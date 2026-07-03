@@ -261,13 +261,14 @@
   const CUTOVER='2026-06-01';          // 이 날짜까지 시트, 이후는 워크북·레코드
   const NOZERO_BASE=312;               // 검증된 연속 NO ZERO — 2026-06-01 기준 312일 (과거 0 기록은 휴무일)
   const PATH='jaeyoung_record/records', SPATH='sales', RNPATH='rejectnotes/admin';
+  const WEBHOOK='https://script.google.com/macros/s/AKfycbxX4Da__UZiZTeZywAxkrFqmgMREhJevA9qKKHd1hLEMrs9nseVij6SCy_s6VWM9EG2/exec'; // 스코어 시트 통합 웹훅 (워크북과 동일)
   const ME='임재영', MYROLE='AOP', MYUID='admin';
   const TH=[['TEN',10],['HORN',5],['GONG',3],['BELL',2]];
   const OBJ=['금전부담','타단체후원','일시후원','생각해보고','배우자와 상의','국내희망','단체불신','개인정보'];
   const WD=['일','월','화','수','목','금','토'];
 
   const $=id=>document.getElementById(id);
-  let baseAgg=null, recs={}, sal={}, rns={}, sheetDays={}, tabsLoaded=0;
+  let baseAgg=null, recs={}, sal={}, rns={}, sheetDays={}, sheetLate={}, tabsLoaded=0;
   let selYear='2026', selMonth=(new Date()).getMonth()+1;
 
   /* ═══════ CSV 유틸 ═══════ */
@@ -317,7 +318,7 @@
           let dv=(row[dCol+donorOff]||'').trim(), cv=(row[dCol+closeOff]||'').trim();
           if(dv===''&&cv!==''&&dateCell>='2026-03-01'&&dateCell<='2026-05-31'){dv=cv;cv='';}
           if(dv==='') continue;
-          if(dateCell>CUTOVER) continue;
+          if(dateCell>CUTOVER){sheetLate[dateCell]={d:num(dv), c:num(cv), src:'SHEET'}; continue;}
           sheetDays[dateCell]={d:num(dv), c:(dateCell>='2026-06-01')?num(cv):0, src:'SHEET'};
         }
       }
@@ -358,6 +359,8 @@
     for(const k of Object.keys(sheetDays)) if(k<=CUTOVER) out[k]=sheetDays[k];
     const fb=fbMerged();
     for(const k of Object.keys(fb)) if(k>CUTOVER) out[k]=fb[k];
+    /* 6/1 이후 시트에만 있는 날은 시트 기록으로 채움 — 시트↔웹 양방향 연동 */
+    for(const k of Object.keys(sheetLate)) if(k>CUTOVER && !out[k]) out[k]=sheetLate[k];
     return out;
   }
   function grade(v){for(const [n,t] of TH) if(v>=t)return n; return v>=1?'':'ZERO';}
@@ -449,18 +452,29 @@
   $('cMinus').onclick=()=>{$('fc').value=Math.max(0,Number($('fc').value)-1);gp();};
   $('fd').oninput=()=>clampNum($('fd')); $('fc').oninput=()=>clampNum($('fc')); gp();
 
+  /* 시트 자동 기록 — 워크북과 같은 웹훅(JSONP)으로 스코어 시트에 셀 단위 반영 */
+  function sheetWrite(date,count,close,cb){
+    const cbn='__sw_'+Date.now()+'_'+Math.floor(Math.random()*1e5);
+    window[cbn]=res=>{cb&&cb(!!(res&&(res.written||res.ok)));try{delete window[cbn];}catch(e){}const s=document.getElementById(cbn);if(s)s.remove();};
+    const q='action=write&date='+encodeURIComponent(date)+'&name='+encodeURIComponent(ME)
+      +'&role='+encodeURIComponent(MYROLE)+'&count='+encodeURIComponent(count)
+      +'&close='+encodeURIComponent(close||0)+'&callback='+cbn+'&t='+Date.now();
+    const sc=document.createElement('script');sc.id=cbn;sc.src=WEBHOOK+'?'+q;
+    sc.onerror=()=>{cb&&cb(false);try{delete window[cbn];}catch(e){}};
+    document.body.appendChild(sc);
+  }
   function saveDay(k,dv,cv,cb){
     if(!db){$('msg').textContent='FIREBASE 연결 없음';$('msg').className='msg err';return;}
     const t=Date.now();
     Promise.all([
       set(ref(db,PATH+'/'+k),{d:dv,c:cv,t}),
       set(ref(db,SPATH+'/'+k+'/'+ME),{name:ME,role:MYROLE,count:dv,t})
-    ]).then(()=>cb&&cb(true)).catch(e=>cb&&cb(false,e));
+    ]).then(()=>{sheetWrite(k,dv,cv,sok=>{if(sok){$('s1').textContent='LIVE · 기록됨';$('s1').className='on';}});cb&&cb(true);}).catch(e=>cb&&cb(false,e));
   }
   $('save').onclick=()=>{
     const k=$('fdate').value; if(!k)return;
     saveDay(k,Number($('fd').value)||0,Number($('fc').value)||0,(ok,e)=>{
-      $('msg').textContent=ok?'저장 완료 — 워크북·허브에 실시간 반영':'저장 실패: '+(e&&e.message);
+      $('msg').textContent=ok?'저장 완료 — 워크북·허브·스코어 시트에 실시간 반영':'저장 실패: '+(e&&e.message);
       $('msg').className='msg '+(ok?'ok':'err');});
   };
   $('quick1').onclick=()=>{
