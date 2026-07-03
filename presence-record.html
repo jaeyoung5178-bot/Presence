@@ -261,7 +261,7 @@
   const CUTOVER='2026-06-01';          // 이 날짜까지 시트, 이후는 워크북·레코드
   const NOZERO_BASE=312;               // 검증된 연속 NO ZERO — 2026-06-01 기준 312일 (과거 0 기록은 휴무일)
   const PATH='jaeyoung_record/records', SPATH='sales', RNPATH='rejectnotes/admin';
-  const WEBHOOK='https://script.google.com/macros/s/AKfycbxX4Da__UZiZTeZywAxkrFqmgMREhJevA9qKKHd1hLEMrs9nseVij6SCy_s6VWM9EG2/exec'; // 스코어 시트 통합 웹훅 (워크북과 동일)
+  let WEBHOOK='https://script.google.com/macros/s/AKfycbxFNOzyQP8XQOsFoiLOx5OaU2UlFa-5wSwK4q_tPxStEehJKF85iy_pMHPwI-Gigz9g/exec'; // 스코어 시트 웹훅 — 워크북 설정(settings/webhook)으로 자동 갱신
   const ME='임재영', MYROLE='AOP', MYUID='admin';
   const TH=[['TEN',10],['HORN',5],['GONG',3],['BELL',2]];
   const OBJ=['금전부담','타단체후원','일시후원','생각해보고','배우자와 상의','국내희망','단체불신','개인정보'];
@@ -352,7 +352,10 @@
     sc.onerror=()=>{try{delete window[cb];}catch(e){}};
     document.body.appendChild(sc);
   }
-  loadTeamPull();
+  /* 워크북 설정에 저장된 최신 웹훅을 먼저 읽고 나서 pull — 워크북과 항상 같은 시트를 바라봄 */
+  fetch('https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/settings/webhook.json?t='+Date.now())
+    .then(r=>r.json()).then(u=>{if(typeof u==='string'&&/script\.google\.com/.test(u))WEBHOOK=u.trim();})
+    .catch(()=>{}).finally(loadTeamPull);
 
   /* ═══════ Firebase ═══════ */
   let db=null;
