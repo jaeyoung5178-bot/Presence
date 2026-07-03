@@ -340,7 +340,8 @@
             const sval=String(row[nm]).trim().toLowerCase();
             if(sval===''||sval==='na'||sval==='n'||sval==='랠리') break;   // 빈칸·휴무·랠리 → 연속 유지, 계산 제외
             const c=Number(sval);
-            if(!isNaN(c)&&c>=0&&c<=300) teamDays[date]={d:c,c:0,src:'TEAM'};
+            /* 팀 시트의 0은 미기록(관리자 일괄 입력)으로 간주 — 연속을 끊지 않음. 실제 제로는 레코드/워크북에 직접 입력 */
+            if(!isNaN(c)&&c>=1&&c<=300) teamDays[date]={d:c,c:0,src:'TEAM'};
             break;
           }
         }
