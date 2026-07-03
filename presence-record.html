@@ -268,7 +268,7 @@
   const WD=['일','월','화','수','목','금','토'];
 
   const $=id=>document.getElementById(id);
-  let baseAgg=null, recs={}, sal={}, rns={}, sheetDays={}, sheetLate={}, tabsLoaded=0;
+  let baseAgg=null, recs={}, sal={}, rns={}, sheetDays={}, sheetLate={}, teamDays={}, tabsLoaded=0;
   let selYear='2026', selMonth=(new Date()).getMonth()+1;
 
   /* ═══════ CSV 유틸 ═══════ */
@@ -327,6 +327,32 @@
   }
   loadYearTabs();
 
+  /* ═══════ 팀 스코어 시트 pull — 6/1 이후 내 기록을 당겨와 병합 (워크북과 같은 웹훅) ═══════ */
+  function loadTeamPull(){
+    const cb='__tp_'+Date.now();
+    window[cb]=data=>{try{
+      if(data&&typeof data==='object'){
+        for(const date of Object.keys(data)){
+          if(!DATE_RE.test(date)||date<=CUTOVER) continue;
+          const row=data[date]||{};
+          for(const nm of Object.keys(row)){
+            if(String(nm).replace(/\s/g,'').indexOf(ME)!==0) continue;
+            const sval=String(row[nm]).trim().toLowerCase();
+            if(sval===''||sval==='na'||sval==='n'||sval==='랠리') break;   // 빈칸·휴무·랠리 → 연속 유지, 계산 제외
+            const c=Number(sval);
+            if(!isNaN(c)&&c>=0&&c<=300) teamDays[date]={d:c,c:0,src:'TEAM'};
+            break;
+          }
+        }
+        renderAll();
+      }
+    }finally{try{delete window[cb];}catch(e){}const s=document.getElementById(cb);if(s)s.remove();}};
+    const sc=document.createElement('script');sc.id=cb;sc.src=WEBHOOK+'?action=pull&callback='+cb+'&t='+Date.now();
+    sc.onerror=()=>{try{delete window[cb];}catch(e){}};
+    document.body.appendChild(sc);
+  }
+  loadTeamPull();
+
   /* ═══════ Firebase ═══════ */
   let db=null;
   try{
@@ -361,6 +387,8 @@
     for(const k of Object.keys(fb)) if(k>CUTOVER) out[k]=fb[k];
     /* 6/1 이후 시트에만 있는 날은 시트 기록으로 채움 — 시트↔웹 양방향 연동 */
     for(const k of Object.keys(sheetLate)) if(k>CUTOVER && !out[k]) out[k]=sheetLate[k];
+    /* 팀 스코어 시트(웹훅 pull) 기록 — 다른 소스에 없는 날 채움 */
+    for(const k of Object.keys(teamDays)) if(k>CUTOVER && !out[k]) out[k]=teamDays[k];
     return out;
   }
   function grade(v){for(const [n,t] of TH) if(v>=t)return n; return v>=1?'':'ZERO';}
@@ -430,7 +458,7 @@
         `<td>${g?`<span class="chip ${g}">${g}</span>`:''}</td><td>${r.d>=1?'1':''}</td>`+
         `<td class="mono">${streakMap[k]!==undefined?streakMap[k]:''}</td>`+
         `<td><span class="chip ${r.src}">${r.src}</span></td>`+
-        `<td>${r.src!=='SHEET'?`<button class="del" data-k="${k}">✕</button>`:''}</td>`;
+        `<td>${(r.src!=='SHEET'&&r.src!=='TEAM')?`<button class="del" data-k="${k}">✕</button>`:''}</td>`;
       tb.appendChild(tr);}
     tb.querySelectorAll('.del').forEach(btn=>btn.addEventListener('click',()=>{
       const k=btn.dataset.k;
