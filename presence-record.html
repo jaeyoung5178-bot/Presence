@@ -243,7 +243,7 @@
     실시간으로 이어집니다. 같은 날짜에 양쪽 입력이 있으면 더 최근 것이 우선하고, 리젝노트는 워크북 리젝노트와 완전히 연동됩니다.
     연도별 과거 일자 기록을 표에 채우려면 게시된 시트에서 연도 탭(2023~2026)을 클릭할 때 주소창에 보이는 <b>gid 숫자 4개</b>를 알려주세요.
   </div>
-  <div class="src" id="src">DATA · SHEET <span id="s1">…</span> · FIREBASE <span id="s2">…</span> · YEAR TABS <span id="s3">대기</span> · SYNC v4</div>
+  <div class="src" id="src">DATA · SHEET <span id="s1">…</span> · FIREBASE <span id="s2">…</span> · YEAR TABS <span id="s3">대기</span> · SYNC v5</div>
 </div>
 
 <script type="module">
@@ -367,7 +367,11 @@
       for(const date of Object.keys(all)){
         for(const k of Object.keys(all[date])){
           const e=all[date][k]||{};
-          if(String(e.name||k).replace(/\s/g,'').indexOf(ME)===0){ sal[date]={count:Number(e.count)||0,t:e.t||0}; break; }
+          if(String(e.name||k).replace(/\s/g,'').indexOf(ME)===0){
+            const cc=Number(e.count)||0;
+            /* 휴무(na)·일괄 0 은 미기록 — 연속을 끊지 않음. 실제 제로는 이 페이지에서 직접 저장 */
+            if(e.na!==true && cc>=1) sal[date]={count:cc,t:e.t||0};
+            break; }
         }
       } renderAll();
     },()=>{});
