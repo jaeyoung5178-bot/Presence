@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEAM RECAP · APRIL 2026 — PRESENCE</title>
+<style>
+  :root{--ink:#0a0a0c;--amber:#e8b466;--amber-dim:#9a7a44;--green:#38a37a;--cream:#efe7d6;--smoke:#6f6a60;--line:#2a2722;--film:#16140f;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--ink);color:var(--cream);font-family:"Times New Roman","Nanum Myeongjo",serif;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(110% 80% at 50% -10%, rgba(56,163,122,.07), transparent 60%);}
+  .mono{font-family:"Courier New",ui-monospace,monospace;}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 60px;}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+  .kicker{font-size:10px;letter-spacing:.45em;color:var(--green);font-family:"Courier New",monospace;}
+  h1{font-weight:400;font-size:clamp(24px,4.5vw,34px);margin-top:.25em;}
+  h1 em{font-style:italic;color:var(--amber);}
+  .period{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.2em;color:var(--smoke);margin-top:.5em;}
+  .nb{text-decoration:none;font-family:"Courier New",monospace;font-size:10px;letter-spacing:.16em;color:var(--cream);
+    border:1px solid var(--line);border-radius:20px;padding:7px 13px;background:rgba(22,20,15,.7);transition:.3s;white-space:nowrap;}
+  .nb:hover{border-color:var(--green);color:#fff;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:26px;}
+  @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr);}}
+  .st{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:16px 12px;text-align:center;}
+  .st .k{font-family:"Courier New",monospace;font-size:8.5px;letter-spacing:.2em;color:var(--amber-dim);}
+  .st .v{font-size:clamp(24px,4vw,32px);margin-top:.25em;color:#fff;}
+  .st.hl{border-color:rgba(56,163,122,.45);background:linear-gradient(160deg,rgba(56,163,122,.14),var(--film));}
+  .st.hl .v{text-shadow:0 0 24px rgba(56,163,122,.4);}
+  .sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);display:flex;align-items:center;gap:14px;margin:26px 0 12px;}
+  .sect::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent);}
+  .card{border:1px solid var(--line);border-radius:6px;background:rgba(22,20,15,.85);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  th{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.18em;color:var(--amber-dim);text-align:right;padding:10px;border-bottom:1px solid var(--line);}
+  th:first-child{text-align:left;}
+  td{padding:9px 10px;border-bottom:1px solid rgba(42,39,34,.55);font-size:14px;text-align:right;}
+  td:first-child{text-align:left;}
+  tr.sum td{color:var(--amber);border-top:1px solid var(--amber-dim);font-size:15px;}
+  td .role{font-family:"Courier New",monospace;font-size:9px;color:var(--smoke);margin-left:.4em;}
+  .quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;}
+  .q{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:18px;}
+  .q .qt{font-size:15px;line-height:1.75;font-style:italic;}
+  .q .qt::before{content:"“";color:var(--amber);font-size:1.3em;}
+  .q .qt::after{content:"”";color:var(--amber);font-size:1.3em;}
+  .q .who{margin-top:12px;font-family:"Courier New",monospace;font-size:9px;letter-spacing:.2em;color:var(--green);}
+  .close{margin-top:28px;text-align:center;font-style:italic;color:var(--smoke);font-size:14px;line-height:1.8;}
+  .close b{color:var(--amber);font-weight:400;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">PRESENCE · TEAM RECAP</div>
+      <h1>April 2026, <em>how the team ran</em></h1>
+      <div class="period">2026.03.23 – 04.19 · PRESENCE TEAM · LIM JAE YOUNG AOP</div>
+    </div>
+    <a class="nb" href="../index.html">◂ 허브</a>
+  </header>
+
+  <div class="stats">
+    <div class="st hl"><div class="k">월간 총 세일즈</div><div class="v">160<span style="font-size:.5em">pcs</span></div></div>
+    <div class="st"><div class="k">월간 실인컴</div><div class="v">₩11.3M</div></div>
+    <div class="st"><div class="k">팀 월간 AVG</div><div class="v">1.5</div></div>
+    <div class="st"><div class="k">FIELD H/C</div><div class="v">105<span style="font-size:.5em">명</span></div></div>
+  </div>
+
+  <div class="sect">SCOREBOARD — 팀원별 성과</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>팀원</th><th>필드일</th><th>세일즈</th><th>실인컴</th><th>리젝</th></tr></thead>
+      <tbody>
+        <tr><td>윤채영<span class="role">TL</span></td><td>19일</td><td>39</td><td>₩2,508,542</td><td>14</td></tr>
+        <tr><td>고윤경<span class="role">LR</span></td><td>23일</td><td>36</td><td>₩2,432,699</td><td>8</td></tr>
+        <tr><td>손예진<span class="role">LR</span></td><td>21일</td><td>34</td><td>₩2,764,934</td><td>5</td></tr>
+        <tr><td>임재영<span class="role">AOP</span></td><td>14일</td><td>27</td><td>₩1,896,207</td><td>15</td></tr>
+        <tr><td>박인선<span class="role">LR</span></td><td>19일</td><td>17</td><td>₩1,271,316</td><td>2</td></tr>
+        <tr><td>서경욱<span class="role">LR</span></td><td>6일</td><td>7</td><td>₩376,075</td><td>2</td></tr>
+        <tr><td>김하진<span class="role">IC</span></td><td>3일</td><td>0</td><td>₩68,032</td><td>1</td></tr>
+        <tr class="sum"><td>합계</td><td>105일</td><td>160</td><td>₩11,317,805</td><td>47</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sect">TEAM FEEDBACK — 리더와 연결된 팀</div>
+  <div class="quotes">
+    <div class="q"><div class="qt">사소한 질문도 OK. 이미 만들어진 길, 나아가기만 하면 된다.</div><div class="who">고윤경 LR · SALES 잘하는 법 발표 中</div></div>
+    <div class="q"><div class="qt">응원해주는 사람들이 있기에 더 노력하자. 타인의 말을 믿어라.</div><div class="who">고윤경 LR · 발표 中</div></div>
+    <div class="q"><div class="qt">재영리더님 덕분에 잘하고 있구나, 스스로를 돌봐주며 버티고 있다.</div><div class="who">팀원 카톡 中</div></div>
+  </div>
+
+  <div class="close">리더와의 연결감이 팀원 개개인의 멘탈리티와 성장의 토대가 된다.<br>
+  우리가 잘 되고 있는 이유는 시스템이 아니라 <b>사람</b>입니다.</div>
+</div>
+</body>
+</html>

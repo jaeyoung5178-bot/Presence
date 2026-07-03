@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIM JAE YOUNG — FIELD RECORD</title>
+<style>
+  :root{--ink:#0a0a0c;--amber:#e8b466;--amber-dim:#9a7a44;--green:#38a37a;--cream:#efe7d6;
+    --smoke:#6f6a60;--line:#2a2722;--film:#16140f;--red:#c05b4d;--blue:#5f8fe0;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--ink);color:var(--cream);font-family:"Times New Roman","Nanum Myeongjo",serif;
+    -webkit-font-smoothing:antialiased;min-height:100vh;
+    background-image:radial-gradient(120% 90% at 50% -10%, rgba(232,180,102,.06), transparent 60%);}
+  .mono{font-family:"Courier New",ui-monospace,monospace;}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 60px;}
+  header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:26px;flex-wrap:wrap;}
+  .lockup{display:flex;align-items:center;gap:14px;}
+  .emblem{width:52px;height:52px;border-radius:22%;filter:drop-shadow(0 0 12px rgba(56,163,122,.25));}
+  .brand .kicker{font-size:9px;letter-spacing:.45em;color:var(--amber);}
+  .brand h1{font-weight:400;font-size:22px;margin-top:.25em;}
+  .brand h1 em{font-style:italic;color:var(--amber);}
+  .navbtns{display:flex;gap:8px;flex-wrap:wrap;}
+  .nb{text-decoration:none;font-family:"Courier New",monospace;font-size:10px;letter-spacing:.16em;
+    color:var(--cream);border:1px solid var(--line);border-radius:20px;padding:7px 13px;
+    background:rgba(22,20,15,.7);transition:.3s;white-space:nowrap;cursor:pointer;}
+  .nb:hover{border-color:var(--green);color:#fff;}
+  .nb.hub{border-color:var(--amber-dim);}
+
+  .hero{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1.4fr);gap:14px;margin-bottom:14px;}
+  @media(max-width:640px){.hero{grid-template-columns:1fr;}}
+  .card{border:1px solid var(--line);border-radius:6px;background:rgba(22,20,15,.85);padding:18px 20px;}
+  .streak{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:linear-gradient(160deg, rgba(56,163,122,.16), rgba(22,20,15,.9));border-color:rgba(56,163,122,.4);}
+  .streak .lbl{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--green);text-indent:.4em;}
+  .streak .num{font-size:clamp(58px,14vw,88px);line-height:1.05;color:#fff;text-shadow:0 0 40px rgba(56,163,122,.4);}
+  .streak .sub{font-size:11px;color:var(--smoke);font-family:"Courier New",monospace;letter-spacing:.14em;}
+  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:4px;overflow:hidden;height:100%;}
+  .cell{background:var(--film);padding:13px 12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:5px;}
+  .cell .k{font-family:"Courier New",monospace;font-size:8.5px;letter-spacing:.16em;color:var(--amber-dim);}
+  .cell .v{font-size:24px;color:var(--cream);}
+
+  .grades{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .gcard{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:13px 8px;text-align:center;}
+  .gcard .gk{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.3em;text-indent:.3em;}
+  .gcard .gv{font-size:30px;margin-top:.15em;}
+  .gcard .gth{font-size:9px;color:var(--smoke);font-family:"Courier New",monospace;margin-top:.2em;}
+  .g-bell .gk,.g-bell .gv{color:#dda94e;} .g-gong .gk,.g-gong .gv{color:#a77bd4;}
+  .g-horn .gk,.g-horn .gv{color:#4fae9e;} .g-ten .gk,.g-ten .gv{color:#5f8fe0;}
+
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;}
+  .kcell{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:12px;text-align:center;}
+  .kcell .k{font-family:"Courier New",monospace;font-size:8.5px;letter-spacing:.16em;color:var(--green);}
+  .kcell .v{font-size:22px;margin-top:.2em;}
+
+  .sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);
+    display:flex;align-items:center;gap:14px;margin:26px 0 12px;}
+  .sect::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent);}
+
+  .form{border:1px solid rgba(56,163,122,.35);border-radius:6px;background:rgba(22,20,15,.9);padding:18px;}
+  .frow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .fld{display:flex;flex-direction:column;gap:6px;}
+  .fld label{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.2em;color:var(--amber-dim);}
+  input[type=date],select,input[type=text],textarea{background:var(--ink);border:1px solid var(--line);color:var(--cream);border-radius:4px;
+    padding:10px 12px;font-family:"Courier New",monospace;font-size:13.5px;color-scheme:dark;}
+  textarea{font-family:"Times New Roman","Nanum Myeongjo",serif;width:100%;min-height:56px;}
+  .step{display:flex;align-items:center;border:1px solid var(--line);border-radius:4px;background:var(--ink);}
+  .step button{background:none;border:none;color:var(--amber);font-size:20px;width:42px;height:42px;cursor:pointer;}
+  .step button:active{background:rgba(232,180,102,.12);}
+  .step input{width:56px;text-align:center;background:none;border:none;color:#fff;font-size:20px;font-family:"Courier New",monospace;}
+  .save{background:linear-gradient(160deg,#2f8e6a,#256d52);color:#fff;border:none;border-radius:4px;
+    padding:13px 26px;font-family:"Courier New",monospace;font-size:12px;letter-spacing:.2em;cursor:pointer;transition:.25s;}
+  .save:hover{box-shadow:0 0 24px rgba(56,163,122,.4);}
+  .quick{background:none;border:1px dashed var(--green);color:var(--green);border-radius:4px;
+    padding:13px 20px;font-family:"Courier New",monospace;font-size:12px;letter-spacing:.14em;cursor:pointer;transition:.25s;}
+  .quick:hover{background:rgba(56,163,122,.12);}
+  .gpreview{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.2em;color:var(--smoke);margin-top:12px;min-height:1.2em;}
+  .gpreview b{color:var(--amber);font-weight:400;}
+  .msg{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.14em;margin-top:8px;min-height:1.2em;}
+  .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
+
+  table{width:100%;border-collapse:collapse;}
+  th{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.18em;color:var(--amber-dim);
+    text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:8px 10px;border-bottom:1px solid rgba(42,39,34,.6);font-size:13.5px;white-space:nowrap;}
+  td.mono{font-size:12px;color:var(--smoke);}
+  .chip{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:10px;border:1px solid var(--line);}
+  .chip.BELL{color:#dda94e;border-color:#dda94e55;} .chip.GONG{color:#a77bd4;border-color:#a77bd455;}
+  .chip.HORN{color:#4fae9e;border-color:#4fae9e55;} .chip.TEN{color:#5f8fe0;border-color:#5f8fe055;}
+  .chip.ZERO{color:var(--red);border-color:#c05b4d55;}
+  .chip.SHEET{color:var(--smoke);} .chip.WORK{color:var(--green);border-color:rgba(56,163,122,.4);}
+  .chip.REC{color:var(--amber);border-color:rgba(232,180,102,.4);}
+  .chip.open{color:var(--blue);border-color:#5f8fe055;} .chip.pass{color:var(--green);border-color:rgba(56,163,122,.4);}
+  .chip.reject{color:var(--red);border-color:#c05b4d55;}
+  .del{background:none;border:none;color:var(--smoke);cursor:pointer;font-size:14px;transition:.2s;}
+  .del:hover{color:var(--red);}
+
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;}
+  .pick{background:var(--ink);border:1px solid var(--line);color:var(--smoke);border-radius:16px;
+    padding:6px 13px;font-size:12px;cursor:pointer;transition:.2s;font-family:"Courier New",monospace;}
+  .pick.on{color:var(--green);border-color:var(--green);}
+  .ybtn.on{color:var(--amber);border-color:var(--amber-dim);}
+  .rnstats{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .rnstat{flex:1;min-width:70px;border:1px solid var(--line);border-radius:6px;background:var(--film);padding:10px;text-align:center;}
+  .rnstat .n{font-size:20px;} .rnstat .l{font-size:8.5px;font-family:"Courier New",monospace;color:var(--smoke);letter-spacing:.16em;margin-top:2px;}
+  .note{font-size:11.5px;color:var(--smoke);line-height:1.7;margin-top:16px;}
+  .note b{color:var(--amber-dim);font-weight:400;}
+  .src{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.14em;color:var(--smoke);margin-top:6px;}
+  .src .on{color:var(--green);}
+  .warn{font-family:"Courier New",monospace;font-size:10px;color:var(--amber-dim);letter-spacing:.1em;padding:10px 0;}
+  details.rn{border:1px solid var(--line);border-radius:6px;background:rgba(22,20,15,.9);padding:0;}
+  details.rn summary{cursor:pointer;padding:14px 18px;font-family:"Courier New",monospace;font-size:11px;
+    letter-spacing:.2em;color:var(--green);list-style:none;}
+  details.rn[open] summary{border-bottom:1px solid var(--line);}
+  details.rn .inner{padding:16px 18px;}
+  .scrollx{overflow-x:auto;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="lockup">
+      <svg class="emblem" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-label="Presence">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#181c26"/><stop offset="1" stop-color="#0f131b"/></linearGradient></defs>
+        <rect x="8" y="8" width="1008" height="1008" rx="232" fill="url(#g)"/>
+        <path d="M544 232 L700 522 L392 522 Z" fill="#38a37a" stroke="#38a37a" stroke-width="24" stroke-linejoin="round"/>
+        <path d="M464 284 L652 520 L306 520 Z" fill="#efe8d9" stroke="#efe8d9" stroke-width="24" stroke-linejoin="round"/>
+        <text x="512" y="806" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="150" fill="#efe8d9" letter-spacing="2">Presence</text>
+      </svg>
+      <div class="brand">
+        <div class="kicker mono">PRESENCE · PERSONAL</div>
+        <h1>Lim Jae Young, <em>field record</em></h1>
+      </div>
+    </div>
+    <nav class="navbtns">
+      <a class="nb hub" href="index.html">◂ 허브</a>
+      <a class="nb" href="https://presence.co.kr" target="_blank" rel="noopener">WORK BOOK</a>
+      <a class="nb" href="https://jaeyoung5178-bot.github.io/matdosa.github.io/" target="_blank" rel="noopener">맛도사</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="card streak">
+      <div class="lbl">연속 NO ZERO</div>
+      <div class="num" id="streak">—</div>
+      <div class="sub">일차 진행 중 · 입력 시 자동 갱신</div>
+    </div>
+    <div class="grid6">
+      <div class="cell"><span class="k">누적 후원자</span><span class="v" id="donors">—</span></div>
+      <div class="cell"><span class="k">총 필드일수</span><span class="v" id="days">—</span></div>
+      <div class="cell"><span class="k">NO ZERO 일수</span><span class="v" id="nozero">—</span></div>
+      <div class="cell"><span class="k">제로한 날</span><span class="v" id="zero">—</span></div>
+      <div class="cell"><span class="k">AVG (후원자/일)</span><span class="v" id="avg">—</span></div>
+      <div class="cell"><span class="k">NO ZERO 비율</span><span class="v" id="ratio">—</span></div>
+    </div>
+  </div>
+
+  <div class="grades">
+    <div class="gcard g-bell"><div class="gk">BELL</div><div class="gv" id="bell">—</div><div class="gth">≥ 2</div></div>
+    <div class="gcard g-gong"><div class="gk">GONG</div><div class="gv" id="gong">—</div><div class="gth">≥ 3</div></div>
+    <div class="gcard g-horn"><div class="gk">HORN</div><div class="gv" id="horn">—</div><div class="gth">≥ 5</div></div>
+    <div class="gcard g-ten"><div class="gk">TEN</div><div class="gv" id="ten">—</div><div class="gth">≥ 10</div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kcell"><div class="k">올해 클로즈 (26.6~)</div><div class="v" id="closes">—</div></div>
+    <div class="kcell"><div class="k">클로즈 동반 후원자</div><div class="v" id="cdonors">—</div></div>
+    <div class="kcell"><div class="k">KPI (클로즈/후원자)</div><div class="v" id="kpi">—</div></div>
+  </div>
+
+  <div class="sect">RECORD TODAY — 오늘의 기록</div>
+  <div class="form">
+    <div class="frow">
+      <div class="fld"><label>날짜</label><input type="date" id="fdate"></div>
+      <div class="fld"><label>후원자</label>
+        <div class="step"><button id="dMinus">−</button><input id="fd" value="0" inputmode="numeric"><button id="dPlus">+</button></div></div>
+      <div class="fld"><label>클로즈</label>
+        <div class="step"><button id="cMinus">−</button><input id="fc" value="0" inputmode="numeric"><button id="cPlus">+</button></div></div>
+      <button class="save" id="save">기록 저장</button>
+      <button class="quick" id="quick1">⚡ 오늘 후원자 +1</button>
+    </div>
+    <div class="gpreview" id="gprev"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="sect">REJECT NOTE — 후원 안정성 추적</div>
+  <div class="rnstats">
+    <div class="rnstat"><div class="n" id="rnTot">0</div><div class="l">전체</div></div>
+    <div class="rnstat"><div class="n" id="rnOpen" style="color:var(--blue)">0</div><div class="l">OPEN</div></div>
+    <div class="rnstat"><div class="n" id="rnPass" style="color:var(--green)">0</div><div class="l">PASS</div></div>
+    <div class="rnstat"><div class="n" id="rnRej" style="color:var(--red)">0</div><div class="l">REJECT</div></div>
+  </div>
+  <details class="rn">
+    <summary>➕ 후원자 기록 추가 (리젝노트)</summary>
+    <div class="inner">
+      <div class="frow">
+        <div class="fld"><label>클라이언트</label><select id="rnClient"><option>옥스팜</option><option>유니세프</option><option>위페어</option></select></div>
+        <div class="fld"><label>구분</label><select id="rnCity"><option>시티</option><option>로드</option></select></div>
+        <div class="fld"><label>채널</label><select id="rnChan"><option>스트릿</option><option>이벤트</option><option>B2B</option></select></div>
+        <div class="fld"><label>후원번호 (SWP·숫자만)</label><input type="text" id="rnCode" inputmode="numeric" placeholder="26034329"></div>
+      </div>
+      <div class="frow" style="margin-top:10px">
+        <div class="fld"><label>금액</label><select id="rnAmt"><option>2만</option><option selected>3만</option><option>4만</option><option>5만</option><option>7만</option><option>10만</option></select></div>
+        <div class="fld"><label>결제</label><select id="rnPay"><option>계좌</option><option>카드</option></select></div>
+        <div class="fld"><label>주기</label><select id="rnCycle"><option>매월</option><option>6개월</option><option>12개월</option></select></div>
+        <div class="fld"><label>출생연도</label><input type="text" id="rnBirth" inputmode="numeric" placeholder="1999" style="width:90px"></div>
+        <div class="fld"><label>성별</label><select id="rnGen"><option>여</option><option>남</option></select></div>
+      </div>
+      <div class="fld" style="margin-top:10px"><label>오브젝션 (클릭해서 선택)</label>
+        <div class="chips" id="rnObj"></div></div>
+      <div class="frow" style="margin-top:6px">
+        <div class="fld" style="flex:1"><label>장소</label><input type="text" id="rnPlace" placeholder="스타벅스 부평역점" style="width:100%"></div>
+      </div>
+      <div class="fld" style="margin-top:10px"><label>특이사항·메모</label><textarea id="rnMemo" placeholder="후원 사연, 인상, 기부금영수증 여부 등"></textarea></div>
+      <div class="frow" style="margin-top:12px;align-items:center">
+        <button class="save" id="rnSave">리젝노트 저장</button>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--smoke);cursor:pointer">
+          <input type="checkbox" id="rnPlus" checked> 오늘 후원자 +1 함께 기록</label>
+      </div>
+      <div class="msg" id="rnMsg"></div>
+    </div>
+  </details>
+  <div class="card scrollx" style="padding:6px 4px;margin-top:12px;">
+    <table>
+      <thead><tr><th>날짜</th><th>클라이언트</th><th>금액</th><th>결제</th><th>장소</th><th>상태</th><th></th></tr></thead>
+      <tbody id="rnList"><tr><td class="mono" colspan="7">불러오는 중…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="sect">HISTORY — 전체 기록 (연도 · 월 · 일)</div>
+  <div class="chips" id="years"></div>
+  <div class="chips" id="months"></div>
+  <div class="warn" id="histWarn" style="display:none"></div>
+  <div class="card scrollx" style="padding:6px 4px;">
+    <table>
+      <thead><tr><th>날짜</th><th>요일</th><th>후원자</th><th>클로즈</th><th>등급</th><th>노제로</th><th>연속</th><th>출처</th><th></th></tr></thead>
+      <tbody id="hist"><tr><td class="mono" colspan="9">불러오는 중…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>데이터 흐름</b> — 2026-06-01까지는 스프레드시트 기록, 2026-06-02부터는 워크북(+버튼)과 이 페이지의 기록이
+    실시간으로 이어집니다. 같은 날짜에 양쪽 입력이 있으면 더 최근 것이 우선하고, 리젝노트는 워크북 리젝노트와 완전히 연동됩니다.
+    연도별 과거 일자 기록을 표에 채우려면 게시된 시트에서 연도 탭(2023~2026)을 클릭할 때 주소창에 보이는 <b>gid 숫자 4개</b>를 알려주세요.
+  </div>
+  <div class="src" id="src">DATA · SHEET <span id="s1">…</span> · FIREBASE <span id="s2">…</span> · YEAR TABS <span id="s3">대기</span></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  /* ═══════ 설정 ═══════ */
+  const CFG={apiKey:"AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0",authDomain:"presence-team.firebaseapp.com",
+    databaseURL:"https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"presence-team",storageBucket:"presence-team.firebasestorage.app",
+    messagingSenderId:"1056684483470",appId:"1:1056684483470:web:1f50113d410b53458d3adf"};
+  const SHEET_BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vSHY74IWhzKLmIg403yidi_JylIt4MQ4U5_zGnpO-YdjaF-kS4cA3tf6xHDRaSbyvTHCrDbvdNrCnN7/pub';
+  /* 연도 탭 gid — 게시 페이지에서 각 연도 탭 클릭 시 URL의 gid=숫자. 채우면 과거 일자별 기록이 표에 나타납니다. */
+  const YEAR_GIDS={ '2023':'408625257', '2024':'75815253', '2025':'1269243832', '2026':'1635000496' };
+  const CUTOVER='2026-06-01';          // 이 날짜까지 시트, 이후는 워크북·레코드
+  const PATH='jaeyoung_record/records', SPATH='sales', RNPATH='rejectnotes/admin';
+  const ME='임재영', MYROLE='AOP', MYUID='admin';
+  const TH=[['TEN',10],['HORN',5],['GONG',3],['BELL',2]];
+  const OBJ=['금전부담','타단체후원','일시후원','생각해보고','배우자와 상의','국내희망','단체불신','개인정보'];
+  const WD=['일','월','화','수','목','금','토'];
+
+  const $=id=>document.getElementById(id);
+  let baseAgg=null, recs={}, sal={}, rns={}, sheetDays={}, tabsLoaded=0;
+  let selYear='2026', selMonth=(new Date()).getMonth()+1;
+
+  /* ═══════ CSV 유틸 ═══════ */
+  function parseCSV(t){const rows=[[]];let cur='',q=false;
+    for(let i=0;i<t.length;i++){const ch=t[i];
+      if(q){if(ch==='"'){if(t[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
+      else if(ch==='"')q=true;
+      else if(ch===','){rows[rows.length-1].push(cur);cur='';}
+      else if(ch==='\n'){rows[rows.length-1].push(cur);cur='';rows.push([]);}
+      else if(ch!=='\r')cur+=ch;}
+    rows[rows.length-1].push(cur);return rows;}
+  function below(rows,label){for(let r=0;r<rows.length;r++){
+    const c=rows[r].findIndex(v=>v.trim()===label);
+    if(c>=0&&rows[r+1])return (rows[r+1][c]||'').trim();}return '';}
+  const num=s=>Number(String(s).replace(/[^0-9.\-]/g,''))||0;
+
+  /* ═══════ 메인 탭(기준값) ═══════ */
+  fetch(SHEET_BASE+'?output=csv&t='+Date.now()).then(r=>r.text()).then(t=>{
+    const rows=parseCSV(t), g=l=>below(rows,l);
+    baseAgg={streak:num(g('연속 NO ZERO')),donors:num(g('누적 후원자')),days:num(g('총 필드일수')),
+      nozero:num(g('NO ZERO 일수')),zero:num(g('제로한 날')),
+      bell:num(g('BELL')),gong:num(g('GONG')),horn:num(g('HORN')),ten:num(g('TEN')),
+      closes:num(g('올해 클로즈')),cdonors:num(g('클로즈 동반 후원자'))};
+    $('s1').textContent='LIVE'; $('s1').className='on'; renderAll();
+  }).catch(()=>{ $('s1').textContent='OFF';
+    baseAgg={streak:0,donors:0,days:0,nozero:0,zero:0,bell:0,gong:0,horn:0,ten:0,closes:0,cdonors:0}; renderAll(); });
+
+  /* ═══════ 연도 탭(일자별) ═══════ */
+  const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
+  function loadYearTabs(){
+    const jobs=Object.entries(YEAR_GIDS).filter(([y,g])=>g!=='');
+    if(!jobs.length){ $('s3').textContent='대기 (gid 필요)'; return; }
+    Promise.all(jobs.map(([y,gid])=>
+      fetch(`${SHEET_BASE}?gid=${gid}&single=true&output=csv&t=${Date.now()}`).then(r=>r.text()).then(t=>({y,rows:parseCSV(t)})).catch(()=>null)
+    )).then(res=>{
+      for(const item of res){ if(!item) continue; tabsLoaded++;
+        let dCol=-1,donorOff=3,closeOff=2;
+        for(const row of item.rows){
+          const h=row.findIndex(v=>v.trim()==='날짜');
+          if(h>=0){ dCol=h;
+            const dn=row.findIndex(v=>v.trim()==='후원자'); if(dn>=0)donorOff=dn-h;
+            const cl=row.findIndex(v=>v.trim()==='클로즈'); if(cl>=0)closeOff=cl-h;
+            continue; }
+          if(dCol<0) continue;
+          const dateCell=(row[dCol]||'').trim();
+          if(!DATE_RE.test(dateCell)) continue;
+          let dv=(row[dCol+donorOff]||'').trim(), cv=(row[dCol+closeOff]||'').trim();
+          if(dv===''&&cv!==''&&dateCell>='2026-03-01'&&dateCell<='2026-05-31'){dv=cv;cv='';}
+          if(dv==='') continue;
+          if(dateCell>CUTOVER) continue;
+          sheetDays[dateCell]={d:num(dv), c:(dateCell>='2026-06-01')?num(cv):0, src:'SHEET'};
+        }
+      }
+      $('s3').textContent=tabsLoaded+'개 로드'; $('s3').className='on'; renderAll();
+    });
+  }
+  loadYearTabs();
+
+  /* ═══════ Firebase ═══════ */
+  let db=null;
+  try{
+    db=getDatabase(initializeApp(CFG));
+    onValue(ref(db,PATH),snap=>{recs=snap.val()||{}; $('s2').textContent='LIVE'; $('s2').className='on'; renderAll();},()=>{$('s2').textContent='OFF';});
+    onValue(ref(db,SPATH),snap=>{
+      const all=snap.val()||{}; sal={};
+      for(const date of Object.keys(all)){
+        for(const k of Object.keys(all[date])){
+          const e=all[date][k]||{};
+          if(String(e.name||k).replace(/\s/g,'').indexOf(ME)===0){ sal[date]={count:Number(e.count)||0,t:e.t||0}; break; }
+        }
+      } renderAll();
+    },()=>{});
+    onValue(ref(db,RNPATH),snap=>{rns=snap.val()||{}; renderRN();},()=>{});
+  }catch(e){ $('s2').textContent='OFF'; }
+
+  /* ═══════ 병합 ═══════ */
+  function fbMerged(){
+    const out={};
+    for(const k of Object.keys(recs)) out[k]={d:Number(recs[k].d)||0,c:Number(recs[k].c)||0,t:recs[k].t||0,src:'REC'};
+    for(const k of Object.keys(sal)){
+      const s=sal[k];
+      if(!out[k]) out[k]={d:s.count,c:0,t:s.t,src:'WORK'};
+      else if((s.t||0)>(out[k].t||0)){out[k].d=s.count;out[k].src='WORK';}
+    } return out;
+  }
+  function allDays(){
+    const out={};
+    for(const k of Object.keys(sheetDays)) if(k<=CUTOVER) out[k]=sheetDays[k];
+    const fb=fbMerged();
+    for(const k of Object.keys(fb)) if(k>CUTOVER) out[k]=fb[k];
+    return out;
+  }
+  function grade(v){for(const [n,t] of TH) if(v>=t)return n; return v>=1?'':'ZERO';}
+
+  /* ═══════ 집계 & 상단 렌더 ═══════ */
+  let streakMap={};
+  function renderAll(){
+    if(!baseAgg) return;
+    const m=allDays(), days=Object.keys(m).sort();
+    streakMap={};
+    if(tabsLoaded>0){
+      let st=0,d=0,nz=0,z=0,b=0,go=0,h=0,tn=0,cl=0,cd=0;
+      for(const k of days){const v=m[k].d,c=m[k].c||0;
+        d+=v; if(v>=1){nz++;st++;}else{z++;st=0;} streakMap[k]=st;
+        if(v>=2)b++; if(v>=3)go++; if(v>=5)h++; if(v>=10)tn++;
+        if(k>=CUTOVER){cl+=c; if(c>0)cd+=v;}}
+      setAgg(st,d,days.length,nz,z,b,go,h,tn,cl,cd);
+    }else{
+      const fb=Object.keys(m).filter(k=>k>CUTOVER).sort();
+      let st=baseAgg.streak,d=0,nz=0,z=0,b=0,go=0,h=0,tn=0,cl=0,cd=0;
+      for(const k of fb){const v=m[k].d,c=m[k].c||0;
+        d+=v; if(v>=1){nz++;st++;}else{z++;st=0;} streakMap[k]=st;
+        if(v>=2)b++; if(v>=3)go++; if(v>=5)h++; if(v>=10)tn++;
+        cl+=c; if(c>0)cd+=v;}
+      setAgg(st,baseAgg.donors+d,baseAgg.days+fb.length,baseAgg.nozero+nz,baseAgg.zero+z,
+        baseAgg.bell+b,baseAgg.gong+go,baseAgg.horn+h,baseAgg.ten+tn,baseAgg.closes+cl,baseAgg.cdonors+cd);
+    }
+    renderHist();
+  }
+  function setAgg(st,dn,D,nz,z,b,go,h,tn,cl,cd){
+    $('streak').textContent=st; $('donors').textContent=dn.toLocaleString();
+    $('days').textContent=D; $('nozero').textContent=nz; $('zero').textContent=z;
+    $('avg').textContent=D?(dn/D).toFixed(2):'0';
+    $('ratio').textContent=D?(nz/D*100).toFixed(1)+'%':'—';
+    $('bell').textContent=b; $('gong').textContent=go; $('horn').textContent=h; $('ten').textContent=tn;
+    $('closes').textContent=cl; $('cdonors').textContent=cd; $('kpi').textContent=cd?(cl/cd).toFixed(2):'0.00';
+  }
+
+  /* ═══════ HISTORY UI ═══════ */
+  const YEARS=['2023','2024','2025','2026'];
+  function buildChips(){
+    $('years').innerHTML=''; $('months').innerHTML='';
+    for(const y of YEARS){
+      const b=document.createElement('button'); b.className='pick ybtn'+(y===selYear?' on':''); b.textContent=y;
+      b.onclick=()=>{selYear=y;buildChips();renderHist();}; $('years').appendChild(b);}
+    for(let mo=1;mo<=12;mo++){
+      const b=document.createElement('button'); b.className='pick'+(mo===selMonth?' on':''); b.textContent=mo+'월';
+      b.onclick=()=>{selMonth=mo;buildChips();renderHist();}; $('months').appendChild(b);}
+  }
+  function renderHist(){
+    const m=allDays();
+    const pre=selYear+'-'+String(selMonth).padStart(2,'0');
+    const days=Object.keys(m).filter(k=>k.startsWith(pre)).sort();
+    const tb=$('hist'); tb.innerHTML='';
+    const warn=$('histWarn');
+    if(tabsLoaded===0 && pre<=CUTOVER.slice(0,7)){
+      warn.style.display=''; warn.textContent='⚠ 과거 기록 표시는 연도 탭 gid 연결 후 활성화됩니다 (하단 안내 참고)';
+    } else warn.style.display='none';
+    if(!days.length){tb.innerHTML='<tr><td class="mono" colspan="9">'+selYear+'년 '+selMonth+'월 기록 없음</td></tr>';return;}
+    for(const k of days){
+      const r=m[k],g=grade(r.d),wd=WD[new Date(k+'T00:00:00').getDay()];
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="mono">${k}</td><td class="mono">${wd}</td><td><b>${r.d}</b></td><td>${r.c||''}</td>`+
+        `<td>${g?`<span class="chip ${g}">${g}</span>`:''}</td><td>${r.d>=1?'1':''}</td>`+
+        `<td class="mono">${streakMap[k]!==undefined?streakMap[k]:''}</td>`+
+        `<td><span class="chip ${r.src}">${r.src}</span></td>`+
+        `<td>${r.src!=='SHEET'?`<button class="del" data-k="${k}">✕</button>`:''}</td>`;
+      tb.appendChild(tr);}
+    tb.querySelectorAll('.del').forEach(btn=>btn.addEventListener('click',()=>{
+      const k=btn.dataset.k;
+      if(confirm(k+' 기록을 삭제할까요? (개인·워크북 모두)')){
+        remove(ref(db,PATH+'/'+k)); remove(ref(db,SPATH+'/'+k+'/'+ME)); }
+    }));
+  }
+  buildChips();
+
+  /* ═══════ 기록 저장 ═══════ */
+  const today=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+  $('fdate').value=today;
+  function gp(){const v=Number($('fd').value)||0,g=grade(v);
+    $('gprev').innerHTML=v>=1?`<b>${v}</b>명 → ${g&&g!=='ZERO'?`<b>${g}</b> 달성 · `:''}NO ZERO 연속 이어집니다`:(v===0?'0명은 연속이 초기화됩니다':'');}
+  const clampNum=el=>{el.value=Math.max(0,Math.min(99,Number(String(el.value).replace(/\D/g,''))||0));gp();};
+  $('dPlus').onclick=()=>{$('fd').value=Number($('fd').value)+1;gp();};
+  $('dMinus').onclick=()=>{$('fd').value=Math.max(0,Number($('fd').value)-1);gp();};
+  $('cPlus').onclick=()=>{$('fc').value=Number($('fc').value)+1;gp();};
+  $('cMinus').onclick=()=>{$('fc').value=Math.max(0,Number($('fc').value)-1);gp();};
+  $('fd').oninput=()=>clampNum($('fd')); $('fc').oninput=()=>clampNum($('fc')); gp();
+
+  function saveDay(k,dv,cv,cb){
+    if(!db){$('msg').textContent='FIREBASE 연결 없음';$('msg').className='msg err';return;}
+    const t=Date.now();
+    Promise.all([
+      set(ref(db,PATH+'/'+k),{d:dv,c:cv,t}),
+      set(ref(db,SPATH+'/'+k+'/'+ME),{name:ME,role:MYROLE,count:dv,t})
+    ]).then(()=>cb&&cb(true)).catch(e=>cb&&cb(false,e));
+  }
+  $('save').onclick=()=>{
+    const k=$('fdate').value; if(!k)return;
+    saveDay(k,Number($('fd').value)||0,Number($('fc').value)||0,(ok,e)=>{
+      $('msg').textContent=ok?'저장 완료 — 워크북·허브에 실시간 반영':'저장 실패: '+(e&&e.message);
+      $('msg').className='msg '+(ok?'ok':'err');});
+  };
+  $('quick1').onclick=()=>{
+    const cur=fbMerged()[today];
+    const dv=(cur?cur.d:0)+1, cv=cur?cur.c:0;
+    saveDay(today,dv,cv,(ok,e)=>{
+      $('msg').textContent=ok?`⚡ 오늘 ${dv}명째 — 수고하셨습니다!`:'실패: '+(e&&e.message);
+      $('msg').className='msg '+(ok?'ok':'err');});
+  };
+
+  /* ═══════ 리젝노트 ═══════ */
+  let selObj=[];
+  function drawObj(){
+    $('rnObj').innerHTML='';
+    for(const o of OBJ){
+      const b=document.createElement('button'); b.type='button';
+      b.className='pick'+(selObj.includes(o)?' on':''); b.textContent=o;
+      b.onclick=()=>{selObj=selObj.includes(o)?selObj.filter(x=>x!==o):[...selObj,o];drawObj();};
+      $('rnObj').appendChild(b);}
+  }
+  drawObj();
+  $('rnSave').onclick=()=>{
+    if(!db){$('rnMsg').textContent='FIREBASE 연결 없음';$('rnMsg').className='msg err';return;}
+    const g=id=>$(id).value.trim();
+    const codeNum=g('rnCode').replace(/[^0-9]/g,'');
+    const r={id:'rn_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),t:Date.now(),
+      date:today,client:g('rnClient'),city:g('rnCity'),chan:g('rnChan'),
+      code:codeNum?('SWP'+codeNum):'',amount:g('rnAmt'),pay:g('rnPay'),cycle:g('rnCycle'),
+      birth:g('rnBirth'),gender:g('rnGen'),owner:ME,place:g('rnPlace'),obj:selObj.slice(),
+      memo:g('rnMemo'),status:'open',rejReason:'',rejProb:'',by:ME,byUid:MYUID};
+    set(ref(db,RNPATH+'/'+r.id),r).then(()=>{
+      $('rnMsg').textContent='리젝노트 저장 완료 — 워크북에서도 보입니다';$('rnMsg').className='msg ok';
+      $('rnCode').value='';$('rnBirth').value='';$('rnPlace').value='';$('rnMemo').value='';selObj=[];drawObj();
+      if($('rnPlus').checked) $('quick1').click();
+    }).catch(e=>{$('rnMsg').textContent='실패: '+e.message;$('rnMsg').className='msg err';});
+  };
+  function renderRN(){
+    const L=Object.values(rns).sort((a,b)=>(b.t||0)-(a.t||0));
+    $('rnTot').textContent=L.length;
+    $('rnOpen').textContent=L.filter(r=>r.status==='open').length;
+    $('rnPass').textContent=L.filter(r=>r.status==='pass').length;
+    $('rnRej').textContent=L.filter(r=>r.status==='reject').length;
+    const tb=$('rnList'); tb.innerHTML='';
+    if(!L.length){tb.innerHTML='<tr><td class="mono" colspan="7">기록 없음 — 첫 후원자를 기록해볼까요?</td></tr>';return;}
+    for(const r of L.slice(0,10)){
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="mono">${r.date||''}</td><td>${r.client||''}</td><td>${r.amount||''}</td>`+
+        `<td class="mono">${r.pay||''}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis">${r.place||''}</td>`+
+        `<td><span class="chip ${r.status}">${(r.status||'open').toUpperCase()}</span></td>`+
+        `<td><button class="del" data-id="${r.id}">✕</button></td>`;
+      tb.appendChild(tr);}
+    tb.querySelectorAll('.del').forEach(btn=>btn.addEventListener('click',()=>{
+      if(confirm('이 리젝노트를 삭제할까요?')) remove(ref(db,RNPATH+'/'+btn.dataset.id));
+    }));
+  }
+</script>
+</body>
+</html>
