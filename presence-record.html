@@ -259,6 +259,7 @@
   /* 연도 탭 gid — 게시 페이지에서 각 연도 탭 클릭 시 URL의 gid=숫자. 채우면 과거 일자별 기록이 표에 나타납니다. */
   const YEAR_GIDS={ '2023':'408625257', '2024':'75815253', '2025':'1269243832', '2026':'1635000496' };
   const CUTOVER='2026-06-01';          // 이 날짜까지 시트, 이후는 워크북·레코드
+  const NOZERO_BASE=312;               // 검증된 연속 NO ZERO — 2026-06-01 기준 312일 (과거 0 기록은 휴무일)
   const PATH='jaeyoung_record/records', SPATH='sales', RNPATH='rejectnotes/admin';
   const ME='임재영', MYROLE='AOP', MYUID='admin';
   const TH=[['TEN',10],['HORN',5],['GONG',3],['BELL',2]];
@@ -373,10 +374,13 @@
         d+=v; if(v>=1){nz++;st++;}else{z++;st=0;} streakMap[k]=st;
         if(v>=2)b++; if(v>=3)go++; if(v>=5)h++; if(v>=10)tn++;
         if(k>=CUTOVER){cl+=c; if(c>0)cd+=v;}}
+      /* 연속 NO ZERO — 2026-06-01까지는 검증 기준값(과거 0은 휴무), 이후는 실기록으로 이어감 */
+      st=Math.max(baseAgg.streak||0,NOZERO_BASE);
+      for(const k of days) if(k>CUTOVER){const v=m[k].d; if(v>=1)st++; else st=0; streakMap[k]=st;}
       setAgg(st,d,days.length,nz,z,b,go,h,tn,cl,cd);
     }else{
       const fb=Object.keys(m).filter(k=>k>CUTOVER).sort();
-      let st=baseAgg.streak,d=0,nz=0,z=0,b=0,go=0,h=0,tn=0,cl=0,cd=0;
+      let st=Math.max(baseAgg.streak||0,NOZERO_BASE),d=0,nz=0,z=0,b=0,go=0,h=0,tn=0,cl=0,cd=0;
       for(const k of fb){const v=m[k].d,c=m[k].c||0;
         d+=v; if(v>=1){nz++;st++;}else{z++;st=0;} streakMap[k]=st;
         if(v>=2)b++; if(v>=3)go++; if(v>=5)h++; if(v>=10)tn++;
