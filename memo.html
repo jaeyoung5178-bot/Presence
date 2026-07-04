@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRESENCE — MEMO</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f131b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Presence">
+<style>
+  :root{--ink:#0a0a0c;--amber:#e8b466;--amber-dim:#9a7a44;--green:#38a37a;--cream:#efe7d6;
+    --smoke:#6f6a60;--line:#2a2722;--film:#16140f;--red:#c05b4d;--blue:#5f8fe0;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--ink);color:var(--cream);font-family:"Times New Roman","Nanum Myeongjo",serif;
+    -webkit-font-smoothing:antialiased;min-height:100vh;word-break:keep-all;
+    background-image:radial-gradient(120% 90% at 50% -10%, rgba(232,180,102,.06), transparent 60%);}
+  .mono{font-family:"Courier New",ui-monospace,monospace;}
+  .wrap{max-width:760px;margin:0 auto;padding:26px 20px 60px;}
+  header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+  .lockup{display:flex;align-items:center;gap:14px;}
+  .emblem{width:46px;height:46px;border-radius:22%;filter:drop-shadow(0 0 12px rgba(56,163,122,.25));}
+  .brand .kicker{font-size:9px;letter-spacing:.45em;color:var(--amber);}
+  .brand h1{font-weight:400;font-size:21px;margin-top:.25em;}
+  .brand h1 em{font-style:italic;color:var(--amber);}
+  .navbtns{display:flex;gap:8px;flex-wrap:wrap;}
+  .nb{text-decoration:none;font-family:"Courier New",monospace;font-size:10px;letter-spacing:.16em;
+    color:var(--cream);border:1px solid var(--line);border-radius:20px;padding:7px 13px;
+    background:rgba(22,20,15,.7);transition:.3s;white-space:nowrap;cursor:pointer;}
+  .nb:hover{border-color:var(--green);color:#fff;}
+  .nb.hub{border-color:var(--amber-dim);}
+
+  .form{border:1px solid rgba(56,163,122,.35);border-radius:6px;background:rgba(22,20,15,.9);padding:16px;}
+  .tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+  .tag{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.1em;color:var(--smoke);
+    border:1px solid var(--line);border-radius:20px;padding:5px 11px;background:none;cursor:pointer;transition:.25s;}
+  .tag.on{color:#0d0d0f;background:var(--green);border-color:var(--green);}
+  textarea{width:100%;min-height:92px;background:var(--film);border:1px solid var(--line);border-radius:6px;
+    color:var(--cream);font-family:inherit;font-size:15px;line-height:1.6;padding:12px;resize:vertical;}
+  textarea:focus{outline:none;border-color:var(--green);}
+  .fbar{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;}
+  .save{background:var(--green);color:#0d0d0f;border:none;border-radius:6px;padding:10px 22px;
+    font-family:"Courier New",monospace;font-size:12px;letter-spacing:.14em;cursor:pointer;transition:.25s;}
+  .save:hover{filter:brightness(1.12);}
+  .ghost{background:none;border:1px dashed var(--line);color:var(--smoke);border-radius:6px;padding:10px 16px;
+    font-family:"Courier New",monospace;font-size:11px;letter-spacing:.1em;cursor:pointer;transition:.25s;}
+  .ghost:hover{color:var(--cream);border-color:var(--amber-dim);}
+  .msg{font-family:"Courier New",monospace;font-size:11px;letter-spacing:.08em;min-height:1em;}
+  .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
+
+  .sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);
+    display:flex;align-items:center;gap:14px;margin:26px 0 12px;}
+  .sect::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent);}
+
+  .day{font-family:"Courier New",monospace;font-size:11px;letter-spacing:.14em;color:var(--amber-dim);margin:18px 0 8px;}
+  .memo{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:13px 15px;margin-bottom:8px;
+    display:flex;gap:12px;align-items:flex-start;}
+  .memo .body{flex:1;min-width:0;}
+  .memo .txt{font-size:15px;line-height:1.65;white-space:pre-wrap;}
+  .memo .meta{font-family:"Courier New",monospace;font-size:9.5px;color:var(--smoke);margin-top:.5em;letter-spacing:.08em;}
+  .memo .meta .t{color:var(--green);}
+  .del{background:none;border:none;color:var(--smoke);cursor:pointer;font-size:13px;padding:2px 4px;transition:.2s;flex:none;}
+  .del:hover{color:var(--red);}
+  .empty{color:var(--smoke);font-family:"Courier New",monospace;font-size:12px;letter-spacing:.08em;padding:18px 4px;}
+  .note{margin-top:26px;border:1px dashed var(--line);border-radius:6px;padding:13px 15px;font-size:12.5px;
+    line-height:1.7;color:var(--smoke);}
+  .note b{color:var(--amber-dim);font-weight:400;}
+  @media(max-width:480px){ .wrap{padding:18px 12px 50px;} .brand h1{font-size:18px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="lockup">
+      <svg class="emblem" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-label="Presence">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#181c26"/><stop offset="1" stop-color="#0f131b"/></linearGradient></defs>
+        <rect x="8" y="8" width="1008" height="1008" rx="232" fill="url(#g)"/>
+        <path d="M544 232 L700 522 L392 522 Z" fill="#38a37a" stroke="#38a37a" stroke-width="24" stroke-linejoin="round"/>
+        <path d="M464 284 L652 520 L306 520 Z" fill="#efe8d9" stroke="#efe8d9" stroke-width="24" stroke-linejoin="round"/>
+        <text x="512" y="806" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="150" fill="#efe8d9" letter-spacing="2">Presence</text>
+      </svg>
+      <div class="brand">
+        <div class="kicker">PRESENCE · PERSONAL</div>
+        <h1>Lim Jae Young, <em>memo</em></h1>
+      </div>
+    </div>
+    <nav class="navbtns">
+      <a class="nb hub" href="index.html">◂ 허브</a>
+      <a class="nb" href="presence-record.html">FIELD RECORD</a>
+    </nav>
+  </header>
+
+  <div class="form">
+    <div class="tags" id="tags"></div>
+    <textarea id="txt" placeholder="필드에서 느낀 것, 팀·교육·리쿠르팅 아이디어, 오늘의 배움 — 자유롭게 적어두세요."></textarea>
+    <div class="fbar">
+      <button class="save" id="save">메모 저장</button>
+      <button class="ghost" id="copyAll">📋 정리용 전체 복사</button>
+      <span class="msg" id="msg"></span>
+    </div>
+  </div>
+
+  <div class="sect">MEMOS — 전체 메모</div>
+  <div id="list"><div class="empty">불러오는 중…</div></div>
+
+  <div class="note">
+    <b>정리 흐름</b> — 메모는 팀 DB(Firebase)에 저장되어 어느 기기에서든 이어집니다.
+    기록을 마친 뒤 Claude에게 “메모 정리해줘”라고 하면 저장된 메모를 그대로 읽어와
+    주제별로 정리해줍니다. 급할 땐 <b>정리용 전체 복사</b>를 눌러 붙여넣어도 됩니다.
+  </div>
+</div>
+
+<script>
+  const FB='https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/jaeyoung_memo';
+  const TAGS=['필드','팀','교육','리쿠르팅','위페어','아이디어','일반'];
+  const $=id=>document.getElementById(id);
+  const WD=['일','월','화','수','목','금','토'];
+  let selTag='일반', memos={};
+
+  function drawTags(){
+    $('tags').innerHTML='';
+    for(const t of TAGS){
+      const b=document.createElement('button'); b.type='button';
+      b.className='tag'+(t===selTag?' on':''); b.textContent=t;
+      b.onclick=()=>{selTag=t;drawTags();}; $('tags').appendChild(b);
+    }
+  }
+  drawTags();
+
+  function say(m,ok){ $('msg').textContent=m; $('msg').className='msg '+(ok?'ok':'err');
+    setTimeout(()=>{$('msg').textContent='';},3500); }
+
+  function load(){
+    fetch(FB+'.json?t='+Date.now()).then(r=>r.json()).then(d=>{memos=d||{};render();})
+      .catch(()=>{$('list').innerHTML='<div class="empty">불러오기 실패 — 네트워크 확인</div>';});
+  }
+
+  function render(){
+    const keys=Object.keys(memos).sort((a,b)=>(memos[b].t||0)-(memos[a].t||0));
+    if(!keys.length){$('list').innerHTML='<div class="empty">아직 메모가 없어요 — 첫 메모를 남겨볼까요?</div>';return;}
+    const box=document.createElement('div'); let lastDay='';
+    for(const k of keys){
+      const m=memos[k], d=m.date||'';
+      if(d!==lastDay){lastDay=d;
+        const wd=d?WD[new Date(d+'T00:00:00').getDay()]:'';
+        const h=document.createElement('div'); h.className='day'; h.textContent=d+(wd?' ('+wd+')':'');
+        box.appendChild(h);}
+      const el=document.createElement('div'); el.className='memo';
+      const time=m.t?new Date(m.t).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):'';
+      el.innerHTML=`<div class="body"><div class="txt"></div>
+        <div class="meta"><span class="t">#${m.tag||'일반'}</span> · ${time}</div></div>
+        <button class="del" title="삭제">✕</button>`;
+      el.querySelector('.txt').textContent=m.text||'';
+      el.querySelector('.del').onclick=()=>{
+        if(!confirm('이 메모를 삭제할까요?'))return;
+        fetch(FB+'/'+k+'.json',{method:'DELETE'}).then(()=>{delete memos[k];render();say('삭제됨',1);})
+          .catch(()=>say('삭제 실패',0));
+      };
+      box.appendChild(el);
+    }
+    $('list').innerHTML=''; $('list').appendChild(box);
+  }
+
+  $('save').onclick=()=>{
+    const text=$('txt').value.trim();
+    if(!text){say('내용을 입력해 주세요',0);return;}
+    const now=new Date(Date.now()-new Date().getTimezoneOffset()*60000);
+    const rec={text, tag:selTag, date:now.toISOString().slice(0,10), t:Date.now()};
+    fetch(FB+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)})
+      .then(r=>r.json()).then(res=>{ if(res&&res.name){memos[res.name]=rec;$('txt').value='';render();say('저장 완료 — 모든 기기에서 보입니다',1);}
+        else say('저장 실패',0); })
+      .catch(()=>say('저장 실패 — 네트워크 확인',0));
+  };
+
+  $('copyAll').onclick=()=>{
+    const keys=Object.keys(memos).sort((a,b)=>(memos[a].t||0)-(memos[b].t||0));
+    if(!keys.length){say('복사할 메모가 없어요',0);return;}
+    let out='[PRESENCE 메모 — 임재영]\n';
+    let lastDay='';
+    for(const k of keys){const m=memos[k];
+      if(m.date!==lastDay){lastDay=m.date;out+='\n■ '+m.date+'\n';}
+      out+='- (#'+(m.tag||'일반')+') '+String(m.text||'').replace(/\n/g,'\n  ')+'\n';}
+    out+='\n위 메모를 주제별로 보기 좋게 정리해줘.';
+    (navigator.clipboard?navigator.clipboard.writeText(out):Promise.reject())
+      .then(()=>say('복사 완료 — Claude에 붙여넣으면 정리해줍니다',1))
+      .catch(()=>{const ta=document.createElement('textarea');ta.value=out;document.body.appendChild(ta);
+        ta.select();document.execCommand('copy');ta.remove();say('복사 완료',1);});
+  };
+
+  load();
+</script>
+</body>
+</html>
