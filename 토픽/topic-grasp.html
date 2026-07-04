@@ -74,5 +74,22 @@
     if(document.fullscreenElement)document.exitFullscreen(); else document.documentElement.requestFullscreen();};
   show(0);
 </script>
+
+<!-- PRESENCE THEME TOGGLE -->
+<style id="pth-style">
+html.pth-light{filter:invert(1) hue-rotate(180deg);background:#efe9db}
+html.pth-light img,html.pth-light video,html.pth-light iframe,html.pth-light svg.emblem,html.pth-light .mat-logo svg{filter:invert(1) hue-rotate(180deg)}
+html.pth-light .vignette,html.pth-light .grain,html.pth-light .beam{display:none!important}
+#pth-btn{position:fixed;right:18px;bottom:18px;z-index:99999;width:46px;height:46px;border-radius:50%;border:1px solid rgba(150,140,120,.5);cursor:pointer;font-size:19px;line-height:1;background:rgba(22,20,15,.85);color:#efe7d6;box-shadow:0 4px 18px rgba(0,0,0,.4);transition:.25s}
+#pth-btn:hover{transform:scale(1.1)}
+html.pth-light #pth-btn{filter:invert(1) hue-rotate(180deg)}
+</style>
+<button id="pth-btn" title="라이트 / 나이트 모드" aria-label="테마 전환">☀</button>
+<script>
+(function(){var K="presence_theme",b=document.getElementById("pth-btn"),h=document.documentElement;
+function ap(t){h.classList.toggle("pth-light",t==="light");b.textContent=t==="light"?"☾":"☀";}
+var t="night";try{t=localStorage.getItem(K)||"night"}catch(e){}ap(t);
+b.addEventListener("click",function(){t=(t==="light")?"night":"light";try{localStorage.setItem(K,t)}catch(e){}ap(t);});})();
+</script>
 </body>
 </html>
