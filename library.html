@@ -139,12 +139,31 @@ body.biz .chip{background:#eeedeb;color:#444}
 body.biz nav{background:rgba(246,246,244,.92)}
 
 /* business notes */
-.ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-.ncard{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;border-left:5px solid var(--ink)}
-.ncard h4{font-family:'Noto Serif KR',serif;font-size:1rem;margin-bottom:2px}
-.ncard .nd{font-size:.72rem;color:var(--ink2)}
-.ncard p{font-size:.84rem;color:var(--ink2);margin-top:8px;max-height:4.4em;overflow:hidden;white-space:pre-wrap}
+.notegroups button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.notegroups button small{opacity:.55;font-weight:400}
+.nlist{display:flex;flex-direction:column;gap:10px;max-width:820px}
+.nrow{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--ink);border-radius:10px;padding:14px 20px;cursor:pointer;box-shadow:var(--shadow);transition:.15s}
+.nrow:hover{transform:translateX(4px);border-color:var(--gold)}
+.nrow h4{font-family:'Noto Serif KR',serif;font-size:1.02rem}
+.nrow .nd{font-size:.74rem;color:var(--ink2);margin-top:2px}
+.nrow p{font-size:.85rem;color:var(--ink2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-bar{display:flex;gap:8px;margin-bottom:14px;align-items:center;max-width:860px}
+.nv-bar button{padding:8px 18px;border-radius:8px;border:1px solid var(--line);background:var(--paper);cursor:pointer;font-family:inherit;font-size:.88rem;color:var(--ink)}
+.nv-bar button:hover{border-color:var(--gold)}
+.nv-bar .pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.nv-bar .danger{color:#a33}
+.nv-page{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:36px clamp(22px,5vw,56px) 44px;max-width:860px}
+#nv-title{font-size:1.5rem;line-height:1.45}
+.nv-meta{font-size:.8rem;color:var(--ink2);margin:10px 0 22px;padding-bottom:16px;border-bottom:1px dashed var(--line);letter-spacing:.04em}
+.nv-body{font-size:.97rem;line-height:1.95}
+.nv-body li{margin:0 0 12px 2px;list-style:none;padding-left:24px;position:relative}
+.nv-body li::before{content:'—';position:absolute;left:0;color:var(--gold);font-weight:700}
+.nv-body p{margin-bottom:12px}
+#nv-edit label{font-size:.8rem;color:var(--ink2);display:block;margin:14px 0 5px}
+#nv-edit input,#nv-edit textarea,#nv-edit select{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:.95rem;background:var(--bg);color:var(--ink)}
+#nv-edit textarea{line-height:1.85;resize:vertical}
 .empty{color:#8f8d88;background:#f0efec;border-radius:10px;padding:22px;font-size:.9rem;text-align:center}
+body.night .empty{background:#2c2721;color:#a99c86}
 
 /* teambuilding calendar diary */
 .tb-wrap{display:grid;grid-template-columns:minmax(300px,540px) 1fr;gap:20px;align-items:start}
@@ -312,9 +331,34 @@ footer{text-align:center;color:#b3a68f;font-size:.78rem;padding:30px 0 50px}
 
 <section id="bnotes">
   <h2 class="sec serif">비즈니스 노트</h2>
-  <p class="sub">FOM 아카이브 · 현장 운영 · 교육 · 리쿠르팅 — 카드를 누르면 수정할 수 있어요</p>
-  <div class="bkbar"><button id="addnt">＋ 새 노트</button></div>
-  <div class="ngrid" id="ngrid"></div>
+  <p class="sub">분류 단추를 고르고, 노트를 누르면 읽기 좋게 펼쳐집니다</p>
+  <div id="nb-list">
+    <div class="bkbar notegroups" id="ngroups"></div>
+    <div class="bkbar"><button id="addnt">＋ 새 노트</button></div>
+    <div class="nlist" id="nlist"></div>
+  </div>
+  <div id="nb-view" style="display:none">
+    <div class="nv-bar">
+      <button id="nvback">← 목록</button>
+      <div style="flex:1"></div>
+      <button id="nvedit">✏️ 수정</button>
+      <button id="nvdel" class="danger">삭제</button>
+      <button id="nvcancel" style="display:none">취소</button>
+      <button id="nvsave" class="pri" style="display:none">저장</button>
+    </div>
+    <div class="nv-page">
+      <div id="nv-read">
+        <h3 class="serif" id="nv-title"></h3>
+        <div class="nv-meta" id="nv-meta"></div>
+        <div class="nv-body" id="nv-body"></div>
+      </div>
+      <div id="nv-edit" style="display:none">
+        <label>분류</label><select id="nv-g"></select>
+        <label>제목</label><input id="nv-t" placeholder="예) 7월 클라이언트 미팅 — 옥스팜 정기 브리핑">
+        <label>내용 ( • 로 시작하면 요점으로 표시됩니다 )</label><textarea id="nv-c" rows="16"></textarea>
+      </div>
+    </div>
+  </div>
 </section>
 
 <section id="tb">
@@ -338,13 +382,6 @@ footer{text-align:center;color:#b3a68f;font-size:.78rem;padding:30px 0 50px}
 </section>
 
 </main>
-
-<dialog id="ntdlg">
-  <h3 id="nt_title">새 노트</h3>
-  <label>제목</label><input id="n_t" placeholder="예) 7월 부스 입지 아이디어">
-  <label>내용</label><textarea id="n_c" rows="7"></textarea>
-  <div class="row"><button id="n_del" style="margin-right:auto;color:#a33">삭제</button><button onclick="ntdlg.close()">취소</button><button class="pri" id="n_save">저장</button></div>
-</dialog>
 
 <dialog id="bkdlg">
   <h3 id="bk_title">책 추가</h3>
@@ -527,38 +564,88 @@ document.getElementById('modeswitch').onclick = () => {
   applyMode();
 };
 
-/* ---------- business notes ---------- */
-function loadNotes(){
-  try{ const v = localStorage.getItem('biz_notes_v2'); if(v) return JSON.parse(v); }catch(e){}
-  let old=[]; try{ old = JSON.parse(localStorage.getItem('biz_notes')||'[]'); }catch(e){}
-  const init = [...old, ...(DATA.bizNotes||[])];
-  localStorage.setItem('biz_notes_v2', JSON.stringify(init));
-  return init;
-}
+/* ---------- business notes (분류 단추 + 읽기 페이지) ---------- */
+const NGROUPS = ['FOM','오피스 미팅','클라이언트 미팅','팀미팅'];
+let ngFilter = 'FOM', nvIdx = null, nvNew = false;
+const $id = x => document.getElementById(x);
 function saveNotes(n){ localStorage.setItem('biz_notes_v2', JSON.stringify(n)); }
-let editIdx = null;
-const ngrid = document.getElementById('ngrid');
+function loadNotes(){
+  let n = null;
+  try{ const v = localStorage.getItem('biz_notes_v2'); if(v) n = JSON.parse(v); }catch(e){}
+  if(!Array.isArray(n)){
+    let old=[]; try{ old = JSON.parse(localStorage.getItem('biz_notes')||'[]'); }catch(e){}
+    n = [...old, ...(DATA.bizNotes||[])];
+  }
+  let dirty = !localStorage.getItem('biz_notes_v2');
+  n.forEach(x=>{ if(!x.g){ x.g = (x.t||'').startsWith('FOM') ? 'FOM' : '오피스 미팅'; dirty = true; } });
+  if(dirty) saveNotes(n);
+  return n;
+}
 function renderNotes(){
   const n = loadNotes();
-  ngrid.innerHTML = n.length
-    ? n.map((x,i)=>`<div class="ncard" onclick="openNote(${i})"><h4>${esc(x.t||'(제목 없음)')}</h4><div class="nd">${x.d||''}</div><p>${esc(x.c||'')}</p></div>`).join('')
-    : '<div class="empty">아직 노트가 없습니다. ＋ 새 노트로 첫 기록을 시작해보세요!</div>';
+  $id('ngroups').innerHTML = NGROUPS.map(g=>{
+    const c = n.filter(x=>x.g===g).length;
+    return `<button class="${g===ngFilter?'on':''}" onclick="setNG('${g}')">${g} <small>${c}</small></button>`;
+  }).join('');
+  const items = n.map((x,i)=>({...x,_i:i})).filter(x=>x.g===ngFilter);
+  $id('nlist').innerHTML = items.length ? items.map(x=>`
+    <div class="nrow" onclick="openNote(${x._i})">
+      <h4>${esc(x.t||'(제목 없음)')}</h4>
+      <div class="nd">${x.d||''}</div>
+      <p>${esc((x.c||'').split('\n')[0].replace(/^[•\-–—]\s*/,''))}</p>
+    </div>`).join('')
+    : '<div class="empty">이 분류에는 아직 노트가 없습니다. ＋ 새 노트로 첫 기록을 남겨보세요!</div>';
 }
-window.openNote = i => { editIdx=i; const x=loadNotes()[i];
-  nt_title.textContent='노트 편집'; n_t.value=x.t||''; n_c.value=x.c||''; n_del.style.display=''; ntdlg.showModal(); };
-document.getElementById('addnt').onclick = () => { editIdx=null;
-  nt_title.textContent='새 노트'; n_t.value=''; n_c.value=''; n_del.style.display='none'; ntdlg.showModal(); };
-document.getElementById('n_save').onclick = () => {
-  if(!n_t.value.trim() && !n_c.value.trim()) return ntdlg.close();
+window.setNG = g => { ngFilter = g; renderNotes(); };
+function showList(){ $id('nb-view').style.display='none'; $id('nb-list').style.display=''; renderNotes(); }
+function nvMode(edit){
+  $id('nv-read').style.display = edit?'none':'';
+  $id('nv-edit').style.display = edit?'':'none';
+  $id('nvedit').style.display = edit?'none':'';
+  $id('nvdel').style.display = edit?'none':'';
+  $id('nvsave').style.display = edit?'':'none';
+  $id('nvcancel').style.display = edit?'':'none';
+}
+function renderNoteBody(c){
+  return (c||'').split('\n').map(l=>{
+    l = l.trim(); if(!l) return '';
+    if(/^[•\-–—*]/.test(l)) return '<li>'+esc(l.replace(/^[•\-–—*]\s*/,''))+'</li>';
+    return '<p>'+esc(l)+'</p>';
+  }).join('');
+}
+window.openNote = i => {
+  nvIdx = i; nvNew = false;
+  const x = loadNotes()[i]; if(!x) return;
+  $id('nv-title').textContent = x.t||'(제목 없음)';
+  $id('nv-meta').textContent = (x.g||'') + (x.d ? ' · ' + x.d : '');
+  $id('nv-body').innerHTML = renderNoteBody(x.c);
+  $id('nv-g').value = NGROUPS.includes(x.g) ? x.g : NGROUPS[0];
+  $id('nv-t').value = x.t||''; $id('nv-c').value = x.c||'';
+  $id('nb-list').style.display='none'; $id('nb-view').style.display='';
+  nvMode(false); window.scrollTo({top:0});
+};
+$id('addnt').onclick = () => {
+  nvIdx = null; nvNew = true;
+  $id('nv-g').value = ngFilter; $id('nv-t').value=''; $id('nv-c').value='';
+  $id('nb-list').style.display='none'; $id('nb-view').style.display='';
+  nvMode(true);
+};
+$id('nvback').onclick = showList;
+$id('nvedit').onclick = () => nvMode(true);
+$id('nvcancel').onclick = () => { if(nvNew) showList(); else openNote(nvIdx); };
+$id('nvsave').onclick = () => {
+  const t = $id('nv-t').value.trim(), c = $id('nv-c').value;
+  if(!t && !c.trim()) return;
   const n = loadNotes(), today = new Date().toISOString().slice(0,10).replace(/-/g,'.');
-  if(editIdx===null) n.unshift({t:n_t.value, c:n_c.value, d:today});
-  else { n[editIdx].t=n_t.value; n[editIdx].c=n_c.value; n[editIdx].d=today; }
-  saveNotes(n); ntdlg.close(); renderNotes();
+  if(nvIdx === null){ n.unshift({t, c, g: $id('nv-g').value, d: today}); nvIdx = 0; nvNew = false; }
+  else { n[nvIdx] = {...n[nvIdx], t, c, g: $id('nv-g').value}; }
+  saveNotes(n); ngFilter = $id('nv-g').value; openNote(nvIdx);
 };
-document.getElementById('n_del').onclick = () => {
-  if(editIdx!==null){ const n=loadNotes(); n.splice(editIdx,1); saveNotes(n); }
-  ntdlg.close(); renderNotes();
+$id('nvdel').onclick = () => {
+  if(nvIdx !== null){ const n = loadNotes(); n.splice(nvIdx, 1); saveNotes(n); }
+  showList();
 };
+$id('nv-g').innerHTML = NGROUPS.map(g=>'<option>'+g+'</option>').join('');
 renderNotes();
 
 /* ---------- teambuilding diary (calendar) ---------- */
