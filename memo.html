@@ -65,6 +65,11 @@
   .del{background:none;border:none;color:var(--smoke);cursor:pointer;font-size:13px;padding:2px 4px;transition:.2s;flex:none;}
   .del:hover{color:var(--red);}
   .empty{color:var(--smoke);font-family:"Courier New",monospace;font-size:12px;letter-spacing:.08em;padding:18px 4px;}
+  .clb{display:block;margin:26px auto 0;background:linear-gradient(160deg,#3fb98a,#2b8a66);color:#0d0d0f;
+    border:none;border-radius:30px;padding:14px 28px;font-family:inherit;font-size:16px;cursor:pointer;
+    box-shadow:0 6px 24px rgba(56,163,122,.35);transition:.25s;}
+  .clb:hover{transform:translateY(-2px) scale(1.03);filter:brightness(1.08);}
+  .clb:active{transform:scale(.96);}
   .note{margin-top:26px;border:1px dashed var(--line);border-radius:6px;padding:13px 15px;font-size:12.5px;
     line-height:1.7;color:var(--smoke);}
   .note b{color:var(--amber-dim);font-weight:400;}
@@ -99,7 +104,6 @@
     <textarea id="txt" placeholder="필드에서 느낀 것, 팀·교육·리쿠르팅 아이디어, 오늘의 배움 — 자유롭게 적어두세요."></textarea>
     <div class="fbar">
       <button class="save" id="save">메모 저장</button>
-      <button class="ghost" id="copyAll">📋 정리용 전체 복사</button>
       <span class="msg" id="msg"></span>
     </div>
   </div>
@@ -107,10 +111,13 @@
   <div class="sect">MEMOS — 전체 메모</div>
   <div id="list"><div class="empty">불러오는 중…</div></div>
 
+  <button class="clb" id="copyAll">🤖 클비서에게 정리시키기</button>
+  <div class="msg" id="msg2" style="text-align:center;margin-top:10px;"></div>
+
   <div class="note">
     <b>정리 흐름</b> — 메모는 팀 DB(Firebase)에 저장되어 어느 기기에서든 이어집니다.
-    기록을 마친 뒤 Claude에게 “메모 정리해줘”라고 하면 저장된 메모를 그대로 읽어와
-    주제별로 정리해줍니다. 급할 땐 <b>정리용 전체 복사</b>를 눌러 붙여넣어도 됩니다.
+    기록을 다 마치면 <b>클비서에게 정리시키기</b> 버튼을 눌러 복사한 뒤 Claude에 붙여넣거나,
+    그냥 Claude에게 “메모 정리해줘”라고만 해도 저장된 메모를 읽어와 주제별로 정리해줍니다.
   </div>
 </div>
 
@@ -185,10 +192,12 @@
       if(m.date!==lastDay){lastDay=m.date;out+='\n■ '+m.date+'\n';}
       out+='- (#'+(m.tag||'일반')+') '+String(m.text||'').replace(/\n/g,'\n  ')+'\n';}
     out+='\n위 메모를 주제별로 보기 좋게 정리해줘.';
+    const say2=(m,ok)=>{const e=$('msg2');e.textContent=m;e.className='msg '+(ok?'ok':'err');
+      setTimeout(()=>{e.textContent='';},4000);};
     (navigator.clipboard?navigator.clipboard.writeText(out):Promise.reject())
-      .then(()=>say('복사 완료 — Claude에 붙여넣으면 정리해줍니다',1))
+      .then(()=>say2('복사 완료! 클비서(Claude)에게 붙여넣어 주세요 ㅎㅎ',1))
       .catch(()=>{const ta=document.createElement('textarea');ta.value=out;document.body.appendChild(ta);
-        ta.select();document.execCommand('copy');ta.remove();say('복사 완료',1);});
+        ta.select();document.execCommand('copy');ta.remove();say2('복사 완료! 클비서에게 붙여넣어 주세요 ㅎㅎ',1);});
   };
 
   load();
