@@ -94,6 +94,7 @@
     background:#fff;color:var(--ink);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
   .amts button.on{background:var(--red);border-color:var(--red);color:#fff}
   .amts button.etc{flex:0 0 auto;min-width:96px;color:var(--sub)}
+  .amts button.etc.on{color:#fff}
 
   .btn-link{background:none;border:none;color:var(--green);font-size:14px;font-weight:600;
     cursor:pointer;text-decoration:underline;padding:6px 0;font-family:inherit}
@@ -208,6 +209,33 @@
   .sms .from{color:#9a9a9e;font-size:12px;text-align:center;margin-bottom:10px}
   .sms a{color:#4aa3ff;word-break:break-all;cursor:pointer}
   .hidden{display:none!important}
+
+  /* ===== 모바일: 실제 옥스팜 후원 페이지처럼 ===== */
+  @media(max-width:560px){
+    body{background:#fff}
+    .bgphoto,.bgphoto-fallback{display:none!important}
+    .col{width:100%;margin-left:0;padding:0 0 50px}
+    .logobox{display:block;width:100%;text-align:center;margin:0;padding:18px 0}
+    .logo{justify-content:center}
+    .logo .txt b{font-size:32px}
+    .logo .txt span{font-size:16px}
+    .hero{padding:0;min-height:232px;border-bottom:5px solid var(--green);
+      background:linear-gradient(to bottom,rgba(0,0,0,.04) 42%,rgba(0,0,0,.62)),url("https://cdn.donus.org/media-file/92C630D0-B61D-47FA-8A6E-1D9A93942751/page/45c9d96d-9528-48d5-b86c-afb5d4f8d67f.jpg") 62% center/cover;
+      display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:6px}
+    .hero h1{font-size:27px;padding:0 22px;margin:0;white-space:normal;text-shadow:0 1px 5px rgba(0,0,0,.55)}
+    .hero p{font-size:14px;line-height:1.5;padding:0 22px 22px;text-shadow:0 1px 4px rgba(0,0,0,.55);opacity:1}
+    .sheet{padding:24px 22px}
+    .sec-h h2{font-size:20px}
+    .rofield{height:56px;line-height:54px;background:#fff;border:1px solid #cfcfcf;border-radius:9px;font-size:16px;color:#333;margin-bottom:13px}
+    .amts{gap:12px}
+    .amts button{flex:1 1 calc(50% - 6px);min-width:0;height:62px;border-radius:9px;border:1px solid #d6d6d6;background:#f1f1f1;color:#333;font-size:16px}
+    .amts button.on{background:var(--red);border-color:var(--red);color:#fff}
+    .amts button.etc{flex:1 1 calc(50% - 6px);background:#f1f1f1;color:#8a8a8a}
+    .amts button.etc.on{background:var(--red);border-color:var(--red);color:#fff}
+    .tog button{height:52px;font-size:16px}
+    input[type=text],input[type=tel],input[type=email],input[type=password],select{height:50px;font-size:16px;border-radius:9px}
+  }
+
 </style>
 </head>
 <body>
@@ -565,9 +593,25 @@
   }
 
   // 금액
+  function syncAmt(){
+    var etc=document.querySelector("#amts .etc"); var matched=false;
+    document.querySelectorAll("#amts button").forEach(function(b){
+      b.classList.remove("on");
+      if(b!==etc && parseInt(b.dataset.v,10)===amount){ b.classList.add("on"); matched=true; }
+    });
+    if(etc){ if(matched){ etc.textContent="직접입력"; } else { etc.classList.add("on"); etc.textContent=amount.toLocaleString("ko-KR")+"원"; } }
+  }
   segify("#amts", function(v){
-    if(v==="etc"){var n=prompt("직접입력 (원)","30000");if(n&&!isNaN(n))amount=parseInt(n,10);}
-    else amount=parseInt(v,10);
+    if(v==="etc"){
+      var raw=prompt("직접입력 (원)","20000");
+      if(raw!==null){
+        var n=parseInt(String(raw).replace(/[^0-9]/g,""),10);
+        if(isNaN(n)){ popup("금액을 숫자로 입력해주세요."); }
+        else if(n<20000){ popup("최소 금액은 20,000원 입니다."); }
+        else { amount=n; }
+      }
+    } else { amount=parseInt(v,10); }
+    syncAmt();
   });
   // 구분
   segify("#segType", function(v){
