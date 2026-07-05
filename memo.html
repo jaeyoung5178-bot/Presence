@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRESENCE — MEMO</title>
+<title>PRESENCE — MEMO & JOURNAL</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -11,16 +11,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Presence">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <style>
   :root{--ink:#0a0a0c;--amber:#e8b466;--amber-dim:#9a7a44;--green:#38a37a;--cream:#efe7d6;
-    --smoke:#6f6a60;--line:#2a2722;--film:#16140f;--red:#c05b4d;--blue:#5f8fe0;}
+    --smoke:#6f6a60;--line:#2a2722;--film:#16140f;--red:#c05b4d;--blue:#5f8fe0;
+    --paper:#f3ecdb;--paper2:#ece2cc;--pink:#e8b4c8;--ink2:#2c2820;--rule:#d8cbae;}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--ink);color:var(--cream);font-family:"Times New Roman","Nanum Myeongjo",serif;
     -webkit-font-smoothing:antialiased;min-height:100vh;word-break:keep-all;
     background-image:radial-gradient(120% 90% at 50% -10%, rgba(232,180,102,.06), transparent 60%);}
   .mono{font-family:"Courier New",ui-monospace,monospace;}
   .wrap{max-width:760px;margin:0 auto;padding:26px 20px 60px;}
-  header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+  header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
   .lockup{display:flex;align-items:center;gap:14px;}
   .emblem{width:46px;height:46px;border-radius:22%;filter:drop-shadow(0 0 12px rgba(56,163,122,.25));}
   .brand .kicker{font-size:9px;letter-spacing:.45em;color:var(--amber);}
@@ -33,6 +36,25 @@
   .nb:hover{border-color:var(--green);color:#fff;}
   .nb.hub{border-color:var(--amber-dim);}
 
+  /* ===== 메모 ↔ 기록노트 전환 ===== */
+  .seg{position:relative;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);
+    border-radius:30px;background:rgba(22,20,15,.85);margin-bottom:20px;overflow:hidden;}
+  .seg .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 8px);border-radius:26px;
+    background:linear-gradient(160deg,#3fb98a,#2b8a66);transition:transform .38s cubic-bezier(.6,.05,.2,1);
+    box-shadow:0 4px 16px rgba(56,163,122,.35);}
+  .seg.p1 .ind{transform:translateX(calc(100% + 8px));background:linear-gradient(160deg,#e8b466,#c99549);
+    box-shadow:0 4px 16px rgba(232,180,102,.35);}
+  .seg button{position:relative;z-index:1;background:none;border:none;color:var(--smoke);cursor:pointer;
+    padding:12px 0;font-family:inherit;font-size:15px;letter-spacing:.06em;transition:color .3s;}
+  .seg button.on{color:#0d0d0f;font-weight:700;}
+  .seg .s-ico{margin-right:.4em;}
+
+  .pages{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;gap:0;margin:0 -20px;}
+  .pages::-webkit-scrollbar{display:none;}
+  .page{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;padding:0 20px;min-width:0;}
+
+  /* ===== 메모 페이지 (기존) ===== */
   .form{border:1px solid rgba(56,163,122,.35);border-radius:6px;background:rgba(22,20,15,.9);padding:16px;}
   .tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
   .tag{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.1em;color:var(--smoke);
@@ -45,16 +67,11 @@
   .save{background:var(--green);color:#0d0d0f;border:none;border-radius:6px;padding:10px 22px;
     font-family:"Courier New",monospace;font-size:12px;letter-spacing:.14em;cursor:pointer;transition:.25s;}
   .save:hover{filter:brightness(1.12);}
-  .ghost{background:none;border:1px dashed var(--line);color:var(--smoke);border-radius:6px;padding:10px 16px;
-    font-family:"Courier New",monospace;font-size:11px;letter-spacing:.1em;cursor:pointer;transition:.25s;}
-  .ghost:hover{color:var(--cream);border-color:var(--amber-dim);}
   .msg{font-family:"Courier New",monospace;font-size:11px;letter-spacing:.08em;min-height:1em;}
   .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
-
   .sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);
     display:flex;align-items:center;gap:14px;margin:26px 0 12px;}
   .sect::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent);}
-
   .day{font-family:"Courier New",monospace;font-size:11px;letter-spacing:.14em;color:var(--amber-dim);margin:18px 0 8px;}
   .memo{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:13px 15px;margin-bottom:8px;
     display:flex;gap:12px;align-items:flex-start;}
@@ -69,11 +86,91 @@
     border:none;border-radius:30px;padding:14px 28px;font-family:inherit;font-size:16px;cursor:pointer;
     box-shadow:0 6px 24px rgba(56,163,122,.35);transition:.25s;}
   .clb:hover{transform:translateY(-2px) scale(1.03);filter:brightness(1.08);}
-  .clb:active{transform:scale(.96);}
   .note{margin-top:26px;border:1px dashed var(--line);border-radius:6px;padding:13px 15px;font-size:12.5px;
     line-height:1.7;color:var(--smoke);}
   .note b{color:var(--amber-dim);font-weight:400;}
-  @media(max-width:480px){ .wrap{padding:18px 12px 50px;} .brand h1{font-size:18px;} }
+
+  /* ===== 기록노트 (일기장) ===== */
+  .jr-paper{position:relative;background:linear-gradient(175deg,var(--paper),var(--paper2));color:var(--ink2);
+    border-radius:10px;padding:22px 20px 20px;box-shadow:0 14px 44px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.35);}
+  .jr-paper::before{content:"";position:absolute;left:14px;top:0;bottom:0;width:1px;background:rgba(192,91,77,.35);}
+  .jr-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding-left:12px;}
+  .jr-date{font-family:"Nanum Pen Script",cursive;font-size:26px;color:#8a4b3c;}
+  .jr-date small{font-size:16px;color:#a08960;}
+  .jr-author{display:flex;align-items:center;gap:6px;}
+  .jr-author select{border:1px solid var(--rule);background:#fbf6ea;color:var(--ink2);border-radius:20px;
+    padding:5px 12px;font-family:"Gaegu",cursive;font-size:15px;cursor:pointer;}
+  .jr-author select:focus{outline:none;border-color:#8a4b3c;}
+  .jr-title{width:100%;background:transparent;border:none;border-bottom:2px dashed var(--rule);
+    font-family:"Gaegu",cursive;font-size:22px;font-weight:700;color:var(--ink2);padding:6px 4px 6px 12px;}
+  .jr-title::placeholder{color:#b8a67f;}
+  .jr-title:focus{outline:none;border-bottom-color:#8a4b3c;}
+  .jr-text{width:100%;min-height:170px;background:repeating-linear-gradient(transparent,transparent 35px,var(--rule) 35px,var(--rule) 36px);
+    border:none;color:var(--ink2);font-family:"Gaegu",cursive;font-size:19px;line-height:36px;
+    padding:0 4px 0 12px;resize:vertical;margin-top:8px;}
+  .jr-text::placeholder{color:#b8a67f;}
+  .jr-text:focus{outline:none;}
+
+  .jr-lab{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.3em;color:#a08960;margin:16px 0 8px;padding-left:12px;}
+  .emos{display:flex;gap:6px;flex-wrap:wrap;padding-left:12px;}
+  .emo{border:1.5px solid var(--rule);background:#fbf6ea;border-radius:20px;padding:6px 12px;cursor:pointer;
+    font-family:"Gaegu",cursive;font-size:15px;color:#6b5c42;transition:.2s;}
+  .emo.on{background:#8a4b3c;border-color:#8a4b3c;color:#fbf6ea;transform:scale(1.06);}
+  .sits{display:flex;gap:6px;flex-wrap:wrap;padding-left:12px;}
+  .sit{border:1.5px solid var(--rule);background:none;border-radius:20px;padding:5px 12px;cursor:pointer;
+    font-family:"Gaegu",cursive;font-size:14px;color:#6b5c42;transition:.2s;}
+  .sit.on{background:#38a37a;border-color:#38a37a;color:#fff;}
+
+  .jr-photos{display:flex;gap:10px;flex-wrap:wrap;padding-left:12px;margin-top:4px;}
+  .jr-add{width:82px;height:82px;border:2px dashed var(--rule);border-radius:8px;background:#fbf6ea;
+    color:#a08960;font-size:26px;cursor:pointer;transition:.25s;display:flex;align-items:center;justify-content:center;}
+  .jr-add:hover{border-color:#8a4b3c;color:#8a4b3c;transform:rotate(-2deg);}
+  .jr-ph{position:relative;transform:rotate(var(--r,0deg));}
+  .jr-ph img{width:82px;height:82px;object-fit:cover;border:4px solid #fff;border-bottom-width:16px;
+    box-shadow:0 4px 12px rgba(0,0,0,.25);display:block;}
+  .jr-ph button{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:none;
+    background:var(--red);color:#fff;font-size:11px;cursor:pointer;line-height:1;}
+  .jr-bar{display:flex;gap:10px;align-items:center;margin-top:18px;padding-left:12px;flex-wrap:wrap;}
+  .jr-save{background:#8a4b3c;color:#fbf6ea;border:none;border-radius:30px;padding:12px 28px;
+    font-family:"Gaegu",cursive;font-size:18px;cursor:pointer;box-shadow:0 6px 20px rgba(138,75,60,.35);transition:.25s;}
+  .jr-save:hover{transform:translateY(-2px);filter:brightness(1.1);}
+  .jr-msg{font-family:"Gaegu",cursive;font-size:15px;color:#38a37a;min-height:1em;}
+  .jr-msg.err{color:var(--red);}
+
+  /* 일기 피드 */
+  .jr-sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);
+    display:flex;align-items:center;gap:14px;margin:30px 0 14px;}
+  .jr-sect::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent);}
+  .jr-card{position:relative;background:linear-gradient(175deg,#f6efdf,#ede3cb);color:var(--ink2);border-radius:8px;
+    padding:18px 18px 16px 26px;margin-bottom:16px;box-shadow:0 10px 30px rgba(0,0,0,.45);
+    transform:rotate(var(--tilt,0deg));transition:transform .25s;}
+  .jr-card:hover{transform:rotate(0deg) translateY(-2px);}
+  .jr-card::before{content:"";position:absolute;left:13px;top:0;bottom:0;width:1px;background:rgba(192,91,77,.3);}
+  .jr-card .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .jr-card .d{font-family:"Nanum Pen Script",cursive;font-size:22px;color:#8a4b3c;}
+  .jr-card .who{font-family:"Gaegu",cursive;font-size:14px;color:#fff;background:#38a37a;border-radius:20px;padding:2px 11px;}
+  .jr-card .ttl{font-family:"Gaegu",cursive;font-size:21px;font-weight:700;margin:.3em 0 .15em;}
+  .jr-card .bd{font-family:"Gaegu",cursive;font-size:17px;line-height:1.75;white-space:pre-wrap;}
+  .jr-card .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .jr-card .chip{font-family:"Gaegu",cursive;font-size:13px;border:1px solid #c9b990;border-radius:20px;
+    padding:2px 10px;color:#6b5c42;background:#fbf6ea;}
+  .jr-card .chip.mood{background:#f7e3dc;border-color:#d9a493;color:#8a4b3c;}
+  .jr-card .gal{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .jr-card .gal img{width:104px;height:104px;object-fit:cover;border:4px solid #fff;border-bottom-width:18px;
+    box-shadow:0 4px 14px rgba(0,0,0,.28);cursor:pointer;transform:rotate(var(--r,0deg));transition:.25s;}
+  .jr-card .gal img:hover{transform:rotate(0deg) scale(1.05);}
+  .jr-card .jdel{position:absolute;top:10px;right:12px;background:none;border:none;color:#b8a67f;
+    cursor:pointer;font-size:14px;transition:.2s;}
+  .jr-card .jdel:hover{color:var(--red);}
+
+  /* 사진 라이트박스 */
+  .lb{position:fixed;inset:0;z-index:300;background:rgba(10,10,12,.93);display:none;align-items:center;
+    justify-content:center;cursor:zoom-out;padding:4vw;}
+  .lb.open{display:flex;}
+  .lb img{max-width:100%;max-height:100%;border:6px solid #fff;box-shadow:0 20px 80px rgba(0,0,0,.8);}
+
+  @media(max-width:480px){ .wrap{padding:18px 12px 50px;} .brand h1{font-size:18px;}
+    .pages{margin:0 -12px;} .page{padding:0 12px;} .jr-text{font-size:17px;} }
 </style>
 </head>
 <body>
@@ -90,44 +187,114 @@
       </svg>
       <div class="brand">
         <div class="kicker">PRESENCE · PERSONAL</div>
-        <h1>Lim Jae Young, <em>memo</em></h1>
+        <h1>Presence, <em>memo &amp; journal</em></h1>
       </div>
     </div>
     <nav class="navbtns">
       <a class="nb hub" href="index.html">◂ 허브</a>
+      <a class="nb" href="action-plan.html">액션플랜</a>
       <a class="nb" href="presence-record.html">FIELD RECORD</a>
     </nav>
   </header>
 
-  <div class="form">
-    <div class="tags" id="tags"></div>
-    <textarea id="txt" placeholder="필드에서 느낀 것, 팀·교육·리쿠르팅 아이디어, 오늘의 배움 — 자유롭게 적어두세요."></textarea>
-    <div class="fbar">
-      <button class="save" id="save">메모 저장</button>
-      <span class="msg" id="msg"></span>
-    </div>
+  <div class="seg" id="seg">
+    <div class="ind"></div>
+    <button id="segMemo" class="on"><span class="s-ico">✏️</span>메모</button>
+    <button id="segJr"><span class="s-ico">📖</span>기록노트</button>
   </div>
 
-  <div class="sect">MEMOS — 전체 메모</div>
-  <div id="list"><div class="empty">불러오는 중…</div></div>
+  <div class="pages" id="pages">
 
-  <button class="clb" id="copyAll">🤖 클비서에게 정리시키기</button>
-  <div class="msg" id="msg2" style="text-align:center;margin-top:10px;"></div>
+    <!-- ============ PAGE 1 : 메모 ============ -->
+    <div class="page" id="pageMemo">
+      <div class="form">
+        <div class="tags" id="tags"></div>
+        <textarea id="txt" placeholder="필드에서 느낀 것, 팀·교육·리쿠르팅 아이디어, 오늘의 배움 — 자유롭게 적어두세요."></textarea>
+        <div class="fbar">
+          <button class="save" id="save">메모 저장</button>
+          <span class="msg" id="msg"></span>
+        </div>
+      </div>
 
-  <div class="note">
-    <b>정리 흐름</b> — 메모는 팀 DB(Firebase)에 저장되어 어느 기기에서든 이어집니다.
-    기록을 다 마치면 <b>클비서에게 정리시키기</b> 버튼을 눌러 복사한 뒤 Claude에 붙여넣거나,
-    그냥 Claude에게 “메모 정리해줘”라고만 해도 저장된 메모를 읽어와 주제별로 정리해줍니다.
+      <div class="sect">MEMOS — 전체 메모</div>
+      <div id="list"><div class="empty">불러오는 중…</div></div>
+
+      <button class="clb" id="copyAll">🤖 클비서에게 정리시키기</button>
+      <div class="msg" id="msg2" style="text-align:center;margin-top:10px;"></div>
+
+      <div class="note">
+        <b>정리 흐름</b> — 메모는 팀 DB(Firebase)에 저장되어 어느 기기에서든 이어집니다.
+        기록을 다 마치면 <b>클비서에게 정리시키기</b> 버튼을 눌러 복사한 뒤 Claude에 붙여넣거나,
+        그냥 Claude에게 “메모 정리해줘”라고만 해도 저장된 메모를 읽어와 주제별로 정리해줍니다.
+      </div>
+    </div>
+
+    <!-- ============ PAGE 2 : 기록노트 (일기장) ============ -->
+    <div class="page" id="pageJr">
+      <div class="jr-paper">
+        <div class="jr-head">
+          <div class="jr-date" id="jrDate"></div>
+          <div class="jr-author">
+            <select id="jrWho">
+              <option>임재영</option><option>고윤경</option><option>박인선</option><option>윤채영</option>
+              <option>간승학</option><option>손예진</option><option>권영웅</option><option>양아영</option>
+              <option>김하진</option><option>최이수</option>
+            </select>
+          </div>
+        </div>
+        <input class="jr-title" id="jrTitle" placeholder="오늘의 제목을 붙여주세요 ✎" maxlength="60">
+        <textarea class="jr-text" id="jrText" placeholder="오늘 하루는 어땠나요? 필드의 순간, 팀과의 시간, 나의 마음 — 일기처럼 적어보세요."></textarea>
+
+        <div class="jr-lab">TODAY'S MOOD — 오늘의 감정</div>
+        <div class="emos" id="emos"></div>
+
+        <div class="jr-lab">SCENE — 어떤 상황이었나요</div>
+        <div class="sits" id="sits"></div>
+
+        <div class="jr-lab">PHOTO — 오늘의 장면</div>
+        <div class="jr-photos" id="jrPhotos">
+          <button class="jr-add" id="jrAdd" title="사진 추가">＋</button>
+        </div>
+        <input type="file" id="jrFile" accept="image/*" multiple style="display:none">
+
+        <div class="jr-bar">
+          <button class="jr-save" id="jrSave">📖 오늘을 기록하기</button>
+          <span class="jr-msg" id="jrMsg"></span>
+        </div>
+      </div>
+
+      <div class="jr-sect">JOURNAL — 팀의 하루하루</div>
+      <div id="jrList"><div class="empty">불러오는 중…</div></div>
+    </div>
+
   </div>
 </div>
 
+<div class="lb" id="lb"><img id="lbImg" alt=""></div>
+
 <script>
-  const FB='https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/jaeyoung_memo';
+  const FB ='https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/jaeyoung_memo';
+  const FBJ='https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/presence_journal';
   const TAGS=['필드','팀','교육','리쿠르팅','위페어','아이디어','일반'];
+  const EMOS=['😊 뿌듯','🥰 행복','🔥 열정','😌 평온','💪 도전','🤔 고민','😮‍💨 지침','😢 아쉬움'];
+  const SITS=['필드','부스','팀','교육','리쿠르팅','위페어','일상'];
   const $=id=>document.getElementById(id);
   const WD=['일','월','화','수','목','금','토'];
   let selTag='일반', memos={};
 
+  /* ===== 페이지 전환 (스와이프 + 토글) ===== */
+  const pages=$('pages'), seg=$('seg');
+  function goto(i){ pages.scrollTo({left:i*pages.clientWidth, behavior:'smooth'}); }
+  $('segMemo').onclick=()=>goto(0);
+  $('segJr').onclick =()=>goto(1);
+  pages.addEventListener('scroll',()=>{
+    const i=Math.round(pages.scrollLeft/pages.clientWidth);
+    seg.classList.toggle('p1', i===1);
+    $('segMemo').classList.toggle('on', i===0);
+    $('segJr').classList.toggle('on', i===1);
+  },{passive:true});
+
+  /* ===== 메모 (기존 기능 유지) ===== */
   function drawTags(){
     $('tags').innerHTML='';
     for(const t of TAGS){
@@ -137,15 +304,12 @@
     }
   }
   drawTags();
-
   function say(m,ok){ $('msg').textContent=m; $('msg').className='msg '+(ok?'ok':'err');
     setTimeout(()=>{$('msg').textContent='';},3500); }
-
   function load(){
     fetch(FB+'.json?t='+Date.now()).then(r=>r.json()).then(d=>{memos=d||{};render();})
       .catch(()=>{$('list').innerHTML='<div class="empty">불러오기 실패 — 네트워크 확인</div>';});
   }
-
   function render(){
     const keys=Object.keys(memos).sort((a,b)=>(memos[b].t||0)-(memos[a].t||0));
     if(!keys.length){$('list').innerHTML='<div class="empty">아직 메모가 없어요 — 첫 메모를 남겨볼까요?</div>';return;}
@@ -171,7 +335,6 @@
     }
     $('list').innerHTML=''; $('list').appendChild(box);
   }
-
   $('save').onclick=()=>{
     const text=$('txt').value.trim();
     if(!text){say('내용을 입력해 주세요',0);return;}
@@ -182,12 +345,10 @@
         else say('저장 실패',0); })
       .catch(()=>say('저장 실패 — 네트워크 확인',0));
   };
-
   $('copyAll').onclick=()=>{
     const keys=Object.keys(memos).sort((a,b)=>(memos[a].t||0)-(memos[b].t||0));
     if(!keys.length){say('복사할 메모가 없어요',0);return;}
-    let out='[PRESENCE 메모 — 임재영]\n';
-    let lastDay='';
+    let out='[PRESENCE 메모 — 임재영]\n'; let lastDay='';
     for(const k of keys){const m=memos[k];
       if(m.date!==lastDay){lastDay=m.date;out+='\n■ '+m.date+'\n';}
       out+='- (#'+(m.tag||'일반')+') '+String(m.text||'').replace(/\n/g,'\n  ')+'\n';}
@@ -199,8 +360,133 @@
       .catch(()=>{const ta=document.createElement('textarea');ta.value=out;document.body.appendChild(ta);
         ta.select();document.execCommand('copy');ta.remove();say2('복사 완료! 클비서에게 붙여넣어 주세요 ㅎㅎ',1);});
   };
-
   load();
+
+  /* ===== 기록노트 (일기장) ===== */
+  let selEmo='', selSits=[], jrPics=[], journal={};
+  (function(){
+    const d=new Date();
+    $('jrDate').innerHTML=(d.getMonth()+1)+'월 '+d.getDate()+'일 <small>'+WD[d.getDay()]+'요일 · '+d.getFullYear()+'</small>';
+    try{ const w=localStorage.getItem('presence_journal_who'); if(w) $('jrWho').value=w; }catch(e){}
+    $('jrWho').onchange=()=>{ try{localStorage.setItem('presence_journal_who',$('jrWho').value);}catch(e){} };
+  })();
+  function drawEmos(){
+    $('emos').innerHTML='';
+    for(const e of EMOS){
+      const b=document.createElement('button'); b.type='button';
+      b.className='emo'+(e===selEmo?' on':''); b.textContent=e;
+      b.onclick=()=>{selEmo=(selEmo===e?'':e);drawEmos();};
+      $('emos').appendChild(b);
+    }
+  }
+  function drawSits(){
+    $('sits').innerHTML='';
+    for(const s of SITS){
+      const b=document.createElement('button'); b.type='button';
+      b.className='sit'+(selSits.includes(s)?' on':''); b.textContent=s;
+      b.onclick=()=>{selSits=selSits.includes(s)?selSits.filter(x=>x!==s):[...selSits,s];drawSits();};
+      $('sits').appendChild(b);
+    }
+  }
+  drawEmos(); drawSits();
+
+  function jsay(m,ok){ $('jrMsg').textContent=m; $('jrMsg').className='jr-msg'+(ok?'':' err');
+    setTimeout(()=>{$('jrMsg').textContent='';},4000); }
+
+  function compress(file){
+    return new Promise((res,rej)=>{
+      const img=new Image();
+      img.onload=()=>{
+        const M=900, s=Math.min(1, M/Math.max(img.width,img.height));
+        const c=document.createElement('canvas');
+        c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL('image/jpeg',.72));
+      };
+      img.onerror=rej; img.src=URL.createObjectURL(file);
+    });
+  }
+  $('jrAdd').onclick=()=>$('jrFile').click();
+  $('jrFile').onchange=async function(){
+    for(const f of this.files){
+      if(jrPics.length>=6){ jsay('사진은 한 기록에 6장까지예요',0); break; }
+      try{ jrPics.push(await compress(f)); }catch(e){}
+    }
+    this.value=''; drawPics();
+  };
+  function drawPics(){
+    [...$('jrPhotos').querySelectorAll('.jr-ph')].forEach(n=>n.remove());
+    jrPics.forEach((b64,i)=>{
+      const d=document.createElement('div'); d.className='jr-ph';
+      d.style.setProperty('--r',((i%3)-1)*2.5+'deg');
+      const im=document.createElement('img'); im.src=b64;
+      const x=document.createElement('button'); x.textContent='✕';
+      x.onclick=()=>{jrPics.splice(i,1);drawPics();};
+      d.appendChild(im); d.appendChild(x);
+      $('jrPhotos').insertBefore(d,$('jrAdd'));
+    });
+  }
+  $('jrSave').onclick=()=>{
+    const text=$('jrText').value.trim(), title=$('jrTitle').value.trim();
+    if(!text&&!jrPics.length){ jsay('오늘의 이야기나 사진을 담아주세요',0); return; }
+    const now=new Date(Date.now()-new Date().getTimezoneOffset()*60000);
+    const rec={title, text, who:$('jrWho').value, emo:selEmo, sits:selSits,
+      pics:jrPics, date:now.toISOString().slice(0,10), t:Date.now()};
+    $('jrSave').disabled=true; jsay('기록 저장 중…',1);
+    fetch(FBJ+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)})
+      .then(r=>r.json()).then(res=>{
+        $('jrSave').disabled=false;
+        if(res&&res.name){ journal[res.name]=rec;
+          $('jrTitle').value=''; $('jrText').value=''; selEmo=''; selSits=[]; jrPics=[];
+          drawEmos(); drawSits(); drawPics(); renderJr();
+          jsay('오늘이 기록됐어요 — 팀 모두가 볼 수 있습니다 📖',1);
+        } else jsay('저장 실패',0);
+      }).catch(()=>{ $('jrSave').disabled=false; jsay('저장 실패 — 네트워크 확인',0); });
+  };
+  function loadJr(){
+    fetch(FBJ+'.json?t='+Date.now()).then(r=>r.json()).then(d=>{journal=d||{};renderJr();})
+      .catch(()=>{$('jrList').innerHTML='<div class="empty">불러오기 실패 — 네트워크 확인</div>';});
+  }
+  function renderJr(){
+    const keys=Object.keys(journal).sort((a,b)=>(journal[b].t||0)-(journal[a].t||0));
+    if(!keys.length){$('jrList').innerHTML='<div class="empty">첫 페이지가 비어 있어요 — 오늘을 기록해볼까요? 📖</div>';return;}
+    const box=document.createElement('div');
+    keys.forEach((k,i)=>{
+      const j=journal[k];
+      const el=document.createElement('div'); el.className='jr-card';
+      el.style.setProperty('--tilt',((i%3)-1)*.6+'deg');
+      const d=j.date?new Date(j.date+'T00:00:00'):null;
+      const ds=d?(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+WD[d.getDay()]+')':'';
+      const chips=[];
+      if(j.emo) chips.push('<span class="chip mood">'+j.emo+'</span>');
+      (j.sits||[]).forEach(s=>chips.push('<span class="chip">#'+s+'</span>'));
+      el.innerHTML='<button class="jdel" title="삭제">✕</button>'+
+        '<div class="top"><span class="d">'+ds+'</span><span class="who">'+(j.who||'')+'</span></div>'+
+        (j.title?'<div class="ttl"></div>':'')+
+        (j.text?'<div class="bd"></div>':'')+
+        (chips.length?'<div class="chips">'+chips.join('')+'</div>':'')+
+        ((j.pics&&j.pics.length)?'<div class="gal"></div>':'');
+      if(j.title) el.querySelector('.ttl').textContent=j.title;
+      if(j.text)  el.querySelector('.bd').textContent=j.text;
+      if(j.pics&&j.pics.length){
+        const g=el.querySelector('.gal');
+        j.pics.forEach((b64,pi)=>{
+          const im=document.createElement('img'); im.src=b64; im.loading='lazy';
+          im.style.setProperty('--r',((pi%3)-1)*2+'deg');
+          im.onclick=()=>{$('lbImg').src=b64;$('lb').classList.add('open');};
+          g.appendChild(im);
+        });
+      }
+      el.querySelector('.jdel').onclick=()=>{
+        if(!confirm('이 기록을 삭제할까요?'))return;
+        fetch(FBJ+'/'+k+'.json',{method:'DELETE'}).then(()=>{delete journal[k];renderJr();});
+      };
+      box.appendChild(el);
+    });
+    $('jrList').innerHTML=''; $('jrList').appendChild(box);
+  }
+  $('lb').onclick=()=>$('lb').classList.remove('open');
+  loadJr();
 </script>
 
 <!-- PRESENCE THEME TOGGLE -->
