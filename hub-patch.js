@@ -34,6 +34,22 @@
 
   /* ---------- 2) 메뉴에 관리자 항목 추가 ---------- */
   var menu = document.getElementById('menu');
+  if(menu){
+    menu.addEventListener('click',function(e){
+      var a=e.target.closest&&e.target.closest('a,button');
+      if(!a||!menu.contains(a))return;
+      if(a.classList.contains('join'))return;
+      if(a.__hubGated)return;
+      if(isAdmin())return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if(isTeam()){ alert('이 바로가기는 관리자 전용이에요 · 팀원은 사진 공간만 이용할 수 있어요'); return; }
+      var p=prompt('바로가기는 관리자 전용이에요 · 비밀번호를 입력하세요');
+      if(p===null)return;
+      if(p===PASS){setAdmin(true);try{syncDLState();}catch(_){} a.__hubGated=1;setTimeout(function(){a.click();a.__hubGated=0;},40);}
+      else if(p===TPASS){ alert('이 바로가기는 관리자 전용이에요 · 팀원은 사진 공간만 이용할 수 있어요'); }
+      else alert('비밀번호가 올바르지 않습니다');
+    },true);
+  }
   function addMenuItem(tag, label, fn){
     if(!menu) return;
     var b = document.createElement('button');
@@ -379,6 +395,9 @@
 
   var btn=document.createElement('button'); btn.id='hsBtn'; btn.title='검색 — 토픽·발표자료 바로 찾기'; btn.textContent='🔍';
   document.body.appendChild(btn);
+  function hsAdmin(){try{return localStorage.getItem('presence_hub_admin')==='1';}catch(e){return false;}}
+  btn.style.display=hsAdmin()?'':'none';
+  setInterval(function(){var on=hsAdmin();btn.style.display=on?'':'none';if(!on){var o=document.getElementById('hsOv');if(o)o.classList.remove('on');}},1200);
   var ov=document.createElement('div'); ov.id='hsOv';
   ov.innerHTML='<div id="hsBox"><div id="hsKick">SEARCH — 토픽 · 발표자료 · 페이지</div>'+
     '<input id="hsIn" placeholder="검색어 입력 (예: 노제로, 오브젝션, 리캡, 메모…)" autocomplete="off">'+
@@ -402,7 +421,7 @@
   function loadIdx(){
     if(loading)return; loading=true;
     try{
-      var c=localStorage.getItem('hs_idx_v1');
+      var c=localStorage.getItem('hs_idx_v2');
       if(c){var o=JSON.parse(c); if(Date.now()-o.t<86400000){topics=o.topics;recaps=o.recaps;render(IN.value);return;}}
     }catch(e){}
     Promise.all([
@@ -416,12 +435,13 @@
         return fetch('토픽/'+f.name).then(function(r){return r.text();}).then(function(html){
           var m=/<title>([^<]*)<\/title>/i.exec(html);
           var base=f.name.replace(/\.html?$/i,'');
-          return {t:(m?m[1].trim():base),u:'토픽/'+f.name,e:'🎙️',g:'TOPIC',k:(ALIAS[base]||'')+' 토픽 발표'};
+          var body=html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&[a-z#0-9]+;/gi,' ').replace(/\s+/g,' ').trim().slice(0,1500);
+          return {t:(m?m[1].trim():base),u:'토픽/'+f.name,e:'🎙️',g:'TOPIC',k:(ALIAS[base]||'')+' 토픽 발표 '+body};
         }).catch(function(){return null;});
       }));
     }).then(function(list){
       topics=(list||[]).filter(Boolean);
-      try{localStorage.setItem('hs_idx_v1',JSON.stringify({t:Date.now(),topics:topics,recaps:recaps}));}catch(e){}
+      try{localStorage.setItem('hs_idx_v2',JSON.stringify({t:Date.now(),topics:topics,recaps:recaps}));}catch(e){}
       render(IN.value);
     }).catch(function(){topics=topics||[];recaps=recaps||[];render(IN.value);});
   }
