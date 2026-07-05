@@ -353,3 +353,114 @@
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ loadPhotos(); });
   else loadPhotos();
 })();
+
+
+/* ═══ 허브 검색 — 토픽·발표자료·리캡·페이지 바로 찾기 ═══ */
+(function(){
+  if(window.__hubSearch)return; window.__hubSearch=true;
+  var css=document.createElement('style');
+  css.textContent=
+    '#hsBtn{position:fixed;right:18px;bottom:76px;z-index:99998;width:46px;height:46px;border-radius:50%;border:1px solid rgba(150,140,120,.5);cursor:pointer;font-size:18px;line-height:1;background:rgba(22,20,15,.85);color:#efe7d6;box-shadow:0 4px 18px rgba(0,0,0,.4);transition:.25s}'+
+    '#hsBtn:hover{transform:scale(1.1);border-color:#38a37a}'+
+    '#hsOv{position:fixed;inset:0;z-index:400;background:rgba(8,8,10,.9);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;padding:12vh 5vw 5vh}'+
+    '#hsOv.on{display:flex}'+
+    '#hsBox{width:100%;max-width:560px}'+
+    '#hsKick{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:#e8b466;margin-bottom:10px}'+
+    '#hsIn{width:100%;background:#16140f;border:1px solid rgba(232,180,102,.45);border-radius:10px;color:#efe7d6;font-size:16px;padding:15px 17px;outline:none;font-family:inherit}'+
+    '#hsIn:focus{border-color:#e8b466;box-shadow:0 0 24px rgba(232,180,102,.15)}'+
+    '#hsList{margin-top:12px;display:flex;flex-direction:column;gap:7px;max-height:52vh;overflow:auto}'+
+    '.hs-it{display:flex;align-items:center;gap:12px;background:rgba(22,20,15,.92);border:1px solid #2a2722;border-radius:10px;padding:12px 14px;cursor:pointer;transition:.2s;text-decoration:none;color:#efe7d6}'+
+    '.hs-it:hover,.hs-it.sel{border-color:#38a37a;transform:translateX(3px)}'+
+    '.hs-emo{font-size:19px;flex:none}'+
+    '.hs-t{flex:1;font-size:14.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+    '.hs-tag{font-family:"Courier New",monospace;font-size:8.5px;letter-spacing:.22em;color:#9a7a44;border:1px solid #2a2722;border-radius:10px;padding:3px 8px;flex:none}'+
+    '.hs-none{color:#6f6a60;font-family:"Courier New",monospace;font-size:12px;letter-spacing:.1em;text-align:center;padding:22px 0}';
+  document.head.appendChild(css);
+
+  var btn=document.createElement('button'); btn.id='hsBtn'; btn.title='검색 — 토픽·발표자료 바로 찾기'; btn.textContent='🔍';
+  document.body.appendChild(btn);
+  var ov=document.createElement('div'); ov.id='hsOv';
+  ov.innerHTML='<div id="hsBox"><div id="hsKick">SEARCH — 토픽 · 발표자료 · 페이지</div>'+
+    '<input id="hsIn" placeholder="검색어 입력 (예: 노제로, 오브젝션, 리캡, 메모…)" autocomplete="off">'+
+    '<div id="hsList"><div class="hs-none">입력하면 바로 찾아드려요 🎬</div></div></div>';
+  document.body.appendChild(ov);
+  var IN=document.getElementById('hsIn'), LIST=document.getElementById('hsList');
+
+  var CORE=[
+    {t:'메모 · 기록노트 · 액션플랜',u:'memo.html',e:'📝',g:'PAGE',k:'메모 노트 일기 저널 액션플랜 플랜 할일 계획'},
+    {t:'액션플랜 보드',u:'memo.html#plan',e:'✅',g:'PAGE',k:'액션 플랜 계획 할일 투두'},
+    {t:'개인 세일즈 기록 (필드 레코드)',u:'presence-record.html',e:'📊',g:'PAGE',k:'레코드 기록 세일즈 노제로 후원자 리젝'},
+    {t:'팀 리캡 아카이브',u:'recaps.html',e:'🎞️',g:'PAGE',k:'리캡 아카이브 발표 월간'},
+    {t:'재영의 서재',u:'library.html',e:'📚',g:'PAGE',k:'서재 책 라이브러리 독서'},
+    {t:'PRESENCE 워크북',u:'https://presence.co.kr',e:'🌳',g:'LINK',k:'워크북 팀 먹이 컴페티션'},
+    {t:'맛도사 · MATDOSA',u:'https://jaeyoung5178-bot.github.io/matdosa.github.io/',e:'🍜',g:'LINK',k:'맛도사 맛집'}
+  ];
+  var ALIAS={'topic-grasp':'그랩 grasp 잡기 스타핑 스타퍼','topic-objection':'오브젝션 거절 반론 objection','topic-training':'트레이닝 교육 training','topic-howwerun':'운영 팀운영 how we run','topic-nozero200':'노제로 200 nozero','topic-nozero300':'노제로 300 nozero','topic-onboarding':'온보딩 신입 onboarding','topic-steady':'꾸준 스테디 steady 유지','recap-2026-04':'리캡 4월 recap'};
+  var topics=null, recaps=null, loading=false;
+
+  function nrm(x){return (x||'').toLowerCase().replace(/\s+/g,'');}
+  function loadIdx(){
+    if(loading)return; loading=true;
+    try{
+      var c=localStorage.getItem('hs_idx_v1');
+      if(c){var o=JSON.parse(c); if(Date.now()-o.t<86400000){topics=o.topics;recaps=o.recaps;render(IN.value);return;}}
+    }catch(e){}
+    Promise.all([
+      fetch('https://api.github.com/repos/jaeyoung5178-bot/Presence/contents/'+encodeURIComponent('토픽')).then(function(r){return r.json();}).catch(function(){return [];}),
+      fetch('https://api.github.com/repos/jaeyoung5178-bot/Presence/contents/'+encodeURIComponent('리캡')).then(function(r){return r.json();}).catch(function(){return [];})
+    ]).then(function(res){
+      var tfiles=(Array.isArray(res[0])?res[0]:[]).filter(function(f){return f.type==='file'&&/\.html?$/i.test(f.name);});
+      var rfiles=(Array.isArray(res[1])?res[1]:[]).filter(function(f){return f.type==='file'&&/\.(pdf|pptx?)$/i.test(f.name);});
+      recaps=rfiles.map(function(f){return {t:f.name.replace(/\.[^.]+$/,''),u:f.download_url,e:'🎬',g:'RECAP',k:'리캡 recap 발표'};});
+      return Promise.all(tfiles.map(function(f){
+        return fetch('토픽/'+f.name).then(function(r){return r.text();}).then(function(html){
+          var m=/<title>([^<]*)<\/title>/i.exec(html);
+          var base=f.name.replace(/\.html?$/i,'');
+          return {t:(m?m[1].trim():base),u:'토픽/'+f.name,e:'🎙️',g:'TOPIC',k:(ALIAS[base]||'')+' 토픽 발표'};
+        }).catch(function(){return null;});
+      }));
+    }).then(function(list){
+      topics=(list||[]).filter(Boolean);
+      try{localStorage.setItem('hs_idx_v1',JSON.stringify({t:Date.now(),topics:topics,recaps:recaps}));}catch(e){}
+      render(IN.value);
+    }).catch(function(){topics=topics||[];recaps=recaps||[];render(IN.value);});
+  }
+
+  function items(){ return CORE.concat(topics||[],recaps||[]); }
+  function score(it,q){
+    var hay=nrm(it.t+' '+(it.k||''));
+    if(!q)return 1;
+    var i=hay.indexOf(q);
+    if(i<0)return 0;
+    return i===0?100:(50-Math.min(40,i));
+  }
+  function render(qraw){
+    var q=nrm(qraw);
+    var rs=items().map(function(it){return [score(it,q),it];}).filter(function(x){return x[0]>0;});
+    rs.sort(function(a,b){return b[0]-a[0];});
+    rs=rs.slice(0,10);
+    LIST.innerHTML='';
+    if(!rs.length){LIST.innerHTML='<div class="hs-none">'+(topics===null?'토픽 목록 불러오는 중…':'검색 결과가 없어요 — 다른 말로 해볼까요?')+'</div>';return;}
+    rs.forEach(function(x,i){
+      var it=x[1];
+      var a=document.createElement('a'); a.className='hs-it'+(i===0?' sel':''); a.href=it.u;
+      if(it.g==='LINK'||it.g==='RECAP'){a.target='_blank';a.rel='noopener';}
+      a.innerHTML='<span class="hs-emo">'+it.e+'</span><span class="hs-t"></span><span class="hs-tag">'+it.g+'</span>';
+      a.querySelector('.hs-t').textContent=it.t;
+      LIST.appendChild(a);
+    });
+  }
+  function open(){ ov.classList.add('on'); IN.value=''; render(''); loadIdx(); setTimeout(function(){IN.focus();},60); }
+  function close(){ ov.classList.remove('on'); }
+  btn.onclick=open;
+  ov.addEventListener('click',function(e){ if(e.target===ov)close(); });
+  IN.addEventListener('input',function(){render(IN.value);});
+  IN.addEventListener('keydown',function(e){
+    if(e.key==='Escape')close();
+    if(e.key==='Enter'){var f=LIST.querySelector('.hs-it'); if(f)f.click();}
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')close();
+    if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();open();}
+  });
+})();
