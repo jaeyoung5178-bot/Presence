@@ -273,6 +273,13 @@
   body.hints-off .code .idnum{background:none!important;color:inherit!important;box-shadow:none!important;padding:0!important;margin:0!important;letter-spacing:normal!important;font-weight:inherit!important;border-radius:0!important}
   .logo .mark{background:none!important;border-radius:0!important}
   .logo .mark .mark-img{width:100%;height:100%;object-fit:contain;display:block}
+  /* 토글 버튼(개인/단체·신용카드/자동이체 등) 줄바꿈·칸 좁음 방지 */
+  .tog{width:100%}
+  .tog button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+  @media(max-width:560px){
+    .tog{width:100%}
+    .tog button{font-size:15px;height:52px;white-space:nowrap;padding:0 6px}
+  }
 </style>
 </head>
 <body>
