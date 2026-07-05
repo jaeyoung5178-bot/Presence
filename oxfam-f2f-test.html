@@ -280,6 +280,12 @@
     .tog{width:100%}
     .tog button{font-size:15px;height:52px;white-space:nowrap;padding:0 6px}
   }
+  /* 모바일 칼럼 레이아웃에서 입력칸·토글이 꽉 차게 (align-items 기본값 flex-start 보정) */
+  @media(max-width:560px){
+    .frow{align-items:stretch}
+    .frow .rc{width:100%}
+    .tog{width:100%}
+  }
 </style>
 </head>
 <body>
