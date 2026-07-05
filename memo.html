@@ -140,6 +140,32 @@
   .jr-msg{font-family:"Gaegu",cursive;font-size:15px;color:#38a37a;min-height:1em;}
   .jr-msg.err{color:var(--red);}
 
+  /* 귀여운 달력 (지난 날짜 일기) */
+  .jr-datewrap{position:relative;display:inline-block;}
+  button.jr-date{background:none;border:none;cursor:pointer;padding:0;text-align:left;font-family:"Nanum Pen Script",cursive;font-size:26px;color:#8a4b3c;}
+  button.jr-date small{font-size:16px;color:#a08960;}
+  .jr-calico{font-size:17px;vertical-align:2px;margin-left:2px;}
+  .jr-past{font-family:"Gaegu",cursive;font-size:13px;color:#fff;background:#e8a03e;border-radius:14px;padding:2px 9px;margin-left:8px;vertical-align:4px;}
+  .jr-cal{position:absolute;left:0;top:calc(100% + 12px);z-index:60;width:288px;
+    background:linear-gradient(175deg,#fbf6ea,#f3ecdb);border:1.5px solid #d8cbae;border-radius:14px;
+    box-shadow:0 18px 50px rgba(0,0,0,.35);padding:16px 14px 12px;}
+  .jr-cal::before{content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-2deg);
+    width:86px;height:18px;background:rgba(232,180,200,.75);border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .jrc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .jrc-title{font-family:"Nanum Pen Script",cursive;font-size:22px;color:#8a4b3c;}
+  .jrc-nav{background:none;border:1.5px solid #d8cbae;border-radius:50%;width:28px;height:28px;color:#8a4b3c;font-size:15px;cursor:pointer;line-height:1;}
+  .jrc-nav:hover{background:#f7e3dc;}
+  .jrc-sub{font-family:"Gaegu",cursive;font-size:14px;color:#a08960;text-align:center;margin-bottom:8px;}
+  .jrc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;}
+  .jrc-w{font-family:"Gaegu",cursive;font-size:12px;color:#a08960;padding:2px 0;}
+  .jrc-w:first-child{color:#c05b4d;}
+  .jrc-d{font-family:"Gaegu",cursive;font-size:15px;color:#5c5140;background:none;border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;transition:.15s;}
+  .jrc-d:hover{background:#f7e3dc;}
+  .jrc-d.today{border:1.5px dashed #38a37a;color:#2b8a66;}
+  .jrc-d.sel{background:#8a4b3c;color:#fbf6ea;font-weight:700;}
+  .jrc-d[disabled]{color:#cfc4a9;cursor:default;}
+  .jrc-today{display:block;margin:10px auto 0;font-family:"Gaegu",cursive;font-size:14px;color:#2b8a66;background:#eaf5ef;border:1.5px solid #bfe0d0;border-radius:16px;padding:5px 14px;cursor:pointer;}
+
   /* 일기 피드 */
   .jr-sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);
     display:flex;align-items:center;gap:14px;margin:30px 0 14px;}
@@ -292,7 +318,7 @@
     <div class="page" id="pageJr">
       <div class="jr-paper">
         <div class="jr-head">
-          <div class="jr-date" id="jrDate"></div>
+          <div class="jr-datewrap"><button type="button" class="jr-date" id="jrDate" title="날짜 바꾸기 — 지난 날짜 일기도 쓸 수 있어요"></button><div class="jr-cal" id="jrCal" hidden></div></div>
           <div class="jr-author">
             <select id="jrWho">
               <option>임재영</option><option>고윤경</option><option>박인선</option><option>윤채영</option>
@@ -461,9 +487,41 @@
 
   /* ===== 기록노트 (일기장) ===== */
   let selEmo='', selSits=[], jrPics=[], journal={};
+  let jrSel=new Date(), jrView=null;
+  function jrFmt(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function jrSame(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+  function renderJrDate(){
+    const t=new Date();
+    $('jrDate').innerHTML=(jrSel.getMonth()+1)+'월 '+jrSel.getDate()+'일 <small>'+WD[jrSel.getDay()]+'요일 · '+jrSel.getFullYear()+'</small>'
+      +'<span class="jr-calico">🗓️</span>'+(jrSame(jrSel,t)?'':'<span class="jr-past">지난 날짜</span>');
+  }
+  function drawCal(){
+    const cal=$('jrCal'), t=new Date();
+    if(!jrView) jrView=new Date(jrSel.getFullYear(),jrSel.getMonth(),1);
+    const y=jrView.getFullYear(), m=jrView.getMonth();
+    const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+    let h='<div class="jrc-top"><button type="button" class="jrc-nav" data-n="-1">‹</button>'
+      +'<span class="jrc-title">'+y+'년 '+(m+1)+'월</span>'
+      +'<button type="button" class="jrc-nav" data-n="1">›</button></div>'
+      +'<div class="jrc-sub">🌤️ 언제의 하루인가요?</div>'
+      +'<div class="jrc-grid">'+WD.map(w=>'<span class="jrc-w">'+w+'</span>').join('');
+    for(let i=0;i<first;i++)h+='<span></span>';
+    for(let d=1;d<=days;d++){
+      const dt=new Date(y,m,d);
+      const fut=dt>t&&!jrSame(dt,t);
+      h+='<button type="button" class="jrc-d'+(jrSame(dt,jrSel)?' sel':'')+(jrSame(dt,t)?' today':'')+'"'+(fut?' disabled':'')+' data-d="'+d+'">'+d+'</button>';
+    }
+    h+='</div><button type="button" class="jrc-today" id="jrcToday">오늘로 ↩</button>';
+    cal.innerHTML=h;
+    cal.querySelectorAll('.jrc-nav').forEach(b=>b.onclick=e=>{e.stopPropagation();jrView=new Date(y,m+Number(b.dataset.n),1);drawCal();});
+    cal.querySelectorAll('.jrc-d:not([disabled])').forEach(b=>b.onclick=e=>{e.stopPropagation();jrSel=new Date(y,m,Number(b.dataset.d));renderJrDate();cal.hidden=true;});
+    cal.querySelector('#jrcToday').onclick=e=>{e.stopPropagation();jrSel=new Date();jrView=null;renderJrDate();cal.hidden=true;};
+  }
+  $('jrDate').onclick=e=>{e.stopPropagation();const c=$('jrCal');
+    if(c.hidden){jrView=new Date(jrSel.getFullYear(),jrSel.getMonth(),1);drawCal();c.hidden=false;} else c.hidden=true;};
+  document.addEventListener('click',e=>{ if(!e.target.closest('.jr-datewrap')) $('jrCal').hidden=true; });
+  renderJrDate();
   (function(){
-    const d=new Date();
-    $('jrDate').innerHTML=(d.getMonth()+1)+'월 '+d.getDate()+'일 <small>'+WD[d.getDay()]+'요일 · '+d.getFullYear()+'</small>';
     try{ const w=localStorage.getItem('presence_journal_who'); if(w) $('jrWho').value=w; }catch(e){}
     $('jrWho').onchange=()=>{ try{localStorage.setItem('presence_journal_who',$('jrWho').value);}catch(e){} };
   })();
@@ -526,9 +584,8 @@
   $('jrSave').onclick=()=>{
     const text=$('jrText').value.trim(), title=$('jrTitle').value.trim();
     if(!text&&!jrPics.length){ jsay('오늘의 이야기나 사진을 담아주세요',0); return; }
-    const now=new Date(Date.now()-new Date().getTimezoneOffset()*60000);
     const rec={title, text, who:$('jrWho').value, emo:selEmo, sits:selSits,
-      pics:jrPics, date:now.toISOString().slice(0,10), t:Date.now()};
+      pics:jrPics, date:jrFmt(jrSel), t:Date.now()};
     $('jrSave').disabled=true; jsay('기록 저장 중…',1);
     fetch(FBJ+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)})
       .then(r=>r.json()).then(res=>{
@@ -536,6 +593,7 @@
         if(res&&res.name){ journal[res.name]=rec;
           $('jrTitle').value=''; $('jrText').value=''; selEmo=''; selSits=[]; jrPics=[];
           drawEmos(); drawSits(); drawPics(); renderJr();
+          jrSel=new Date(); jrView=null; renderJrDate();
           jsay('오늘이 기록됐어요 — 팀 모두가 볼 수 있습니다 📖',1);
         } else jsay('저장 실패',0);
       }).catch(()=>{ $('jrSave').disabled=false; jsay('저장 실패 — 네트워크 확인',0); });
