@@ -413,6 +413,7 @@
     {t:'재영의 서재',u:'library.html',e:'📚',g:'PAGE',k:'서재 책 라이브러리 독서'},
     {t:'PRESENCE 워크북',u:'https://presence.co.kr',e:'🌳',g:'LINK',k:'워크북 팀 먹이 컴페티션'},
     {t:'맛도사 · MATDOSA',u:'https://jaeyoung5178-bot.github.io/matdosa.github.io/',e:'🍜',g:'LINK',k:'맛도사 맛집'},
+    {t:'위페어 지도 (WePair Map)',u:'https://jaeyoung5178-bot.github.io/wepair-map/',e:'🚗',g:'LINK',k:'위페어 wepair 지도 맵 공업사 정착 필드 동선 테스터'},
     {t:'옥스팜 피치카드',u:'https://jaeyoung5178-bot.github.io/oxfam-pitch/',e:'🎤',g:'PITCH',k:'옥스팜 피치 피치카드 oxfam pitch 세일즈 클로징 스크립트 후원'},
     {t:'위페어 피치카드',u:'https://jaeyoung5178-bot.github.io/wepair-pitch/',e:'🎤',g:'PITCH',k:'위페어 피치 피치카드 wepair pitch 세일즈 공업사 스크립트'}
   ];
