@@ -216,9 +216,32 @@
   var lb=document.createElement('div'); lb.id='pdl-lb';
   lb.innerHTML='<img alt="presence photo"><div id="pdl-bar">'
     +'<a class="pdl-btn main" id="pdl-save" download>⬇ 이 사진 저장</a>'
+    +'<button class="pdl-btn" id="pdl-del" type="button" style="display:none">🗑 필름에서 빼기</button>'
     +'<button class="pdl-btn" id="pdl-close" type="button">✕ 닫기</button></div>';
   document.body.appendChild(lb);
   var lbImg=lb.querySelector('img'), saveA=$('pdl-save');
+  var delBtn=$('pdl-del'), curSrc=null, HIDDEN={};
+  var FBH=FB.replace('hub_photos','hub_hidden');
+  function h32(x){var h=5381;for(var i=0;i<x.length;i++){h=((h<<5)+h+x.charCodeAt(i))|0;}return (h>>>0).toString(36);}
+  function applyHidden(){
+    document.querySelectorAll('.frame img').forEach(function(im){
+      if(im.closest('#pdl-lb'))return;
+      if(HIDDEN[h32(im.src)]){var f=im.closest('.frame'); if(f)f.remove();}
+    });
+  }
+  fetch(FBH+'.json').then(function(r){return r.json();}).then(function(d){HIDDEN=d||{};applyHidden();setInterval(applyHidden,2500);}).catch(function(){});
+  delBtn.onclick=function(){
+    if(!isAdmin()||!curSrc)return;
+    if(!confirm('이 사진을 필름에서 뺄까요? (모든 기기에서 사라져요)'))return;
+    var k=h32(curSrc);
+    HIDDEN[k]={t:Date.now()};
+    fetch(FBH+'/'+k+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({t:Date.now()})}).catch(function(){});
+    fetch(FB+'.json').then(function(r){return r.json();}).then(function(d){
+      d=d||{};
+      Object.keys(d).forEach(function(key){ if(d[key]&&d[key].b64===curSrc){ fetch(FB+'/'+key+'.json',{method:'DELETE'}); } });
+    }).catch(function(){});
+    applyHidden(); lb.classList.remove('on');
+  };
 
   function stamp(){ var d=new Date(); return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }
   function extOf(src){ var m=/^data:image\/(\w+)/.exec(src); var e=m?m[1]:'jpeg'; return e==='jpeg'?'jpg':e; }
@@ -243,6 +266,7 @@
     var idx=allImgs().indexOf(img.src);
     saveA.href=img.src;
     saveA.setAttribute('download','presence-'+stamp()+'-'+String((idx<0?0:idx)+1).padStart(3,'0')+'.'+extOf(img.src));
+    curSrc=img.src; delBtn.style.display=isAdmin()?'inline-block':'none';
     lb.classList.add('on');
   }, true);
   lb.addEventListener('click', function(e){ if(e.target===lb) lb.classList.remove('on'); });
