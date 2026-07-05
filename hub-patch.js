@@ -413,7 +413,7 @@
     {t:'재영의 서재',u:'library.html',e:'📚',g:'PAGE',k:'서재 책 라이브러리 독서'},
     {t:'PRESENCE 워크북',u:'https://presence.co.kr',e:'🌳',g:'LINK',k:'워크북 팀 먹이 컴페티션'},
     {t:'맛도사 · MATDOSA',u:'https://jaeyoung5178-bot.github.io/matdosa.github.io/',e:'🍜',g:'LINK',k:'맛도사 맛집'},
-    {t:'위페어 백오피스 (WePair)',u:'https://sales.wepair.kr/salesworks',e:'🚗',g:'LINK',k:'위페어 wepair 백오피스 공업사 보험 청구 세일즈웍스 테스터 정착'}
+    {t:'위페어 지도 (WePair Map)',u:'https://jaeyoung5178-bot.github.io/wepair-map/',e:'🚗',g:'LINK',k:'위페어 wepair 지도 맵 공업사 정착 필드 동선 테스터'}
   ];
   var ALIAS={'topic-grasp':'그랩 grasp 잡기 스타핑 스타퍼','topic-objection':'오브젝션 거절 반론 objection','topic-training':'트레이닝 교육 training','topic-howwerun':'운영 팀운영 how we run','topic-nozero200':'노제로 200 nozero','topic-nozero300':'노제로 300 nozero','topic-onboarding':'온보딩 신입 onboarding','topic-steady':'꾸준 스테디 steady 유지','recap-2026-04':'리캡 4월 recap'};
   var topics=null, recaps=null, loading=false;
