@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRESENCE — MEMO & JOURNAL</title>
+<title>PRESENCE — 메모 · 기록노트 · 액션플랜</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -36,18 +36,21 @@
   .nb:hover{border-color:var(--green);color:#fff;}
   .nb.hub{border-color:var(--amber-dim);}
 
-  /* ===== 메모 ↔ 기록노트 전환 ===== */
-  .seg{position:relative;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);
+  /* ===== 메모 ↔ 기록노트 ↔ 액션플랜 전환 ===== */
+  .seg{position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line);
     border-radius:30px;background:rgba(22,20,15,.85);margin-bottom:20px;overflow:hidden;}
-  .seg .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 8px);border-radius:26px;
+  .seg .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc(33.333% - 8px);border-radius:26px;
     background:linear-gradient(160deg,#3fb98a,#2b8a66);transition:transform .38s cubic-bezier(.6,.05,.2,1);
     box-shadow:0 4px 16px rgba(56,163,122,.35);}
   .seg.p1 .ind{transform:translateX(calc(100% + 8px));background:linear-gradient(160deg,#e8b466,#c99549);
     box-shadow:0 4px 16px rgba(232,180,102,.35);}
+  .seg.p2 .ind{transform:translateX(calc(200% + 16px));background:linear-gradient(160deg,#6f9ce6,#3f6cb8);
+    box-shadow:0 4px 16px rgba(95,143,224,.35);}
   .seg button{position:relative;z-index:1;background:none;border:none;color:var(--smoke);cursor:pointer;
     padding:12px 0;font-family:inherit;font-size:15px;letter-spacing:.06em;transition:color .3s;}
   .seg button.on{color:#0d0d0f;font-weight:700;}
   .seg .s-ico{margin-right:.4em;}
+  @media(max-width:420px){ .seg button{font-size:13.5px;} .seg .s-ico{margin-right:.15em;} }
 
   .pages{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
     scrollbar-width:none;gap:0;margin:0 -20px;}
@@ -169,8 +172,64 @@
   .lb.open{display:flex;}
   .lb img{max-width:100%;max-height:100%;border:6px solid #fff;box-shadow:0 20px 80px rgba(0,0,0,.8);}
 
+  /* ===== 액션플랜 (클린 카드 보드) ===== */
+  .ap{font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",-apple-system,sans-serif;}
+  .ap-card{border:1px solid var(--line);border-radius:14px;background:rgba(22,20,15,.9);padding:15px 16px;
+    margin-bottom:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .ap-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;}
+  .ap-label{font-size:13px;font-weight:800;color:var(--cream);}
+  .ap-num{font-size:13px;font-weight:800;color:var(--amber);}
+  .ap-bar{height:10px;background:#111009;border-radius:6px;overflow:hidden;}
+  .ap-fill{height:100%;width:0%;border-radius:6px;transition:width .4s ease;
+    background:linear-gradient(90deg,var(--amber-dim),var(--amber));}
+  .ap-add{display:flex;gap:8px;flex-wrap:wrap;}
+  .ap-add input[type=text]{flex:1 1 200px;border:1px solid var(--line);border-radius:10px;background:var(--ink);
+    color:var(--cream);padding:11px 13px;font-size:14.5px;outline:none;font-family:inherit;transition:.25s;}
+  .ap-add input[type=text]:focus{border-color:var(--amber-dim);}
+  .ap-add input::placeholder{color:var(--smoke);}
+  .ap-add select{border:1px solid var(--line);border-radius:10px;background:var(--ink);color:var(--cream);
+    padding:11px 8px;font-size:13.5px;outline:none;font-family:inherit;}
+  .ap-add button{background:var(--amber);color:#141310;border:none;border-radius:10px;padding:11px 20px;
+    font-size:14.5px;font-weight:800;cursor:pointer;transition:.25s;font-family:inherit;}
+  .ap-add button:hover{filter:brightness(1.1);}
+  .ap-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 14px;}
+  .ap-tab{border:1px solid var(--line);background:rgba(22,20,15,.85);border-radius:999px;
+    padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--smoke);cursor:pointer;transition:.25s;font-family:inherit;}
+  .ap-tab:hover{color:var(--cream);}
+  .ap-tab.active{background:var(--cream);color:#141310;border-color:var(--cream);}
+  .ap-list{display:flex;flex-direction:column;gap:10px;}
+  .ap-item{display:flex;align-items:flex-start;gap:12px;background:var(--film);border:1px solid var(--line);
+    border-radius:14px;padding:14px 15px;transition:.25s;}
+  .ap-item:hover{border-color:var(--amber-dim);}
+  .ap-item.done{opacity:.5;}
+  .ap-item.done .ap-text{text-decoration:line-through;text-decoration-color:var(--amber);}
+  .ap-chk{width:22px;height:22px;flex:none;margin-top:2px;cursor:pointer;background:var(--ink);
+    border:1.5px solid var(--line);border-radius:7px;color:#141310;font-size:13px;line-height:1;
+    display:flex;align-items:center;justify-content:center;transition:.25s;}
+  .ap-chk:hover{border-color:var(--amber);}
+  .ap-item.done .ap-chk{background:var(--amber);border-color:var(--amber);}
+  .ap-body{flex:1;min-width:0;}
+  .ap-text{font-size:14.5px;line-height:1.6;color:var(--cream);font-weight:500;}
+  .ap-meta{display:flex;align-items:center;gap:9px;margin-top:8px;}
+  .ap-badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:8px;
+    color:var(--amber);background:rgba(232,180,102,.13);}
+  .ap-badge.c-field{color:#54c496;background:rgba(56,163,122,.15);}
+  .ap-badge.c-wepair{color:#7ea6ec;background:rgba(95,143,224,.14);}
+  .ap-badge.c-present{color:#bb95e0;background:rgba(167,123,212,.14);}
+  .ap-badge.c-edu{color:#e6a967;background:rgba(221,143,62,.14);}
+  .ap-badge.c-recruit{color:#6fc4b5;background:rgba(79,174,158,.14);}
+  .ap-badge.c-etc{color:var(--smoke);background:rgba(111,106,96,.15);}
+  .ap-date{font-size:11.5px;color:var(--smoke);font-weight:600;}
+  .ap-del{background:none;border:none;color:var(--smoke);font-size:17px;cursor:pointer;
+    padding:2px 5px;line-height:1;transition:.2s;flex:none;}
+  .ap-del:hover{color:var(--red);}
+  .ap-empty{border:1.5px dashed var(--line);border-radius:14px;padding:38px 16px;text-align:center;
+    color:var(--smoke);font-size:13.5px;}
+  .ap-foot{margin-top:22px;text-align:center;font-size:12px;color:var(--smoke);line-height:1.9;}
+
   @media(max-width:480px){ .wrap{padding:18px 12px 50px;} .brand h1{font-size:18px;}
-    .pages{margin:0 -12px;} .page{padding:0 12px;} .jr-text{font-size:17px;} }
+    .pages{margin:0 -12px;} .page{padding:0 12px;} .jr-text{font-size:17px;}
+    .ap-add select{flex:1 1 40%;} .ap-add button{flex:1 1 30%;} }
 </style>
 </head>
 <body>
@@ -187,12 +246,11 @@
       </svg>
       <div class="brand">
         <div class="kicker">PRESENCE · PERSONAL</div>
-        <h1>Presence, <em>memo &amp; journal</em></h1>
+        <h1>Presence, <em>memo · journal · plan</em></h1>
       </div>
     </div>
     <nav class="navbtns">
       <a class="nb hub" href="index.html">◂ 허브</a>
-      <a class="nb" href="action-plan.html">액션플랜</a>
       <a class="nb" href="presence-record.html">FIELD RECORD</a>
     </nav>
   </header>
@@ -201,6 +259,7 @@
     <div class="ind"></div>
     <button id="segMemo" class="on"><span class="s-ico">✏️</span>메모</button>
     <button id="segJr"><span class="s-ico">📖</span>기록노트</button>
+    <button id="segPlan"><span class="s-ico">✅</span>액션플랜</button>
   </div>
 
   <div class="pages" id="pages">
@@ -267,6 +326,39 @@
       <div id="jrList"><div class="empty">불러오는 중…</div></div>
     </div>
 
+    <!-- ============ PAGE 3 : 액션플랜 ============ -->
+    <div class="page ap" id="pagePlan">
+      <div class="ap-card">
+        <div class="ap-top">
+          <span class="ap-label">달성률</span>
+          <span class="ap-num" id="pNum">0 / 0</span>
+        </div>
+        <div class="ap-bar"><div class="ap-fill" id="pFill"></div></div>
+      </div>
+
+      <div class="ap-card ap-add" style="display:flex;">
+        <input type="text" id="newText" placeholder="새 액션플랜을 입력하세요" maxlength="200">
+        <select id="newCat">
+          <option value="field">현장 운영</option>
+          <option value="wepair">위페어</option>
+          <option value="present">발표·자료</option>
+          <option value="edu">교육</option>
+          <option value="recruit">리쿠르팅</option>
+          <option value="team">팀 운영</option>
+          <option value="etc">기타</option>
+        </select>
+        <button id="addBtn">추가</button>
+      </div>
+
+      <div class="ap-tabs" id="planTabs"></div>
+      <div class="ap-list" id="planList"></div>
+
+      <div class="ap-foot">
+        채팅으로 액션플랜을 말씀해주시면 Claude가 이 보드에 추가해 드립니다.<br>
+        체크·추가·삭제 내역은 이 기기에 자동 저장됩니다.
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -284,15 +376,20 @@
 
   /* ===== 페이지 전환 (스와이프 + 토글) ===== */
   const pages=$('pages'), seg=$('seg');
-  function goto(i){ pages.scrollTo({left:i*pages.clientWidth, behavior:'smooth'}); }
+  function goto(i,instant){ pages.scrollTo({left:i*pages.clientWidth, behavior:instant?'auto':'smooth'}); }
   $('segMemo').onclick=()=>goto(0);
   $('segJr').onclick =()=>goto(1);
+  $('segPlan').onclick=()=>goto(2);
   pages.addEventListener('scroll',()=>{
     const i=Math.round(pages.scrollLeft/pages.clientWidth);
     seg.classList.toggle('p1', i===1);
+    seg.classList.toggle('p2', i===2);
     $('segMemo').classList.toggle('on', i===0);
     $('segJr').classList.toggle('on', i===1);
+    $('segPlan').classList.toggle('on', i===2);
   },{passive:true});
+  if(location.hash==='#plan'){ requestAnimationFrame(()=>goto(2,true)); }
+  if(location.hash==='#journal'){ requestAnimationFrame(()=>goto(1,true)); }
 
   /* ===== 메모 (기존 기능 유지) ===== */
   function drawTags(){
@@ -487,6 +584,120 @@
   }
   $('lb').onclick=()=>$('lb').classList.remove('open');
   loadJr();
+
+  /* ===== 액션플랜 (localStorage — 기존 데이터 그대로 이어짐) ===== */
+  (function(){
+    var LS_KEY='presence-actionplan-v1';
+    var SEED_KEY='presence-actionplan-seed-v1';
+
+    /* ── 여기에 새 액션플랜을 추가하면 방문 시 자동으로 목록에 합쳐집니다 (id는 중복 금지) ── */
+    var SEED=[
+      { id:'s-260704-1', cat:'team', text:'팀미팅 로테이션 운영: 재영 → 채영 → 윤경 → 예진 → 승학 순으로 월 1회 미팅 기회 주기. 순서 미리 공유하고, 담당자가 목표를 갖고 미팅을 어떻게 꾸려갈지 준비하도록 돕기' },
+      { id:'s-260704-2', cat:'team', text:'팀 목표 중간 점검: 수요일쯤 목표 달성률 공유 → 남은 목표 달성을 위한 액션 제안 → 미달성 시 이유 피드백 → 기준을 가지고 다음 목표 제시' },
+      { id:'s-260704-3', cat:'team', text:'팀원이 주관을 갖고 팀을 직접 운영해보는 경험 제공 + 운영 후 피드백과 성찰을 감정적이지 않게 하도록 돕기' },
+      { id:'s-260704-4', cat:'team', text:'성과 공유 방식 만들기: 첫 세일즈·첫 프로모션·첫 트립·첫 컴페티션 위닝 등 "우리는 할 수 있는 팀"임을 보여주는 성과 공유 양식/프로그램 기획하기' },
+      { id:'s-260704-5', cat:'team', text:'팀 문화 형성: 우리 팀의 문화가 무엇인지 정돈하고, 추구하는 문화를 모아 팀원들과 함께 이야기하는 시간을 어떻게 만들지 기획하기' }
+    ];
+
+    var CATS={
+      field:  {label:'현장 운영', cls:'c-field'},
+      wepair: {label:'위페어',    cls:'c-wepair'},
+      present:{label:'발표·자료', cls:'c-present'},
+      edu:    {label:'교육',      cls:'c-edu'},
+      recruit:{label:'리쿠르팅',  cls:'c-recruit'},
+      team:   {label:'팀 운영',   cls:''},
+      etc:    {label:'기타',      cls:'c-etc'}
+    };
+
+    var filter=localStorage.getItem('presence-actionplan-filter')||'all';
+
+    function load(){ try{return JSON.parse(localStorage.getItem(LS_KEY))||[];}catch(e){return [];} }
+    function save(a){ localStorage.setItem(LS_KEY, JSON.stringify(a)); }
+
+    function mergeSeed(items){
+      var applied=[];
+      try{applied=JSON.parse(localStorage.getItem(SEED_KEY))||[];}catch(e){}
+      var changed=false;
+      SEED.forEach(function(s){
+        if(applied.indexOf(s.id)===-1){
+          items.push({id:s.id, text:s.text, cat:s.cat, done:false, ts:Date.now()});
+          applied.push(s.id); changed=true;
+        }
+      });
+      if(changed){ localStorage.setItem(SEED_KEY, JSON.stringify(applied)); save(items); }
+      return items;
+    }
+
+    var items=mergeSeed(load());
+
+    function fmt(ts){ var d=new Date(ts); return (d.getMonth()+1)+'/'+d.getDate(); }
+
+    function render(){
+      var tabsEl=document.getElementById('planTabs');
+      tabsEl.innerHTML='';
+      var defs=[['all','전체']].concat(Object.keys(CATS).map(function(k){return [k,CATS[k].label];}));
+      defs.forEach(function(d){
+        var b=document.createElement('button');
+        b.className='ap-tab'+(filter===d[0]?' active':'');
+        b.textContent=d[1];
+        b.onclick=function(){ filter=d[0]; localStorage.setItem('presence-actionplan-filter',filter); render(); };
+        tabsEl.appendChild(b);
+      });
+
+      var total=items.length, done=items.filter(function(i){return i.done;}).length;
+      document.getElementById('pNum').textContent=done+' / '+total;
+      document.getElementById('pFill').style.width=(total?Math.round(done/total*100):0)+'%';
+
+      var listEl=document.getElementById('planList');
+      listEl.innerHTML='';
+      var view=items.filter(function(i){return filter==='all'||i.cat===filter;});
+      view.sort(function(a,b){ if(a.done!==b.done)return a.done?1:-1; return b.ts-a.ts; });
+
+      if(!view.length){
+        var e=document.createElement('div');
+        e.className='ap-empty';
+        e.textContent='아직 액션플랜이 없어요 — 위에서 추가해 보세요.';
+        listEl.appendChild(e);
+        return;
+      }
+
+      view.forEach(function(it){
+        var cat=CATS[it.cat]||CATS.etc;
+        var row=document.createElement('div'); row.className='ap-item'+(it.done?' done':'');
+
+        var chk=document.createElement('button'); chk.className='ap-chk';
+        chk.textContent=it.done?'✓':''; chk.title=it.done?'미완료로 되돌리기':'달성 체크';
+        chk.onclick=function(){ it.done=!it.done; save(items); render(); };
+
+        var body=document.createElement('div'); body.className='ap-body';
+        var t=document.createElement('div'); t.className='ap-text'; t.textContent=it.text;
+        var meta=document.createElement('div'); meta.className='ap-meta';
+        var badge=document.createElement('span'); badge.className='ap-badge '+cat.cls; badge.textContent=cat.label;
+        var date=document.createElement('span'); date.className='ap-date'; date.textContent=fmt(it.ts);
+        meta.appendChild(badge); meta.appendChild(date);
+        body.appendChild(t); body.appendChild(meta);
+
+        var del=document.createElement('button'); del.className='ap-del'; del.innerHTML='&times;'; del.title='삭제';
+        del.onclick=function(){ if(!confirm('이 액션플랜을 삭제할까요?'))return;
+          items=items.filter(function(x){return x.id!==it.id;}); save(items); render(); };
+
+        row.appendChild(chk); row.appendChild(body); row.appendChild(del);
+        listEl.appendChild(row);
+      });
+    }
+
+    function addItem(){
+      var input=document.getElementById('newText');
+      var text=input.value.trim();
+      if(!text)return;
+      items.push({id:'u-'+Date.now(), text:text, cat:document.getElementById('newCat').value, done:false, ts:Date.now()});
+      save(items); input.value=''; render();
+    }
+    document.getElementById('addBtn').onclick=addItem;
+    document.getElementById('newText').addEventListener('keydown',function(e){ if(e.key==='Enter')addItem(); });
+
+    render();
+  })();
 </script>
 
 <!-- PRESENCE THEME TOGGLE -->

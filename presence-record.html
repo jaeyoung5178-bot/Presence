@@ -71,6 +71,9 @@
   .sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);
     display:flex;align-items:center;gap:14px;margin:26px 0 12px;}
   .sect::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent);}
+  .sect.tgl{cursor:pointer;user-select:none;}
+  .sect.tgl:hover{color:#f5c888;}
+  .sect .arrow{color:var(--smoke);letter-spacing:.14em;}
 
   .form{border:1px solid rgba(56,163,122,.35);border-radius:6px;background:rgba(22,20,15,.9);padding:18px;}
   .frow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
@@ -104,6 +107,7 @@
   .chip.HORN{color:#4fae9e;border-color:#4fae9e55;} .chip.TEN{color:#5f8fe0;border-color:#5f8fe055;}
   .chip.ZERO{color:var(--red);border-color:#c05b4d55;}
   .chip.SHEET{color:var(--smoke);} .chip.WORK{color:var(--green);border-color:rgba(56,163,122,.4);}
+  .chip.TEAM{color:var(--blue);border-color:#5f8fe055;}
   .chip.REC{color:var(--amber);border-color:rgba(232,180,102,.4);}
   .chip.open{color:var(--blue);border-color:#5f8fe055;} .chip.pass{color:var(--green);border-color:rgba(56,163,122,.4);}
   .chip.reject{color:var(--red);border-color:#c05b4d55;}
@@ -152,7 +156,7 @@
       <a class="nb hub" href="index.html">◂ 허브</a>
       <a class="nb" href="https://presence.co.kr" target="_blank" rel="noopener">WORK BOOK</a>
       <a class="nb" href="https://jaeyoung5178-bot.github.io/matdosa.github.io/" target="_blank" rel="noopener">맛도사</a>
-    <a class="nb" href="memo.html">메모</a>
+    <a class="nb" href="memo.html">메모 &amp; 액션플랜</a>
     </nav>
   </header>
 
@@ -200,7 +204,8 @@
     <div class="msg" id="msg"></div>
   </div>
 
-  <div class="sect">REJECT NOTE — 후원 안정성 추적</div>
+  <div class="sect tgl" id="rnToggle">REJECT NOTE — 후원 안정성 추적&nbsp;<span class="arrow" id="rnArrow">▾ 접기</span></div>
+  <div id="rnWrap">
   <div class="rnstats">
     <div class="rnstat"><div class="n" id="rnTot">0</div><div class="l">전체</div></div>
     <div class="rnstat"><div class="n" id="rnOpen" style="color:var(--blue)">0</div><div class="l">OPEN</div></div>
@@ -208,29 +213,35 @@
     <div class="rnstat"><div class="n" id="rnRej" style="color:var(--red)">0</div><div class="l">REJECT</div></div>
   </div>
   <details class="rn">
-    <summary>➕ 후원자 기록 추가 (리젝노트)</summary>
+    <summary>➕ 후원자 기록 추가</summary>
     <div class="inner">
       <div class="frow">
-        <div class="fld"><label>클라이언트</label><select id="rnClient"><option>옥스팜</option><option>유니세프</option><option>위페어</option></select></div>
+        <div class="fld"><label>클라이언트</label><select id="rnClient"><option>옥스팜</option><option>유니세프</option><option>위페어</option><option value="__etc">기타(직접입력)</option></select>
+          <input type="text" id="rnClientEtc" placeholder="직접 입력" style="display:none"></div>
         <div class="fld"><label>구분</label><select id="rnCity"><option>시티</option><option>로드</option></select></div>
-        <div class="fld"><label>채널</label><select id="rnChan"><option>스트릿</option><option>이벤트</option><option>B2B</option></select></div>
-        <div class="fld"><label>후원번호 (SWP·숫자만)</label><input type="text" id="rnCode" inputmode="numeric" placeholder="26034329"></div>
+        <div class="fld"><label>채널</label><select id="rnChan"><option>스트릿</option><option>이벤트</option><option value="B2B">비투비</option></select></div>
+        <div class="fld"><label>후원번호 (숫자만 — SWP 자동)</label><input type="text" id="rnCode" inputmode="numeric" placeholder="26034329"></div>
       </div>
       <div class="frow" style="margin-top:10px">
-        <div class="fld"><label>금액</label><select id="rnAmt"><option>2만</option><option selected>3만</option><option>4만</option><option>5만</option><option>7만</option><option>10만</option></select></div>
+        <div class="fld"><label>금액</label><select id="rnAmt"><option>2만</option><option selected>3만</option><option>4만</option><option>5만</option><option>7만</option><option>10만</option><option value="__etc">기타(직접입력)</option></select>
+          <input type="text" id="rnAmtEtc" placeholder="직접 입력 (예: 1만)" style="display:none;width:120px"></div>
         <div class="fld"><label>결제</label><select id="rnPay"><option>계좌</option><option>카드</option></select></div>
-        <div class="fld"><label>주기</label><select id="rnCycle"><option>매월</option><option>6개월</option><option>12개월</option></select></div>
+        <div class="fld"><label>후원 주기</label><select id="rnCycle"><option>매월</option><option>6개월</option><option>12개월</option></select></div>
         <div class="fld"><label>출생연도</label><input type="text" id="rnBirth" inputmode="numeric" placeholder="1999" style="width:90px"></div>
         <div class="fld"><label>성별</label><select id="rnGen"><option>여</option><option>남</option></select></div>
+        <div class="fld"><label>담당자</label><input type="text" id="rnOwner" value="임재영" readonly style="width:100px;color:var(--smoke)"></div>
       </div>
-      <div class="fld" style="margin-top:10px"><label>오브젝션 (클릭해서 선택)</label>
-        <div class="chips" id="rnObj"></div></div>
+      <div class="fld" style="margin-top:10px"><label>오브젝션 (클릭해서 추가 · 여러 개)</label>
+        <div class="chips" id="rnObj"></div>
+        <div class="frow" id="rnObjEtcRow" style="display:none">
+          <input type="text" id="rnObjEtc" placeholder="오브젝션 직접 입력 후 Enter" style="flex:1;min-width:180px">
+        </div></div>
       <div class="frow" style="margin-top:6px">
         <div class="fld" style="flex:1"><label>장소</label><input type="text" id="rnPlace" placeholder="스타벅스 부평역점" style="width:100%"></div>
       </div>
       <div class="fld" style="margin-top:10px"><label>특이사항·메모</label><textarea id="rnMemo" placeholder="후원 사연, 인상, 기부금영수증 여부 등"></textarea></div>
       <div class="frow" style="margin-top:12px;align-items:center">
-        <button class="save" id="rnSave">리젝노트 저장</button>
+        <button class="save" id="rnSave">기록 저장</button>
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--smoke);cursor:pointer">
           <input type="checkbox" id="rnPlus" checked> 오늘 후원자 +1 함께 기록</label>
       </div>
@@ -243,6 +254,7 @@
       <tbody id="rnList"><tr><td class="mono" colspan="7">불러오는 중…</td></tr></tbody>
     </table>
   </div>
+  </div><!-- /rnWrap -->
 
   <div class="sect">HISTORY — 전체 기록 (연도 · 월 · 일)</div>
   <div class="chips" id="years"></div>
@@ -262,6 +274,18 @@
   </div>
   <div class="src" id="src">DATA · SHEET <span id="s1">…</span> · FIREBASE <span id="s2">…</span> · YEAR TABS <span id="s3">대기</span> · SYNC v6</div>
 </div>
+
+<script>
+/* ═══════ 후원 안정성 추적 접기/펼치기 ═══════ */
+(function(){
+  var K='presence-rn-open';
+  var w=document.getElementById('rnWrap'), h=document.getElementById('rnToggle'), a=document.getElementById('rnArrow');
+  function ap(o){ w.style.display=o?'':'none'; a.textContent=o?'▾ 접기':'▸ 펼치기'; }
+  var o=true; try{o=localStorage.getItem(K)!=='0';}catch(e){}
+  ap(o);
+  h.addEventListener('click',function(){ o=!o; try{localStorage.setItem(K,o?'1':'0');}catch(e){} ap(o); });
+})();
+</script>
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -539,27 +563,47 @@
   };
 
   /* ═══════ 리젝노트 ═══════ */
-  let selObj=[];
+  let selObj=[], customObj=[];
   function drawObj(){
     $('rnObj').innerHTML='';
-    for(const o of OBJ){
+    for(const o of [...OBJ,...customObj]){
       const b=document.createElement('button'); b.type='button';
       b.className='pick'+(selObj.includes(o)?' on':''); b.textContent=o;
       b.onclick=()=>{selObj=selObj.includes(o)?selObj.filter(x=>x!==o):[...selObj,o];drawObj();};
       $('rnObj').appendChild(b);}
+    const etc=document.createElement('button'); etc.type='button'; etc.className='pick';
+    etc.textContent='기타 직접입력';
+    etc.onclick=()=>{const row=$('rnObjEtcRow');row.style.display=row.style.display==='none'?'flex':'none';
+      if(row.style.display==='flex')$('rnObjEtc').focus();};
+    $('rnObj').appendChild(etc);
   }
   drawObj();
+  $('rnObjEtc').addEventListener('keydown',e=>{
+    if(e.key!=='Enter')return;
+    e.preventDefault();
+    const v=$('rnObjEtc').value.trim(); if(!v)return;
+    if(!customObj.includes(v)&&!OBJ.includes(v))customObj.push(v);
+    if(!selObj.includes(v))selObj.push(v);
+    $('rnObjEtc').value=''; drawObj();
+  });
+  /* 셀렉트 기타(직접입력) 토글 */
+  const etcPair=(selId,inpId)=>{$(selId).addEventListener('change',()=>{
+    $(inpId).style.display=$(selId).value==='__etc'?'':'none';});};
+  etcPair('rnClient','rnClientEtc'); etcPair('rnAmt','rnAmtEtc');
+
   $('rnSave').onclick=()=>{
     if(!db){$('rnMsg').textContent='FIREBASE 연결 없음';$('rnMsg').className='msg err';return;}
     const g=id=>$(id).value.trim();
     const codeNum=g('rnCode').replace(/[^0-9]/g,'');
+    const client=$('rnClient').value==='__etc'?(g('rnClientEtc')||'기타'):g('rnClient');
+    const amount=$('rnAmt').value==='__etc'?(g('rnAmtEtc')||'기타'):g('rnAmt');
     const r={id:'rn_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),t:Date.now(),
-      date:today,client:g('rnClient'),city:g('rnCity'),chan:g('rnChan'),
-      code:codeNum?('SWP'+codeNum):'',amount:g('rnAmt'),pay:g('rnPay'),cycle:g('rnCycle'),
+      date:today,client:client,city:g('rnCity'),chan:$('rnChan').value,
+      code:codeNum?('SWP'+codeNum):'',amount:amount,pay:g('rnPay'),cycle:g('rnCycle'),
       birth:g('rnBirth'),gender:g('rnGen'),owner:ME,place:g('rnPlace'),obj:selObj.slice(),
       memo:g('rnMemo'),status:'open',rejReason:'',rejProb:'',by:ME,byUid:MYUID};
     set(ref(db,RNPATH+'/'+r.id),r).then(()=>{
-      $('rnMsg').textContent='리젝노트 저장 완료 — 워크북에서도 보입니다';$('rnMsg').className='msg ok';
+      $('rnMsg').textContent='기록 저장 완료 — 워크북 리젝노트에서도 보입니다';$('rnMsg').className='msg ok';
       $('rnCode').value='';$('rnBirth').value='';$('rnPlace').value='';$('rnMemo').value='';selObj=[];drawObj();
       if($('rnPlus').checked) $('quick1').click();
     }).catch(e=>{$('rnMsg').textContent='실패: '+e.message;$('rnMsg').className='msg err';});
