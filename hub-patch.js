@@ -5,7 +5,7 @@
 (function(){
   'use strict';
   var FB   = 'https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/hub_photos';
-  var PASS = '5178';                    // 관리자 비밀번호 (변경 원하면 클비서에게)
+  var PASS = '0001';                    // 관리자 비밀번호 (변경 원하면 클비서에게)
   var KEY  = 'presence_hub_admin';      // localStorage 관리자 플래그
 
   function isAdmin(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
