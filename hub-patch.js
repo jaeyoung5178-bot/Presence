@@ -414,6 +414,7 @@
     {t:'PRESENCE 워크북',u:'https://presence.co.kr',e:'🌳',g:'LINK',k:'워크북 팀 먹이 컴페티션'},
     {t:'맛도사 · MATDOSA',u:'https://jaeyoung5178-bot.github.io/matdosa.github.io/',e:'🍜',g:'LINK',k:'맛도사 맛집'},
     {t:'위페어 지도 (WePair Map)',u:'https://jaeyoung5178-bot.github.io/wepair-map/',e:'🚗',g:'LINK',k:'위페어 wepair 지도 맵 공업사 정착 필드 동선 테스터'},
+    {t:'섹터리더 스탠다드 가이드 (SSG)',u:'https://jaeyoung5178-bot.github.io/Pesentation/',e:'🧭',g:'LINK',k:'ssg 섹터리더 스탠다드 가이드 sector leader standard guide 리더 육성 리더십 팀 키우기'},
     {t:'옥스팜 피치카드',u:'https://jaeyoung5178-bot.github.io/oxfam-pitch/',e:'🎤',g:'PITCH',k:'옥스팜 피치 피치카드 oxfam pitch 세일즈 클로징 스크립트 후원'},
     {t:'위페어 피치카드',u:'https://jaeyoung5178-bot.github.io/wepair-pitch/',e:'🎤',g:'PITCH',k:'위페어 피치 피치카드 wepair pitch 세일즈 공업사 스크립트'}
   ];
@@ -467,7 +468,7 @@
     rs.forEach(function(x,i){
       var it=x[1];
       var a=document.createElement('a'); a.className='hs-it'+(i===0?' sel':''); a.href=it.u;
-      if(it.g==='LINK'||it.g==='RECAP'){a.target='_blank';a.rel='noopener';}
+      if(it.g==='LINK'||it.g==='RECAP'||it.g==='PITCH'){a.target='_blank';a.rel='noopener';}
       a.innerHTML='<span class="hs-emo">'+it.e+'</span><span class="hs-t"></span><span class="hs-tag">'+it.g+'</span>';
       a.querySelector('.hs-t').textContent=it.t;
       LIST.appendChild(a);
