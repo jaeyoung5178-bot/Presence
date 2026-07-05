@@ -244,6 +244,11 @@
   .fmt-ex{margin-top:7px;color:#333;background:#fff;border:1px dashed #bcd6a8;border-radius:6px;padding:7px 9px}
   .fmt-ex b{color:var(--red)}
   .fmt-warn{margin-top:7px;color:#c1272d;font-weight:700}
+  .idbar{background:#fff4f4;color:#8a1f1f;border-bottom:2px solid #f2c4c4;text-align:center;font-size:13px;font-weight:700;line-height:1.55;padding:10px 14px}
+  .idchip{display:inline-flex;align-items:center;background:#fff;border:1.5px solid #888;border-radius:6px;padding:2px 6px;margin:0 3px;color:#222;font-weight:800;letter-spacing:.5px;vertical-align:middle}
+  .idnum{background:#ffe14d;color:#c1272d;padding:1px 7px;margin-left:3px;border-radius:4px;box-shadow:0 0 0 2px #e53935;font-weight:900;letter-spacing:1px}
+  .code .idnum{margin-left:1px;padding:0 5px}
+  body.hints-off .idbar{display:none}
 </style>
 </head>
 <body>
@@ -255,6 +260,9 @@
   <label><input type="checkbox" id="hintToggle" checked> 코칭 힌트 표시</label>
   <span class="creator"><span class="st">⭐</span> 제작자 피스메이커 _ <b>임재영 리더</b> <span class="st">⭐</span></span>
   <span class="creator-note">⚠️ 이 페이지에는 제작자의 엄청난 노력이 들어가 있습니다. 함부로 퍼가거나 무단사용을 금합니다.</span>
+</div>
+<div class="idbar">
+  🪪 <b>내 ID 확인 필수</b> — 이 화면은 <span class="idchip">NM<span class="idnum">00178</span></span> 후원 페이지입니다. <b>OXFAM 홈페이지</b>나 <b>타인 ID</b>가 아닌, <u>반드시 본인 ID(NM) 넘버 페이지</u>에서 후원이 이뤄지도록 꼭 확인하세요!
 </div>
 
 <!-- ===================== 1페이지 : 정보 입력 ===================== -->
@@ -275,7 +283,7 @@
 
     <!-- 후원 정보 -->
     <div class="sec">
-      <div class="sec-h"><h2>후원 정보</h2><span class="code">NM00178</span></div>
+      <div class="sec-h"><h2>후원 정보</h2><span class="code">NM<span class="idnum">00178</span></span></div>
       <div class="rofield">F2F SW</div>
       <div class="rofield">정기</div>
       <div class="amts" id="amts">
