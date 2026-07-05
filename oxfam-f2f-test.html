@@ -249,11 +249,32 @@
   .idnum{background:#ffe14d;color:#c1272d;padding:1px 7px;margin-left:3px;border-radius:4px;box-shadow:0 0 0 2px #e53935;font-weight:900;letter-spacing:1px}
   .code .idnum{margin-left:1px;padding:0 5px}
   body.hints-off .idbar{display:none}
+  /* 코칭 끄면 실제 옥스팜과 동일하게 — 모든 코칭 요소 숨김 */
+  body.hints-off .flag{display:none}
+  body.hints-off .idbar{display:none}
+  body.hints-off .fmt-guide{display:none}
+  body.hints-off .rg-check{display:none}
+  .coach-fab{position:fixed;right:12px;bottom:16px;z-index:90;background:rgba(30,30,30,.82);color:#fff;border:none;border-radius:999px;padding:10px 15px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  .coach-fab.on{background:#c1272d}
+  /* 모바일: 실제 옥스팜처럼 각진 사각형 */
+  @media(max-width:560px){
+    .rofield{border-radius:0}
+    .amts button{border-radius:0;background:#efefef;border:1px solid #cfcfcf;color:#333}
+    .amts button.on{background:var(--red);border-color:var(--red);color:#fff}
+    .amts button.etc{background:#efefef;color:#8a8a8a}
+    .amts button.etc.on{background:var(--red);border-color:var(--red);color:#fff}
+    input[type=text],input[type=tel],input[type=email],input[type=password],select{border-radius:0}
+  }
+  /* 태블릿: 흰 카드 중앙 정렬 + 배경사진 양옆 (실제 옥스팜 태블릿) */
+  @media(min-width:561px) and (max-width:1100px){
+    .col{width:min(760px,74%);margin-left:auto;margin-right:auto}
+  }
 </style>
 </head>
 <body>
 <div class="pop-ov" id="popOv"><div class="pop"><div class="msg" id="popMsg"></div><div class="ok" id="popOk">확인</div></div></div>
 <div class="bgphoto-fallback"></div>
+<button class="coach-fab" id="coachFab">👁 코칭</button>
 <img class="bgphoto" src="https://cdn.donus.org/media-file/92C630D0-B61D-47FA-8A6E-1D9A93942751/page/45c9d96d-9528-48d5-b86c-afb5d4f8d67f.jpg" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">
 <div class="flag">
   <span>🟡 교육용 연습판 — 실제 신청·결제가 되지 않습니다</span>
@@ -602,7 +623,18 @@
   var $=function(s){return document.querySelector(s);};
 
   // 힌트 토글
-  $("#hintToggle").onchange=function(){document.body.classList.toggle("hints-off",!this.checked);};
+  function setHints(on){
+    document.body.classList.toggle("hints-off", !on);
+    var cb=$("#hintToggle"); if(cb) cb.checked=on;
+    var fb=$("#coachFab"); if(fb){ fb.textContent = on ? "👁 코칭 ON" : "👁 코칭 OFF"; fb.classList.toggle("on", on); }
+    try{ localStorage.setItem("pms_f2f_hints", on?"1":"0"); }catch(e){}
+  }
+  (function(){
+    var cb=$("#hintToggle"); if(cb) cb.onchange=function(){setHints(this.checked);};
+    var fb=$("#coachFab"); if(fb) fb.onclick=function(){ setHints(document.body.classList.contains("hints-off")); };
+    var saved=null; try{ saved=localStorage.getItem("pms_f2f_hints"); }catch(e){}
+    setHints(saved===null ? true : saved==="1");
+  })();
 
   function segify(wrapSel, cb){
     document.querySelectorAll(wrapSel+" button").forEach(function(b){
