@@ -286,6 +286,14 @@
     .frow .rc{width:100%}
     .tog{width:100%}
   }
+  /* [최종] 모바일 폼 행 강제 세로배치 + 입력칸/토글 100% (개인·단체 크기 통일) */
+  @media(max-width:560px){
+    .frow{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+    .frow>.rl{width:100%!important;padding-top:0!important}
+    .frow>.rc{width:100%!important;flex:0 0 auto!important}
+    .tog{width:100%!important;display:flex!important}
+    .tog button{flex:1 1 0!important;min-width:0!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
+  }
 </style>
 </head>
 <body>
