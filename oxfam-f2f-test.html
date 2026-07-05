@@ -29,6 +29,13 @@
     font-weight:700;font-size:12.5px;padding:6px 10px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
   .flag label{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-weight:600}
   .flag input{width:15px;height:15px}
+  .creator{display:inline-flex;align-items:center;gap:6px;font-size:14.5px;font-weight:800;color:#8a2b00;background:linear-gradient(100deg,#fff6d0,#ffe89a,#fff6d0);background-size:200% 100%;border:2px solid #e6a700;border-radius:999px;padding:5px 14px;box-shadow:0 2px 6px rgba(0,0,0,.2);letter-spacing:-.2px;animation:credShimmer 3s linear infinite}
+  .creator .st{font-size:19px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));animation:starPulse 1.6s ease-in-out infinite}
+  .creator b{color:#c1272d}
+  .creator-note{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:800;color:#a71e24;background:#fff;border:1.5px dashed #c1272d;border-radius:999px;padding:4px 12px;animation:notePulse 2s ease-in-out infinite}
+  @keyframes credShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  @keyframes starPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.35) rotate(12deg)}}
+  @keyframes notePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(193,39,45,0)}50%{transform:scale(1.04);box-shadow:0 0 10px rgba(193,39,45,.25)}}
 
   .col{width:min(668px,100%);margin-left:max(0px,calc(50% - 470px));padding:0 0 60px}
   @media(max-width:720px){.col{margin-left:0}}
@@ -210,6 +217,8 @@
 <div class="flag">
   <span>🟡 교육용 연습판 — 실제 신청·결제가 되지 않습니다</span>
   <label><input type="checkbox" id="hintToggle" checked> 코칭 힌트 표시</label>
+  <span class="creator"><span class="st">⭐</span> 제작자 피스메이커 _ <b>임재영 리더</b> <span class="st">⭐</span></span>
+  <span class="creator-note">💪 이 페이지에는 제작자의 노고가 잔뜩 들어가 있습니다 ✨</span>
 </div>
 
 <!-- ===================== 1페이지 : 정보 입력 ===================== -->
@@ -666,6 +675,7 @@
     if(![...ags].every(x=>x.checked)){popup("필수 약관에 모두 동의해주세요.");return;}     // 5) 동의
     if(!drawn){popup("서명을 완료해주세요.");return;}                     // 6) 서명
     $("#donorName").value = nameOk;
+    try{window.__logF2F&&window.__logF2F(nameOk);}catch(e){}
     $("#regAmt").textContent = "월 "+amount.toLocaleString("ko-KR")+" 원";
     show("screen2");
   };
@@ -739,6 +749,19 @@
   var restart=function(){location.reload();};
   $("#restart").onclick=restart;
   $("#restart2").onclick=restart;
+})();
+</script>
+<script>
+(function(){
+  var DB="https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app";
+  var dev=localStorage.getItem("pms_f2f_dev");
+  if(!dev){ dev="d"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem("pms_f2f_dev",dev); }
+  window.__logF2F=function(name){
+    try{
+      var body={name:name||"", ts:Date.now(), ref:document.referrer||"", url:location.href, dev:dev, ua:navigator.userAgent};
+      fetch(DB+"/f2f_test_log.json",{method:"POST",body:JSON.stringify(body)});
+    }catch(e){}
+  };
 })();
 </script>
 </body>

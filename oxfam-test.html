@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OXFAM 테스트링크 · PRESENCE</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+  :root{ --bg:#0d0e12; --bg2:#14161c; --card:#1a1d25; --ink:#f3efe6; --sub:#a7a294; --line:#2c313c; --line2:#3a4150; --green:#44841a; --gold:#e8c877; }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{ font-family:"Pretendard","Apple SD Gothic Neo",sans-serif; background:radial-gradient(1000px 500px at 50% -10%, #191c24, var(--bg) 60%); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; }
+  .wrap{max-width:560px; margin:0 auto; padding:24px 18px 70px;}
+  .back{color:var(--sub); text-decoration:none; font-size:14px; border:1px solid var(--line); padding:7px 12px; border-radius:999px; display:inline-block;}
+  .back:hover{color:var(--ink);}
+  .kicker{font-size:11px; letter-spacing:3px; color:var(--gold); font-weight:700; margin-top:20px;}
+  h1{font-size:26px; margin:10px 0 4px; letter-spacing:-.5px;}
+  .lead{color:var(--sub); font-size:14px; line-height:1.6; margin:0 0 24px;}
+
+  .cards{display:grid; gap:14px;}
+  .c{display:block; text-decoration:none; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:18px; padding:22px 20px; transition:.15s; position:relative; overflow:hidden;}
+  .c:hover{transform:translateY(-2px); border-color:var(--line2); background:#20242e;}
+  .c .ico{font-size:30px; margin-bottom:10px;}
+  .c .t{font-size:18px; font-weight:800; margin:0 0 4px;}
+  .c .d{font-size:13px; color:var(--sub); line-height:1.5; margin:0;}
+  .c .go{position:absolute; right:18px; bottom:18px; color:var(--sub); font-size:20px; transition:.15s;}
+  .c:hover .go{right:15px; color:var(--ink);}
+  .c.primary{background:linear-gradient(135deg,#1f3a12,#2c5019); border-color:#3a6322;}
+  .c.primary .d{color:#c7e3b0;}
+  .c.admin .t::after{content:"🔒 비번 필요"; font-size:11px; font-weight:600; color:var(--gold); background:rgba(232,200,119,.12); border:1px solid rgba(232,200,119,.3); border-radius:999px; padding:2px 8px; margin-left:8px; vertical-align:middle;}
+  .foot{margin-top:22px; font-size:12px; color:var(--sub); line-height:1.6; background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:14px 16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← 허브</a>
+  <div class="kicker">OXFAM · FACE TO FACE TEST</div>
+  <h1>OXFAM 테스트링크</h1>
+  <p class="lead">신입이 옥스팜 후원 안내를 <b>실제처럼 연습</b>하는 페이지와, 누가 참여했는지 확인하는 관리자 페이지입니다.</p>
+
+  <div class="cards">
+    <a class="c primary" href="oxfam-f2f-test.html" target="_blank" rel="noopener">
+      <div class="ico">📝</div>
+      <p class="t">후원 연습판 열기</p>
+      <p class="d">옥스팜코리아 후원하기 연습판. 실제 신청·결제는 되지 않는 교육용 화면입니다.</p>
+      <span class="go">→</span>
+    </a>
+    <a class="c admin" href="f2f-log.html">
+      <div class="ico">📋</div>
+      <p class="t">테스트 관리자페이지</p>
+      <p class="d">연습판에서 등록(후원하기)을 누른 명단 — 이름·시각·유입경로·기기를 확인하고 CSV로 내려받습니다.</p>
+      <span class="go">→</span>
+    </a>
+  </div>
+
+  <div class="foot">
+    ⭐ 링크가 무분별하게 퍼지는지 확인하려면 <b>테스트 관리자페이지</b>에서 유입 경로와 반복 기기를 점검하세요.<br>
+    제작 · 피스메이커 임재영 리더
+  </div>
+</div>
+</body>
+</html>

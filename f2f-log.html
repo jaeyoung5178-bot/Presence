@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>테스트 관리자페이지 · 등록 명단</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+  :root{ --bg:#0d0e12; --bg2:#14161c; --card:#1a1d25; --ink:#f3efe6; --sub:#a7a294; --line:#2c313c; --line2:#3a4150; --accent:#8fd14f; --gold:#e8c877; --danger:#e06a6a; }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{ font-family:"Pretendard","Apple SD Gothic Neo",sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; }
+  .wrap{max-width:1000px; margin:0 auto; padding:22px 16px 80px;}
+  .top{display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;}
+  .back{color:var(--sub); text-decoration:none; font-size:14px; border:1px solid var(--line); padding:7px 12px; border-radius:999px;}
+  .back:hover{color:var(--ink);}
+  h1{font-size:23px; margin:10px 0 2px; letter-spacing:-.4px;}
+  .lead{color:var(--sub); font-size:13px; margin:0 0 16px;}
+  .kicker{font-size:11px; letter-spacing:3px; color:var(--gold); font-weight:700;}
+
+  .stats{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0;}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 16px; min-width:120px;}
+  .stat b{display:block; font-size:24px; color:var(--accent);}
+  .stat span{font-size:12px; color:var(--sub);}
+  .stat.warn b{color:var(--danger);}
+
+  .tools{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+  .btn{background:var(--card); border:1px solid var(--line2); color:var(--ink); padding:9px 15px; border-radius:10px; font-size:13px; cursor:pointer; font-weight:600;}
+  .btn:hover{border-color:var(--accent); color:var(--accent);}
+  .btn.pri{background:linear-gradient(135deg,var(--accent),#5c8f2e); color:#0d0e12; border:none;}
+  input.search{flex:1; min-width:160px; background:var(--card); border:1px solid var(--line2); color:var(--ink); border-radius:10px; padding:9px 13px; font-size:13px; font-family:inherit;}
+
+  .tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:14px;}
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:640px;}
+  th,td{text-align:left; padding:11px 13px; border-bottom:1px solid var(--line);}
+  th{background:var(--bg2); color:var(--sub); font-weight:700; position:sticky; top:0; font-size:12px; letter-spacing:.4px;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#191c24;}
+  td.nm{font-weight:700;}
+  .badge{display:inline-block; font-size:11px; padding:2px 7px; border-radius:6px; background:#2a2f3a; color:var(--sub);}
+  .badge.dup{background:rgba(224,106,106,.18); color:var(--danger);}
+  .muted{color:var(--sub); font-size:12px; word-break:break-all;}
+  .empty{padding:40px; text-align:center; color:var(--sub);}
+
+  /* gate */
+  .gate{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:20px; z-index:100;}
+  .gate.hide{display:none;}
+  .gatebox{background:var(--bg2); border:1px solid var(--line2); border-radius:18px; padding:28px 24px; width:100%; max-width:340px; text-align:center;}
+  .gatebox h2{font-size:19px; margin:0 0 6px;}
+  .gatebox p{color:var(--sub); font-size:13px; margin:0 0 18px;}
+  .gatebox input{width:100%; background:var(--card); border:1px solid var(--line2); color:var(--ink); border-radius:10px; padding:12px; font-size:16px; text-align:center; letter-spacing:6px; font-family:inherit;}
+  .gatebox button{width:100%; margin-top:12px; background:linear-gradient(135deg,var(--accent),#5c8f2e); color:#0d0e12; border:none; border-radius:10px; padding:12px; font-size:15px; font-weight:700; cursor:pointer;}
+  .gate .err{color:var(--danger); font-size:12px; height:16px; margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <div class="gatebox">
+    <h2>🔒 테스트 관리자페이지</h2>
+    <p>등록 명단을 보려면 관리자 비밀번호를 입력하세요.</p>
+    <input id="pw" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
+    <div class="err" id="err"></div>
+    <button id="enter">들어가기</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="top">
+    <a class="back" href="index.html">← 허브</a>
+    <a class="back" href="oxfam-test.html">OXFAM 테스트링크</a>
+  </div>
+  <div class="kicker">OXFAM F2F TEST · ADMIN</div>
+  <h1>등록 명단</h1>
+  <p class="lead">연습판에서 <b>후원하기(등록)</b>를 누른 기록입니다. 유입 경로와 기기로 링크 확산을 확인하세요.</p>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="tools">
+    <input class="search" id="search" placeholder="이름·경로 검색">
+    <button class="btn" id="refresh">↻ 새로고침</button>
+    <button class="btn pri" id="csv">CSV 내려받기</button>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>#</th><th>이름</th><th>등록 시각</th><th>유입 경로</th><th>기기</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" class="empty">불러오는 중…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DB="https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app";
+  var NODE="/f2f_test_log.json";
+  var PW="0001";
+  var rows=[]; // normalized entries
+  var $=function(s){return document.querySelector(s);};
+
+  function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function fmt(ts){ if(!ts) return "-"; var d=new Date(ts); var p=function(n){return(n<10?"0":"")+n;}; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()); }
+  function refFmt(r){ if(!r) return '<span class="badge">직접 접속</span>'; try{ var u=new URL(r); return esc(u.hostname+u.pathname); }catch(e){ return esc(r); } }
+  function devShort(d){ if(!d) return "-"; return d.slice(0,8); }
+
+  function unlock(){
+    $("#gate").classList.add("hide"); $("#app").style.display="block"; loadData();
+  }
+  $("#enter").addEventListener("click", tryPw);
+  $("#pw").addEventListener("keydown", function(e){ if(e.key==="Enter") tryPw(); });
+  function tryPw(){ if($("#pw").value===PW){ unlock(); } else { $("#err").textContent="비밀번호가 달라요."; $("#pw").value=""; } }
+
+  function loadData(){
+    $("#rows").innerHTML='<tr><td colspan="5" class="empty">불러오는 중…</td></tr>';
+    fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
+      rows=[];
+      if(j){ Object.keys(j).forEach(function(k){ var e=j[k]||{}; rows.push({name:e.name||"(이름없음)", ts:e.ts||0, ref:e.ref||"", url:e.url||"", dev:e.dev||"", ua:e.ua||""}); }); }
+      rows.sort(function(a,b){return b.ts-a.ts;});
+      render();
+    }).catch(function(){ $("#rows").innerHTML='<tr><td colspan="5" class="empty">불러오기 실패. 새로고침 해주세요.</td></tr>'; });
+  }
+
+  function render(){
+    var q=($("#search").value||"").trim().toLowerCase();
+    var list = rows.filter(function(r){ return !q || (r.name.toLowerCase().indexOf(q)>=0 || (r.ref||"").toLowerCase().indexOf(q)>=0); });
+    // device dup counts
+    var devCount={}; rows.forEach(function(r){ if(r.dev) devCount[r.dev]=(devCount[r.dev]||0)+1; });
+    var uniqDev = Object.keys(devCount).length;
+    var dupDev = Object.keys(devCount).filter(function(d){return devCount[d]>=3;}).length;
+    // stats
+    $("#stats").innerHTML =
+      '<div class="stat"><b>'+rows.length+'</b><span>총 등록</span></div>'+
+      '<div class="stat"><b>'+uniqDev+'</b><span>고유 기기</span></div>'+
+      '<div class="stat '+(dupDev?"warn":"")+'"><b>'+dupDev+'</b><span>반복 기기(3+)</span></div>';
+    if(list.length===0){ $("#rows").innerHTML='<tr><td colspan="5" class="empty">아직 등록 기록이 없어요.</td></tr>'; return; }
+    var html="";
+    list.forEach(function(r,i){
+      var dup = r.dev && devCount[r.dev]>=3;
+      html += '<tr><td>'+(i+1)+'</td>'
+        + '<td class="nm">'+esc(r.name)+'</td>'
+        + '<td class="muted">'+fmt(r.ts)+'</td>'
+        + '<td>'+refFmt(r.ref)+'</td>'
+        + '<td><span class="badge '+(dup?"dup":"")+'" title="'+esc(r.ua)+'">'+devShort(r.dev)+(dup?" ·"+devCount[r.dev]+"회":"")+'</span></td></tr>';
+    });
+    $("#rows").innerHTML=html;
+  }
+
+  $("#search").addEventListener("input", render);
+  $("#refresh").addEventListener("click", loadData);
+  $("#csv").addEventListener("click", function(){
+    var head=["이름","등록시각","유입경로","기기ID","UserAgent","URL"];
+    var lines=[head.join(",")];
+    rows.forEach(function(r){
+      var row=[r.name, fmt(r.ts), r.ref, r.dev, r.ua, r.url].map(function(v){ v=String(v==null?"":v).replace(/"/g,'""'); return '"'+v+'"'; });
+      lines.push(row.join(","));
+    });
+    var blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="oxfam_test_log_"+new Date().toISOString().slice(0,10)+".csv"; a.click();
+  });
+})();
+</script>
+</body>
+</html>

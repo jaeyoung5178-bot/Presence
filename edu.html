@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>에듀케이션 · PRESENCE</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0e12; --bg2:#14161c; --card:#1a1d25; --card2:#20242e;
+    --ink:#f3efe6; --sub:#a7a294; --line:#2c313c; --line2:#3a4150;
+    --accent:#8fd14f; --accent-d:#5c8f2e; --gold:#e8c877; --danger:#e06a6a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%, #191c24 0%, var(--bg) 60%);
+    color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:22px 18px 90px;}
+  .top{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .back{color:var(--sub); text-decoration:none; font-size:14px; border:1px solid var(--line); padding:7px 12px; border-radius:999px; transition:.15s;}
+  .back:hover{color:var(--ink); border-color:var(--line2);}
+  h1{font-size:26px; margin:14px 0 2px; letter-spacing:-.5px;}
+  h1 .em{color:var(--accent);}
+  .lead{color:var(--sub); font-size:14px; margin:0 0 18px;}
+  .kicker{font-size:12px; letter-spacing:3px; color:var(--gold); font-weight:700;}
+
+  .bar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:14px 0 12px;}
+  .folders{display:flex; gap:8px; flex-wrap:wrap;}
+  .chip{
+    display:inline-flex; align-items:center; gap:7px; cursor:pointer; user-select:none;
+    background:var(--card); border:1px solid var(--line); color:var(--sub);
+    padding:9px 14px; border-radius:999px; font-size:14px; font-weight:600; transition:.15s;
+  }
+  .chip:hover{border-color:var(--line2); color:var(--ink);}
+  .chip.on{background:linear-gradient(135deg,var(--accent),var(--accent-d)); color:#0d0e12; border-color:transparent;}
+  .chip .cnt{font-size:11px; opacity:.7;}
+  .chip .fx{color:var(--danger); font-weight:800; margin-left:2px; display:none;}
+  .editing .chip .fx{display:inline;}
+  .chip.addf{border-style:dashed; color:var(--accent);}
+
+  .adminbtn{background:var(--card); border:1px solid var(--line); color:var(--sub); padding:9px 14px; border-radius:999px; font-size:13px; cursor:pointer; transition:.15s;}
+  .adminbtn:hover{color:var(--ink); border-color:var(--line2);}
+  .adminbtn.on{color:var(--gold); border-color:var(--gold);}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:6px;}
+  .item{
+    position:relative; background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px 16px 15px; text-decoration:none; color:var(--ink); display:block; transition:.15s; overflow:hidden;
+  }
+  .item:hover{transform:translateY(-2px); border-color:var(--line2); background:var(--card2);}
+  .item .tg{display:inline-block; font-size:11px; letter-spacing:1.5px; font-weight:800; color:var(--accent); border:1px solid var(--line2); border-radius:6px; padding:3px 8px; margin-bottom:9px;}
+  .item .ti{font-size:16px; font-weight:700; margin:0 0 4px; letter-spacing:-.3px;}
+  .item .su{font-size:13px; color:var(--sub); line-height:1.45; margin:0;}
+  .item .arw{position:absolute; right:14px; top:15px; color:var(--sub); opacity:0; transition:.15s;}
+  .item:hover .arw{opacity:1; right:12px;}
+  .item .xdel{position:absolute; right:8px; top:8px; width:24px; height:24px; border-radius:50%; background:var(--danger); color:#fff; border:none; font-weight:800; cursor:pointer; display:none; align-items:center; justify-content:center; line-height:1;}
+  .editing .item .xdel{display:flex;}
+  .item .mv{display:none; margin-top:10px;}
+  .editing .item .mv{display:block;}
+  .item .mv select{width:100%; background:var(--bg2); color:var(--ink); border:1px solid var(--line2); border-radius:8px; padding:7px 8px; font-size:12px;}
+
+  .empty{grid-column:1/-1; text-align:center; color:var(--sub); padding:40px 10px; font-size:14px;}
+  .additem{border:1px dashed var(--line2); background:transparent; color:var(--accent); border-radius:16px; padding:16px; font-size:14px; cursor:pointer; display:none; align-items:center; justify-content:center; min-height:90px;}
+  .editing .additem{display:flex;}
+
+  /* modal */
+  .mask{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:18px; z-index:50;}
+  .mask.on{display:flex;}
+  .modal{background:var(--bg2); border:1px solid var(--line2); border-radius:18px; width:100%; max-width:400px; padding:20px;}
+  .modal h3{margin:0 0 14px; font-size:17px;}
+  .fld{margin-bottom:11px;}
+  .fld label{display:block; font-size:12px; color:var(--sub); margin-bottom:5px;}
+  .fld input,.fld select{width:100%; background:var(--card); color:var(--ink); border:1px solid var(--line2); border-radius:9px; padding:10px 11px; font-size:14px; font-family:inherit;}
+  .row2{display:flex; gap:9px;}
+  .row2>*{flex:1;}
+  .chk{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--sub); cursor:pointer;}
+  .mbtns{display:flex; gap:9px; margin-top:16px;}
+  .mbtns button{flex:1; padding:11px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; border:none;}
+  .b-ok{background:linear-gradient(135deg,var(--accent),var(--accent-d)); color:#0d0e12;}
+  .b-cc{background:var(--card); color:var(--sub); border:1px solid var(--line2)!important;}
+  .save-toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--accent); color:#0d0e12; padding:10px 20px; border-radius:999px; font-weight:700; font-size:13px; opacity:0; transition:.3s; pointer-events:none; z-index:60;}
+  .save-toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
+  @media(max-width:560px){ .grid{grid-template-columns:1fr 1fr;} .item .ti{font-size:15px;} h1{font-size:22px;} }
+  @media(max-width:400px){ .grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="index.html">← 허브</a>
+    <button class="adminbtn" id="adminBtn">🔒 관리자</button>
+  </div>
+  <div class="kicker">PRESENCE LIBRARY</div>
+  <h1>에듀케이션<span class="em">.</span></h1>
+  <p class="lead">폴더별로 자료를 모아두는 공간입니다. 폴더를 눌러 필요한 자료를 찾으세요.</p>
+
+  <div class="bar">
+    <div class="folders" id="folders"></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- add/edit item modal -->
+<div class="mask" id="itemMask">
+  <div class="modal">
+    <h3 id="itemModalTitle">자료 추가</h3>
+    <div class="fld"><label>제목</label><input id="fTitle" placeholder="예: Objection Handling"></div>
+    <div class="fld"><label>설명 (한 줄)</label><input id="fSub" placeholder="예: 니즈파악 중심 핸들링 기법"></div>
+    <div class="row2">
+      <div class="fld"><label>태그</label><input id="fTag" placeholder="예: HANDLE" maxlength="10"></div>
+      <div class="fld"><label>폴더</label><select id="fFolder"></select></div>
+    </div>
+    <div class="fld"><label>링크 주소</label><input id="fHref" placeholder="예: 토픽/topic-xxx.html 또는 https://..."></div>
+    <label class="chk"><input type="checkbox" id="fBlank"> 새 탭에서 열기</label>
+    <div class="mbtns"><button class="b-cc" id="itemCancel">취소</button><button class="b-ok" id="itemSave">저장</button></div>
+  </div>
+</div>
+
+<div class="save-toast" id="toast">저장됨 ✓</div>
+
+<script>
+(function(){
+  var DB = "https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app";
+  var NODE = "/edu_lib.json";
+  var ADMIN_PW = "0001";
+  var uid = function(){ return "e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); };
+
+  var SEED = {
+    v:1,
+    folders:["신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
+    items:[
+      {id:uid(),tag:"CLASS",title:"Onboarding I·II",sub:"인천 신입교육 — 피스메이커 루키 클래스",href:"토픽/topic-onboarding.html",target:"",folder:"신입"},
+      {id:uid(),tag:"TRAIN",title:"Rookie Training Guide",sub:"신입을 세일즈하는 사람으로 키우는 법",href:"토픽/topic-training.html",target:"",folder:"신입"},
+      {id:uid(),tag:"PITCH",title:"옥스팜 피치",sub:"Oxfam 후원 피치덱",href:"https://jaeyoung5178-bot.github.io/oxfam-pitch/",target:"_blank",folder:"피치카드"},
+      {id:uid(),tag:"PITCH",title:"위페어 피치",sub:"WePair 피치덱",href:"https://jaeyoung5178-bot.github.io/wepair-pitch/",target:"_blank",folder:"피치카드"},
+      {id:uid(),tag:"GRASP",title:"GRASP",sub:"이끌던지, 따르던지 — 리더십 원칙",href:"토픽/topic-grasp.html",target:"",folder:"섹터리더"},
+      {id:uid(),tag:"WIN",title:"Win Analysis",sub:"How We Run Presence — 팀 운영과 성장 동력",href:"토픽/topic-howwerun.html",target:"",folder:"섹터리더"},
+      {id:uid(),tag:"SSG",title:"Sector Leader Standard Guide",sub:"팀에 섹터리더를 길러내는 방법",href:"https://jaeyoung5178-bot.github.io/Pesentation/",target:"_blank",folder:"섹터리더"},
+      {id:uid(),tag:"RECAP",title:"Team Recap · April",sub:"2026년 4월 팀 세일즈 현황 & 팀 피드백",href:"토픽/recap-2026-04.html",target:"_blank",folder:"리캡"},
+      {id:uid(),tag:"NOZERO",title:"NoZero 300 Days",sub:"흔들리지 않는 세 가지 확신",href:"토픽/topic-nozero300.html",target:"",folder:"멘탈리티"},
+      {id:uid(),tag:"STEADY",title:"Steady Rolling",sub:"꾸준히 잘하는 방법 — 컨시스턴시 플레이북",href:"토픽/topic-steady.html",target:"",folder:"멘탈리티"},
+      {id:uid(),tag:"HANDLE",title:"Objection Handling",sub:"니즈파악을 중심으로 하는 핸들링 기법",href:"토픽/topic-objection.html",target:"",folder:"세일즈"},
+      {id:uid(),tag:"NOZERO",title:"NoZero 200 Days",sub:"How to NoZero — 노제로의 방법론",href:"토픽/topic-nozero200.html",target:"",folder:"세일즈"}
+    ]
+  };
+
+  var data = null;         // {v,folders,items}
+  var active = "__ALL__";  // current folder filter
+  var isAdmin = false;
+  var editingItemId = null;
+  var $ = function(s){ return document.querySelector(s); };
+
+  function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
+
+  function load(){
+    fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
+      if(j && j.folders && j.items){ data=j; render(); }
+      else { data=JSON.parse(JSON.stringify(SEED)); save(true); render(); }
+    }).catch(function(){ data=JSON.parse(JSON.stringify(SEED)); render(); });
+  }
+  function save(silent){
+    if(!data) return;
+    fetch(DB+NODE,{method:"PUT",body:JSON.stringify(data)}).then(function(){ if(!silent) toast("저장됨 ✓"); }).catch(function(){ if(!silent) toast("저장 실패 · 다시 시도"); });
+  }
+
+  function countIn(f){ return data.items.filter(function(it){return it.folder===f;}).length; }
+
+  function render(){
+    if(!data) return;
+    document.body.classList.toggle("editing", isAdmin);
+    // folders
+    var fh = '<div class="chip '+(active==="__ALL__"?"on":"")+'" data-f="__ALL__">전체 <span class="cnt">'+data.items.length+'</span></div>';
+    data.folders.forEach(function(f){
+      fh += '<div class="chip '+(active===f?"on":"")+'" data-f="'+esc(f)+'">'+esc(f)+' <span class="cnt">'+countIn(f)+'</span><span class="fx" data-del="'+esc(f)+'">×</span></div>';
+    });
+    if(isAdmin){ fh += '<div class="chip addf" id="addFolder">＋ 폴더</div>'; }
+    $("#folders").innerHTML = fh;
+
+    // items
+    var list = data.items.filter(function(it){ return active==="__ALL__" || it.folder===active; });
+    var gh = "";
+    if(list.length===0){ gh = '<div class="empty">아직 자료가 없어요.'+(isAdmin?' 아래 ＋로 추가하세요.':'')+'</div>'; }
+    list.forEach(function(it){
+      var opts = data.folders.map(function(f){ return '<option value="'+esc(f)+'" '+(f===it.folder?"selected":"")+'>'+esc(f)+'</option>'; }).join("");
+      gh += '<a class="item" href="'+esc(it.href||"#")+'" '+(it.target==="_blank"?'target="_blank" rel="noopener"':"")+' data-id="'+it.id+'">'
+          + '<button class="xdel" data-xdel="'+it.id+'" title="삭제">×</button>'
+          + '<span class="tg">'+esc(it.tag||"자료")+'</span>'
+          + '<p class="ti">'+esc(it.title||"")+'</p>'
+          + '<p class="su">'+esc(it.sub||"")+'</p>'
+          + '<span class="arw">→</span>'
+          + '<div class="mv"><select data-mv="'+it.id+'">'+opts+'</select></div>'
+          + '</a>';
+    });
+    if(isAdmin){ gh += '<div class="additem" id="addItem">＋ 자료 추가</div>'; }
+    $("#grid").innerHTML = gh;
+  }
+
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  // ---- events (delegated) ----
+  $("#folders").addEventListener("click", function(e){
+    var del = e.target.closest("[data-del]");
+    if(del){ e.stopPropagation(); var f=del.getAttribute("data-del");
+      if(confirm('"'+f+'" 폴더를 삭제할까요? (안의 자료는 유지되지만 미분류가 됩니다)')){
+        data.folders = data.folders.filter(function(x){return x!==f;});
+        data.items.forEach(function(it){ if(it.folder===f) it.folder="미분류"; });
+        if(data.items.some(function(it){return it.folder==="미분류";}) && data.folders.indexOf("미분류")<0) data.folders.push("미분류");
+        if(active===f) active="__ALL__";
+        save(); render();
+      }
+      return;
+    }
+    if(e.target.id==="addFolder"){
+      var n=(prompt("새 폴더 이름")||"").trim();
+      if(n){ if(data.folders.indexOf(n)>=0){ alert("이미 있는 폴더예요."); return; } data.folders.push(n); save(); render(); }
+      return;
+    }
+    var chip=e.target.closest(".chip[data-f]");
+    if(chip){ active=chip.getAttribute("data-f"); render(); }
+  });
+
+  $("#grid").addEventListener("click", function(e){
+    var x=e.target.closest("[data-xdel]");
+    if(x){ e.preventDefault(); e.stopPropagation(); var id=x.getAttribute("data-xdel");
+      if(confirm("이 자료를 삭제할까요?")){ data.items=data.items.filter(function(it){return it.id!==id;}); save(); render(); }
+      return;
+    }
+    if(e.target.id==="addItem"){ e.preventDefault(); openItemModal(null); return; }
+    if(isAdmin){ // in edit mode, block navigation so admin can manage; allow via long-press? simply prevent
+      var a=e.target.closest("a.item");
+      if(a && !e.target.closest(".mv")){ e.preventDefault(); }
+    }
+  });
+  $("#grid").addEventListener("change", function(e){
+    var mv=e.target.closest("[data-mv]");
+    if(mv){ var id=mv.getAttribute("data-mv"); var it=data.items.filter(function(x){return x.id===id;})[0]; if(it){ it.folder=mv.value; save(); render(); } }
+  });
+
+  // admin toggle
+  $("#adminBtn").addEventListener("click", function(){
+    if(isAdmin){ isAdmin=false; this.classList.remove("on"); this.textContent="🔒 관리자"; render(); return; }
+    var pw=prompt("관리자 비밀번호");
+    if(pw===ADMIN_PW){ isAdmin=true; this.classList.add("on"); this.textContent="✏️ 편집중 (누르면 종료)"; render(); }
+    else if(pw!=null){ alert("비밀번호가 달라요."); }
+  });
+
+  // item modal
+  function openItemModal(id){
+    editingItemId=id;
+    var it = id ? data.items.filter(function(x){return x.id===id;})[0] : null;
+    $("#itemModalTitle").textContent = id ? "자료 편집" : "자료 추가";
+    $("#fTitle").value = it?it.title:"";
+    $("#fSub").value = it?it.sub:"";
+    $("#fTag").value = it?it.tag:"";
+    $("#fHref").value = it?it.href:"";
+    $("#fBlank").checked = it? it.target==="_blank" : true;
+    $("#fFolder").innerHTML = data.folders.map(function(f){ return '<option value="'+esc(f)+'" '+((it&&it.folder===f)||(!it&&f===(active==="__ALL__"?data.folders[0]:active))?"selected":"")+'>'+esc(f)+'</option>'; }).join("");
+    $("#itemMask").classList.add("on");
+  }
+  $("#itemCancel").addEventListener("click", function(){ $("#itemMask").classList.remove("on"); });
+  $("#itemMask").addEventListener("click", function(e){ if(e.target===this) this.classList.remove("on"); });
+  $("#itemSave").addEventListener("click", function(){
+    var t=$("#fTitle").value.trim(); if(!t){ alert("제목을 입력하세요."); return; }
+    var obj={ tag:$("#fTag").value.trim()||"자료", title:t, sub:$("#fSub").value.trim(), href:$("#fHref").value.trim(), target:$("#fBlank").checked?"_blank":"", folder:$("#fFolder").value };
+    if(editingItemId){ var it=data.items.filter(function(x){return x.id===editingItemId;})[0]; if(it) Object.assign(it,obj); }
+    else { obj.id=uid(); data.items.push(obj); }
+    $("#itemMask").classList.remove("on"); save(); render();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
