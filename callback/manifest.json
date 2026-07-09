@@ -1,0 +1,12 @@
+{
+  "name": "Field Callback OS",
+  "short_name": "FieldOS",
+  "description": "F2F 캠페이너를 위한 Plan·Do·See 필드 운영 시스템",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F7F8FA",
+  "theme_color": "#2563EB",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

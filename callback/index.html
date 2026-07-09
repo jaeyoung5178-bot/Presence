@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2563EB">
+<title>Field Callback OS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <a href="../index.html" class="hub-back" title="프레젠스 허브로">←</a>
+      <span class="brand-dot"></span>
+      <span class="brand-name">Field Callback OS</span>
+    </div>
+    <div class="header-meta">
+      <span id="header-date"></span>
+      <span id="header-site" class="chip chip-blue"></span>
+    </div>
+  </div>
+</header>
+
+<main class="app-main">
+
+<!-- ================= DASHBOARD ================= -->
+<section id="view-dashboard" class="view">
+  <div class="view-head">
+    <h1>오늘의 진행률</h1>
+    <p class="sub" id="dash-greeting">버튼만 누르세요. 분석은 자동입니다.</p>
+  </div>
+
+  <div class="rings-grid" id="rings-grid"><!-- JS renders 5 progress rings --></div>
+
+  <div class="card">
+    <div class="card-title-row">
+      <h2>⏱ 시간당 목표 페이스</h2>
+      <span id="pace-badge" class="chip"></span>
+    </div>
+    <div id="pace-list" class="pace-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>최근 활동</h2>
+    <div id="dash-recent" class="timeline compact"></div>
+  </div>
+
+  <div class="quick-actions">
+    <button class="btn btn-primary btn-lg" data-nav="do">▶ 필드 모드 시작</button>
+  </div>
+</section>
+
+<!-- ================= PLAN ================= -->
+<section id="view-plan" class="view hidden">
+  <div class="view-head">
+    <h1>Plan</h1>
+    <p class="sub">오늘의 기본 정보와 목표를 설정하세요</p>
+  </div>
+
+  <div class="card">
+    <h2>기본 정보</h2>
+    <div class="form-grid">
+      <label>이름<input type="text" id="p-name" placeholder="예: 임재영"></label>
+      <label>날짜<input type="date" id="p-date"></label>
+      <label>사이트<input type="text" id="p-site" placeholder="예: 홈플러스 강서점" list="site-list"><datalist id="site-list"></datalist></label>
+      <label>날씨
+        <select id="p-weather">
+          <option value="맑음">☀️ 맑음</option>
+          <option value="흐림">☁️ 흐림</option>
+          <option value="비">🌧 비</option>
+          <option value="눈">❄️ 눈</option>
+          <option value="더움">🥵 더움</option>
+          <option value="추움">🥶 추움</option>
+        </select>
+      </label>
+      <label class="span2">오늘의 테마<input type="text" id="p-theme" placeholder="예: 첫 마디에 미소 담기"></label>
+      <label class="span2">팀원<input type="text" id="p-team" placeholder="예: 김OO, 박OO"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>오늘의 목표</h2>
+    <div class="form-grid">
+      <label>시작 시간<input type="time" id="p-start" value="13:00"></label>
+      <label>근무시간 (시간)<input type="number" id="p-hours" min="1" max="12" value="6"></label>
+      <label>Contact 목표<input type="number" id="p-g-contact" min="0" value="40"></label>
+      <label>Stop 목표<input type="number" id="p-g-stop" min="0" value="20"></label>
+      <label>Presentation 목표<input type="number" id="p-g-presentation" min="0" value="15"></label>
+      <label>Close 목표<input type="number" id="p-g-close" min="0" value="6"></label>
+      <label>Rehash 목표<input type="number" id="p-g-rehash" min="0" value="3"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>시간당 목표 (자동 계산)</h2>
+    <div class="table-wrap">
+      <table class="mini-table" id="hourly-goal-table"></table>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-lg btn-block" id="btn-save-plan">저장하고 시작하기</button>
+</section>
+
+<!-- ================= DO ================= -->
+<section id="view-do" class="view hidden">
+  <div class="do-status" id="do-status"><!-- mini counters --></div>
+
+  <div class="time-mode-wrap">
+    <div class="time-mode" id="time-mode"><!-- 기록 시간 선택 칩 --></div>
+    <div class="tm-hint hidden" id="tm-hint"></div>
+  </div>
+
+  <div class="do-buttons">
+    <button class="do-btn c-contact" data-log="contact">
+      <span class="do-btn-label">CONTACT</span><span class="do-btn-count" id="cnt-contact">0</span>
+    </button>
+    <button class="do-btn c-stop" data-log="stop">
+      <span class="do-btn-label">STOP</span><span class="do-btn-count" id="cnt-stop">0</span>
+    </button>
+    <button class="do-btn c-presentation" data-log="presentation">
+      <span class="do-btn-label">PRESENTATION</span><span class="do-btn-count" id="cnt-presentation">0</span>
+    </button>
+    <button class="do-btn c-close" data-log="close">
+      <span class="do-btn-label">CLOSE</span><span class="do-btn-count" id="cnt-close">0</span>
+    </button>
+    <button class="do-btn c-rehash" data-log="rehash">
+      <span class="do-btn-label">REHASH</span><span class="do-btn-count" id="cnt-rehash">0</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-title-row">
+      <h2>타임라인</h2>
+      <div>
+        <button class="btn btn-outline btn-sm" id="btn-manual">＋ 수동 기록</button>
+        <button class="btn btn-ghost btn-sm" id="btn-undo">↩ 실행취소</button>
+      </div>
+    </div>
+    <p class="hint">시간을 누르면 수정할 수 있어요 · 수동 기록으로 지난 시간대도 채울 수 있어요</p>
+    <div id="do-timeline" class="timeline"></div>
+  </div>
+
+  <div class="card">
+    <h2>기록 시간대 범위</h2>
+    <p class="hint">필드 시작~끝 시간을 정하면, 위의 시간대 칩이 이 범위대로 펼쳐집니다</p>
+    <div class="range-row">
+      <select id="range-from"></select>
+      <span class="range-sep">부터</span>
+      <select id="range-to"></select>
+      <span class="range-sep">까지</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SEE ================= -->
+<section id="view-see" class="view hidden">
+  <div class="view-head">
+    <h1>See</h1>
+    <p class="sub" id="see-sub">오늘 하루를 데이터로 돌아봅니다</p>
+  </div>
+
+  <div class="card">
+    <h2>목표 vs 실제</h2>
+    <div class="result-cards" id="result-cards"></div>
+  </div>
+
+  <div class="card">
+    <h2>퍼널 분석</h2>
+    <div id="funnel" class="funnel"></div>
+  </div>
+
+  <div class="card">
+    <h2>시간대 분석</h2>
+    <div class="chart-box"><canvas id="chart-hourly"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>성과 히트맵</h2>
+    <p class="hint">색이 진할수록 성과가 좋았던 시간대</p>
+    <div id="heatmap" class="heatmap"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title-row">
+      <h2>오브젝션 통계</h2>
+      <div class="seg" id="obj-chart-toggle">
+        <button class="seg-btn active" data-objchart="pie">Pie</button>
+        <button class="seg-btn" data-objchart="bar">Bar</button>
+      </div>
+    </div>
+    <div class="chart-box"><canvas id="chart-objection"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>타임라인 Replay</h2>
+    <button class="btn btn-primary btn-sm" id="btn-replay">▶ 재생</button>
+    <div id="replay-box" class="timeline compact"></div>
+  </div>
+
+  <div class="card">
+    <h2>리해쉬 / 후원자 목록</h2>
+    <div class="filter-row">
+      <input type="search" id="rh-search" placeholder="이름 검색">
+      <input type="date" id="rh-date">
+      <input type="text" id="rh-site" placeholder="사이트">
+      <select id="rh-pay">
+        <option value="">결제수단 전체</option>
+        <option value="계좌">계좌</option>
+        <option value="카드">카드</option>
+      </select>
+    </div>
+    <div id="rehash-list" class="rehash-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>사이트별 통계</h2>
+    <div class="table-wrap"><table class="mini-table" id="site-stats"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>날씨별 통계</h2>
+    <div class="table-wrap"><table class="mini-table" id="weather-stats"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>오늘의 회고</h2>
+    <div class="retro-grid">
+      <div class="retro-block">
+        <h3>Number</h3>
+        <textarea id="retro-number-good" placeholder="잘한 점" rows="2"></textarea>
+        <textarea id="retro-number-bad" placeholder="아쉬운 점" rows="2"></textarea>
+      </div>
+      <div class="retro-block">
+        <h3>Skill</h3>
+        <textarea id="retro-skill-good" placeholder="잘한 점" rows="2"></textarea>
+        <textarea id="retro-skill-bad" placeholder="아쉬운 점" rows="2"></textarea>
+      </div>
+      <div class="retro-block">
+        <h3>Attitude</h3>
+        <textarea id="retro-attitude-good" placeholder="잘한 점" rows="2"></textarea>
+        <textarea id="retro-attitude-bad" placeholder="아쉬운 점" rows="2"></textarea>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="btn-save-retro">회고 저장</button>
+  </div>
+
+  <div class="card">
+    <h2>데이터 관리</h2>
+    <div class="export-row">
+      <button class="btn btn-primary btn-sm" id="btn-pdf-report">📑 오늘의 리포트 (PDF)</button>
+      <button class="btn btn-outline btn-sm" id="btn-csv-logs">📄 로그 CSV</button>
+      <button class="btn btn-outline btn-sm" id="btn-csv-rehash">📄 리해쉬 CSV</button>
+      <button class="btn btn-outline btn-sm" id="btn-json-export">💾 JSON 백업</button>
+      <label class="btn btn-outline btn-sm">📂 JSON 복원<input type="file" id="json-import" accept=".json" hidden></label>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== Bottom Nav ===== -->
+<nav class="tabbar">
+  <button class="tab active" data-nav="dashboard"><span class="tab-ico">◎</span>홈</button>
+  <button class="tab" data-nav="plan"><span class="tab-ico">☰</span>Plan</button>
+  <button class="tab tab-do" data-nav="do"><span class="tab-ico">●</span>Do</button>
+  <button class="tab" data-nav="see"><span class="tab-ico">▤</span>See</button>
+</nav>
+
+<!-- ===== Objection Modal ===== -->
+<div class="modal-backdrop hidden" id="modal-objection">
+  <div class="modal">
+    <h2 id="objection-modal-title">Close — 오브젝션 선택</h2>
+    <p class="hint">해당하는 항목을 모두 선택하세요</p>
+    <div class="obj-grid" id="obj-grid"><!-- JS --></div>
+    <input type="text" id="obj-etc" placeholder="기타 직접입력" class="mt8">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close-modal>취소</button>
+      <button class="btn btn-primary" id="btn-save-objection">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Rehash Modal ===== -->
+<div class="modal-backdrop hidden" id="modal-rehash">
+  <div class="modal">
+    <h2 id="rehash-modal-title">후원자 정보 (Rehash)</h2>
+    <div class="form-grid">
+      <label>이름<input type="text" id="rh-f-name"></label>
+      <label>나이<input type="number" id="rh-f-age" min="18" max="99"></label>
+      <label>성별
+        <select id="rh-f-gender"><option value="여">여</option><option value="남">남</option><option value="기타">기타</option></select>
+      </label>
+      <label>후원금액<input type="number" id="rh-f-amount" step="1000" placeholder="30000"></label>
+      <label class="span2">결제수단
+        <div class="seg">
+          <button class="seg-btn active" data-pay="계좌">계좌</button>
+          <button class="seg-btn" data-pay="카드">카드</button>
+        </div>
+      </label>
+      <label class="span2">특이사항<input type="text" id="rh-f-note"></label>
+      <label class="span2">기억할 내용<input type="text" id="rh-f-memory"></label>
+      <label class="span2">다음에 이야기할 거리<input type="text" id="rh-f-next"></label>
+      <label class="span2">Remark<input type="text" id="rh-f-remark"></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close-modal>취소</button>
+      <button class="btn btn-primary" id="btn-save-rehash">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Manual Log Modal (거꾸로 기록 / 시간 수정) ===== -->
+<div class="modal-backdrop hidden" id="modal-manual">
+  <div class="modal">
+    <h2 id="manual-title">수동 기록 추가</h2>
+    <p class="hint">기억을 되짚어 시간대별로 기록하세요</p>
+    <div class="form-grid">
+      <label>유형
+        <select id="mn-type">
+          <option value="contact">Contact</option>
+          <option value="stop">Stop</option>
+          <option value="presentation">Presentation</option>
+          <option value="close">Close</option>
+          <option value="rehash">Rehash</option>
+        </select>
+      </label>
+      <label>시간<input type="time" id="mn-time"></label>
+      <label id="mn-count-wrap">개수<input type="number" id="mn-count" value="1" min="1" max="99"></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close-modal>취소</button>
+      <button class="btn btn-primary" id="btn-save-manual">저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
