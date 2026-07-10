@@ -38,7 +38,7 @@ function newSession(date) {
     goals: { start: "13:00", hours: 6, contact: 40, stop: 20, presentation: 15, close: 6, rehash: 3 },
     logs: [],        // {t: ISO string, type: stage|'fail'}
     objections: [],  // {t, type, reasons: []}
-    rehashes: [],    // {t, date, site, name, age, gender, amount, pay, note, memory, next, remark}
+    rehashes: [],    // {t, date, site, name, age, gender, amount, pay, code, place, note, memory, next, remark}
     retro: { number: { good: "", bad: "" }, skill: { good: "", bad: "" }, attitude: { good: "", bad: "" } },
   };
 }
@@ -320,13 +320,14 @@ function saveObjection() {
 let pendingRehashLog = null;
 let editingRehashT = null;   // 타임라인에서 "✎ 정보"로 연 경우: 해당 로그의 t
 
-const RH_FIELDS = ["name", "age", "amount", "note", "memory", "next", "remark"];
+const RH_FIELDS = ["name", "age", "amount", "code", "place", "note", "memory", "next", "remark"];
 
 function openRehash() {
   editingRehashT = null;
   pendingRehashLog = addLog("rehash");
   RH_FIELDS.forEach((f) => ($("rh-f-" + f).value = ""));
   $("rh-f-gender").value = "여";
+  $("rh-f-place").value = S.info.site || "";   /* 활동장소 — PLAN의 사이트(테리코드 포함)를 기본값으로 */
   $$("#modal-rehash .seg-btn").forEach((b, i) => b.classList.toggle("active", i === 0));
   $("modal-rehash").classList.remove("hidden");
   setTimeout(() => $("rh-f-name").focus(), 250);
@@ -339,6 +340,8 @@ function openRehashEdit(log) {
   pendingRehashLog = null;
   const r = S.rehashes.find((x) => x.t === log.t) || {};
   RH_FIELDS.forEach((f) => ($("rh-f-" + f).value = r[f] != null ? r[f] : ""));
+  $("rh-f-code").value = String(r.code || "").replace(/^C26/, "");   /* 입력칸엔 뒷자리만 */
+  if (!$("rh-f-place").value) $("rh-f-place").value = r.place || r.site || S.info.site || "";
   $("rh-f-gender").value = r.gender || "여";
   const pay = r.pay || "계좌";
   $$("#modal-rehash .seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.pay === pay));
@@ -350,12 +353,15 @@ function openRehashEdit(log) {
 
 function saveRehash() {
   const pay = document.querySelector("#modal-rehash .seg-btn.active")?.dataset.pay || "계좌";
+  const codeDigits = $("rh-f-code").value.replace(/[^0-9]/g, "");
   const data = {
     name: $("rh-f-name").value.trim(),
     age: $("rh-f-age").value,
     gender: $("rh-f-gender").value,
     amount: $("rh-f-amount").value,
     pay,
+    code: codeDigits ? "C26" + codeDigits : "",
+    place: $("rh-f-place").value.trim(),
     note: $("rh-f-note").value.trim(),
     memory: $("rh-f-memory").value.trim(),
     next: $("rh-f-next").value.trim(),
@@ -639,7 +645,7 @@ function renderRehashList() {
   const items = allRehashes().filter((r) =>
     (!q || (r.name || "").toLowerCase().includes(q)) &&
     (!date || r.date === date) &&
-    (!site || (r.site || "").toLowerCase().includes(site)) &&
+    (!site || ((r.place || r.site || "")).toLowerCase().includes(site)) &&
     (!pay || r.pay === pay)
   ).sort((a, b) => b.t.localeCompare(a.t));
 
@@ -649,9 +655,10 @@ function renderRehashList() {
         <span>${esc(r.name) || "이름 없음"}</span>
         <span class="chip chip-blue">Rehash</span>
         <span class="chip">${esc(r.pay)}</span>
+        ${r.code ? `<span class="chip">${esc(r.code)}</span>` : ""}
         <span class="rh-amount">${r.amount ? Number(r.amount).toLocaleString() + "원" : "-"}</span>
       </div>
-      <div class="rh-sub">${r.date} · ${esc(r.site) || "-"} · ${r.age ? r.age + "세" : ""} ${esc(r.gender || "")}</div>
+      <div class="rh-sub">${r.date} · ${esc(r.place || r.site) || "-"} · ${r.age ? r.age + "세" : ""} ${esc(r.gender || "")}</div>
       ${r.memory ? `<div class="rh-note">💭 ${esc(r.memory)}</div>` : ""}
       ${r.next ? `<div class="rh-note">💬 다음: ${esc(r.next)}</div>` : ""}
       ${r.note || r.remark ? `<div class="rh-note">${esc([r.note, r.remark].filter(Boolean).join(" · "))}</div>` : ""}
@@ -746,9 +753,9 @@ function exportLogsCsv() {
 }
 
 function exportRehashCsv() {
-  let rows = [["날짜", "시간", "이름", "나이", "성별", "후원금액", "결제수단", "사이트", "특이사항", "기억할 내용", "다음 이야기", "Remark"]];
+  let rows = [["날짜", "시간", "이름", "나이", "성별", "후원금액", "결제수단", "약정코드", "활동장소", "사이트", "특이사항", "기억할 내용", "다음 이야기", "Remark"]];
   allRehashes().forEach((r) => {
-    rows.push([r.date, fmtTime(r.t), r.name, r.age, r.gender, r.amount, r.pay, r.site, r.note, r.memory, r.next, r.remark]);
+    rows.push([r.date, fmtTime(r.t), r.name, r.age, r.gender, r.amount, r.pay, r.code, r.place, r.site, r.note, r.memory, r.next, r.remark]);
   });
   download(`fcos_rehash_${todayStr()}.csv`, "﻿" + rows.map((r) => r.map(csvCell).join(",")).join("\n"), "text/csv;charset=utf-8");
   toast("리해쉬 CSV 다운로드 ✓");
@@ -812,7 +819,8 @@ function buildReportHTML() {
   /* 후원자 */
   const donorRows = S.rehashes.map((r) =>
     `<div class="donor">
-      <div class="donor-line"><b class="donor-time">${fmtTime(r.t)}</b><b class="donor-name">${esc(r.name) || "이름없음"}</b><span class="donor-meta">${r.age ? r.age + "세" : ""} ${esc(r.gender || "")} · ${r.amount ? Number(r.amount).toLocaleString() + "원" : "-"} · ${esc(r.pay || "")}</span></div>
+      <div class="donor-line"><b class="donor-time">${fmtTime(r.t)}</b><b class="donor-name">${esc(r.name) || "이름없음"}</b><span class="donor-meta">${r.age ? r.age + "세" : ""} ${esc(r.gender || "")} · ${r.amount ? Number(r.amount).toLocaleString() + "원" : "-"} · ${esc(r.pay || "")}${r.code ? " · " + esc(r.code) : ""}</span></div>
+      ${r.place ? `<div class="donor-memo">장소 · ${esc(r.place)}</div>` : ""}
       ${r.note ? `<div class="donor-memo">특이사항 · ${esc(r.note)}</div>` : ""}
       ${r.memory ? `<div class="donor-memo">기억 · ${esc(r.memory)}</div>` : ""}
       ${r.next ? `<div class="donor-memo">다음 · ${esc(r.next)}</div>` : ""}
@@ -1093,7 +1101,7 @@ const Hub = {
   synced() { try { return JSON.parse(localStorage.getItem(HUB_SYNCED_KEY)) || {}; } catch (e) { return {}; } },
   markSynced(id) { const m = this.synced(); m[id] = 1; localStorage.setItem(HUB_SYNCED_KEY, JSON.stringify(m)); },
 
-  /* rehash {t,date,site,name,age,gender,amount,pay,note,memory,next,remark}
+  /* rehash {t,date,site,name,age,gender,amount,pay,code,place,note,memory,next,remark}
      → 허브 rejectnotes 레코드 (허브 폼과 동일 스키마) */
   toRN(r, who) {
     const yr = new Date().getFullYear();
@@ -1102,10 +1110,11 @@ const Hub = {
       .filter(Boolean).join(" · ");
     return {
       id: "rn_cb_" + r.t, t: r.t, date: r.date || new Date().toISOString().slice(0, 10),
-      client: "옥스팜", city: "시티", chan: "스트릿", code: "",
+      client: "옥스팜", city: "시티", chan: "스트릿", code: r.code || "",
       amount: amt, pay: (r.pay === "카드" ? "카드" : "계좌"), cycle: "매월",
       birth: r.age ? String(yr - Number(r.age)) : "", gender: (r.gender === "남" ? "남" : "여"),
-      owner: who.name, place: r.site || "", obj: [], memo: memoBits + " · 콜백싯 연동",
+      name: r.name || "",
+      owner: who.name, place: r.place || r.site || "", obj: [], memo: memoBits + " · 콜백싯 연동",
       status: "open", rejReason: "", rejProb: "", by: who.name, byUid: who.uid
     };
   },

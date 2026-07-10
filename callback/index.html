@@ -71,7 +71,7 @@
     <div class="form-grid">
       <label>이름<input type="text" id="p-name" placeholder="예: 임재영"></label>
       <label>날짜<input type="date" id="p-date"></label>
-      <label>사이트<input type="text" id="p-site" placeholder="예: 홈플러스 강서점" list="site-list"><datalist id="site-list"></datalist></label>
+      <label>사이트<input type="text" id="p-site" placeholder="예: 롯데마트시화점/E/C/22470" list="site-list"><datalist id="site-list"></datalist></label>
       <label>날씨
         <select id="p-weather">
           <option value="맑음">☀️ 맑음</option>
@@ -300,6 +300,10 @@
         <select id="rh-f-gender"><option value="여">여</option><option value="남">남</option><option value="기타">기타</option></select>
       </label>
       <label>후원금액<input type="number" id="rh-f-amount" step="1000" placeholder="30000"></label>
+      <label class="span2">약정코드
+        <div style="display:flex;align-items:stretch"><span style="display:flex;align-items:center;background:#F4F4F5;border:1.5px solid #E4E4E7;border-right:none;border-radius:10px 0 0 10px;padding:0 11px;color:#52525B;font-weight:800;font-size:13px">C26</span><input type="text" id="rh-f-code" inputmode="numeric" placeholder="024561 (뒷자리만)" style="border-radius:0 10px 10px 0;flex:1"></div>
+      </label>
+      <label class="span2">활동장소<input type="text" id="rh-f-place" placeholder="예: 롯데마트시화점/E/C/22470"></label>
       <label class="span2">결제수단
         <div class="seg">
           <button class="seg-btn active" data-pay="계좌">계좌</button>
