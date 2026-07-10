@@ -1004,3 +1004,120 @@ loadToday();
 renderHeader();
 bind();
 nav("dashboard");
+
+/* ════════════════════════════════════════════════════════════════════
+   HUB SYNC — 프레젠스 허브 리젝노트 자동 연동 (v1)
+   Close→Rehash(후원자)가 저장되면 presence.co.kr 허브의
+   rejectnotes/{uid}/{id} 에 '관찰중(open)' 상태로 자동 등록됩니다.
+   - REST 방식(PUT)이라 SDK 불필요 · 오프라인이면 다음 접속 때 재시도
+   - id가 rehash 타임스탬프로 고정(rn_cb_{t}) → 몇 번 돌려도 중복 0
+   ════════════════════════════════════════════════════════════════════ */
+const HUB_DB = "https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app";
+const HUB_ID_KEY = "fcos_hub_identity";   // {uid,name}
+const HUB_SYNCED_KEY = "fcos_hub_synced"; // {rn_cb_t:1,...}
+
+const Hub = {
+  identity() { try { return JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) { return null; } },
+  setIdentity(v) { localStorage.setItem(HUB_ID_KEY, JSON.stringify(v)); this.badge(); },
+  synced() { try { return JSON.parse(localStorage.getItem(HUB_SYNCED_KEY)) || {}; } catch (e) { return {}; } },
+  markSynced(id) { const m = this.synced(); m[id] = 1; localStorage.setItem(HUB_SYNCED_KEY, JSON.stringify(m)); },
+
+  /* rehash {t,date,site,name,age,gender,amount,pay,note,memory,next,remark}
+     → 허브 rejectnotes 레코드 (허브 폼과 동일 스키마) */
+  toRN(r, who) {
+    const yr = new Date().getFullYear();
+    const amt = r.amount ? (Math.round(Number(r.amount) / 10000) + "만") : "3만";
+    const memoBits = [r.name ? (r.name + (r.age ? "(" + r.age + "세)" : "")) : "", r.note || "", r.memory || "", r.next || "", r.remark || ""]
+      .filter(Boolean).join(" · ");
+    return {
+      id: "rn_cb_" + r.t, t: r.t, date: r.date || new Date().toISOString().slice(0, 10),
+      client: "옥스팜", city: "시티", chan: "스트릿", code: "",
+      amount: amt, pay: (r.pay === "카드" ? "카드" : "계좌"), cycle: "매월",
+      birth: r.age ? String(yr - Number(r.age)) : "", gender: (r.gender === "남" ? "남" : "여"),
+      owner: who.name, place: r.site || "", obj: [], memo: memoBits + " · 콜백싯 연동",
+      status: "open", rejReason: "", rejProb: "", by: who.name, byUid: who.uid
+    };
+  },
+
+  async put(uid, rec) {
+    const res = await fetch(HUB_DB + "/rejectnotes/" + uid + "/" + rec.id + ".json", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(rec)
+    });
+    if (!res.ok) throw new Error("hub " + res.status);
+    return rec.id;
+  },
+
+  allRehashes() { return Object.values(Store.getAll()).flatMap((s) => s.rehashes || []); },
+
+  async syncAll(showToast) {
+    const who = this.identity(); if (!who) return 0;
+    const done = this.synced(); let n = 0;
+    for (const r of this.allRehashes()) {
+      const id = "rn_cb_" + r.t;
+      if (done[id]) continue;
+      try { await this.put(who.uid, this.toRN(r, who)); this.markSynced(id); n++; }
+      catch (e) { console.warn("[HubSync]", e.message); break; }
+    }
+    if (n && showToast !== false) this.toast("허브 리젝노트에 " + n + "건 연동 ✓");
+    this.badge();
+    return n;
+  },
+
+  /* ---- 계정 연결 피커 ---- */
+  async openPicker() {
+    let users = {};
+    try { users = await fetch(HUB_DB + "/users.json").then((r) => r.json()) || {}; }
+    catch (e) { this.toast("허브 연결 실패 — 인터넷 확인"); return; }
+    const list = Object.values(users).filter((u) => u && u.name && u.status !== "retired" && !u.test);
+    const old = document.getElementById("hub-picker"); if (old) old.remove();
+    const ov = document.createElement("div"); ov.id = "hub-picker";
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(15,18,24,.55);z-index:99;display:flex;align-items:center;justify-content:center;padding:20px";
+    const box = document.createElement("div");
+    box.style.cssText = "background:#fff;border-radius:18px;padding:20px;max-width:420px;width:100%;max-height:70vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3)";
+    box.innerHTML = "<div style='font-weight:800;font-size:16px;margin-bottom:4px'>허브 계정 연결</div>" +
+      "<div style='font-size:13px;color:#6b7482;margin-bottom:14px'>후원자 정보가 이 계정의 리젝노트로 들어갑니다</div>";
+    list.sort((a, b) => (a.name > b.name ? 1 : -1)).forEach((u) => {
+      const b = document.createElement("button");
+      b.textContent = u.name + (u.role ? " · " + u.role : "");
+      b.style.cssText = "display:block;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border:1.5px solid #e5e9f0;border-radius:12px;background:#f8fafc;font-weight:700;font-size:14px;cursor:pointer";
+      b.onclick = () => { this.setIdentity({ uid: u.uid, name: u.name }); ov.remove(); this.toast(u.name + "님으로 연결 ✓"); this.syncAll(); };
+      box.appendChild(b);
+    });
+    const x = document.createElement("button"); x.textContent = "닫기";
+    x.style.cssText = "margin-top:10px;padding:10px 14px;border:0;border-radius:10px;background:#eef1f6;font-weight:700;cursor:pointer;width:100%";
+    x.onclick = () => ov.remove(); box.appendChild(x);
+    ov.appendChild(box); document.body.appendChild(ov);
+  },
+
+  toast(msg) {
+    const t = document.createElement("div");
+    t.textContent = msg;
+    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#0f1218;color:#fff;padding:10px 16px;border-radius:12px;font-size:13.5px;font-weight:700;z-index:120;box-shadow:0 8px 24px rgba(0,0,0,.35)";
+    document.body.appendChild(t); setTimeout(() => t.remove(), 2400);
+  },
+
+  badge() {
+    let b = document.getElementById("hub-badge");
+    if (!b) {
+      b = document.createElement("button"); b.id = "hub-badge";
+      b.style.cssText = "border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:8px";
+      const meta = document.querySelector(".header-meta"); if (meta) meta.appendChild(b); else document.body.appendChild(b);
+      b.onclick = () => this.openPicker();
+    }
+    const who = this.identity();
+    b.textContent = who ? "허브 ✓ " + who.name : "허브 연결";
+    b.style.background = who ? "#DCFCE7" : "#FEE2E2";
+    b.style.color = who ? "#166534" : "#991B1B";
+  },
+
+  init() {
+    this.badge();
+    // 후원자 저장 버튼 뒤에 동기화 (원본 리스너 다음 순서로 실행됨)
+    const btn = document.getElementById("btn-save-rehash");
+    if (btn) btn.addEventListener("click", () => setTimeout(() => this.syncAll(false).then((n) => { if (n) this.toast("리젝노트 등록 ✓ (관찰중)"); }), 400));
+    // 진입 시 + 온라인 복귀 시 미전송분 재시도
+    setTimeout(() => this.syncAll(false), 2000);
+    window.addEventListener("online", () => this.syncAll(false));
+  }
+};
+Hub.init();
