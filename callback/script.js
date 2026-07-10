@@ -236,6 +236,7 @@ function renderTimeline(el, logs, deletable, limit) {
       <span class="tl-dot d-${l.type}"></span>
       <span class="tl-type">${label}</span>
       ${extra ? `<span class="tl-extra">${esc(extra)}</span>` : ""}
+      ${deletable && l.type === "rehash" ? `<button class="tl-rh" data-rh="${idx}" title="후원자 정보 입력/수정" style="border:1.5px solid #F59E0B;background:#FFFBEB;color:#B45309;border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700;cursor:pointer;margin-left:6px">✎ 정보</button>` : ""}
       ${deletable ? `<button class="tl-del" data-del="${idx}" aria-label="삭제">×</button>` : ""}
     </div>`;
   }).join("");
@@ -317,23 +318,39 @@ function saveObjection() {
 
 /* ==================== Rehash Modal (후원자 정보) ==================== */
 let pendingRehashLog = null;
+let editingRehashT = null;   // 타임라인에서 "✎ 정보"로 연 경우: 해당 로그의 t
+
+const RH_FIELDS = ["name", "age", "amount", "note", "memory", "next", "remark"];
 
 function openRehash() {
+  editingRehashT = null;
   pendingRehashLog = addLog("rehash");
-  ["name", "age", "amount", "note", "memory", "next", "remark"].forEach((f) => ($("rh-f-" + f).value = ""));
+  RH_FIELDS.forEach((f) => ($("rh-f-" + f).value = ""));
   $("rh-f-gender").value = "여";
   $$("#modal-rehash .seg-btn").forEach((b, i) => b.classList.toggle("active", i === 0));
   $("modal-rehash").classList.remove("hidden");
   setTimeout(() => $("rh-f-name").focus(), 250);
 }
 
+/* 타임라인의 Rehash 항목에서 후원자 정보 입력/수정 */
+function openRehashEdit(log) {
+  if (!log || log.type !== "rehash") return;
+  editingRehashT = log.t;
+  pendingRehashLog = null;
+  const r = S.rehashes.find((x) => x.t === log.t) || {};
+  RH_FIELDS.forEach((f) => ($("rh-f-" + f).value = r[f] != null ? r[f] : ""));
+  $("rh-f-gender").value = r.gender || "여";
+  const pay = r.pay || "계좌";
+  $$("#modal-rehash .seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.pay === pay));
+  if (!document.querySelector("#modal-rehash .seg-btn.active"))
+    $$("#modal-rehash .seg-btn").forEach((b, i) => b.classList.toggle("active", i === 0));
+  $("modal-rehash").classList.remove("hidden");
+  setTimeout(() => $("rh-f-name").focus(), 250);
+}
+
 function saveRehash() {
   const pay = document.querySelector("#modal-rehash .seg-btn.active")?.dataset.pay || "계좌";
-  S.rehashes.push({
-    t: pendingRehashLog.t,
-    source: pendingRehashLog.type,
-    date: S.info.date,
-    site: S.info.site,
+  const data = {
     name: $("rh-f-name").value.trim(),
     age: $("rh-f-age").value,
     gender: $("rh-f-gender").value,
@@ -343,6 +360,28 @@ function saveRehash() {
     memory: $("rh-f-memory").value.trim(),
     next: $("rh-f-next").value.trim(),
     remark: $("rh-f-remark").value.trim(),
+  };
+  if (editingRehashT != null) {
+    /* 수정 모드: 기존 후원자 갱신 (기록이 없던 로그면 새로 채움) */
+    let r = S.rehashes.find((x) => x.t === editingRehashT);
+    if (!r) { r = { t: editingRehashT, source: "rehash", date: S.info.date, site: S.info.site }; S.rehashes.push(r); }
+    Object.assign(r, data);
+    /* 허브 리젝노트에도 수정분 재반영 (동기화 마킹 해제 → 재전송) */
+    try {
+      const k = "fcos_hub_synced"; const m = JSON.parse(localStorage.getItem(k)) || {};
+      delete m["rn_cb_" + editingRehashT]; localStorage.setItem(k, JSON.stringify(m));
+      if (typeof Hub !== "undefined") setTimeout(() => Hub.syncAll(false), 300);
+    } catch (e) {}
+    editingRehashT = null;
+    save(); closeModals(); renderDo(); toast("후원자 정보 수정 완료 ✓");
+    return;
+  }
+  S.rehashes.push({
+    t: pendingRehashLog.t,
+    source: pendingRehashLog.type,
+    date: S.info.date,
+    site: S.info.site,
+    ...data,
   });
   save();
   closeModals();
@@ -741,34 +780,49 @@ function importJson(file) {
 function buildReportHTML() {
   const { hours, data } = hourlyBuckets();
   const counts = STAGES.map((s) => countType(s));
+  const dayNames = ["일","월","화","수","목","금","토"];
+  const dObj = new Date(S.info.date + "T00:00:00");
+  const dateLabel = `${S.info.date} (${dayNames[dObj.getDay()]})`;
 
-  // 실제 기록된 시간대만 표시 (억지로 늘어나지 않도록)
+  /* 목표 & 결과 카드 */
+  const statCards = STAGES.map((s, i) => {
+    const a = counts[i], g = S.goals[s], p = pct(a, g), ok = a >= g;
+    return `<div class="stat">
+      <div class="stat-label" style="color:${STAGE_COLOR[s]}">${STAGE_LABEL[s]}</div>
+      <div class="stat-num">${a}<span class="stat-goal">/ ${g}</span></div>
+      <div class="stat-rate ${ok ? "ok" : ""}">${ok ? "달성 " : ""}${p}%</div>
+    </div>`;
+  }).join("");
+
+  /* 퍼널 전환 */
+  const funnel = STAGES.slice(0, -1).map((s, i) => {
+    const from = counts[i], to = counts[i + 1];
+    return `<div class="fun">
+      <div class="fun-top"><b style="color:${STAGE_COLOR[s]}">${STAGE_LABEL[s]} ${from}</b><span class="fun-arrow">→</span><b style="color:${STAGE_COLOR[STAGES[i+1]]}">${STAGE_LABEL[STAGES[i+1]]} ${to}</b></div>
+      <div class="fun-pct">${pct(to, from)}%</div>
+    </div>`;
+  }).join("");
+
+  /* 시간대 표 (기록된 시간대만) */
   const hourRows = hours.map((h) => {
     const d = data[h];
     return `<tr><td class="hr">${h}시</td><td>${d.contact || ""}</td><td>${d.stop || ""}</td><td>${d.presentation || ""}</td><td>${d.close || ""}</td><td>${d.rehash || ""}</td></tr>`;
   }).join("");
 
+  /* 후원자 */
+  const donorRows = S.rehashes.map((r) =>
+    `<div class="donor">
+      <div class="donor-line"><b class="donor-time">${fmtTime(r.t)}</b><b class="donor-name">${esc(r.name) || "이름없음"}</b><span class="donor-meta">${r.age ? r.age + "세" : ""} ${esc(r.gender || "")} · ${r.amount ? Number(r.amount).toLocaleString() + "원" : "-"} · ${esc(r.pay || "")}</span></div>
+      ${r.note ? `<div class="donor-memo">특이사항 · ${esc(r.note)}</div>` : ""}
+      ${r.memory ? `<div class="donor-memo">기억 · ${esc(r.memory)}</div>` : ""}
+      ${r.next ? `<div class="donor-memo">다음 · ${esc(r.next)}</div>` : ""}
+      ${r.remark ? `<div class="donor-memo">Remark · ${esc(r.remark)}</div>` : ""}
+    </div>`).join("") || `<div class="none-block">기록 없음</div>`;
+
+  /* 오브젝션 */
   const objItems = S.objections.map((o) =>
-    `<li>${o.type === "fail" ? `<span class="tag tag-f">실패</span> ` : ""}${fmtTime(o.t)} · ${esc(o.reasons.join(", "))}</li>`
+    `<li>${o.type === "fail" ? `<span class="tag-f">실패</span> ` : ""}<b>${fmtTime(o.t)}</b> · ${esc(o.reasons.join(", "))}</li>`
   ).join("") || `<li class="none">기록 없음</li>`;
-
-  const serialItems = S.rehashes.map((r) =>
-    `<li><b class="ser-time">${fmtTime(r.t)}</b> · ${esc(r.name) || "이름없음"} · ${r.age ? r.age + "세" : "-"} ${esc(r.gender || "")} · ${r.amount ? Number(r.amount).toLocaleString() + "원" : "-"} · ${esc(r.pay)}${r.memory ? `<div class="memo">메모: ${esc(r.memory)}</div>` : ""}${r.next ? `<div class="memo">다음: ${esc(r.next)}</div>` : ""}</li>`
-  ).join("") || `<li class="none">기록 없음</li>`;
-
-  const goalCells = STAGES.map((s, i) =>
-    `<td class="gv"><b>${counts[i]}</b><span class="gg"> / ${S.goals[s]}</span></td>`).join("");
-  const rateCells = STAGES.map((s, i) => {
-    const g = S.goals[s], a = counts[i], p = pct(a, g);
-    return `<td class="rate ${a >= g ? "ok" : ""}">${p}%</td>`;
-  }).join("");
-
-  // 전환율: 각 칸에 "무엇에서 무엇으로 몇 %"인지 그대로 표기
-  let convCells = "";
-  for (let i = 0; i < STAGES.length - 1; i++) {
-    convCells += `<td class="cv"><b>${pct(counts[i + 1], counts[i])}%</b>
-      <div class="cv-sub">${STAGE_LABEL[STAGES[i]]} ${counts[i]}명 → ${STAGE_LABEL[STAGES[i + 1]]} ${counts[i + 1]}명</div></td>`;
-  }
 
   const retroRow = (sign) => ["number", "skill", "attitude"].map((k) =>
     `<td class="retro-cell">${esc(S.retro[k][sign === "+" ? "good" : "bad"]) || "<span class='none'>-</span>"}</td>`).join("");
@@ -777,105 +831,120 @@ function buildReportHTML() {
 <style>
   @page { size: A4; margin: 9mm 10mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; color:#18181B; font-size:10.5px; line-height:1.4; padding:24px; }
-  #sheet { width:718px; margin:0 auto; }
-  h1 { text-align:center; font-size:20px; letter-spacing:-.02em; margin-bottom:1px; }
-  .subtitle { text-align:center; color:#71717A; font-size:9px; margin-bottom:10px; }
-  .info { display:grid; grid-template-columns:repeat(3,1fr); gap:2px 14px; border:1px solid #D4D4D8; border-radius:8px; padding:7px 12px; margin-bottom:9px; }
-  .info div b { color:#2563EB; margin-right:6px; font-size:9.5px; }
-  .cols { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:9px; align-items:start; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; color:#18181B; font-size:13px; line-height:1.45; padding:24px; }
+  #sheet { width:730px; margin:0 auto; }
+
+  .head { display:flex; align-items:flex-end; justify-content:space-between; padding-bottom:10px; border-bottom:3px solid #18181B; margin-bottom:12px; }
+  h1 { font-size:27px; font-weight:900; letter-spacing:-.02em; }
+  .brand { text-align:right; color:#71717A; font-size:12px; line-height:1.5; }
+  .brand b { color:#2563EB; }
+
+  .info { display:flex; flex-wrap:wrap; gap:7px 8px; margin-bottom:14px; }
+  .info div { background:#F4F4F5; border-radius:9px; padding:7px 13px; font-size:12.5px; font-weight:600; }
+  .info b { color:#2563EB; margin-right:7px; font-weight:800; }
+
+  .stats { display:grid; grid-template-columns:repeat(5,1fr); gap:9px; margin-bottom:12px; }
+  .stat { border:1.5px solid #E4E4E7; border-radius:13px; padding:11px 12px 9px; text-align:center; }
+  .stat-label { font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; margin-bottom:2px; }
+  .stat-num { font-size:27px; font-weight:900; letter-spacing:-.02em; }
+  .stat-goal { font-size:13px; font-weight:700; color:#A1A1AA; margin-left:4px; }
+  .stat-rate { font-size:11.5px; font-weight:800; color:#A1A1AA; margin-top:1px; }
+  .stat-rate.ok { color:#16A34A; }
+
+  .funnel { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:14px; }
+  .fun { background:#FAFAFA; border:1px solid #E4E4E7; border-radius:11px; padding:8px 10px; text-align:center; }
+  .fun-top { font-size:11.5px; font-weight:700; }
+  .fun-arrow { color:#A1A1AA; margin:0 5px; }
+  .fun-pct { font-size:17px; font-weight:900; color:#2563EB; margin-top:1px; }
+
+  .sec { font-size:13px; font-weight:900; border-left:5px solid #2563EB; padding-left:9px; margin:0 0 8px; letter-spacing:-.01em; }
+  .cols { display:grid; grid-template-columns:300px 1fr; gap:13px; margin-bottom:14px; align-items:start; }
+
   table { width:100%; border-collapse:collapse; }
-  th,td { border:1px solid #D4D4D8; padding:3px 5px; text-align:center; }
-  th { background:#F4F4F5; font-size:9.5px; }
-  .hr { font-weight:700; background:#FAFAFA; }
-  .hourly td { height:17px; }
-  .lbl { width:64px; background:#F4F4F5; color:#71717A; font-size:9px; font-weight:700; }
-  .panel { border:1px solid #D4D4D8; border-radius:8px; overflow:hidden; }
-  .ser-time { color:#2563EB; }
-  .panel h3 { background:#F4F4F5; font-size:10px; padding:4px 9px; border-bottom:1px solid #D4D4D8; }
-  .panel ol { padding:5px 9px 6px 24px; }
-  .panel ol.two-col { columns:2; column-gap:14px; }
-  .panel li { margin-bottom:2px; break-inside:avoid; }
-  .memo { color:#71717A; font-size:9px; padding-left:2px; }
+  th,td { border:1px solid #E4E4E7; padding:7px 6px; text-align:center; font-size:12.5px; }
+  th { background:#F4F4F5; font-size:11.5px; font-weight:800; }
+  .hr { font-weight:800; background:#FAFAFA; width:52px; }
+  .sum td { background:#F8FAFF; font-weight:800; }
+
+  .panel { border:1.5px solid #E4E4E7; border-radius:12px; overflow:hidden; }
+  .panel h3 { background:#F4F4F5; font-size:12px; font-weight:800; padding:7px 12px; border-bottom:1px solid #E4E4E7; }
+  .donor { padding:8px 13px; border-bottom:1px solid #F1F1F3; }
+  .donor:last-child { border-bottom:none; }
+  .donor-line { display:flex; align-items:baseline; gap:9px; }
+  .donor-time { color:#2563EB; font-size:12px; }
+  .donor-name { font-size:14px; font-weight:800; }
+  .donor-meta { color:#52525B; font-size:12px; }
+  .donor-memo { color:#71717A; font-size:11.5px; margin-top:2px; padding-left:2px; }
+  .none-block { padding:12px; color:#A1A1AA; text-align:center; }
+
+  .obj-panel ol { padding:8px 13px 9px 30px; }
+  .obj-panel li { margin-bottom:4px; font-size:12.5px; }
+  .obj-panel.two-col ol { columns:2; column-gap:18px; }
+  .obj-panel li b { color:#2563EB; font-weight:700; }
+  .tag-f { font-size:10.5px; font-weight:800; border-radius:5px; padding:1px 6px; background:#FEE2E2; color:#DC2626; }
   .none { color:#A1A1AA; }
-  .tag { font-size:8.5px; font-weight:700; border-radius:4px; padding:0 4px; background:#FEE2E2; color:#DC2626; }
-  .sec-title { background:#27272A; color:#fff; text-align:center; font-size:10.5px; font-weight:700; padding:4px; border-radius:6px 6px 0 0; }
-  .goal-table .gv { font-size:11px; padding:6px 5px; }
-  .goal-table .gv b { font-size:15px; }
-  .gg { color:#A1A1AA; font-size:9.5px; }
-  .rate { font-size:9px; font-weight:700; color:#A1A1AA; background:#FAFAFA; padding:3px; }
-  .rate.ok { color:#16A34A; }
-  .conv-table { margin-bottom:9px; }
-  .cv b { font-size:11.5px; color:#2563EB; }
-  .cv-sub { font-size:8.5px; color:#71717A; }
-  .retro-cell { text-align:left; vertical-align:middle; min-height:0; white-space:pre-wrap; width:33.3%; padding:7px 9px; height:auto; }
-  .retro-table td { height:52px; }
-  .pm { width:56px; font-weight:800; background:#F4F4F5; color:#71717A; font-size:9px; }
-  .footer { text-align:center; color:#A1A1AA; font-size:8.5px; margin-top:9px; }
+
+  .retro-table th { padding:8px; }
+  .retro-cell { text-align:left; vertical-align:top; white-space:pre-wrap; width:31%; padding:10px 12px; font-size:12.5px; line-height:1.5; }
+  .retro-table td { height:64px; }
+  .pm { width:92px; font-weight:800; background:#F4F4F5; color:#52525B; font-size:11.5px; white-space:nowrap; }
+
+  .footer { display:flex; justify-content:space-between; color:#A1A1AA; font-size:10.5px; margin-top:12px; padding-top:8px; border-top:1px solid #E4E4E7; }
   .noprint { text-align:center; margin-bottom:14px; }
   .noprint button { background:#2563EB; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-size:14px; font-weight:700; cursor:pointer; }
-  @media print {
-    .noprint { display:none; }
-    body { padding:0; }
-    html, body { height:auto; }
-  }
+  @media print { .noprint { display:none; } body { padding:0; } html, body { height:auto; } }
 </style></head><body>
 <div class="noprint"><button onclick="window.print()">📑 PDF로 저장 / 인쇄</button></div>
 <div id="sheet">
-<h1>Call Back Sheet</h1>
-<div class="subtitle">Field Callback OS — Daily Report</div>
+
+<div class="head">
+  <h1>CALL BACK SHEET</h1>
+  <div class="brand"><b>Presence</b> · Field Callback OS<br>${dateLabel}</div>
+</div>
 
 <div class="info">
   <div><b>Name</b>${esc(S.info.name) || "-"}</div>
   <div><b>Team</b>${esc(S.info.team) || "-"}</div>
-  <div><b>Date</b>${S.info.date}</div>
-  <div><b>Weather</b>${esc(S.info.weather)}</div>
-  <div><b>Location</b>${esc(S.info.site) || "-"}</div>
-  <div><b>오늘의 테마</b>${esc(S.info.theme) || "-"}</div>
+  <div><b>Site</b>${esc(S.info.site) || "-"}</div>
+  <div><b>Weather</b>${esc(S.info.weather) || "-"}</div>
+  ${S.info.theme ? `<div><b>Theme</b>${esc(S.info.theme)}</div>` : ""}
 </div>
 
+<div class="sec">오늘의 목표 &amp; 결과</div>
+<div class="stats">${statCards}</div>
+<div class="funnel">${funnel}</div>
+
 <div class="cols">
-  <table class="hourly">
-    <tr><th>Field Time</th><th>Contact</th><th>Stop</th><th>PT</th><th>Close</th><th>Rehash</th></tr>
-    ${hourRows}
-    <tr><td class="hr">합계</td>${counts.map((c) => `<td><b>${c}</b></td>`).join("")}</tr>
-  </table>
   <div>
-    <div class="panel" style="margin-bottom:9px">
-      <h3>오브젝션 핸들링 사유 (Close)</h3>
-      <ol class="${S.objections.length > 7 ? "two-col" : ""}">${objItems}</ol>
-    </div>
-    <div class="panel">
-      <h3>시리얼 — 후원자 기본정보 (Rehash)</h3>
-      <ol>${serialItems}</ol>
-    </div>
+    <div class="sec">시간대별 활동</div>
+    <table>
+      <tr><th>시간</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th></tr>
+      ${hourRows}
+      <tr class="sum"><td class="hr">합계</td>${counts.map((c) => `<td>${c}</td>`).join("")}</tr>
+    </table>
+  </div>
+  <div>
+    <div class="sec">후원자 — Rehash ${S.rehashes.length}건</div>
+    <div class="panel">${donorRows}</div>
   </div>
 </div>
 
-<div class="sec-title">오늘의 목표 & 결과 (환경을 탓하지 말고 나의 노력을 탓하라)</div>
-<table class="goal-table">
-  <tr><th class="lbl"></th>${STAGES.map((s) => `<th>${STAGE_LABEL[s]}</th>`).join("")}</tr>
-  <tr><td class="lbl">결과<br>실제/목표</td>${goalCells}</tr>
-  <tr><td class="lbl">달성률</td>${rateCells}</tr>
-</table>
-<table class="conv-table">
-  <tr><td class="lbl">전환율<br>다음 단계<br>이동 비율</td>${convCells}</tr>
-</table>
+<div class="sec">오브젝션 핸들링 ${S.objections.length}건</div>
+<div class="panel obj-panel ${S.objections.length > 5 ? "two-col" : ""}"><ol>${objItems}</ol></div>
 
-<div class="sec-title">내일을 위한 Analysis &amp; Evaluation</div>
+<div class="sec" style="margin-top:14px">Analysis &amp; Evaluation — 내일을 위한 복기</div>
 <table class="retro-table">
   <tr><th class="pm"></th><th>Number</th><th>Pitch (Skill)</th><th>Attitude (Mental)</th></tr>
-  <tr><td class="pm">잘한 점 (＋)</td>${retroRow("+")}</tr>
-  <tr><td class="pm">아쉬운 점 (－)</td>${retroRow("-")}</tr>
+  <tr><td class="pm">잘한 점 ＋</td>${retroRow("+")}</tr>
+  <tr><td class="pm">아쉬운 점 －</td>${retroRow("-")}</tr>
 </table>
 
-<div class="footer">Generated by Field Callback OS · ${new Date().toLocaleString("ko-KR")}</div>
+<div class="footer"><span>환경을 탓하지 말고 나의 노력을 탓하라</span><span>Field Callback OS · ${new Date().toLocaleString("ko-KR")}</span></div>
 </div><!-- /#sheet -->
 <script>
-// 어떤 데이터가 들어와도 무조건 A4 한 페이지: 내용이 넘치면 전체를 비율 축소
 window.addEventListener("load", () => {
   const sheet = document.getElementById("sheet");
-  const PAGE_H = 1035; // A4 인쇄 가능 높이(px, 9mm 여백 기준)
+  const PAGE_H = 1035;
   const h = sheet.scrollHeight;
   if (h > PAGE_H) sheet.style.zoom = Math.max(0.55, PAGE_H / h).toFixed(3);
   setTimeout(() => window.print(), 400);
@@ -947,6 +1016,8 @@ function bind() {
       toast(`기록 범위: ${from}시 ~ ${to}시`);
     }));
   $("do-timeline").addEventListener("click", (e) => {
+    const rh = e.target.closest("[data-rh]");
+    if (rh) { openRehashEdit(S.logs[parseInt(rh.dataset.rh, 10)]); return; }
     const del = e.target.closest("[data-del]");
     if (del) { deleteLog(parseInt(del.dataset.del, 10)); return; }
     const edit = e.target.closest("[data-edit]");
