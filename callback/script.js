@@ -902,7 +902,7 @@ function buildReportHTML() {
   .noprint button { background:#2563EB; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-size:14px; font-weight:700; cursor:pointer; }
   @media print { .noprint { display:none; } body { padding:0; } html, body { height:auto; } }
 </style></head><body>
-<div class="noprint"><button onclick="window.print()">📑 PDF로 저장 / 인쇄</button></div>
+<div class="noprint"><button onclick="window.print()">📑 PDF로 저장 / 인쇄</button><button onclick="window.close();setTimeout(function(){history.back()},250)" style="background:#3F3F46;margin-left:8px">✕ 닫기</button></div>
 <div id="sheet">
 
 <div class="head">
