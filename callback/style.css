@@ -385,3 +385,8 @@ button.tl-time-edit:hover { color: var(--blue); }
   .result-cards { grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .result-card .v { font-size: 16px; }
 }
+
+/* iOS 홈화면 앱: 상태바와 절대 겹치지 않도록 최소 패딩 강제 */
+@media (display-mode: standalone) {
+  .app-header { padding-top: max(24px, env(safe-area-inset-top)); }
+}
