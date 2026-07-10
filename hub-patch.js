@@ -515,3 +515,49 @@
     if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();open();}
   });
 })();
+
+/* ════ REEL GUARD v1 — 필름 릴 자기복구 가드 (멱등) ════ */
+(function(){
+  'use strict';
+  function keyOf(f){
+    var im = f.querySelector('img');
+    return im ? (im.getAttribute('src')||'').slice(0,80) + '|' + (im.getAttribute('src')||'').length : f.textContent.slice(0,40);
+  }
+  function normalizeReel(reel){
+    var frames = Array.prototype.slice.call(reel.children);
+    if (!frames.length) return;
+    var seen = {}, uniq = [];
+    frames.forEach(function(f){
+      var k = keyOf(f);
+      if (seen[k]) return;
+      seen[k] = 1; uniq.push(f);
+    });
+    if (!uniq.length) return;
+    var W = Math.max(window.innerWidth, 320);
+    var one = 0;
+    uniq.forEach(function(f){ one += f.getBoundingClientRect().width || 240; });
+    var gap = parseFloat(getComputedStyle(reel).gap) || 12;
+    one += gap * uniq.length;
+    if (one < 60) return;
+    var k2 = Math.ceil((W * 2.2) / one);
+    if (k2 % 2) k2++;
+    if (k2 < 2) k2 = 2;
+    var frag = document.createDocumentFragment();
+    for (var r = 0; r < k2; r++)
+      uniq.forEach(function(f){ frag.appendChild(r === 0 ? f : f.cloneNode(true)); });
+    reel.innerHTML = '';
+    reel.appendChild(frag);
+    reel.setAttribute('data-guard', String(k2));
+  }
+  function runGuard(){
+    document.querySelectorAll('.track .reel, .reel').forEach(function(reel){
+      try { normalizeReel(reel); } catch(e){}
+    });
+  }
+  if (document.readyState === 'complete') setTimeout(runGuard, 400);
+  window.addEventListener('load', function(){ setTimeout(runGuard, 400); });
+  setTimeout(runGuard, 1500);
+  setTimeout(runGuard, 3500);
+  var rT; window.addEventListener('resize', function(){ clearTimeout(rT); rT = setTimeout(runGuard, 300); });
+  window.addEventListener('orientationchange', function(){ setTimeout(runGuard, 500); });
+})();
