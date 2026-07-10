@@ -375,7 +375,7 @@ function saveRehash() {
     /* 허브 리젝노트에도 수정분 재반영 (동기화 마킹 해제 → 재전송) */
     try {
       const k = "fcos_hub_synced"; const m = JSON.parse(localStorage.getItem(k)) || {};
-      delete m["rn_cb_" + editingRehashT]; localStorage.setItem(k, JSON.stringify(m));
+      delete m["rn_cb_" + String(editingRehashT).replace(/[^0-9A-Za-z_-]/g, "-")]; localStorage.setItem(k, JSON.stringify(m));
       if (typeof Hub !== "undefined") setTimeout(() => Hub.syncAll(false), 300);
     } catch (e) {}
     editingRehashT = null;
@@ -1109,7 +1109,7 @@ const Hub = {
     const memoBits = [r.name ? (r.name + (r.age ? "(" + r.age + "세)" : "")) : "", r.note || "", r.memory || "", r.next || "", r.remark || ""]
       .filter(Boolean).join(" · ");
     return {
-      id: "rn_cb_" + r.t, t: r.t, date: r.date || new Date().toISOString().slice(0, 10),
+      id: "rn_cb_" + String(r.t).replace(/[^0-9A-Za-z_-]/g, "-"), t: r.t, date: r.date || new Date().toISOString().slice(0, 10),
       client: "옥스팜", city: "시티", chan: "스트릿", code: r.code || "",
       amount: amt, pay: (r.pay === "카드" ? "카드" : "계좌"), cycle: "매월",
       birth: r.age ? String(yr - Number(r.age)) : "", gender: (r.gender === "남" ? "남" : "여"),
@@ -1132,11 +1132,25 @@ const Hub = {
   async syncAll(showToast) {
     const who = this.identity(); if (!who) return 0;
     const done = this.synced(); let n = 0;
+    /* 서버에 이미 있는 후원자(이름+날짜)는 다시 올리지 않는다 — 기기 여러 대여도 중복 0 */
+    let seen = {};
+    try {
+      const exist = await fetch(HUB_DB + "/rejectnotes/" + who.uid + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()) || {};
+      Object.values(exist).forEach((e) => {
+        if (!e) return;
+        const nm = (e.name || String(e.memo || "").split("(")[0] || "").trim();
+        if (nm) seen[(e.date || "") + "|" + nm] = 1;
+      });
+    } catch (e) {}
     for (const r of this.allRehashes()) {
-      const id = "rn_cb_" + r.t;
+      const id = "rn_cb_" + String(r.t).replace(/[^0-9A-Za-z_-]/g, "-");
       if (done[id]) continue;
-      try { await this.put(who.uid, this.toRN(r, who)); this.markSynced(id); n++; }
-      catch (e) { console.warn("[HubSync]", e.message); break; }
+      const nm = (r.name || "").trim();
+      if (nm && seen[(r.date || "") + "|" + nm]) { this.markSynced(id); continue; }
+      try {
+        await this.put(who.uid, this.toRN(r, who));
+        this.markSynced(id); if (nm) seen[(r.date || "") + "|" + nm] = 1; n++;
+      } catch (e) { console.warn("[HubSync]", e.message); break; }
     }
     if (n && showToast !== false) this.toast("허브 리젝노트에 " + n + "건 연동 ✓");
     this.badge();
@@ -1201,3 +1215,136 @@ const Hub = {
   }
 };
 Hub.init();
+
+/* CBS CLOUD v1 — 콜백싯 서버 저장·복원 + 팀 콜백싯(관리자 열람) */
+(function () {
+  'use strict';
+  var PATH = 'cbsheets';
+  var sigs = {};
+
+  function who() { try { return Hub.identity(); } catch (e) { return null; } }
+
+  function pushChanged() {
+    var w = who(); if (!w) return;
+    var all = Store.getAll();
+    Object.keys(all).forEach(function (d) {
+      var j = JSON.stringify(all[d]);
+      if (sigs[d] === j) return;
+      var body; try { body = JSON.parse(j); } catch (e) { return; }
+      if (!body || !body.info) return;
+      body._u = Date.now(); body._by = w.name;
+      fetch(HUB_DB + '/' + PATH + '/' + w.uid + '/' + d + '.json', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      }).then(function (r) { if (r.ok) sigs[d] = j; }).catch(function () {});
+    });
+  }
+
+  function pullAll() {
+    var w = who(); if (!w) return Promise.resolve(0);
+    return fetch(HUB_DB + '/' + PATH + '/' + w.uid + '.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (server) {
+        server = server || {};
+        var all = Store.getAll(); var changed = 0;
+        Object.keys(server).forEach(function (d) {
+          var sv = server[d]; if (!sv || !sv.info) return;
+          var lc = all[d];
+          var lcEmpty = !lc || (((lc.logs || []).length === 0) && ((lc.rehashes || []).length === 0));
+          if (lcEmpty || (sv._u || 0) > (lc._u || 0)) { all[d] = sv; sigs[d] = JSON.stringify(sv); changed++; }
+          else sigs[d] = JSON.stringify(lc);
+        });
+        if (changed) {
+          Store._write(all);
+          if (!sessionStorage.getItem('cbs_pulled')) {
+            sessionStorage.setItem('cbs_pulled', '1');
+            location.reload();
+            return changed;
+          }
+          try { Hub.toast('서버에서 ' + changed + '일치 콜백싯 복원 ✓'); } catch (e) {}
+        }
+        return changed;
+      }).catch(function () { return 0; });
+  }
+
+  function openTeamReport(sess) {
+    var keep = S, html = '';
+    try { S = sess; html = buildReportHTML(); } finally { S = keep; }
+    var w = window.open('', '_blank');
+    if (!w) { try { Hub.toast('팝업을 허용해 주세요'); } catch (e) {} return; }
+    w.document.write(html); w.document.close();
+  }
+
+  function teamOverlay() {
+    var old = document.getElementById('cbs-team-ov'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'cbs-team-ov';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,18,24,.55);z-index:98;display:flex;align-items:center;justify-content:center;padding:20px';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:18px;padding:20px;max-width:460px;width:100%;max-height:72vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3)';
+    box.innerHTML = "<div style='font-weight:800;font-size:16px;margin-bottom:10px'>👥 팀 콜백싯</div><div id='cbs-team-body' style='font-size:14px;color:#6b7482'>불러오는 중…</div>";
+    var x = document.createElement('button'); x.textContent = '닫기';
+    x.style.cssText = 'margin-top:12px;padding:10px 14px;border:0;border-radius:10px;background:#eef1f6;font-weight:700;cursor:pointer;width:100%';
+    x.onclick = function () { ov.remove(); };
+    box.appendChild(x); ov.appendChild(box); document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+
+    Promise.all([
+      fetch(HUB_DB + '/users.json').then(function (r) { return r.json(); }),
+      fetch(HUB_DB + '/' + PATH + '.json?shallow=true').then(function (r) { return r.json(); })
+    ]).then(function (res) {
+      var users = res[0] || {}, sheets = res[1] || {};
+      var byUid = {}; Object.values(users).forEach(function (u) { if (u && u.uid) byUid[u.uid] = u; });
+      var body = document.getElementById('cbs-team-body'); if (!body) return;
+      body.innerHTML = '';
+      var uids = Object.keys(sheets);
+      if (!uids.length) { body.textContent = '아직 제출된 콜백싯이 없습니다'; return; }
+      uids.sort(function (a, b) { return ((byUid[a] || {}).name || a) > ((byUid[b] || {}).name || b) ? 1 : -1; });
+      uids.forEach(function (uid) {
+        var u = byUid[uid] || { name: uid };
+        var b = document.createElement('button');
+        b.textContent = u.name + (u.role ? ' · ' + u.role : '');
+        b.style.cssText = 'display:block;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border:1.5px solid #e5e9f0;border-radius:12px;background:#f8fafc;font-weight:700;font-size:14px;cursor:pointer';
+        b.onclick = function () {
+          b.disabled = true; b.textContent = u.name + ' · 날짜 불러오는 중…';
+          fetch(HUB_DB + '/' + PATH + '/' + uid + '.json').then(function (r) { return r.json(); }).then(function (ss) {
+            ss = ss || {}; b.textContent = u.name + (u.role ? ' · ' + u.role : ''); b.disabled = false;
+            var wrap = document.createElement('div');
+            wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px';
+            Object.keys(ss).sort().reverse().forEach(function (d) {
+              var s = ss[d]; if (!s || !s.info) return;
+              var db = document.createElement('button');
+              var cnt = (s.rehashes || []).length;
+              db.textContent = d.slice(5) + (cnt ? ' · Rh' + cnt : '');
+              db.style.cssText = 'padding:7px 11px;border:1.5px solid #c7d6f5;border-radius:9px;background:#eef4ff;color:#1d4ed8;font-weight:700;font-size:12.5px;cursor:pointer';
+              db.onclick = function (ev) { ev.stopPropagation(); openTeamReport(s); };
+              wrap.appendChild(db);
+            });
+            if (!wrap.children.length) wrap.textContent = '기록 없음';
+            if (b.nextSibling && b.nextSibling.tagName === 'DIV') b.nextSibling.remove();
+            b.parentNode.insertBefore(wrap, b.nextSibling);
+          });
+        };
+        body.appendChild(b);
+      });
+    }).catch(function () {
+      var body = document.getElementById('cbs-team-body');
+      if (body) body.textContent = '불러오기 실패 — 인터넷 연결을 확인해 주세요';
+    });
+  }
+
+  function ensureAdminBtn() {
+    var w = who();
+    var btn = document.getElementById('cbs-team-btn');
+    if (!w || w.uid !== 'admin') { if (btn) btn.remove(); return; }
+    if (btn) return;
+    btn = document.createElement('button'); btn.id = 'cbs-team-btn';
+    btn.textContent = '👥 팀 콜백싯';
+    btn.style.cssText = 'border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:6px;background:#EDE9FE;color:#5B21B6';
+    btn.onclick = teamOverlay;
+    var meta = document.querySelector('.header-meta');
+    if (meta) meta.appendChild(btn); else document.body.appendChild(btn);
+  }
+
+  setTimeout(function () { pullAll(); ensureAdminBtn(); }, 1200);
+  setInterval(function () { ensureAdminBtn(); pushChanged(); }, 3000);
+  window.addEventListener('online', function () { pullAll(); });
+})();
