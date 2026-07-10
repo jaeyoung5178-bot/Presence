@@ -2,6 +2,7 @@
    PRESENCE HUB PATCH — 관리자/팀원 잠금 + 사진 추가 + 다운로드
    (index.html 끝 </body> 직전에 <script src="hub-patch.js"></script>)
    관리자 0001 → ⋯ 전체 메뉴 · 팀원 1004 → 팀원 전용 사진 공간
+   2026-07-11 모바일 안정판: 사진 주입 릴 대칭 유지 + 최근 60장 제한 + 재시도
    ============================================================ */
 (function(){
   'use strict';
@@ -133,14 +134,16 @@
 
   function compress(file){
     return new Promise(function(res,rej){
-      var img=new Image();
+      var img=new Image(), u=URL.createObjectURL(file);
       img.onload=function(){
+        try{URL.revokeObjectURL(u);}catch(e){}
         var M=900, w=img.width, h=img.height, s=Math.min(1, M/Math.max(w,h));
         var c=document.createElement('canvas'); c.width=Math.round(w*s); c.height=Math.round(h*s);
         c.getContext('2d').drawImage(img,0,0,c.width,c.height);
         res({b64:c.toDataURL('image/jpeg',.72), land:c.width>=c.height});
       };
-      img.onerror=rej; img.src=URL.createObjectURL(file);
+      img.onerror=function(){ try{URL.revokeObjectURL(u);}catch(e){} rej(); };
+      img.src=u;
     });
   }
   function autoCap(){
@@ -155,12 +158,15 @@
       return p.then(function(){ return compress(f); }).then(function(r){
         return fetch(FB+'.json',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({b64:r.b64,land:r.land,cap:cap,t:Date.now()})})
-          .then(function(){ done++; msgEl.textContent='압축·업로드 중… '+done+'/'+total; });
+          .then(function(res){
+            if(!res||!res.ok) throw new Error('upload http '+(res&&res.status));
+            done++; msgEl.textContent='압축·업로드 중… '+done+'/'+total;
+          });
       });
     }, Promise.resolve()).then(function(){
       msgEl.textContent='완료! 필름에 반영됐습니다 (새로고침 시 모든 기기 표시)';
       capEl.value=''; loadPhotos(true); after&&after();
-    }).catch(function(){ msgEl.textContent='업로드 실패 — 네트워크 확인'; });
+    }).catch(function(){ msgEl.textContent='업로드 실패 — 네트워크 확인 후 다시 시도해 주세요'; });
   }
 
   $('hpUp').onclick = function(){
@@ -173,7 +179,8 @@
   function drawList(){
     fetch(FB+'.json?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
       cache=d||{};
-      var keys=Object.keys(cache).sort(function(a,b){return (cache[b].t||0)-(cache[a].t||0);});
+      var keys=Object.keys(cache).filter(function(k){ return cache[k]&&cache[k].b64; })
+        .sort(function(a,b){return (cache[b].t||0)-(cache[a].t||0);});
       var L=$('hpList'); L.innerHTML= keys.length?'':'<span style="color:#6f6a60;font-size:12px">아직 추가된 사진이 없습니다</span>';
       keys.forEach(function(k){
         var it=document.createElement('div'); it.className='hp-item';
@@ -338,33 +345,53 @@
     });
   }
 
-  /* ---------- 8) 필름 릴에 사진 주입 ---------- */
+  /* ---------- 8) 필름 릴에 사진 주입 — 모바일 안정판 (2026-07-11) ----------
+     · 최근 60장만 요청 → 사진이 쌓여도 페이로드 고정, 모바일에서 안 끊김
+     · b64 손상 항목 건너뜀 → 깨진 프레임 방지
+     · 릴 앞/뒤 절반 '대칭' 유지: 두 번째 절반의 시작점을 원본 상태에서 한 번만
+       계산해 두고 그 앞에 몰아넣음. (기존 방식은 한 장 넣을 때마다 중간 위치가
+       밀려 릴 루프가 어긋나 빈 구간이 생기고 프레임이 넘어가 보였음)
+     · 로딩 실패 시 5초 후 1회 자동 재시도                                   */
   function makeFrame(p, idx){
     var fig=document.createElement('figure');
     fig.className='frame '+(p.land?'land':'port');
-    fig.innerHTML='<div class="img"><img decoding="async" alt=""></div>'+
+    fig.innerHTML='<div class="img"><img decoding="async" loading="lazy" alt=""></div>'+
       '<figcaption><span class="fc-n">'+String(idx).padStart(2,'0')+'</span><span class="fc-l"></span></figcaption>';
     fig.querySelector('img').src=p.b64;
     fig.querySelector('.fc-l').textContent=p.cap||'PRESENCE';
     return fig;
   }
+  var _plRetried=false;
   function loadPhotos(force){
-    fetch(FB+'.json?t='+(force?Date.now():'0')).then(function(r){return r.json();}).then(function(d){
+    fetch(FB+'.json?orderBy="$key"&limitToLast=60&t='+Date.now()).then(function(r){
+      if(!r.ok) throw new Error('http '+r.status);
+      return r.json();
+    }).then(function(d){
       if(!d) return;
-      var keys=Object.keys(d).sort(function(a,b){return (d[a].t||0)-(d[b].t||0);});
+      var keys=Object.keys(d).filter(function(k){
+        return d[k]&&typeof d[k].b64==='string'&&d[k].b64.indexOf('data:image')===0;
+      }).sort(function(a,b){return (d[a].t||0)-(d[b].t||0);});
       if(!keys.length) return;
       var reels=document.querySelectorAll('.reel');
       if(!reels.length) return;
+      /* 이미 주입된 프레임 제거 (중복 방지) */
       document.querySelectorAll('.frame[data-hub]').forEach(function(n){ n.remove(); });
+      /* 각 릴의 '두 번째 절반 시작' 지점을 원본 상태에서 한 번만 계산 */
+      var mids=[];
+      Array.prototype.forEach.call(reels, function(reel){
+        var orig=reel.children, half=Math.floor(orig.length/2);
+        mids.push(orig[half]||null);
+      });
       keys.forEach(function(k,i){
-        var reel=reels[i%reels.length];
-        var kids=reel.children, half=Math.floor(kids.length/2);
+        var ri=i%reels.length, reel=reels[ri];
         var f1=makeFrame(d[k], 92+i); f1.setAttribute('data-hub','1');
         var f2=f1.cloneNode(true);   f2.setAttribute('data-hub','1');
-        reel.insertBefore(f1, kids[half]||null);
-        reel.appendChild(f2);
+        reel.insertBefore(f1, mids[ri]);  /* 첫 절반의 끝 */
+        reel.appendChild(f2);             /* 두 번째 절반의 끝 — 항상 대칭 */
       });
-    }).catch(function(){});
+    }).catch(function(){
+      if(!_plRetried){ _plRetried=true; setTimeout(function(){ loadPhotos(true); }, 5000); }
+    });
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ loadPhotos(); });
   else loadPhotos();

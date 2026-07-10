@@ -220,7 +220,8 @@
           <input type="text" id="rnClientEtc" placeholder="직접 입력" style="display:none"></div>
         <div class="fld"><label>구분</label><select id="rnCity"><option>시티</option><option>로드</option></select></div>
         <div class="fld"><label>채널</label><select id="rnChan"><option>스트릿</option><option>이벤트</option><option value="B2B">비투비</option></select></div>
-        <div class="fld"><label>후원번호 (숫자만 — SWP 자동)</label><input type="text" id="rnCode" inputmode="numeric" placeholder="26034329"></div>
+        <div class="fld"><label>후원번호 (숫자만 — C26 자동)</label><input type="text" id="rnCode" inputmode="numeric" placeholder="024561"></div>
+        <div class="fld"><label>후원자 이름</label><input type="text" id="rnName" placeholder="홍길동" style="width:110px"></div>
       </div>
       <div class="frow" style="margin-top:10px">
         <div class="fld"><label>금액</label><select id="rnAmt"><option>2만</option><option selected>3만</option><option>4만</option><option>5만</option><option>7만</option><option>10만</option><option value="__etc">기타(직접입력)</option></select>
@@ -237,7 +238,8 @@
           <input type="text" id="rnObjEtc" placeholder="오브젝션 직접 입력 후 Enter" style="flex:1;min-width:180px">
         </div></div>
       <div class="frow" style="margin-top:6px">
-        <div class="fld" style="flex:1"><label>장소</label><input type="text" id="rnPlace" placeholder="스타벅스 부평역점" style="width:100%"></div>
+        <div class="fld" style="flex:1"><label>장소</label><input type="text" id="rnPlace" placeholder="롯데마트 시화점" style="width:100%"></div>
+        <div class="fld"><label>테리토리 코드</label><input type="text" id="rnTerri" placeholder="E/C/22470" style="width:130px"></div>
       </div>
       <div class="fld" style="margin-top:10px"><label>특이사항·메모</label><textarea id="rnMemo" placeholder="후원 사연, 인상, 기부금영수증 여부 등"></textarea></div>
       <div class="frow" style="margin-top:12px;align-items:center">
@@ -250,8 +252,8 @@
   </details>
   <div class="card scrollx" style="padding:6px 4px;margin-top:12px;">
     <table>
-      <thead><tr><th>날짜</th><th>클라이언트</th><th>금액</th><th>결제</th><th>장소</th><th>상태</th><th></th></tr></thead>
-      <tbody id="rnList"><tr><td class="mono" colspan="7">불러오는 중…</td></tr></tbody>
+      <thead><tr><th>날짜</th><th>이름</th><th>클라이언트</th><th>금액</th><th>결제</th><th>장소</th><th>상태</th><th></th></tr></thead>
+      <tbody id="rnList"><tr><td class="mono" colspan="8">불러오는 중…</td></tr></tbody>
     </table>
   </div>
   </div><!-- /rnWrap -->
@@ -599,12 +601,14 @@
     const amount=$('rnAmt').value==='__etc'?(g('rnAmtEtc')||'기타'):g('rnAmt');
     const r={id:'rn_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),t:Date.now(),
       date:today,client:client,city:g('rnCity'),chan:$('rnChan').value,
-      code:codeNum?('SWP'+codeNum):'',amount:amount,pay:g('rnPay'),cycle:g('rnCycle'),
-      birth:g('rnBirth'),gender:g('rnGen'),owner:ME,place:g('rnPlace'),obj:selObj.slice(),
+      code:codeNum?('C26'+codeNum):'',amount:amount,pay:g('rnPay'),cycle:g('rnCycle'),
+      name:g('rnName'),
+      birth:g('rnBirth'),gender:g('rnGen'),owner:ME,
+      place:(()=>{const p=g('rnPlace'),tc=g('rnTerri').replace(/^\/+/,'');return tc?(p?p+'/'+tc:tc):p;})(),obj:selObj.slice(),
       memo:g('rnMemo'),status:'open',rejReason:'',rejProb:'',by:ME,byUid:MYUID};
     set(ref(db,RNPATH+'/'+r.id),r).then(()=>{
       $('rnMsg').textContent='기록 저장 완료 — 워크북 리젝노트에서도 보입니다';$('rnMsg').className='msg ok';
-      $('rnCode').value='';$('rnBirth').value='';$('rnPlace').value='';$('rnMemo').value='';selObj=[];drawObj();
+      $('rnCode').value='';$('rnName').value='';$('rnBirth').value='';$('rnPlace').value='';$('rnTerri').value='';$('rnMemo').value='';selObj=[];drawObj();
       if($('rnPlus').checked) $('quick1').click();
     }).catch(e=>{$('rnMsg').textContent='실패: '+e.message;$('rnMsg').className='msg err';});
   };
@@ -615,10 +619,10 @@
     $('rnPass').textContent=L.filter(r=>r.status==='pass').length;
     $('rnRej').textContent=L.filter(r=>r.status==='reject').length;
     const tb=$('rnList'); tb.innerHTML='';
-    if(!L.length){tb.innerHTML='<tr><td class="mono" colspan="7">기록 없음 — 첫 후원자를 기록해볼까요?</td></tr>';return;}
+    if(!L.length){tb.innerHTML='<tr><td class="mono" colspan="8">기록 없음 — 첫 후원자를 기록해볼까요?</td></tr>';return;}
     for(const r of L.slice(0,10)){
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td class="mono">${r.date||''}</td><td>${r.client||''}</td><td>${r.amount||''}</td>`+
+      tr.innerHTML=`<td class="mono">${r.date||''}</td><td>${r.name||'-'}</td><td>${r.client||''}</td><td>${r.amount||''}</td>`+
         `<td class="mono">${r.pay||''}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis">${r.place||''}</td>`+
         `<td><span class="chip ${r.status}">${(r.status||'open').toUpperCase()}</span></td>`+
         `<td><button class="del" data-id="${r.id}">✕</button></td>`;
