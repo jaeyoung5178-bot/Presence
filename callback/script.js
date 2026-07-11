@@ -540,8 +540,10 @@ function localDateStr(offset) {
 /* 프레젠스 웹앱(워크북) 세일즈 기록 — 내 이름 기준으로 가져와서
    콜백싯 기록이 없는 날도 최근 결과가 보이게 (계정별 자기 데이터만) */
 let _wkSales = null, _wkSalesAt = 0, _wkSalesLoading = false;
+/* Hub가 아직 정의되기 전에 호출돼도 절대 죽지 않게 */
+function hubWho() { try { return Hub.identity(); } catch (e) { return null; } }
 function fetchWeekSales(days) {
-  const who = (typeof Hub !== "undefined" && Hub.identity()) || null;
+  const who = hubWho();
   if (!who || !who.name) return;
   if (_wkSalesLoading || (Date.now() - _wkSalesAt < 60000 && _wkSales)) return;
   _wkSalesLoading = true;
@@ -590,7 +592,7 @@ function renderWeek() {
       + `<td style="font-size:11px">${s && s.info.site ? esc(s.info.site.split("/")[0]) : ""}</td></tr>`;
   });
   if (!any) {
-    el.innerHTML = `<div class="empty">최근 7일 기록이 없습니다${Hub.identity() ? "" : " · 허브 연결하면 웹앱 세일즈 기록도 가져와요"}</div>`;
+    el.innerHTML = `<div class="empty">최근 7일 기록이 없습니다${hubWho() ? "" : " · 허브 연결하면 웹앱 세일즈 기록도 가져와요"}</div>`;
     return;
   }
   const kpi = pct(tot.rehash, tot.close);          // Close 대비 Rehash
@@ -1234,11 +1236,8 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
 
-/* ==================== Init ==================== */
-loadToday();
-renderHeader();
-bind();
-nav("dashboard");
+/* ==================== Init ====================
+   (실제 초기화 실행은 파일 맨 끝 — 모든 모듈 정의 이후) */
 
 /* ════════════════════════════════════════════════════════════════════
    HUB SYNC — 프레젠스 허브 리젝노트 자동 연동 (v1)
@@ -1732,3 +1731,9 @@ const Team = {
   },
 };
 Team.init();
+
+/* ==================== 앱 시작 (모든 모듈 정의 완료 후 실행) ==================== */
+loadToday();
+renderHeader();
+bind();
+nav("dashboard");
