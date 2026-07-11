@@ -597,36 +597,93 @@
   });
 })();
 
-/* REEL SEAM FIX v2 — 원래 방식 보존형 (추가만, 제거/재배열 없음)
-   원리: 줄 전체를 통째로 1벌 복제해 붙이면 translateX(-50%) 루프 지점이
-   항상 "복제 경계"가 되어, 내부 구성이 어떻든 이음새가 수학적으로 매끈해진다.
-   화면 폭보다 짧으면 다시 2배(전체 복제)로 늘려 빈 구간도 차단. */
+/* REEL SEAM FIX v3 — 롤링 원본 보존 + 변경 감지 + 전체보기 갤러리
+   (1) 최초 1회: 줄 전체를 통째로 복제 → 루프 이음새 수학적 보정
+   (2) MutationObserver: 사진 추가/숨김 감지 → 줄이 짧아지면 전체 복제로 즉시 메움
+   (3) ⊞ 전체보기: 우하단 버튼 → 모든 사진 그리드 오버레이 (롤링과 완전 분리) */
 (function () {
   'use strict';
-  function padReel(reel) {
-    if (reel.getAttribute('data-seamfix')) return;
+  var busy = false;
+
+  function doubleStrip(reel) {
     var kids = Array.prototype.slice.call(reel.children);
-    if (!kids.length || kids.length > 400) return;
+    if (!kids.length || kids.length > 500) return false;
+    var frag = document.createDocumentFragment();
+    kids.forEach(function (f) { frag.appendChild(f.cloneNode(true)); });
+    busy = true; reel.appendChild(frag); busy = false;
+    return true;
+  }
+
+  function padReel(reel, first) {
     var W = Math.max(window.innerWidth, 320);
     var guard = 0;
-    /* 전체를 통째로 복제(2배) — 폭이 화면의 2.2배 될 때까지, 최대 3회 */
-    while (reel.scrollWidth < W * 2.2 && guard < 3) {
-      var frag = document.createDocumentFragment();
-      Array.prototype.slice.call(reel.children).forEach(function (f) { frag.appendChild(f.cloneNode(true)); });
-      reel.appendChild(frag);
-      guard++;
-    }
-    if (!guard) { /* 이미 충분히 길어도 이음새 보정을 위해 1회 복제 */
-      var frag2 = document.createDocumentFragment();
-      kids.forEach(function (f) { frag2.appendChild(f.cloneNode(true)); });
-      reel.appendChild(frag2);
-    }
-    reel.setAttribute('data-seamfix', '1');
+    while (reel.scrollWidth < W * 2.2 && guard < 3) { if (!doubleStrip(reel)) break; guard++; }
+    if (first && !guard) doubleStrip(reel);   /* 최초엔 이음새 보정용 1회 복제 */
   }
+
+  var t;
+  function watch(reel) {
+    new MutationObserver(function () {
+      if (busy) return;
+      clearTimeout(t);
+      t = setTimeout(function () {
+        document.querySelectorAll('.reel').forEach(function (r) { try { padReel(r, false); } catch (e) {} });
+      }, 1200);
+    }).observe(reel, { childList: true });
+  }
+
   function run() {
-    document.querySelectorAll('.reel').forEach(function (r) { try { padReel(r); } catch (e) {} });
+    document.querySelectorAll('.reel').forEach(function (r) {
+      if (r.getAttribute('data-seamfix')) return;
+      r.setAttribute('data-seamfix', '1');
+      try { padReel(r, true); watch(r); } catch (e) {}
+    });
   }
-  /* 숨김/추가 패치가 끝난 뒤 시점에 1회 (멱등: data-seamfix로 재실행 방지) */
   window.addEventListener('load', function () { setTimeout(run, 2500); });
   setTimeout(run, 5000);
+  window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () {
+    document.querySelectorAll('.reel').forEach(function (r) { try { padReel(r, false); } catch (e) {} });
+  }, 400); });
+
+  /* ---- ⊞ 전체보기 갤러리 ---- */
+  function uniquePhotos() {
+    var seen = {}, out = [];
+    document.querySelectorAll('.reel .frame img').forEach(function (im) {
+      var k = (im.src || '').slice(0, 100) + '|' + (im.src || '').length;
+      if (seen[k]) return; seen[k] = 1;
+      out.push(im.src);
+    });
+    return out;
+  }
+  function openGallery() {
+    var old = document.getElementById('reel-gal'); if (old) { old.remove(); return; }
+    var ov = document.createElement('div'); ov.id = 'reel-gal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(8,8,10,.96);z-index:200;overflow:auto;padding:56px 4vw 60px;-webkit-overflow-scrolling:touch';
+    var x = document.createElement('button'); x.textContent = '✕';
+    x.style.cssText = 'position:fixed;top:14px;right:16px;z-index:201;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#eee;font-size:17px;cursor:pointer';
+    x.onclick = function () { ov.remove(); };
+    var h = document.createElement('div');
+    h.textContent = 'PRESENCE — 전체보기';
+    h.style.cssText = 'color:#d9c58a;font-size:13px;letter-spacing:.35em;text-align:center;margin-bottom:22px;font-family:"Courier New",monospace';
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-width:1200px;margin:0 auto';
+    uniquePhotos().forEach(function (src) {
+      var im = document.createElement('img');
+      im.src = src; im.loading = 'lazy';
+      im.style.cssText = 'width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;background:#151515;box-shadow:0 4px 14px rgba(0,0,0,.5)';
+      grid.appendChild(im);
+    });
+    ov.appendChild(x); ov.appendChild(h); ov.appendChild(grid);
+    document.body.appendChild(ov);
+  }
+  function galleryBtn() {
+    if (document.getElementById('reel-gal-btn')) return;
+    var b = document.createElement('button'); b.id = 'reel-gal-btn';
+    b.textContent = '⊞'; b.title = '전체보기';
+    b.style.cssText = 'position:fixed;right:22px;bottom:150px;z-index:60;width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(20,20,22,.72);color:#d9c58a;font-size:20px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(0,0,0,.4)';
+    b.onclick = openGallery;
+    document.body.appendChild(b);
+  }
+  window.addEventListener('load', function () { setTimeout(galleryBtn, 800); });
+  setTimeout(galleryBtn, 2000);
 })();
