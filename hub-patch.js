@@ -12,24 +12,99 @@
   var KEY   = 'presence_hub_admin';      // localStorage 관리자 플래그
   var TKEY  = 'presence_hub_team';       // localStorage 팀원 플래그
 
-  function isAdmin(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
-  function setAdmin(v){ try{ v?localStorage.setItem(KEY,'1'):localStorage.removeItem(KEY); }catch(e){} }
-  function isTeam(){ try{ return localStorage.getItem(TKEY)==='1'; }catch(e){ return false; } }
-  function setTeam(v){ try{ v?localStorage.setItem(TKEY,'1'):localStorage.removeItem(TKEY); }catch(e){} }
+  /* ── 30일 재인증 + Face ID(WebAuthn) — 2026-07-11 ──
+     · 잠그기 전까지 인증 유지, 단 30일 지나면 한 번 재인증
+     · Face ID 등록해 두면 재인증·잠금해제가 얼굴 인증 한 번으로 끝 */
+  var LKEY='presence_hub_lastauth', BKEY='presence_hub_bio', BDIS='presence_hub_bio_dismiss', MAXD=30*86400000;
+  function lastAuth(){ try{ return +localStorage.getItem(LKEY)||0; }catch(e){ return 0; } }
+  function touchAuth(){ try{ localStorage.setItem(LKEY,String(Date.now())); }catch(e){} }
+  function authExpired(){ return (Date.now()-lastAuth())>MAXD; }
+  try{ if((localStorage.getItem(KEY)==='1'||localStorage.getItem(TKEY)==='1')&&!localStorage.getItem(LKEY)) touchAuth(); }catch(e){}
+
+  function isAdmin(){ try{ return localStorage.getItem(KEY)==='1' && !authExpired(); }catch(e){ return false; } }
+  function setAdmin(v){ try{ if(v){localStorage.setItem(KEY,'1');touchAuth();}else localStorage.removeItem(KEY); }catch(e){} }
+  function isTeam(){ try{ return localStorage.getItem(TKEY)==='1' && !authExpired(); }catch(e){ return false; } }
+  function setTeam(v){ try{ if(v){localStorage.setItem(TKEY,'1');touchAuth();}else localStorage.removeItem(TKEY); }catch(e){} }
   function canDL(){ return isAdmin()||isTeam(); }
+
+  function bioSup(){ return location.protocol==='https:' && !!window.PublicKeyCredential && !!navigator.credentials; }
+  function bioGet(){ try{ return JSON.parse(localStorage.getItem(BKEY)); }catch(e){ return null; } }
+  function bioSet(v){ try{ v?localStorage.setItem(BKEY,JSON.stringify(v)):localStorage.removeItem(BKEY); }catch(e){} }
+  function b64u(buf){ var u=new Uint8Array(buf),s=''; for(var i=0;i<u.length;i++)s+=String.fromCharCode(u[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function unb64u(s){ s=String(s).replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; var bin=atob(s),u=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); return u.buffer; }
+  function rnd32(){ var u=new Uint8Array(32); crypto.getRandomValues(u); return u; }
+
+  function bioRegister(role){
+    if(!bioSup())return;
+    navigator.credentials.create({publicKey:{
+      challenge:rnd32(),
+      rp:{name:'Presence 허브', id:location.hostname},
+      user:{id:new TextEncoder().encode('hub-'+role), name:'presence-'+role, displayName:role==='admin'?'Presence 관리자':'Presence 팀원'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+      timeout:60000, attestation:'none'
+    }}).then(function(cred){
+      bioSet({role:role,cred:b64u(cred.rawId),t:Date.now()});
+      hideBioBanner();
+      alert('✅ Face ID 등록 완료 — 다음부터 얼굴 인증 한 번으로 열려요');
+    }).catch(function(){ /* 취소 — 배너에서 다시 시도 가능 */ });
+  }
+  function hideBioBanner(){ var el=document.getElementById('hubBioBanner'); if(el)el.remove(); }
+  function offerBio(role){
+    if(!bioSup()||bioGet())return;
+    try{ if(localStorage.getItem(BDIS)==='1')return; }catch(e){}
+    if(document.getElementById('hubBioBanner'))return;
+    var p=window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable?PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable():Promise.resolve(false);
+    p.then(function(ok){
+      if(!ok||document.getElementById('hubBioBanner'))return;
+      var d=document.createElement('div'); d.id='hubBioBanner';
+      d.style.cssText='position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:99997;'
+        +'background:rgba(16,14,11,.97);border:1.5px solid rgba(232,180,102,.5);border-radius:14px;padding:12px 13px;'
+        +'box-shadow:0 10px 30px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;max-width:520px;margin:0 auto;font-family:"Times New Roman","Nanum Myeongjo",serif;';
+      d.innerHTML='<span style="font-size:20px">🔒</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px;color:#efe7d6">Face ID 빠른 인증</div>'
+        +'<div style="font-size:11.5px;color:#9a9484;margin-top:2px">다음부터 비밀번호 없이 얼굴 인증으로 열기</div></div>'
+        +'<button id="hubBioOn" style="flex:none;border:0;border-radius:10px;padding:9px 14px;font-weight:700;font-size:12.5px;background:linear-gradient(160deg,#3fb98a,#2b8a66);color:#0d0d0f;cursor:pointer">켜기</button>'
+        +'<button id="hubBioNo" aria-label="닫기" style="flex:none;border:0;background:none;color:#6f6a60;font-size:15px;cursor:pointer;padding:4px">✕</button>';
+      document.body.appendChild(d);
+      document.getElementById('hubBioOn').onclick=function(){ bioRegister(role); };
+      document.getElementById('hubBioNo').onclick=function(){ try{localStorage.setItem(BDIS,'1');}catch(e){} hideBioBanner(); };
+      setTimeout(hideBioBanner,30000);
+    });
+  }
+  function bioUnlock(b,after){
+    navigator.credentials.get({publicKey:{
+      challenge:rnd32(),
+      allowCredentials:[{type:'public-key',id:unb64u(b.cred),transports:['internal']}],
+      userVerification:'required', rpId:location.hostname, timeout:60000
+    }}).then(function(){
+      if(b.role==='admin') setAdmin(true); else setTeam(true);
+      syncDLState();
+      after&&after(b.role);
+    }).catch(function(){ askPass(after); });
+  }
+  function askPass(after){
+    var p = prompt('비밀번호를 입력하세요');
+    if(p===null) return;
+    if(p===PASS){ setAdmin(true); syncDLState(); offerBio('admin'); after&&after('admin'); }
+    else if(p===TPASS){ setTeam(true); syncDLState(); offerBio('team'); after&&after('team'); }
+    else alert('비밀번호가 올바르지 않습니다');
+  }
 
   /* ---------- 1) ⋯ 버튼 잠금 — 관리자는 메뉴, 팀원은 팀 공간 ---------- */
   var moreBtn = document.getElementById('moreBtn');
+  function afterUnlock(role){
+    if(role==='admin') setTimeout(function(){ moreBtn&&moreBtn.click(); },60);
+    else openTeam();
+  }
   if(moreBtn){
     moreBtn.addEventListener('click', function(e){
       if(isAdmin()) return;
       e.preventDefault(); e.stopImmediatePropagation();
       if(isTeam()){ openTeam(); return; }
-      var p = prompt('비밀번호를 입력하세요');
-      if(p===null) return;
-      if(p===PASS){ setAdmin(true); setTimeout(function(){ moreBtn.click(); },50); }
-      else if(p===TPASS){ setTeam(true); syncDLState(); openTeam(); }
-      else alert('비밀번호가 올바르지 않습니다');
+      var b=bioGet();
+      if(b&&bioSup()){ bioUnlock(b, afterUnlock); return; }   /* Face ID 우선 · 취소 시 비밀번호로 */
+      askPass(afterUnlock);
     }, true);
   }
 
@@ -44,9 +119,15 @@
       if(isAdmin())return;
       e.preventDefault(); e.stopImmediatePropagation();
       if(isTeam()){ alert('이 바로가기는 관리자 전용이에요 · 팀원은 사진 공간만 이용할 수 있어요'); return; }
+      var go=function(role){
+        if(role==='admin'){ a.__hubGated=1; setTimeout(function(){ a.click(); a.__hubGated=0; },40); }
+        else alert('이 바로가기는 관리자 전용이에요 · 팀원은 사진 공간만 이용할 수 있어요');
+      };
+      var bb=bioGet();
+      if(bb&&bb.role==='admin'&&bioSup()){ bioUnlock(bb, go); return; }   /* Face ID 우선 */
       var p=prompt('바로가기는 관리자 전용이에요 · 비밀번호를 입력하세요');
       if(p===null)return;
-      if(p===PASS){setAdmin(true);try{syncDLState();}catch(_){} a.__hubGated=1;setTimeout(function(){a.click();a.__hubGated=0;},40);}
+      if(p===PASS){setAdmin(true);try{syncDLState();}catch(_){} offerBio('admin'); go('admin');}
       else if(p===TPASS){ alert('이 바로가기는 관리자 전용이에요 · 팀원은 사진 공간만 이용할 수 있어요'); }
       else alert('비밀번호가 올바르지 않습니다');
     },true);
@@ -62,7 +143,7 @@
   addMenuItem('TEAM','👥 팀원 사진 공간', openTeam);
   addMenuItem('LOCK','🔒 관리자 잠금', function(){
     setAdmin(false); setTeam(false); syncDLState();
-    alert('잠금 완료 — 다음에 ⋯ 누르면 비밀번호를 다시 묻습니다');
+    alert('잠금 완료 — 다음에 ⋯ 누르면 '+(bioGet()?'Face ID로':'비밀번호를')+' 다시 확인해요');
   });
 
   /* ---------- 3) 패널 공통 스타일 ---------- */
@@ -514,38 +595,4 @@
     if(e.key==='Escape')close();
     if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();open();}
   });
-})();
-
-/* REEL SEAM FIX v2 — 원래 방식 보존형 (추가만, 제거/재배열 없음)
-   원리: 줄 전체를 통째로 1벌 복제해 붙이면 translateX(-50%) 루프 지점이
-   항상 "복제 경계"가 되어, 내부 구성이 어떻든 이음새가 수학적으로 매끈해진다.
-   화면 폭보다 짧으면 다시 2배(전체 복제)로 늘려 빈 구간도 차단. */
-(function () {
-  'use strict';
-  function padReel(reel) {
-    if (reel.getAttribute('data-seamfix')) return;
-    var kids = Array.prototype.slice.call(reel.children);
-    if (!kids.length || kids.length > 400) return;
-    var W = Math.max(window.innerWidth, 320);
-    var guard = 0;
-    /* 전체를 통째로 복제(2배) — 폭이 화면의 2.2배 될 때까지, 최대 3회 */
-    while (reel.scrollWidth < W * 2.2 && guard < 3) {
-      var frag = document.createDocumentFragment();
-      Array.prototype.slice.call(reel.children).forEach(function (f) { frag.appendChild(f.cloneNode(true)); });
-      reel.appendChild(frag);
-      guard++;
-    }
-    if (!guard) { /* 이미 충분히 길어도 이음새 보정을 위해 1회 복제 */
-      var frag2 = document.createDocumentFragment();
-      kids.forEach(function (f) { frag2.appendChild(f.cloneNode(true)); });
-      reel.appendChild(frag2);
-    }
-    reel.setAttribute('data-seamfix', '1');
-  }
-  function run() {
-    document.querySelectorAll('.reel').forEach(function (r) { try { padReel(r); } catch (e) {} });
-  }
-  /* 숨김/추가 패치가 끝난 뒤 시점에 1회 (멱등: data-seamfix로 재실행 방지) */
-  window.addEventListener('load', function () { setTimeout(run, 2500); });
-  setTimeout(run, 5000);
 })();
