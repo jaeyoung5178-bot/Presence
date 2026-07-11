@@ -1673,7 +1673,7 @@ const Cloud = {
       /* ★ 업로드 전 서버 데이터와 병합 — 빈/부분 세션이 서버 기록을
          통째로 덮어쓰는 사고를 원천 차단 */
       try {
-        const remote = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json").then((r) => r.json());
+        const remote = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json());
         if (this.uid() !== uid) return;   // 요청 중 계정 전환 → 폐기
         if (remote && remote.info) {
           this.normalize(remote);
@@ -1701,7 +1701,7 @@ const Cloud = {
   async pullAll() {
     const uid = this.uid(); if (!uid) return;
     try {
-      const v = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json").then((r) => r.json());
+      const v = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json());
       if (this.uid() !== uid) return;   // 응답 도착 전 계정 전환 → 폐기 (교차 오염 차단)
       this.applyRemote(v || {});
       const all = Store.getAll();
@@ -1729,10 +1729,11 @@ const Cloud = {
       this.es.addEventListener("put", onEv);
       this.es.addEventListener("patch", onEv);
       this.es.onerror = () => {
-        this.setStatus("err");
         try { this.es.close(); } catch (e) {}
         this.es = null;
-        setTimeout(() => this.stream(), 6000);
+        /* 실시간 스트림만 잠깐 끊긴 경우 — 읽기가 되면 "실시간" 유지(pullAll이 on으로 세팅),
+           읽기까지 실패할 때만 오프라인 표시. 3초 후 스트림 재접속. */
+        this.pullAll().finally(() => setTimeout(() => { if (!this.es) this.stream(); }, 3000));
       };
     } catch (e) {}
   },
@@ -1863,13 +1864,51 @@ const Team = {
     box.querySelectorAll("[data-tview]").forEach((b) => (b.onclick = () => this.view(b.dataset.tview, b.dataset.tname)));
   },
 
-  async view(uid, name) {
+  /* 팀원 데이터 열람 — 실시간 스트림(SSE) 구독 + 캐시버스터.
+     기존엔 1회성 fetch라 팀원이 기록해도 관리자 화면이 안 바뀌고,
+     캐시된 옛 응답(빈 데이터)을 받아 "안 보인다"는 문제가 있었음. */
+  view(uid, name) {
     const box = $("team-view");
     if (!box) return;
-    box.innerHTML = '<div class="empty">' + esc(name) + '님 데이터 불러오는 중…</div>';
+    this.closeView();
+    this.viewUid = uid; this.viewName = name;
+    box.innerHTML = '<div class="empty">' + esc(name) + '님 데이터 불러오는 중… (실시간 연결)</div>';
+    this.fetchView(uid, name);
+    /* 실시간 수신 — 팀원이 기록하는 즉시 관리자 화면 자동 갱신 */
+    try {
+      this.viewES = new EventSource(HUB_DB + "/callbacksheets/" + uid + ".json");
+      const onEv = () => {
+        if (this.viewUid !== uid) return;
+        clearTimeout(this._vt);
+        this._vt = setTimeout(() => this.fetchView(uid, name), 400);
+      };
+      this.viewES.addEventListener("put", onEv);
+      this.viewES.addEventListener("patch", onEv);
+      this.viewES.onerror = () => {
+        try { this.viewES.close(); } catch (e) {}
+        this.viewES = null;
+        if (this.viewUid === uid) setTimeout(() => { if (this.viewUid === uid && !this.viewES) this.view(uid, name); }, 6000);
+      };
+    } catch (e) {}
+  },
+
+  closeView() {
+    this.viewUid = null;
+    clearTimeout(this._vt);
+    if (this.viewES) { try { this.viewES.close(); } catch (e) {} this.viewES = null; }
+  },
+
+  async fetchView(uid, name) {
+    const box = $("team-view");
+    if (!box) return;
     let all = {};
-    try { all = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json").then((r) => r.json()) || {}; }
-    catch (e) { box.innerHTML = '<div class="empty">불러오기 실패 — 인터넷을 확인해주세요</div>'; return; }
+    try {
+      all = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()) || {};
+    } catch (e) {
+      if (!box.querySelector(".mini-table")) box.innerHTML = '<div class="empty">불러오기 실패 — 인터넷을 확인해주세요</div>';
+      return;
+    }
+    if (this.viewUid !== uid) return;   // 다른 팀원으로 전환됨 → 폐기
     const dates = Object.keys(all).filter((d) => all[d] && !all[d].deleted && all[d].info).sort().reverse().slice(0, 14);
     if (!dates.length) {
       box.innerHTML = '<div class="empty">' + esc(name) + '님은 아직 기록이 없어요 — 개인 링크로 접속해 기록하면 여기 실시간으로 쌓입니다</div>';
@@ -1889,7 +1928,7 @@ const Team = {
         + `<td><button class="btn btn-ghost btn-sm" data-tdel="${esc(d)}" title="이 세션 삭제" style="padding:2px 7px">🗑</button></td></tr>`;
     });
     box.innerHTML =
-      `<h3 style="font-size:14px;margin:4px 0 8px">👤 ${esc(name)} — 최근 ${dates.length}일 · Close ${tot.close} · Rehash ${tot.rehash} (KPI ${pct(tot.rehash, tot.close)}%)</h3>
+      `<h3 style="font-size:14px;margin:4px 0 8px">👤 ${esc(name)} — 최근 ${dates.length}일 · Close ${tot.close} · Rehash ${tot.rehash} (KPI ${pct(tot.rehash, tot.close)}%) <span class="chip" style="background:#DCFCE7;color:#166534">☁ 실시간</span></h3>
       <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>사이트</th><th></th></tr>${rows}</table></div>`
       + (donors.length
         ? `<p class="hint" style="margin:12px 0 4px;font-weight:800">후원자 ${donors.length}건</p>`
