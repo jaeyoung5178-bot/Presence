@@ -596,3 +596,37 @@
     if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();open();}
   });
 })();
+
+/* REEL SEAM FIX v2 — 원래 방식 보존형 (추가만, 제거/재배열 없음)
+   원리: 줄 전체를 통째로 1벌 복제해 붙이면 translateX(-50%) 루프 지점이
+   항상 "복제 경계"가 되어, 내부 구성이 어떻든 이음새가 수학적으로 매끈해진다.
+   화면 폭보다 짧으면 다시 2배(전체 복제)로 늘려 빈 구간도 차단. */
+(function () {
+  'use strict';
+  function padReel(reel) {
+    if (reel.getAttribute('data-seamfix')) return;
+    var kids = Array.prototype.slice.call(reel.children);
+    if (!kids.length || kids.length > 400) return;
+    var W = Math.max(window.innerWidth, 320);
+    var guard = 0;
+    /* 전체를 통째로 복제(2배) — 폭이 화면의 2.2배 될 때까지, 최대 3회 */
+    while (reel.scrollWidth < W * 2.2 && guard < 3) {
+      var frag = document.createDocumentFragment();
+      Array.prototype.slice.call(reel.children).forEach(function (f) { frag.appendChild(f.cloneNode(true)); });
+      reel.appendChild(frag);
+      guard++;
+    }
+    if (!guard) { /* 이미 충분히 길어도 이음새 보정을 위해 1회 복제 */
+      var frag2 = document.createDocumentFragment();
+      kids.forEach(function (f) { frag2.appendChild(f.cloneNode(true)); });
+      reel.appendChild(frag2);
+    }
+    reel.setAttribute('data-seamfix', '1');
+  }
+  function run() {
+    document.querySelectorAll('.reel').forEach(function (r) { try { padReel(r); } catch (e) {} });
+  }
+  /* 숨김/추가 패치가 끝난 뒤 시점에 1회 (멱등: data-seamfix로 재실행 방지) */
+  window.addEventListener('load', function () { setTimeout(run, 2500); });
+  setTimeout(run, 5000);
+})();
