@@ -9,8 +9,8 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="style.css?v=12">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
@@ -112,6 +112,15 @@
 
 <!-- ================= DO ================= -->
 <section id="view-do" class="view hidden">
+  <div class="card" style="padding:12px 16px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-weight:800;font-size:14px">📅 세션 날짜</span>
+      <input type="date" id="do-date" style="flex:1;min-width:150px;padding:9px 12px;border:1.5px solid #E4E4E7;border-radius:10px;font-size:14px;font-weight:700">
+      <button class="btn btn-outline btn-sm" id="do-today-btn" style="display:none">오늘로 돌아가기</button>
+    </div>
+    <p class="hint" style="margin:7px 0 0">지난 날짜를 선택하면 확인 후 그날의 완료된 기록을 수정할 수 있어요</p>
+  </div>
+
   <div class="do-status" id="do-status"><!-- mini counters --></div>
 
   <div class="time-mode-wrap">
@@ -166,6 +175,11 @@
   <div class="view-head">
     <h1>See</h1>
     <p class="sub" id="see-sub">오늘 하루를 데이터로 돌아봅니다</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+      <span style="font-weight:800;font-size:13.5px">📅 분석 날짜</span>
+      <input type="date" id="see-date" style="flex:1;min-width:150px;padding:9px 12px;border:1.5px solid #E4E4E7;border-radius:10px;font-size:14px;font-weight:700">
+      <button class="btn btn-outline btn-sm" id="see-today-btn" style="display:none">오늘</button>
+    </div>
   </div>
 
   <div class="card">
@@ -349,6 +363,6 @@
 
 <div id="toast" class="toast hidden"></div>
 
-<script src="script.js?v=13"></script>
+<script src="script.js"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
-/* Field Callback OS — Service Worker (offline support) */
-const CACHE = "fcos-v1";
+/* Field Callback OS — Service Worker
+   v2: 네트워크 우선(코어 파일) — 업데이트가 즉시 반영되고, 오프라인일 때만 캐시 사용.
+   (기존 캐시 우선 방식은 수정해도 아이폰 PWA에 옛 버전이 계속 뜨던 원인) */
+const CACHE = "fcos-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,17 +27,21 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  const url = new URL(e.request.url);
+  if (e.request.method !== "GET") return;
+  /* Firebase 동기화 요청은 절대 캐시하지 않음 */
+  if (url.hostname.includes("firebasedatabase.app")) return;
+
+  /* 네트워크 우선, 실패 시 캐시 (오프라인 대비) */
   e.respondWith(
-    caches.match(e.request).then(
-      (cached) =>
-        cached ||
-        fetch(e.request).then((res) => {
-          if (e.request.method === "GET" && res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, clone));
-          }
-          return res;
-        }).catch(() => cached)
-    )
+    fetch(e.request)
+      .then((res) => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });

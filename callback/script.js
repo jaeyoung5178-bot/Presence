@@ -40,18 +40,29 @@ function newSession(date) {
     objections: [],  // {t, type, reasons: []}
     rehashes: [],    // {t, date, site, name, age, gender, amount, pay, code, place, note, memory, next, remark}
     retro: { number: { good: "", bad: "" }, skill: { good: "", bad: "" }, attitude: { good: "", bad: "" } },
+    tomb: {},        // 삭제 표식 — 기기 간 병합 시 지운 기록이 되살아나지 않게
+    up: 0,           // 마지막 수정 시각 (동기화 비교용)
   };
 }
 
 let S = null; // current day session
-const todayStr = () => new Date().toISOString().slice(0, 10);
+/* 한국 시간 기준 오늘 날짜 (기존 UTC 기준 버그 수정 — 오전 9시 이전에 어제 세션이 열리던 문제) */
+const todayStr = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+};
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 function loadToday() {
   S = Store.getSession(todayStr()) || newSession(todayStr());
 }
-function save() { Store.saveSession(S); }
+function save() {
+  S.up = Date.now();
+  Store.saveSession(S);
+  try { Cloud.queue(S.info.date); } catch (e) {}  // 클라우드 실시간 동기화
+}
 
 /* 날짜 전환 — 지난 날짜도 뒤늦게 작성 가능 */
 function switchDate(date) {
@@ -71,7 +82,14 @@ function switchDate(date) {
   S = next;
   logMode = "now";
   save();
-  renderHeader(); renderPlan();
+  renderHeader();
+  /* 지금 보고 있는 화면 그대로 새 날짜 데이터로 갱신 */
+  const vis = document.querySelector(".view:not(.hidden)");
+  const cur = vis ? vis.id.replace("view-", "") : "plan";
+  if (cur === "do") renderDo();
+  else if (cur === "see") renderSee();
+  else if (cur === "dashboard") renderDashboard();
+  else renderPlan();
   toast(`${date} 세션으로 이동`);
 }
 
@@ -210,6 +228,10 @@ function renderTimeMode() {
 }
 
 function renderDo() {
+  const dd = $("do-date");
+  if (dd) dd.value = S.info.date;
+  const db = $("do-today-btn");
+  if (db) db.style.display = S.info.date === todayStr() ? "none" : "";
   renderRangeSelects();
   renderTimeMode();
   STAGES.forEach((s) => { $("cnt-" + s).textContent = countType(s); });
@@ -280,6 +302,10 @@ function addLog(type) {
 function deleteLog(idx) {
   const log = S.logs[idx];
   if (!log) return;
+  S.tomb = S.tomb || {};
+  S.tomb["l:" + log.t + "|" + log.type] = 1;
+  if (S.objections.some((o) => o.t === log.t)) S.tomb["o:" + log.t] = 1;
+  if (S.rehashes.some((r) => r.t === log.t)) S.tomb["r:" + log.t] = 1;
   S.objections = S.objections.filter((o) => o.t !== log.t);
   S.rehashes = S.rehashes.filter((r) => r.t !== log.t);
   S.logs.splice(idx, 1);
@@ -375,7 +401,7 @@ function saveRehash() {
     /* 허브 리젝노트에도 수정분 재반영 (동기화 마킹 해제 → 재전송) */
     try {
       const k = "fcos_hub_synced"; const m = JSON.parse(localStorage.getItem(k)) || {};
-      delete m["rn_cb_" + String(editingRehashT).replace(/[^0-9A-Za-z_-]/g, "-")]; localStorage.setItem(k, JSON.stringify(m));
+      delete m["rn_cb_" + editingRehashT]; localStorage.setItem(k, JSON.stringify(m));
       if (typeof Hub !== "undefined") setTimeout(() => Hub.syncAll(false), 300);
     } catch (e) {}
     editingRehashT = null;
@@ -423,6 +449,11 @@ function saveManual() {
   if (!hhmm) { toast("시간을 입력해주세요"); return; }
   if (manualEdit) {
     const oldT = manualEdit.t, newT = tsAt(hhmm);
+    // 이동 전 시각은 삭제 표식 (동기화 병합 시 옛 기록이 되살아나지 않게)
+    S.tomb = S.tomb || {};
+    S.tomb["l:" + oldT + "|" + manualEdit.type] = 1;
+    if (S.objections.some((o) => o.t === oldT)) S.tomb["o:" + oldT] = 1;
+    if (S.rehashes.some((r) => r.t === oldT)) S.tomb["r:" + oldT] = 1;
     // 연결된 오브젝션/리해쉬 기록도 함께 이동
     S.objections.forEach((o) => { if (o.t === oldT) o.t = newT; });
     S.rehashes.forEach((r) => { if (r.t === oldT) r.t = newT; });
@@ -492,6 +523,10 @@ let hourlyChart = null, objChart = null, objChartType = "pie";
 
 function renderSee() {
   $("see-sub").textContent = `${S.info.date} · ${S.info.site || "사이트 미설정"} · ${S.info.weather}`;
+  const sd = $("see-date");
+  if (sd) sd.value = S.info.date;
+  const sb = $("see-today-btn");
+  if (sb) sb.style.display = S.info.date === todayStr() ? "none" : "";
   renderResultCards();
   renderFunnel();
   renderHourlyChart();
@@ -775,6 +810,7 @@ function importJson(file) {
       Store.importAll(data);
       loadToday();
       renderHeader(); renderDashboard();
+      try { Object.keys(data).forEach((d) => Cloud.queue(d)); } catch (e) {}
       toast("복원 완료 ✓");
     } catch { toast("잘못된 백업 파일입니다"); }
   };
@@ -902,7 +938,7 @@ function buildReportHTML() {
   .noprint button { background:#2563EB; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-size:14px; font-weight:700; cursor:pointer; }
   @media print { .noprint { display:none; } body { padding:0; } html, body { height:auto; } }
 </style></head><body>
-<div class="noprint"><button onclick="window.print()">📑 PDF로 저장 / 인쇄</button><button onclick="window.close();setTimeout(function(){history.back()},250)" style="background:#3F3F46;margin-left:8px">✕ 닫기</button></div>
+<div class="noprint"><button onclick="window.print()">📑 PDF로 저장 / 인쇄</button></div>
 <div id="sheet">
 
 <div class="head">
@@ -990,6 +1026,28 @@ function bind() {
     readPlanInputs(); save(); renderHeader();
     toast("계획 저장 ✓"); nav("do");
   });
+
+  // 세션 날짜 달력 (Do·See) — 과거 날짜 선택해 열람·수정
+  const dateJump = (val, needConfirm) => {
+    if (!val) return;
+    if (val === S.info.date) return;
+    if (needConfirm) {
+      const ex = Store.getSession(val);
+      const has = ex && ((ex.logs && ex.logs.length) || (ex.rehashes && ex.rehashes.length));
+      const msg = has
+        ? `${val} 세션에는 완료된 기록이 있습니다.\n이 날짜의 데이터를 수정하시겠습니까?`
+        : `${val} 날짜의 세션을 새로 작성/수정할까요?`;
+      if (val !== todayStr() && !confirm(msg)) { renderDo(); renderSee(); return; }
+    }
+    switchDate(val);
+  };
+  const dd = $("do-date"), sd = $("see-date");
+  if (dd) dd.addEventListener("change", (e) => dateJump(e.target.value, true));
+  if (sd) sd.addEventListener("change", (e) => dateJump(e.target.value, false));
+  const backToday = () => { if (S.info.date !== todayStr()) switchDate(todayStr()); };
+  const dtb = $("do-today-btn"), stb = $("see-today-btn");
+  if (dtb) dtb.addEventListener("click", backToday);
+  if (stb) stb.addEventListener("click", backToday);
 
   // do buttons
   // CLOSE → 오브젝션 선택창, REHASH → 후원자 정보 작성창
@@ -1109,7 +1167,7 @@ const Hub = {
     const memoBits = [r.name ? (r.name + (r.age ? "(" + r.age + "세)" : "")) : "", r.note || "", r.memory || "", r.next || "", r.remark || ""]
       .filter(Boolean).join(" · ");
     return {
-      id: "rn_cb_" + String(r.t).replace(/[^0-9A-Za-z_-]/g, "-"), t: r.t, date: r.date || new Date().toISOString().slice(0, 10),
+      id: "rn_cb_" + r.t, t: r.t, date: r.date || new Date().toISOString().slice(0, 10),
       client: "옥스팜", city: "시티", chan: "스트릿", code: r.code || "",
       amount: amt, pay: (r.pay === "카드" ? "카드" : "계좌"), cycle: "매월",
       birth: r.age ? String(yr - Number(r.age)) : "", gender: (r.gender === "남" ? "남" : "여"),
@@ -1132,25 +1190,11 @@ const Hub = {
   async syncAll(showToast) {
     const who = this.identity(); if (!who) return 0;
     const done = this.synced(); let n = 0;
-    /* 서버에 이미 있는 후원자(이름+날짜)는 다시 올리지 않는다 — 기기 여러 대여도 중복 0 */
-    let seen = {};
-    try {
-      const exist = await fetch(HUB_DB + "/rejectnotes/" + who.uid + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()) || {};
-      Object.values(exist).forEach((e) => {
-        if (!e) return;
-        const nm = (e.name || String(e.memo || "").split("(")[0] || "").trim();
-        if (nm) seen[(e.date || "") + "|" + nm] = 1;
-      });
-    } catch (e) {}
     for (const r of this.allRehashes()) {
-      const id = "rn_cb_" + String(r.t).replace(/[^0-9A-Za-z_-]/g, "-");
+      const id = "rn_cb_" + r.t;
       if (done[id]) continue;
-      const nm = (r.name || "").trim();
-      if (nm && seen[(r.date || "") + "|" + nm]) { this.markSynced(id); continue; }
-      try {
-        await this.put(who.uid, this.toRN(r, who));
-        this.markSynced(id); if (nm) seen[(r.date || "") + "|" + nm] = 1; n++;
-      } catch (e) { console.warn("[HubSync]", e.message); break; }
+      try { await this.put(who.uid, this.toRN(r, who)); this.markSynced(id); n++; }
+      catch (e) { console.warn("[HubSync]", e.message); break; }
     }
     if (n && showToast !== false) this.toast("허브 리젝노트에 " + n + "건 연동 ✓");
     this.badge();
@@ -1216,135 +1260,211 @@ const Hub = {
 };
 Hub.init();
 
-/* CBS CLOUD v1 — 콜백싯 서버 저장·복원 + 팀 콜백싯(관리자 열람) */
-(function () {
-  'use strict';
-  var PATH = 'cbsheets';
-  var sigs = {};
+/* ════════════════════════════════════════════════════════════════════
+   CLOUD SYNC v2 — 콜백싯 세션 "전체" 실시간 동기화 (아이폰 ↔ 아이패드)
+   지금까지는 각 기기의 localStorage에만 저장돼 기기 간 데이터가 달랐음.
+   이제 모든 세션(타임라인·후원자·회고·목표)이 허브 Firebase의
+   callbacksheets/{uid}/{날짜} 에 저장되고, 다른 기기의 변경은
+   SSE 스트림으로 실시간 수신됩니다.
+   - 병합은 기록 합집합 방식 → 두 기기에 나뉜 기록도 합쳐짐 (유실 0)
+   - 삭제는 tombstone 표식 → 지운 기록이 되살아나지 않음
+   - 상단 ☁ 배지로 상태 확인, "허브 연결"로 계정을 잡아야 작동
+   ════════════════════════════════════════════════════════════════════ */
+const Cloud = {
+  started: false, es: null, pushT: {}, pullT: null, status: "off", _tt: null,
 
-  function who() { try { return Hub.identity(); } catch (e) { return null; } }
+  uid() { const w = Hub.identity(); return w && w.uid; },
 
-  function pushChanged() {
-    var w = who(); if (!w) return;
-    var all = Store.getAll();
-    Object.keys(all).forEach(function (d) {
-      var j = JSON.stringify(all[d]);
-      if (sigs[d] === j) return;
-      var body; try { body = JSON.parse(j); } catch (e) { return; }
-      if (!body || !body.info) return;
-      body._u = Date.now(); body._by = w.name;
-      fetch(HUB_DB + '/' + PATH + '/' + w.uid + '/' + d + '.json', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-      }).then(function (r) { if (r.ok) sigs[d] = j; }).catch(function () {});
-    });
-  }
-
-  function pullAll() {
-    var w = who(); if (!w) return Promise.resolve(0);
-    return fetch(HUB_DB + '/' + PATH + '/' + w.uid + '.json?t=' + Date.now(), { cache: 'no-store' })
-      .then(function (r) { return r.json(); })
-      .then(function (server) {
-        server = server || {};
-        var all = Store.getAll(); var changed = 0;
-        Object.keys(server).forEach(function (d) {
-          var sv = server[d]; if (!sv || !sv.info) return;
-          var lc = all[d];
-          var lcEmpty = !lc || (((lc.logs || []).length === 0) && ((lc.rehashes || []).length === 0));
-          if (lcEmpty || (sv._u || 0) > (lc._u || 0)) { all[d] = sv; sigs[d] = JSON.stringify(sv); changed++; }
-          else sigs[d] = JSON.stringify(lc);
-        });
-        if (changed) {
-          Store._write(all);
-          if (!sessionStorage.getItem('cbs_pulled')) {
-            sessionStorage.setItem('cbs_pulled', '1');
-            location.reload();
-            return changed;
-          }
-          try { Hub.toast('서버에서 ' + changed + '일치 콜백싯 복원 ✓'); } catch (e) {}
-        }
-        return changed;
-      }).catch(function () { return 0; });
-  }
-
-  function openTeamReport(sess) {
-    var keep = S, html = '';
-    try { S = sess; html = buildReportHTML(); } finally { S = keep; }
-    var w = window.open('', '_blank');
-    if (!w) { try { Hub.toast('팝업을 허용해 주세요'); } catch (e) {} return; }
-    w.document.write(html); w.document.close();
-  }
-
-  function teamOverlay() {
-    var old = document.getElementById('cbs-team-ov'); if (old) old.remove();
-    var ov = document.createElement('div'); ov.id = 'cbs-team-ov';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,18,24,.55);z-index:98;display:flex;align-items:center;justify-content:center;padding:20px';
-    var box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:18px;padding:20px;max-width:460px;width:100%;max-height:72vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3)';
-    box.innerHTML = "<div style='font-weight:800;font-size:16px;margin-bottom:10px'>👥 팀 콜백싯</div><div id='cbs-team-body' style='font-size:14px;color:#6b7482'>불러오는 중…</div>";
-    var x = document.createElement('button'); x.textContent = '닫기';
-    x.style.cssText = 'margin-top:12px;padding:10px 14px;border:0;border-radius:10px;background:#eef1f6;font-weight:700;cursor:pointer;width:100%';
-    x.onclick = function () { ov.remove(); };
-    box.appendChild(x); ov.appendChild(box); document.body.appendChild(ov);
-    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
-
-    Promise.all([
-      fetch(HUB_DB + '/users.json').then(function (r) { return r.json(); }),
-      fetch(HUB_DB + '/' + PATH + '.json?shallow=true').then(function (r) { return r.json(); })
-    ]).then(function (res) {
-      var users = res[0] || {}, sheets = res[1] || {};
-      var byUid = {}; Object.values(users).forEach(function (u) { if (u && u.uid) byUid[u.uid] = u; });
-      var body = document.getElementById('cbs-team-body'); if (!body) return;
-      body.innerHTML = '';
-      var uids = Object.keys(sheets);
-      if (!uids.length) { body.textContent = '아직 제출된 콜백싯이 없습니다'; return; }
-      uids.sort(function (a, b) { return ((byUid[a] || {}).name || a) > ((byUid[b] || {}).name || b) ? 1 : -1; });
-      uids.forEach(function (uid) {
-        var u = byUid[uid] || { name: uid };
-        var b = document.createElement('button');
-        b.textContent = u.name + (u.role ? ' · ' + u.role : '');
-        b.style.cssText = 'display:block;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border:1.5px solid #e5e9f0;border-radius:12px;background:#f8fafc;font-weight:700;font-size:14px;cursor:pointer';
-        b.onclick = function () {
-          b.disabled = true; b.textContent = u.name + ' · 날짜 불러오는 중…';
-          fetch(HUB_DB + '/' + PATH + '/' + uid + '.json').then(function (r) { return r.json(); }).then(function (ss) {
-            ss = ss || {}; b.textContent = u.name + (u.role ? ' · ' + u.role : ''); b.disabled = false;
-            var wrap = document.createElement('div');
-            wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px';
-            Object.keys(ss).sort().reverse().forEach(function (d) {
-              var s = ss[d]; if (!s || !s.info) return;
-              var db = document.createElement('button');
-              var cnt = (s.rehashes || []).length;
-              db.textContent = d.slice(5) + (cnt ? ' · Rh' + cnt : '');
-              db.style.cssText = 'padding:7px 11px;border:1.5px solid #c7d6f5;border-radius:9px;background:#eef4ff;color:#1d4ed8;font-weight:700;font-size:12.5px;cursor:pointer';
-              db.onclick = function (ev) { ev.stopPropagation(); openTeamReport(s); };
-              wrap.appendChild(db);
-            });
-            if (!wrap.children.length) wrap.textContent = '기록 없음';
-            if (b.nextSibling && b.nextSibling.tagName === 'DIV') b.nextSibling.remove();
-            b.parentNode.insertBefore(wrap, b.nextSibling);
-          });
-        };
-        body.appendChild(b);
+  /* ---- 두 세션 병합: 합집합 + tombstone + 최신 정보 우선 ---- */
+  merge(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    const tomb = Object.assign({}, a.tomb || {}, b.tomb || {});
+    const nw = (b.up || 0) >= (a.up || 0) ? b : a;
+    const od = nw === a ? b : a;
+    const filled = (n, o) => {
+      const out = {}; const keys = new Set([...Object.keys(n || {}), ...Object.keys(o || {})]);
+      keys.forEach((k) => { const v = (n || {})[k]; out[k] = (v === "" || v == null) ? (o || {})[k] : v; });
+      return out;
+    };
+    const uni = (x, y, keyFn) => {
+      const m = {};
+      [...(x || []), ...(y || [])].forEach((it) => {
+        if (!it) return;
+        const k = keyFn(it);
+        if (tomb[k]) return;
+        if (!m[k]) m[k] = it;   // 앞(최신 세션) 항목 우선
       });
-    }).catch(function () {
-      var body = document.getElementById('cbs-team-body');
-      if (body) body.textContent = '불러오기 실패 — 인터넷 연결을 확인해 주세요';
+      return Object.values(m);
+    };
+    const logs = uni(nw.logs, od.logs, (l) => "l:" + l.t + "|" + l.type).sort((p, q) => String(p.t).localeCompare(String(q.t)));
+    const objections = uni(nw.objections, od.objections, (o) => "o:" + o.t);
+    const rehashes = uni(nw.rehashes, od.rehashes, (r) => "r:" + r.t);
+    const retro = {};
+    ["number", "skill", "attitude"].forEach((k) => { retro[k] = filled((nw.retro || {})[k] || {}, (od.retro || {})[k] || {}); });
+    const out = {
+      info: filled(nw.info, od.info),
+      goals: Object.assign({}, od.goals || {}, nw.goals || {}),
+      logs, objections, rehashes, retro, tomb,
+      up: Math.max(a.up || 0, b.up || 0),
+    };
+    if (nw.range || od.range) out.range = nw.range || od.range;
+    return out;
+  },
+
+  /* Firebase는 빈 배열을 지워버리므로 복원 */
+  normalize(r) {
+    ["logs", "objections", "rehashes"].forEach((k) => {
+      if (!Array.isArray(r[k])) r[k] = r[k] ? Object.values(r[k]) : [];
     });
-  }
+    if (!r.retro) r.retro = { number: { good: "", bad: "" }, skill: { good: "", bad: "" }, attitude: { good: "", bad: "" } };
+    if (!r.tomb) r.tomb = {};
+    return r;
+  },
 
-  function ensureAdminBtn() {
-    var w = who();
-    var btn = document.getElementById('cbs-team-btn');
-    if (!w || w.uid !== 'admin') { if (btn) btn.remove(); return; }
-    if (btn) return;
-    btn = document.createElement('button'); btn.id = 'cbs-team-btn';
-    btn.textContent = '👥 팀 콜백싯';
-    btn.style.cssText = 'border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:6px;background:#EDE9FE;color:#5B21B6';
-    btn.onclick = teamOverlay;
-    var meta = document.querySelector('.header-meta');
-    if (meta) meta.appendChild(btn); else document.body.appendChild(btn);
-  }
+  /* ---- 원격 데이터 반영 ---- */
+  applyRemote(remote) {
+    if (!remote || typeof remote !== "object") return;
+    const all = Store.getAll();
+    let changed = false, curChanged = false;
+    Object.keys(remote).forEach((d) => {
+      const r = remote[d];
+      if (!r || !r.info) return;
+      this.normalize(r);
+      const loc = all[d];
+      const m = this.merge(loc, r);
+      if (JSON.stringify(m) !== JSON.stringify(loc || null)) {
+        all[d] = m; changed = true;
+        if (S && S.info.date === d) curChanged = true;
+      }
+      // 병합 결과가 원격과 다르면 (로컬에만 있던 기록 존재) 재업로드
+      if (JSON.stringify(m) !== JSON.stringify(r)) this.queue(d);
+    });
+    if (changed) {
+      Store.importAll(all);
+      if (curChanged) {
+        S = Store.getSession(S.info.date) || S;
+        this.rerender();
+        this.toastOnce("☁️ 다른 기기의 기록을 불러왔어요");
+      }
+    }
+  },
 
-  setTimeout(function () { pullAll(); ensureAdminBtn(); }, 1200);
-  setInterval(function () { ensureAdminBtn(); pushChanged(); }, 3000);
-  window.addEventListener('online', function () { pullAll(); });
-})();
+  rerender() {
+    try {
+      renderHeader();
+      const vis = document.querySelector(".view:not(.hidden)");
+      if (!vis) return;
+      const id = vis.id.replace("view-", "");
+      if (id === "dashboard") renderDashboard();
+      else if (id === "plan") renderPlan();
+      else if (id === "do") renderDo();
+      else if (id === "see") renderSee();
+    } catch (e) {}
+  },
+
+  /* ---- 업로드 (저장할 때마다 자동, 0.7초 디바운스) ---- */
+  queue(date) {
+    const uid = this.uid(); if (!uid || !date) return;
+    clearTimeout(this.pushT[date]);
+    this.pushT[date] = setTimeout(() => this.push(date), 700);
+  },
+  async push(date) {
+    const uid = this.uid(); if (!uid) return;
+    const s = Store.getSession(date); if (!s) return;
+    try {
+      const res = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(s),
+      });
+      if (!res.ok) throw new Error("push " + res.status);
+      this.setStatus("on");
+    } catch (e) {
+      this.setStatus("err");
+      setTimeout(() => this.queue(date), 8000);   // 오프라인 → 자동 재시도
+    }
+  },
+
+  /* ---- 전체 내려받기 + 로컬에만 있는 세션 업로드 ---- */
+  async pullAll() {
+    const uid = this.uid(); if (!uid) return;
+    try {
+      const v = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json").then((r) => r.json());
+      this.applyRemote(v || {});
+      const all = Store.getAll();
+      Object.keys(all).forEach((d) => { if (!v || !v[d]) this.queue(d); });
+      this.setStatus("on");
+    } catch (e) { this.setStatus("err"); }
+  },
+
+  /* ---- 실시간 수신 (Firebase SSE 스트림) ---- */
+  stream() {
+    const uid = this.uid(); if (!uid || this.es) return;
+    try {
+      this.es = new EventSource(HUB_DB + "/callbacksheets/" + uid + ".json");
+      const onEv = (e) => {
+        try {
+          const d = JSON.parse(e.data);
+          if (!d || d.data === null) return;
+          const parts = (d.path || "/").split("/").filter(Boolean);
+          if (parts.length === 0) this.applyRemote(d.data || {});
+          else if (parts.length === 1) this.applyRemote({ [parts[0]]: d.data });
+          else { clearTimeout(this.pullT); this.pullT = setTimeout(() => this.pullAll(), 600); }
+        } catch (err) {}
+      };
+      this.es.addEventListener("put", onEv);
+      this.es.addEventListener("patch", onEv);
+      this.es.onerror = () => {
+        this.setStatus("err");
+        try { this.es.close(); } catch (e) {}
+        this.es = null;
+        setTimeout(() => this.stream(), 6000);
+      };
+    } catch (e) {}
+  },
+
+  /* ---- 상단 ☁ 상태 배지 ---- */
+  setStatus(st) {
+    this.status = st;
+    let b = document.getElementById("cloud-badge");
+    if (!b) {
+      b = document.createElement("button");
+      b.id = "cloud-badge";
+      b.style.cssText = "border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:6px";
+      const meta = document.querySelector(".header-meta");
+      if (meta) meta.appendChild(b); else document.body.appendChild(b);
+      b.onclick = () => {
+        if (!this.uid()) Hub.openPicker();
+        else { Hub.toast("☁️ 동기화 새로고침"); this.pullAll(); }
+      };
+    }
+    if (!this.uid()) { b.textContent = "☁ 연결 필요"; b.style.background = "#FEE2E2"; b.style.color = "#991B1B"; }
+    else if (st === "on") { b.textContent = "☁ 실시간"; b.style.background = "#DCFCE7"; b.style.color = "#166534"; }
+    else { b.textContent = "☁ 오프라인"; b.style.background = "#FEF3C7"; b.style.color = "#92400E"; }
+  },
+
+  toastOnce(msg) {
+    clearTimeout(this._tt);
+    this._tt = setTimeout(() => Hub.toast(msg), 300);
+  },
+
+  start() {
+    if (this.started) return;
+    if (!this.uid()) { this.setStatus("off"); return; }
+    this.started = true;
+    this.pullAll().then(() => this.stream());
+  },
+  init() {
+    this.setStatus("off");
+    this.start();
+    // 허브 계정이 나중에 연결돼도 자동 시작
+    setInterval(() => { if (!this.started) this.start(); }, 3000);
+    window.addEventListener("online", () => {
+      if (this.started) { this.pullAll(); if (!this.es) this.stream(); }
+    });
+    // 앱으로 돌아올 때마다 최신 데이터 확인
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && this.started) this.pullAll();
+    });
+  },
+};
+Cloud.init();
