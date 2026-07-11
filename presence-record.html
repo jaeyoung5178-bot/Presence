@@ -625,11 +625,67 @@
       tr.innerHTML=`<td class="mono">${r.date||''}</td><td>${r.name||'-'}</td><td>${r.client||''}</td><td>${r.amount||''}</td>`+
         `<td class="mono">${r.pay||''}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis">${r.place||''}</td>`+
         `<td><span class="chip ${r.status}">${(r.status||'open').toUpperCase()}</span></td>`+
-        `<td><button class="del" data-id="${r.id}">✕</button></td>`;
+        `<td style="white-space:nowrap"><button class="del" data-edit="${r.id}" title="수정" style="color:var(--amber)">✎</button><button class="del" data-id="${r.id}">✕</button></td>`;
       tb.appendChild(tr);}
-    tb.querySelectorAll('.del').forEach(btn=>btn.addEventListener('click',()=>{
-      if(confirm('이 리젝노트를 삭제할까요?')) remove(ref(db,RNPATH+'/'+btn.dataset.id));
+    tb.querySelectorAll('[data-id]').forEach(btn=>btn.addEventListener('click',()=>{
+      if(confirm('이 리젝노트를 삭제할까요? (워크북에서도 함께 삭제됩니다)')) remove(ref(db,RNPATH+'/'+btn.dataset.id));
     }));
+    tb.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{
+      const r=rns[btn.dataset.edit]; if(r) editRN(r);
+    }));
+  }
+
+  /* ═══════ 리젝노트 수정 — 저장하면 워크북 리젝노트와 즉시 연동 ═══════ */
+  function editRN(r){
+    const old=document.getElementById('rnEditOv'); if(old)old.remove();
+    const eH=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const ov=document.createElement('div'); ov.id='rnEditOv';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(5,5,8,.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:14px';
+    const bx=document.createElement('div');
+    bx.style.cssText='background:var(--film,#16140f);border:1px solid var(--line,#2a2722);border-radius:8px;padding:20px;max-width:560px;width:100%;max-height:88vh;overflow:auto';
+    const fld=(id,lab,v,ph)=>'<div class="fld" style="margin-top:8px"><label>'+lab+'</label><input type="text" id="'+id+'" value="'+eH(v)+'" placeholder="'+(ph||'')+'" style="width:100%"></div>';
+    const sel=(id,lab,opts,v)=>'<div class="fld" style="margin-top:8px"><label>'+lab+'</label><select id="'+id+'" style="width:100%">'+opts.map(o=>'<option value="'+o[0]+'"'+(String(v)===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>';
+    const obj=Array.isArray(r.obj)?r.obj.join(', '):(r.obj||'');
+    bx.innerHTML=
+      '<div style="font-family:\'Courier New\',monospace;font-size:11px;letter-spacing:.3em;color:var(--amber);margin-bottom:4px">EDIT — 후원자 기록 수정</div>'
+      +'<div style="font-size:11.5px;color:var(--smoke);margin-bottom:6px">저장하면 워크북 리젝노트·관리자 조회까지 실시간 반영됩니다</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">'
+      +fld('re-date','날짜',r.date)+fld('re-name','이름',r.name,'홍길동')
+      +fld('re-client','클라이언트',r.client)+fld('re-code','후원번호',r.code,'C26024561')
+      +fld('re-amount','금액',r.amount,'3만')
+      +sel('re-pay','결제',[['계좌','계좌'],['카드','카드']],r.pay||'계좌')
+      +sel('re-cycle','주기',[['매월','매월'],['6개월','6개월'],['12개월','12개월']],r.cycle||'매월')
+      +fld('re-birth','출생연도',r.birth,'1999')
+      +'</div>'
+      +fld('re-place','장소 · 테리코드',r.place,'롯데마트시화점/E/C/22470')
+      +fld('re-obj','오브젝션 (쉼표 구분)',obj)
+      +'<div class="fld" style="margin-top:8px"><label>특이사항·메모</label><textarea id="re-memo" style="width:100%">'+eH(r.memo).replace(/&quot;/g,'"')+'</textarea></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px">'
+      +sel('re-status','상태',[['open','OPEN (관찰중)'],['pass','PASS'],['reject','REJECT']],r.status||'open')
+      +sel('re-prob','리젝 가능성',[['','-'],['상','상'],['중','중'],['하','하']],r.rejProb||'')
+      +fld('re-reason','리젝 사유',r.rejReason)
+      +'</div>'
+      +'<div style="display:flex;gap:10px;margin-top:16px">'
+      +'<button class="save" id="re-save" style="flex:2">저장 — 워크북 연동</button>'
+      +'<button class="quick" id="re-cancel" style="flex:1">취소</button>'
+      +'</div>';
+    ov.appendChild(bx); document.body.appendChild(ov);
+    ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+    bx.querySelector('#re-cancel').onclick=()=>ov.remove();
+    bx.querySelector('#re-save').onclick=()=>{
+      const g=id=>{const el=bx.querySelector('#'+id);return el?el.value.trim():'';};
+      const upd=Object.assign({},r,{
+        date:g('re-date')||r.date,name:g('re-name'),client:g('re-client'),code:g('re-code'),
+        amount:g('re-amount'),pay:g('re-pay'),cycle:g('re-cycle'),birth:g('re-birth'),
+        place:g('re-place'),obj:g('re-obj')?g('re-obj').split(',').map(s=>s.trim()).filter(Boolean):[],
+        memo:g('re-memo'),status:g('re-status'),rejProb:g('re-prob'),rejReason:g('re-reason')
+      });
+      set(ref(db,RNPATH+'/'+r.id),upd).then(()=>{
+        ov.remove();
+        $('rnMsg').textContent='수정 완료 — 워크북 리젝노트에도 실시간 반영됐습니다';
+        $('rnMsg').className='msg ok';
+      }).catch(e=>{alert('저장 실패: '+e.message);});
+    };
   }
 </script>
 
