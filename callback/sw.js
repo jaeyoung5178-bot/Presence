@@ -1,7 +1,7 @@
 /* Field Callback OS — Service Worker
    v2: 네트워크 우선(코어 파일) — 업데이트가 즉시 반영되고, 오프라인일 때만 캐시 사용.
    (기존 캐시 우선 방식은 수정해도 아이폰 PWA에 옛 버전이 계속 뜨던 원인) */
-const CACHE = "fcos-v6"; /* v6: 관리자 팀원 열람 실시간 스트림+캐시버스터 · 동기화 배지 견고화 */
+const CACHE = "fcos-v7"; /* v7: 강제 동기화/업데이트 버튼 · 스트림 자동복구 · SW 자동갱신(1분 점검) */
 const ASSETS = [
   "./",
   "./index.html",
@@ -16,6 +16,9 @@ self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
   self.skipWaiting();
 });
+
+/* 새 버전이 대기 중이면 즉시 활성화 (페이지에서 postMessage("skipWaiting")) */
+self.addEventListener("message", (e) => { if (e.data === "skipWaiting") self.skipWaiting(); });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(

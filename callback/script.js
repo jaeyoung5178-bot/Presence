@@ -1358,7 +1358,22 @@ function bind() {
 
 /* ==================== PWA ==================== */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      reg.update();
+      setInterval(() => reg.update(), 60000);   // 1분마다 새 버전 확인 → 모든 기기 자동 최신화
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing; if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) nw.postMessage("skipWaiting");
+        });
+      });
+    }).catch(() => {});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloaded) return; reloaded = true; location.reload();   // 새 버전 적용되면 1회 새로고침
+    });
+  });
 }
 
 /* ==================== Init ====================
@@ -1691,10 +1706,25 @@ const Cloud = {
       });
       if (!res.ok) throw new Error("push " + res.status);
       this.setStatus("on");
+      return true;
     } catch (e) {
       this.setStatus("err");
       setTimeout(() => this.queue(date), 8000);   // 오프라인 → 자동 재시도
+      return false;
     }
+  },
+
+  /* 강제 동기화 — 로컬 모든 세션을 허브로 즉시 밀어올리고 다시 내려받음.
+     실시간 스트림이 안 붙어도 이 버튼으로 바로 올릴 수 있음. */
+  async forceSync() {
+    const uid = this.uid(); if (!uid) { Hub.openPicker(); return; }
+    Hub.toast("☁️ 강제 동기화 중…");
+    const all = Store.getAll();
+    const dates = Object.keys(all).filter((d) => all[d] && !all[d].deleted);
+    let ok = 0, fail = 0;
+    for (const d of dates) { (await this.push(d)) ? ok++ : fail++; }
+    try { await this.pullAll(); } catch (e) {}
+    Hub.toast(fail ? `⚠️ 업로드 ${ok}건 성공 · ${fail}건 실패 — 인터넷/네트워크 확인` : `✓ ${ok}건 허브에 올렸어요`);
   },
 
   /* ---- 전체 내려받기 + 로컬에만 있는 세션 업로드 ---- */
@@ -1750,7 +1780,7 @@ const Cloud = {
       if (meta) meta.appendChild(b); else document.body.appendChild(b);
       b.onclick = () => {
         if (!this.uid()) Hub.openPicker();
-        else { Hub.toast("☁️ 동기화 새로고침"); this.pullAll(); }
+        else this.forceSync();
       };
     }
     if (!this.uid()) { b.textContent = "☁ 연결 필요"; b.style.background = "#FEE2E2"; b.style.color = "#991B1B"; }
@@ -1777,10 +1807,34 @@ const Cloud = {
     window.addEventListener("online", () => {
       if (this.started) { this.pullAll(); if (!this.es) this.stream(); }
     });
-    // 앱으로 돌아올 때마다 최신 데이터 확인
+    // 앱으로 돌아올 때마다 최신 데이터 확인 + 스트림 살아있는지 점검
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && this.started) this.pullAll();
+      if (!document.hidden && this.started) { this.pullAll(); if (!this.es) this.stream(); }
     });
+    // 8초마다 스트림 생존 점검 — 끊겼으면 자동 복구 (모든 기기 항상 실시간 유지)
+    setInterval(() => { if (this.uid() && this.started && !this.es) { this.pullAll(); this.stream(); } }, 8000);
+    this.addResetButton();
+  },
+
+  /* 🔄 강제 업데이트 버튼 — 옛 캐시(서비스워커)에 갇힌 기기를 최신 버전으로 강제 갱신 */
+  addResetButton() {
+    setTimeout(() => {
+      const meta = document.querySelector(".header-meta");
+      if (!meta || document.getElementById("hard-reset")) return;
+      const rb = document.createElement("button");
+      rb.id = "hard-reset";
+      rb.textContent = "🔄 업데이트";
+      rb.title = "최신 버전으로 강제 갱신 (기록은 유지)";
+      rb.style.cssText = "border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:6px;background:#E0E7FF;color:#3730A3";
+      rb.onclick = async () => {
+        if (!confirm("최신 버전으로 강제 갱신할까요? (콜백싯 기록은 그대로 유지됩니다)")) return;
+        try { await this.forceSync(); } catch (e) {}
+        try { const ks = await caches.keys(); await Promise.all(ks.map((k) => caches.delete(k))); } catch (e) {}
+        try { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map((r) => r.unregister())); } catch (e) {}
+        location.reload(true);
+      };
+      meta.appendChild(rb);
+    }, 500);
   },
 };
 Cloud.init();
