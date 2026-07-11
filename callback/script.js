@@ -314,13 +314,18 @@ function addLog(type) {
   return log;
 }
 
+/* Firebase 키 금지문자( . $ # [ ] / ) 제거 — tomb(삭제표식) 키가 타임스탬프의
+   점(.000Z) 때문에 저장 400 에러가 나던 문제 해결. 삭제표식 만드는 곳과
+   병합에서 조회하는 곳 모두 이 함수로 키를 만들어야 일치함. */
+function fbKey(s) { return String(s).replace(/[.$#\[\]\/]/g, "_"); }
+
 function deleteLog(idx) {
   const log = S.logs[idx];
   if (!log) return;
   S.tomb = S.tomb || {};
-  S.tomb["l:" + log.t + "|" + log.type] = 1;
-  if (S.objections.some((o) => o.t === log.t)) S.tomb["o:" + log.t] = 1;
-  if (S.rehashes.some((r) => r.t === log.t)) S.tomb["r:" + log.t] = 1;
+  S.tomb[fbKey("l:" + log.t + "|" + log.type)] = 1;
+  if (S.objections.some((o) => o.t === log.t)) S.tomb[fbKey("o:" + log.t)] = 1;
+  if (S.rehashes.some((r) => r.t === log.t)) S.tomb[fbKey("r:" + log.t)] = 1;
   S.objections = S.objections.filter((o) => o.t !== log.t);
   S.rehashes = S.rehashes.filter((r) => r.t !== log.t);
   S.logs.splice(idx, 1);
@@ -466,9 +471,9 @@ function saveManual() {
     const oldT = manualEdit.t, newT = tsAt(hhmm);
     // 이동 전 시각은 삭제 표식 (동기화 병합 시 옛 기록이 되살아나지 않게)
     S.tomb = S.tomb || {};
-    S.tomb["l:" + oldT + "|" + manualEdit.type] = 1;
-    if (S.objections.some((o) => o.t === oldT)) S.tomb["o:" + oldT] = 1;
-    if (S.rehashes.some((r) => r.t === oldT)) S.tomb["r:" + oldT] = 1;
+    S.tomb[fbKey("l:" + oldT + "|" + manualEdit.type)] = 1;
+    if (S.objections.some((o) => o.t === oldT)) S.tomb[fbKey("o:" + oldT)] = 1;
+    if (S.rehashes.some((r) => r.t === oldT)) S.tomb[fbKey("r:" + oldT)] = 1;
     // 연결된 오브젝션/리해쉬 기록도 함께 이동
     S.objections.forEach((o) => { if (o.t === oldT) o.t = newT; });
     S.rehashes.forEach((r) => { if (r.t === oldT) r.t = newT; });
@@ -1565,7 +1570,8 @@ const Cloud = {
       }
       return nwd;
     }
-    const tomb = Object.assign({}, a.tomb || {}, b.tomb || {});
+    const rawTomb = Object.assign({}, a.tomb || {}, b.tomb || {});
+    const tomb = {}; for (const tk in rawTomb) tomb[fbKey(tk)] = rawTomb[tk];   // 키 안전화(점 등 제거) — PUT 400 방지
     const nw = (b.up || 0) >= (a.up || 0) ? b : a;
     const od = nw === a ? b : a;
     const filled = (n, o) => {
@@ -1576,7 +1582,7 @@ const Cloud = {
     /* ── 로그 병합: 정확히 같은 기록은 1개로, 시간대(시)+유형별로는
        "두 기기 중 많은 쪽" 개수만 유지 → 같은 날을 두 기기에 넣어도 2배가 되지 않음 ── */
     const clean = (arr, keyEx) => (arr || []).filter((it) => it && !tomb[keyEx(it)]);
-    const exK = (l) => "l:" + l.t + "|" + l.type;
+    const exK = (l) => fbKey("l:" + l.t + "|" + l.type);
     const hrK = (l) => String(l.t).slice(0, 13) + "|" + l.type;
     const nLogs = clean(nw.logs, exK), oLogs = clean(od.logs, exK);
     const seen = {}, nCnt = {}, oCnt = {};
@@ -1592,7 +1598,7 @@ const Cloud = {
     });
     logs.sort((p, q) => String(p.t).localeCompare(String(q.t)));
     /* 오브젝션: 같은 방식 (시간대별 max) */
-    const exO = (o) => "o:" + o.t;
+    const exO = (o) => fbKey("o:" + o.t);
     const hrO = (o) => "o" + String(o.t).slice(0, 13);
     const nObj = clean(nw.objections, exO), oObj = clean(od.objections, exO);
     const oSeen = {}, onCnt = {}, ooCnt = {};
@@ -1609,8 +1615,8 @@ const Cloud = {
     /* 후원자: 날짜+이름 기준 1건 (같은 후원자가 두 기기에 있어도 중복 없음) */
     const rk = (r) => (r.name ? "r:" + (r.date || "") + "|" + String(r.name).replace(/\s+/g, "") : "rt:" + r.t);
     const rMap = {};
-    clean(nw.rehashes, (r) => "r:" + r.t).forEach((r) => { rMap[rk(r)] = r; });
-    clean(od.rehashes, (r) => "r:" + r.t).forEach((r) => { if (!rMap[rk(r)]) rMap[rk(r)] = r; });
+    clean(nw.rehashes, (r) => fbKey("r:" + r.t)).forEach((r) => { rMap[rk(r)] = r; });
+    clean(od.rehashes, (r) => fbKey("r:" + r.t)).forEach((r) => { if (!rMap[rk(r)]) rMap[rk(r)] = r; });
     const rehashes = Object.values(rMap);
     const retro = {};
     ["number", "skill", "attitude"].forEach((k) => { retro[k] = filled((nw.retro || {})[k] || {}, (od.retro || {})[k] || {}); });
@@ -1632,6 +1638,8 @@ const Cloud = {
     });
     if (!r.retro) r.retro = { number: { good: "", bad: "" }, skill: { good: "", bad: "" }, attitude: { good: "", bad: "" } };
     if (!r.tomb) r.tomb = {};
+    /* 옛 삭제표식 키(점 포함)를 Firebase 안전 키로 마이그레이션 — 예전 삭제도 그대로 유지 */
+    { const t2 = {}; for (const k in r.tomb) t2[fbKey(k)] = r.tomb[k]; r.tomb = t2; }
     return r;
   },
 
