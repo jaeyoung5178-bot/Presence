@@ -1,7 +1,7 @@
 /* Field Callback OS — Service Worker
    v2: 네트워크 우선(코어 파일) — 업데이트가 즉시 반영되고, 오프라인일 때만 캐시 사용.
    (기존 캐시 우선 방식은 수정해도 아이폰 PWA에 옛 버전이 계속 뜨던 원인) */
-const CACHE = "fcos-v4"; /* v4: 전체 누적 기준일(2026-07-09) 필터 + 기준일 표시 */
+const CACHE = "fcos-v5"; /* v5: 전체 누적 — 오늘 이후(미래 날짜) 세일즈 제외해 누적 후원자 정확화 */
 const ASSETS = [
   "./",
   "./index.html",

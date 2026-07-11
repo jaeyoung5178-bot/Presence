@@ -672,10 +672,11 @@ function renderAllTime() {
   let donorTot = 0, activeDays = 0, firstDate = null, lastDate = null;
   /* 콜백싯 세션(삭제 제외) + 세일즈만 있는 날짜까지 모두 순회 */
   const start = alltimeStart();   // 사람별 누적 기준일
+  const today = todayStr();
   const dates = new Set([
     ...Object.keys(all).filter((d) => all[d] && !all[d].deleted),
     ...Object.keys(sales),
-  ].filter((d) => d >= start));   // 기준일 이전(콜백싯 시작 전) 기록 제외 — 후원자·활동일수 포함
+  ].filter((d) => d >= start && d <= today));   // 기준일 이전(콜백싯 시작 전) 및 오늘 이후(미래 날짜) 기록 제외 — 후원자·활동일수 포함
   dates.forEach((d) => {
     const s = all[d] && !all[d].deleted ? all[d] : null;
     const c = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
