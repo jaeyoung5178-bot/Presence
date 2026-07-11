@@ -152,8 +152,10 @@ function renderHeader() {
   const isToday = S.info.date === todayStr();
   $("header-date").textContent = `${d.getMonth() + 1}/${d.getDate()} (${"일월화수목금토"[d.getDay()]})${isToday ? "" : " · 과거 세션"}`;
   const site = $("header-site");
-  site.textContent = S.info.site || "사이트 미설정";
+  site.textContent = (S.info.site || "사이트 미설정") + " ✎";
   site.classList.toggle("chip-blue", !!S.info.site);
+  site.style.cursor = "pointer";
+  site.title = "누르면 이 날짜의 사이트를 수정할 수 있어요 (지난 날짜도 소급 가능)";
 }
 
 /* ==================== PLAN ==================== */
@@ -1127,6 +1129,22 @@ function bind() {
     toast("계획 저장 ✓"); nav("do");
   });
 
+  // 헤더 사이트 칩 클릭 → 이 날짜의 사이트 소급 수정 (통계에 바로 반영)
+  $("header-site").addEventListener("click", () => {
+    const v = prompt(`${S.info.date} 세션의 사이트를 입력하세요.\n(달력으로 지난 날짜로 이동한 뒤 누르면 소급 수정됩니다)\n예: 롯데마트시화점 E/C/22470`, S.info.site || "");
+    if (v === null) return;
+    S.info.site = v.trim();
+    save();
+    renderHeader();
+    const vis = document.querySelector(".view:not(.hidden)");
+    const cur = vis ? vis.id.replace("view-", "") : "";
+    if (cur === "see") renderSee();
+    else if (cur === "plan") renderPlan();
+    else if (cur === "do") renderDo();
+    else if (cur === "dashboard") renderDashboard();
+    toast(S.info.site ? `사이트 수정 ✓ — ${S.info.date} 통계에 반영` : "사이트를 비웠어요");
+  });
+
   // 세션 날짜 달력 (Do·See) — 과거 날짜 선택해 열람·수정
   const dateJump = (val, needConfirm) => {
     if (!val) return;
@@ -1472,11 +1490,10 @@ const Cloud = {
     });
     if (changed) {
       Store.importAll(all);
-      if (curChanged) {
-        S = Store.getSession(S.info.date) || S;
-        this.rerender();
-        this.toastOnce("☁️ 다른 기기의 기록을 불러왔어요");
-      }
+      S = Store.getSession(S.info.date) || S;
+      /* 어떤 날짜든 새 데이터가 오면 화면 갱신 (최근 7일·사이트 통계 포함) */
+      this.rerender();
+      this.toastOnce("☁️ 서버 기록을 불러왔어요");
     }
   },
 
