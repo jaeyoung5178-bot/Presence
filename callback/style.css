@@ -53,7 +53,6 @@ textarea { resize: vertical; }
 /* ===== Header ===== */
 .app-header {
   position: sticky; top: 0; z-index: 50;
-  padding-top: env(safe-area-inset-top);
   background: rgba(255,255,255,.85);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -64,11 +63,24 @@ textarea { resize: vertical; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px;
 }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
-.hub-back { text-decoration: none; color: var(--ink-3); font-size: 16px; padding: 2px 8px 2px 0; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; letter-spacing: -.01em; min-width: 0; }
+.brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hub-back { text-decoration: none; color: var(--ink-3); font-size: 16px; padding: 2px 8px 2px 0; flex: 0 0 auto; }
 .hub-back:hover { color: var(--blue); }
-.brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 4px var(--blue-soft); }
-.header-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); }
+.brand-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 4px var(--blue-soft); }
+.header-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 12px; color: var(--ink-2); }
+.header-meta > button { white-space: nowrap; flex: 0 0 auto; }
+
+/* ===== 모바일 헤더: 한 줄에 깔끔하게 ===== */
+@media (max-width: 480px) {
+  .header-inner { padding: 10px 12px; gap: 8px; }
+  .brand { font-size: 13px; gap: 6px; }
+  .header-meta { gap: 5px; }
+  .header-meta > button { padding: 5px 8px !important; font-size: 11.5px !important; }
+}
+@media (max-width: 360px) {
+  .brand-name { max-width: 96px; }
+}
 
 .chip {
   display: inline-block; padding: 3px 10px; border-radius: 999px;
@@ -162,6 +174,47 @@ textarea { resize: vertical; }
 .pace-pct { width: 78px; text-align: right; font-weight: 700; font-size: 12px; color: var(--ink-2); flex-shrink: 0; }
 
 .quick-actions { display: flex; justify-content: center; padding: 4px 0 8px; }
+
+/* 대시보드 검색 */
+.dash-search-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 8px; margin-bottom: 10px; }
+.dash-hit { cursor: pointer; transition: border-color .12s, background .12s; }
+.dash-hit:active, .dash-hit:hover { border-color: var(--blue); background: var(--blue-soft); }
+
+/* 쉬는시간 버튼 */
+.break-btn {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  border: 1.5px dashed var(--line);
+  background: var(--card);
+  color: var(--ink-2);
+  border-radius: var(--r-md);
+  padding: 13px 16px;
+  font-weight: 700; font-size: 14px;
+  transition: all .15s;
+}
+.break-btn .break-sub { font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.break-btn.on {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #fff; border-color: transparent;
+  box-shadow: 0 4px 14px rgba(217,119,6,.35);
+  animation: breathe 2s ease-in-out infinite;
+}
+.break-btn.on .break-sub { color: rgba(255,255,255,.85); }
+@keyframes breathe { 50% { box-shadow: 0 4px 22px rgba(217,119,6,.55); } }
+.tl-break .tl-type { color: var(--amber); }
+.d-break { background: #D97706; }
+
+/* 약정코드 입력 (C26 고정 접두) */
+.code-row { display: flex; align-items: stretch; }
+.code-prefix {
+  display: flex; align-items: center;
+  background: var(--blue-soft); color: var(--blue);
+  font-weight: 800; font-size: 14px;
+  border: 1px solid var(--line); border-right: none;
+  border-radius: var(--r-sm) 0 0 var(--r-sm);
+  padding: 0 12px;
+}
+.code-row input { border-radius: 0 var(--r-sm) var(--r-sm) 0; }
 
 /* ===== DO ===== */
 .do-status {
@@ -384,9 +437,4 @@ button.tl-time-edit:hover { color: var(--blue); }
   .ring-label { font-size: 9px; }
   .result-cards { grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .result-card .v { font-size: 16px; }
-}
-
-/* iOS 홈화면 앱: 상태바와 절대 겹치지 않도록 최소 패딩 강제 */
-@media (display-mode: standalone) {
-  .app-header { padding-top: max(24px, env(safe-area-inset-top)); }
 }

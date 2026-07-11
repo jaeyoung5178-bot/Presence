@@ -151,14 +151,19 @@ function nav(view) {
 
 /* ==================== Header ==================== */
 function renderHeader() {
-  const d = new Date(S.info.date + "T00:00:00");
-  const isToday = S.info.date === todayStr();
-  $("header-date").textContent = `${d.getMonth() + 1}/${d.getDate()} (${"일월화수목금토"[d.getDay()]})${isToday ? "" : " · 과거 세션"}`;
+  const hd = $("header-date");
+  if (hd) {
+    const d = new Date(S.info.date + "T00:00:00");
+    const isToday = S.info.date === todayStr();
+    hd.textContent = `${d.getMonth() + 1}/${d.getDate()} (${"일월화수목금토"[d.getDay()]})${isToday ? "" : " · 과거 세션"}`;
+  }
   const site = $("header-site");
-  site.textContent = (S.info.site || "사이트 미설정") + " ✎";
-  site.classList.toggle("chip-blue", !!S.info.site);
-  site.style.cursor = "pointer";
-  site.title = "누르면 이 날짜의 사이트를 수정할 수 있어요 (지난 날짜도 소급 가능)";
+  if (site) {
+    site.textContent = (S.info.site || "사이트 미설정") + " ✎";
+    site.classList.toggle("chip-blue", !!S.info.site);
+    site.style.cursor = "pointer";
+    site.title = "누르면 이 날짜의 사이트를 수정할 수 있어요 (지난 날짜도 소급 가능)";
+  }
 }
 
 /* ==================== PLAN ==================== */
@@ -318,6 +323,13 @@ function addLog(type) {
    점(.000Z) 때문에 저장 400 에러가 나던 문제 해결. 삭제표식 만드는 곳과
    병합에서 조회하는 곳 모두 이 함수로 키를 만들어야 일치함. */
 function fbKey(s) { return String(s).replace(/[.$#\[\]\/]/g, "_"); }
+
+/* 헤더 배지용 짧은 이름 — 3글자 한글 성명은 성을 떼고 이름만 (민병준→병준) */
+function shortName(n) {
+  n = String(n || "").trim();
+  if (/^[가-힣]{3}$/.test(n)) return n.slice(1);
+  return n;
+}
 
 function deleteLog(idx) {
   const log = S.logs[idx];
@@ -1241,8 +1253,9 @@ function bind() {
     toast("계획 저장 ✓"); nav("do");
   });
 
-  // 헤더 사이트 칩 클릭 → 이 날짜의 사이트 소급 수정 (통계에 바로 반영)
-  $("header-site").addEventListener("click", () => {
+  // 헤더 사이트 칩 클릭 → 이 날짜의 사이트 소급 수정 (헤더에서 칩을 뺐으면 없음 — Plan 탭에서 수정)
+  const _siteChip = $("header-site");
+  if (_siteChip) _siteChip.addEventListener("click", () => {
     const v = prompt(`${S.info.date} 세션의 사이트를 입력하세요.\n(달력으로 지난 날짜로 이동한 뒤 누르면 소급 수정됩니다)\n예: 롯데마트시화점 E/C/22470`, S.info.site || "");
     if (v === null) return;
     S.info.site = v.trim();
@@ -1509,12 +1522,13 @@ const Hub = {
     let b = document.getElementById("hub-badge");
     if (!b) {
       b = document.createElement("button"); b.id = "hub-badge";
-      b.style.cssText = "border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:8px";
+      b.style.cssText = "border:0;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:1;display:inline-flex;align-items:center;gap:2px";
       const meta = document.querySelector(".header-meta"); if (meta) meta.appendChild(b); else document.body.appendChild(b);
       b.onclick = () => this.openPicker();
     }
     const who = this.identity();
-    b.textContent = who ? "허브 ✓ " + who.name : "허브 연결";
+    b.textContent = who ? "✓ " + shortName(who.name) : "허브 연결";
+    b.title = who ? "허브 계정: " + who.name + " (탭하면 계정 변경)" : "허브 연결";
     b.style.background = who ? "#DCFCE7" : "#FEE2E2";
     b.style.color = who ? "#166534" : "#991B1B";
   },
@@ -1783,7 +1797,7 @@ const Cloud = {
     if (!b) {
       b = document.createElement("button");
       b.id = "cloud-badge";
-      b.style.cssText = "border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:6px";
+      b.style.cssText = "border:0;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:1;display:inline-flex;align-items:center;gap:2px";
       const meta = document.querySelector(".header-meta");
       if (meta) meta.appendChild(b); else document.body.appendChild(b);
       b.onclick = () => {
@@ -1791,7 +1805,8 @@ const Cloud = {
         else this.forceSync();
       };
     }
-    if (!this.uid()) { b.textContent = "☁ 연결 필요"; b.style.background = "#FEE2E2"; b.style.color = "#991B1B"; }
+    b.title = "탭하면 강제 동기화";
+    if (!this.uid()) { b.textContent = "☁ 연결"; b.style.background = "#FEE2E2"; b.style.color = "#991B1B"; }
     else if (st === "on") { b.textContent = "☁ 실시간"; b.style.background = "#DCFCE7"; b.style.color = "#166534"; }
     else { b.textContent = "☁ 오프라인"; b.style.background = "#FEF3C7"; b.style.color = "#92400E"; }
   },
@@ -1831,9 +1846,9 @@ const Cloud = {
       if (!meta || document.getElementById("hard-reset")) return;
       const rb = document.createElement("button");
       rb.id = "hard-reset";
-      rb.textContent = "🔄 업데이트";
+      rb.textContent = "🔄";
       rb.title = "최신 버전으로 강제 갱신 (기록은 유지)";
-      rb.style.cssText = "border:0;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;margin-left:6px;background:#E0E7FF;color:#3730A3";
+      rb.style.cssText = "border:0;border-radius:999px;padding:5px 8px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:1;background:#E0E7FF;color:#3730A3";
       rb.onclick = async () => {
         if (!confirm("최신 버전으로 강제 갱신할까요? (콜백싯 기록은 그대로 유지됩니다)")) return;
         try { await this.forceSync(); } catch (e) {}
