@@ -627,7 +627,19 @@ function renderWeek() {
 
 /* ==================== 전체 누적 (All-Time) ====================
    콜백싯 모든 세션(삭제 제외) + 워크북 웹앱 세일즈를 합산.
-   KPI 비율은 "Close N개당 후원 1명" = N : 1 형식으로 표시. */
+   KPI 비율은 "Close N개당 후원 1명" = N : 1 형식으로 표시.
+   ★ 누적 기준일(사람별): 그 이전 날짜의 콜백싯 세션·웹앱 세일즈는
+     누적(후원자·활동일수 포함)에 넣지 않음. 화면에 기준일 표시.
+     - 임재영(admin): 2026-07-09(목) 고정 — 콜백싯 사용 시작일
+     - 그 외 팀원: 본인 콜백싯에 데이터가 처음 기록된 날짜 자동 기준 */
+function alltimeStart() {
+  const who = hubWho();
+  const nrm = (s) => String(s || "").replace(/\s+/g, "");
+  if (who && (who.uid === "admin" || nrm(who.name) === "임재영")) return "2026-07-09";
+  const all = Store.getAll();
+  const ds = Object.keys(all).filter((d) => all[d] && !all[d].deleted && all[d].info).sort();
+  return ds[0] || todayStr();   // 기록이 아직 없으면 오늘부터
+}
 let _atSales = null, _atSalesAt = 0, _atSalesLoading = false;
 /* 워크북 웹앱 세일즈 전체를 1회 fetch(5분 캐시) → 날짜별 내 후원 수 */
 function fetchAllTimeSales() {
@@ -659,10 +671,11 @@ function renderAllTime() {
   const tot = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
   let donorTot = 0, activeDays = 0, firstDate = null, lastDate = null;
   /* 콜백싯 세션(삭제 제외) + 세일즈만 있는 날짜까지 모두 순회 */
+  const start = alltimeStart();   // 사람별 누적 기준일
   const dates = new Set([
     ...Object.keys(all).filter((d) => all[d] && !all[d].deleted),
     ...Object.keys(sales),
-  ]);
+  ].filter((d) => d >= start));   // 기준일 이전(콜백싯 시작 전) 기록 제외 — 후원자·활동일수 포함
   dates.forEach((d) => {
     const s = all[d] && !all[d].deleted ? all[d] : null;
     const c = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
@@ -687,9 +700,11 @@ function renderAllTime() {
   const perDonor = donorTot > 0 ? Math.round((tot.close / donorTot) * 10) / 10 : null;
   const kpiRatio = perDonor != null ? perDonor + " : 1" : "－";
   const period = firstDate === lastDate ? firstDate : `${firstDate} ~ ${lastDate}`;
+  const wd = "일월화수목금토"[new Date(start + "T00:00:00").getDay()];
   el.innerHTML =
-    `<div class="result-cards" style="grid-template-columns:repeat(2,1fr)">
-      <div class="result-card"><div class="k">누적 후원자</div><div class="v" style="color:${STAGE_COLOR.rehash}">${donorTot}</div><div class="g">콜백싯+웹앱 세일즈</div></div>
+    `<div class="hint" style="margin:0 0 8px;font-weight:700">📅 ${start}(${wd}) 콜백싯 시작일부터 누적</div>
+    <div class="result-cards" style="grid-template-columns:repeat(2,1fr)">
+      <div class="result-card"><div class="k">누적 후원자</div><div class="v" style="color:${STAGE_COLOR.rehash}">${donorTot}</div><div class="g">콜백싯+웹앱 세일즈 · ${start}부터</div></div>
       <div class="result-card"><div class="k">누적 CLOSE</div><div class="v" style="color:${STAGE_COLOR.close}">${tot.close}</div><div class="g">Contact ${tot.contact}</div></div>
       <div class="result-card"><div class="k">KPI 비율</div><div class="v" style="color:var(--blue)">${kpiRatio}</div><div class="g">Close ${perDonor != null ? perDonor : "-"}개당 후원 1명</div></div>
       <div class="result-card"><div class="k">Close율</div><div class="v" style="color:${STAGE_COLOR.presentation}">${closeRate}%</div><div class="g">Contact 대비</div></div>
