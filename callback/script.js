@@ -2,6 +2,8 @@
    Field Callback OS — Plan · Do · See
    Vanilla JS + LocalStorage. Storage layer is isolated so it
    can be swapped for Supabase/Firebase later.
+   2026-07-11: PDF 항상 A4 1장 · 홈 전체누적(KPI 비율) · 계정 교차오염
+   차단(Cloud.shutdown + uid 캡처 + 세션 tombstone) · 팀명단 임재영 고정.
 ============================================================ */
 "use strict";
 
@@ -9,7 +11,7 @@
 const STAGES = ["contact", "stop", "presentation", "close", "rehash"];
 const STAGE_LABEL = { contact: "Contact", stop: "Stop", presentation: "Presentation", close: "Close", rehash: "Rehash" };
 const STAGE_COLOR = { contact: "#3B82F6", stop: "#14B8A6", presentation: "#8B5CF6", close: "#22C55E", rehash: "#F59E0B", fail: "#EF4444" };
-const OBJECTIONS = ["이미 후원", "경제적 부담", "배우자 상의", "부모님", "시간이 없음", "급함", "신뢰 부족", "관심 없음", "타단체", "외국인", "미성년자"];
+const OBJECTIONS = ["다른단체후원", "일시희망", "금전부담", "개인정보", "단체불신", "바빠서 나중에", "국내만희망", "배우자와상의", "관심없음"];
 
 /* ==================== Storage Adapter ====================
    All persistence goes through this object only.
@@ -31,7 +33,8 @@ const Store = {
   },
   _write(all) { localStorage.setItem(this.KEY, JSON.stringify(all)); },
   getAll() { return this._read(); },
-  getSession(date) { return this._read()[date] || null; },
+  /* deleted(=tombstone) 세션은 없는 것으로 취급 → null 반환 */
+  getSession(date) { const s = this._read()[date]; return s && !s.deleted ? s : null; },
   saveSession(session) {
     const all = this._read();
     all[session.info.date] = session;
@@ -81,7 +84,7 @@ function switchDate(date) {
   if (!next) {
     next = newSession(date);
     // 최근 세션에서 이름/팀/목표를 이어받는다
-    const prev = Object.values(Store.getAll()).sort((a, b) => b.info.date.localeCompare(a.info.date))[0];
+    const prev = Object.values(Store.getAll()).filter((s) => s && !s.deleted).sort((a, b) => b.info.date.localeCompare(a.info.date))[0];
     if (prev) {
       next.info.name = prev.info.name;
       next.info.team = prev.info.team;
@@ -170,7 +173,7 @@ function renderPlan() {
   $("p-hours").value = S.goals.hours;
   STAGES.forEach((s) => { $("p-g-" + s).value = S.goals[s]; });
   // site autocomplete from history
-  const sites = new Set(Object.values(Store.getAll()).map((x) => x.info.site).filter(Boolean));
+  const sites = new Set(Object.values(Store.getAll()).filter((x) => x && !x.deleted).map((x) => x.info.site).filter(Boolean));
   $("site-list").innerHTML = [...sites].map((s) => `<option value="${esc(s)}">`).join("");
   renderHourlyGoals();
 }
@@ -489,6 +492,8 @@ function renderDashboard() {
     ? `${S.info.name}님, ${S.info.theme ? `오늘의 테마: "${S.info.theme}"` : "오늘도 화이팅!"}`
     : "PLAN에서 오늘 계획을 세워보세요";
 
+  renderAllTime();
+
   // rings
   $("rings-grid").innerHTML = STAGES.map((s) => {
     const cur = countType(s), goal = S.goals[s];
@@ -577,7 +582,7 @@ function renderWeek() {
   const tot = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
   let rows = "", any = false, donorTot = 0;
   days.forEach((d) => {
-    const s = all[d];
+    const s = all[d] && !all[d].deleted ? all[d] : null;
     const c = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
     ((s && s.logs) || []).forEach((l) => { if (c[l.type] !== undefined) c[l.type]++; });
     STAGES.forEach((k) => (tot[k] += c[k]));
@@ -602,7 +607,7 @@ function renderWeek() {
   /* 사이트별 (최근 7일) */
   const siteMap = {};
   days.forEach((d) => {
-    const s = all[d]; if (!s || !s.logs || !s.logs.length) return;
+    const s = all[d] && !all[d].deleted ? all[d] : null; if (!s || !s.logs || !s.logs.length) return;
     const key = (s.info.site || "미설정").split("/")[0];
     if (!siteMap[key]) siteMap[key] = { contact: 0, close: 0, rehash: 0 };
     s.logs.forEach((l) => { if (siteMap[key][l.type] !== undefined) siteMap[key][l.type]++; });
@@ -618,6 +623,81 @@ function renderWeek() {
     </div>
     <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>후원</th><th>사이트</th></tr>${rows}</table></div>`
     + (siteRows ? `<p class="hint" style="margin:12px 0 4px;font-weight:800">사이트별 (7일)</p><div class="table-wrap"><table class="mini-table"><tr><th>사이트</th><th>Contact</th><th>Close</th><th>Rehash</th><th>Close율</th></tr>${siteRows}</table></div>` : "");
+}
+
+/* ==================== 전체 누적 (All-Time) ====================
+   콜백싯 모든 세션(삭제 제외) + 워크북 웹앱 세일즈를 합산.
+   KPI 비율은 "Close N개당 후원 1명" = N : 1 형식으로 표시. */
+let _atSales = null, _atSalesAt = 0, _atSalesLoading = false;
+/* 워크북 웹앱 세일즈 전체를 1회 fetch(5분 캐시) → 날짜별 내 후원 수 */
+function fetchAllTimeSales() {
+  const who = hubWho();
+  if (!who || !who.name) return;
+  if (_atSalesLoading || (Date.now() - _atSalesAt < 300000 && _atSales)) return;
+  _atSalesLoading = true;
+  const nrm = (s) => String(s || "").replace(/\s+/g, "");
+  fetch(HUB_DB + "/sales.json").then((r) => r.json()).then((all) => {
+    const out = {};
+    for (const d in (all || {})) {
+      const day = all[d]; if (!day) continue;
+      for (const k in day) {
+        const e = day[k];
+        if (e && nrm(e.name) === nrm(who.name) && !e.na && !e.rally) { out[d] = +e.count || 0; break; }
+      }
+    }
+    _atSales = out; _atSalesAt = Date.now(); _atSalesLoading = false;
+    renderAllTime();   // 데이터 도착 → 다시 그림
+  }).catch(() => { _atSalesLoading = false; });
+}
+
+function renderAllTime() {
+  const el = $("dash-alltime");
+  if (!el) return;
+  const all = Store.getAll();
+  fetchAllTimeSales();
+  const sales = _atSales || {};
+  const tot = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
+  let donorTot = 0, activeDays = 0, firstDate = null, lastDate = null;
+  /* 콜백싯 세션(삭제 제외) + 세일즈만 있는 날짜까지 모두 순회 */
+  const dates = new Set([
+    ...Object.keys(all).filter((d) => all[d] && !all[d].deleted),
+    ...Object.keys(sales),
+  ]);
+  dates.forEach((d) => {
+    const s = all[d] && !all[d].deleted ? all[d] : null;
+    const c = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
+    ((s && s.logs) || []).forEach((l) => { if (c[l.type] !== undefined) c[l.type]++; });
+    STAGES.forEach((k) => (tot[k] += c[k]));
+    /* 날짜별 후원자 = max(콜백싯 후원자 수, 웹앱 세일즈 수) */
+    const cbDonors = (s && s.rehashes && s.rehashes.length) || 0;
+    const donors = Math.max(cbDonors, sales[d] || 0);
+    donorTot += donors;
+    if ((s && s.logs && s.logs.length) || donors) {
+      activeDays++;
+      if (!firstDate || d < firstDate) firstDate = d;
+      if (!lastDate || d > lastDate) lastDate = d;
+    }
+  });
+  if (!activeDays) {
+    el.innerHTML = `<div class="empty">아직 누적 기록이 없습니다 — 기록을 시작하면 여기에 쌓입니다</div>`;
+    return;
+  }
+  const closeRate = pct(tot.close, tot.contact);
+  /* KPI 비율: Close N개당 후원 1명 → "N : 1" (소수 1자리 반올림, 후원 0이면 "－") */
+  const perDonor = donorTot > 0 ? Math.round((tot.close / donorTot) * 10) / 10 : null;
+  const kpiRatio = perDonor != null ? perDonor + " : 1" : "－";
+  const period = firstDate === lastDate ? firstDate : `${firstDate} ~ ${lastDate}`;
+  el.innerHTML =
+    `<div class="result-cards" style="grid-template-columns:repeat(2,1fr)">
+      <div class="result-card"><div class="k">누적 후원자</div><div class="v" style="color:${STAGE_COLOR.rehash}">${donorTot}</div><div class="g">콜백싯+웹앱 세일즈</div></div>
+      <div class="result-card"><div class="k">누적 CLOSE</div><div class="v" style="color:${STAGE_COLOR.close}">${tot.close}</div><div class="g">Contact ${tot.contact}</div></div>
+      <div class="result-card"><div class="k">KPI 비율</div><div class="v" style="color:var(--blue)">${kpiRatio}</div><div class="g">Close ${perDonor != null ? perDonor : "-"}개당 후원 1명</div></div>
+      <div class="result-card"><div class="k">Close율</div><div class="v" style="color:${STAGE_COLOR.presentation}">${closeRate}%</div><div class="g">Contact 대비</div></div>
+      <div class="result-card"><div class="k">활동일수</div><div class="v">${activeDays}</div><div class="g">${esc(period)}</div></div>
+      <div class="result-card"><div class="k">누적 CONTACT</div><div class="v" style="color:${STAGE_COLOR.contact}">${tot.contact}</div><div class="g">전체 만남</div></div>
+    </div>
+    <div class="table-wrap"><table class="mini-table"><tr><th>Contact</th><th>Stop</th><th>PT</th><th>Close</th><th>Rehash</th></tr>
+      <tr><td>${tot.contact}</td><td>${tot.stop}</td><td>${tot.presentation}</td><td>${tot.close}</td><td>${tot.rehash}</td></tr></table></div>`;
 }
 
 /* ==================== SEE ==================== */
@@ -771,7 +851,7 @@ function renderObjChart() {
 
 /* rehash list (all sessions, filterable) */
 function allRehashes() {
-  return Object.values(Store.getAll()).flatMap((s) => s.rehashes || []);
+  return Object.values(Store.getAll()).filter((s) => s && !s.deleted).flatMap((s) => s.rehashes || []);
 }
 
 function renderRehashList() {
@@ -806,7 +886,7 @@ function renderRehashList() {
 /* site / weather stats across all sessions */
 function aggregateBy(keyFn) {
   const map = {};
-  Object.values(Store.getAll()).forEach((s) => {
+  Object.values(Store.getAll()).filter((s) => s && !s.deleted).forEach((s) => {
     const key = keyFn(s) || "미설정";
     if (!map[key]) map[key] = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0, days: 0 };
     map[key].days++;
@@ -878,7 +958,7 @@ const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 function exportLogsCsv() {
   let rows = [["날짜", "시간", "유형", "사이트", "날씨", "비고"]];
-  Object.values(Store.getAll()).forEach((s) => {
+  Object.values(Store.getAll()).filter((s) => s && !s.deleted).forEach((s) => {
     (s.logs || []).forEach((l) => {
       let extra = "";
       if (l.type === "fail" || l.type === "close") extra = (s.objections.find((o) => o.t === l.t)?.reasons || []).join(", ");
@@ -1032,7 +1112,6 @@ function buildReportHTML() {
 
   .retro-table th { padding:8px; }
   .retro-cell { text-align:left; vertical-align:top; white-space:pre-wrap; width:31%; padding:10px 12px; font-size:12.5px; line-height:1.5; }
-  .retro-table td { height:64px; }
   .pm { width:92px; font-weight:800; background:#F4F4F5; color:#52525B; font-size:11.5px; white-space:nowrap; }
 
   .footer { display:flex; justify-content:space-between; color:#A1A1AA; font-size:10.5px; margin-top:12px; padding-top:8px; border-top:1px solid #E4E4E7; }
@@ -1088,12 +1167,24 @@ function buildReportHTML() {
 <div class="footer"><span>환경을 탓하지 말고 나의 노력을 탓하라</span><span>Field Callback OS · ${new Date().toLocaleString("ko-KR")}</span></div>
 </div><!-- /#sheet -->
 <script>
+/* 어떤 데이터가 와도 A4 한 장에 담기게 — 내용은 절대 자르지 않고 글자만 작아진다.
+   (1) 회고 셀 글자 12.5px→8px 단계 축소 (2) 그래도 넘치면 전체 zoom을 0.3까지 허용 */
 window.addEventListener("load", () => {
   const sheet = document.getElementById("sheet");
   const PAGE_H = 1035;
-  const h = sheet.scrollHeight;
-  if (h > PAGE_H) sheet.style.zoom = Math.max(0.55, PAGE_H / h).toFixed(3);
-  setTimeout(() => window.print(), 400);
+  const fit = () => {
+    sheet.style.zoom = "";
+    const cells = sheet.querySelectorAll(".retro-cell");
+    const sizes = [12.5, 11.5, 10.5, 9.5, 9, 8.5, 8];
+    for (const fs of sizes) {
+      cells.forEach((c) => { c.style.fontSize = fs + "px"; c.style.lineHeight = "1.35"; });
+      if (sheet.scrollHeight <= PAGE_H) break;
+    }
+    const h = sheet.scrollHeight;
+    if (h > PAGE_H) sheet.style.zoom = Math.max(0.3, PAGE_H / h).toFixed(3);
+  };
+  const done = () => { fit(); setTimeout(() => window.print(), 300); };
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(done); else done();
 });
 <\/script>
 </body></html>`;
@@ -1272,11 +1363,18 @@ const Hub = {
   identity() { try { return JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) { return null; } },
   setIdentity(v) {
     let prev = null; try { prev = JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) {}
+    const uidChanged = !prev || prev.uid !== (v && v.uid);
     localStorage.setItem(HUB_ID_KEY, JSON.stringify(v)); this.badge();
     /* 관리자로 연결된 적 있는 기기 표시 — 이후 팀원 계정을 열어봐도 잠기지 않음 */
     if (v && (v.uid === "admin" || v.name === "임재영")) localStorage.setItem("fcos_was_admin", "1");
-    /* 계정이 바뀌면 새 계정 전용 저장소로 다시 시작 (데이터 섞임 방지) */
-    if (!prev || prev.uid !== v.uid) setTimeout(() => location.reload(), 700);
+    /* 계정이 바뀌면 새 계정 전용 저장소로 다시 시작 (데이터 섞임 방지).
+       ★ localStorage 쓰기 직후 동기적으로 Cloud를 끊어, 이전 uid로 열린
+       SSE 스트림·진행 중 fetch 응답이 새 계정 저장소에 이전 데이터를 쓰거나
+       새 uid 클라우드로 재업로드하는 교차 오염을 원천 차단 */
+    if (uidChanged) {
+      try { Cloud.shutdown(); } catch (e) {}
+      setTimeout(() => location.reload(), 700);
+    }
   },
   synced() { try { return JSON.parse(localStorage.getItem(HUB_SYNCED_KEY)) || {}; } catch (e) { return {}; } },
   markSynced(id) { const m = this.synced(); m[id] = 1; localStorage.setItem(HUB_SYNCED_KEY, JSON.stringify(m)); },
@@ -1307,7 +1405,7 @@ const Hub = {
     return rec.id;
   },
 
-  allRehashes() { return Object.values(Store.getAll()).flatMap((s) => s.rehashes || []); },
+  allRehashes() { return Object.values(Store.getAll()).filter((s) => s && !s.deleted).flatMap((s) => s.rehashes || []); },
 
   async syncAll(showToast) {
     const who = this.identity(); if (!who) return 0;
@@ -1325,10 +1423,18 @@ const Hub = {
 
   /* ---- 계정 연결 피커 ---- */
   async openPicker() {
-    let users = {};
-    try { users = await fetch(HUB_DB + "/users.json").then((r) => r.json()) || {}; }
+    let users = {}, removed = [];
+    try {
+      [users, removed] = await Promise.all([
+        fetch(HUB_DB + "/users.json").then((r) => r.json()).then((v) => v || {}),
+        fetch(HUB_DB + "/removedMembers.json").then((r) => r.json()).then((v) => v || []).catch(() => []),
+      ]);
+    }
     catch (e) { this.toast("허브 연결 실패 — 인터넷 확인"); return; }
-    const list = Object.values(users).filter((u) => u && u.name && u.status !== "retired" && !u.test);
+    const nrm = (s) => String(s || "").replace(/\s+/g, "");
+    const rmSet = new Set((removed || []).map(nrm));
+    const isAdminU = (u) => u.uid === "admin" || u.name === "임재영";
+    const list = Object.values(users).filter((u) => u && u.name && u.status !== "retired" && !u.test && !rmSet.has(nrm(u.name)));
     const old = document.getElementById("hub-picker"); if (old) old.remove();
     const ov = document.createElement("div"); ov.id = "hub-picker";
     ov.style.cssText = "position:fixed;inset:0;background:rgba(15,18,24,.55);z-index:99;display:flex;align-items:center;justify-content:center;padding:20px";
@@ -1336,9 +1442,16 @@ const Hub = {
     box.style.cssText = "background:#fff;border-radius:18px;padding:20px;max-width:420px;width:100%;max-height:70vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3)";
     box.innerHTML = "<div style='font-weight:800;font-size:16px;margin-bottom:4px'>허브 계정 연결</div>" +
       "<div style='font-size:13px;color:#6b7482;margin-bottom:14px'>후원자 정보가 이 계정의 리젝노트로 들어갑니다</div>";
-    list.sort((a, b) => (a.name > b.name ? 1 : -1)).forEach((u) => {
+    /* 임재영(AOP)을 항상 맨 위에 고정, 나머지는 이름순 */
+    list.sort((a, b) => {
+      const aa = isAdminU(a), bb = isAdminU(b);
+      if (aa !== bb) return aa ? -1 : 1;
+      return a.name > b.name ? 1 : -1;
+    }).forEach((u) => {
       const b = document.createElement("button");
-      b.textContent = u.name + (u.role ? " · " + u.role : "");
+      const admin = isAdminU(u);
+      const role = u.role || (admin ? "AOP" : "");
+      b.textContent = (admin ? "👑 " : "") + u.name + (role ? " · " + role : "");
       b.style.cssText = "display:block;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border:1.5px solid #e5e9f0;border-radius:12px;background:#f8fafc;font-weight:700;font-size:14px;cursor:pointer";
       b.onclick = () => { this.setIdentity({ uid: u.uid, name: u.name }); ov.remove(); this.toast(u.name + "님으로 연결 ✓"); this.syncAll(); };
       box.appendChild(b);
@@ -1397,10 +1510,30 @@ const Cloud = {
 
   uid() { const w = Hub.identity(); return w && w.uid; },
 
+  /* 계정 전환 시 이전 uid로 열린 모든 연결/타이머 즉시 정리 (교차 오염 차단) */
+  shutdown() {
+    try { if (this.es) this.es.close(); } catch (e) {}
+    this.es = null;
+    Object.keys(this.pushT).forEach((k) => clearTimeout(this.pushT[k]));
+    this.pushT = {};
+    clearTimeout(this.pullT); this.pullT = null;
+    this.started = false;
+  },
+
   /* ---- 두 세션 병합: 합집합 + tombstone + 최신 정보 우선 ---- */
   merge(a, b) {
     if (!a) return b;
     if (!b) return a;
+    /* 세션 레벨 tombstone — 한쪽이 삭제 표식이면 up이 큰 쪽을 따른다.
+       (팀원이 이후 그 날짜에 새로 기록하면 up이 더 커져 자연 부활 — 정상) */
+    if (a.deleted || b.deleted) {
+      const nwd = (b.up || 0) >= (a.up || 0) ? b : a;
+      if (nwd.deleted) {
+        const date = (nwd.info && nwd.info.date) || (a.info && a.info.date) || (b.info && b.info.date) || "";
+        return { deleted: true, info: { date }, up: Math.max(a.up || 0, b.up || 0) };
+      }
+      return nwd;
+    }
     const tomb = Object.assign({}, a.tomb || {}, b.tomb || {});
     const nw = (b.up || 0) >= (a.up || 0) ? b : a;
     const od = nw === a ? b : a;
@@ -1462,6 +1595,7 @@ const Cloud = {
 
   /* Firebase는 빈 배열을 지워버리므로 복원 */
   normalize(r) {
+    if (r && r.deleted) return r;   // tombstone 세션은 배열 복원 없이 그대로
     ["logs", "objections", "rehashes"].forEach((k) => {
       if (!Array.isArray(r[k])) r[k] = r[k] ? Object.values(r[k]) : [];
     });
@@ -1524,16 +1658,18 @@ const Cloud = {
          통째로 덮어쓰는 사고를 원천 차단 */
       try {
         const remote = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json").then((r) => r.json());
+        if (this.uid() !== uid) return;   // 요청 중 계정 전환 → 폐기
         if (remote && remote.info) {
           this.normalize(remote);
           const m = this.merge(s, remote);
           if (JSON.stringify(m) !== JSON.stringify(s)) {
             const all = Store.getAll(); all[date] = m; Store.importAll(all);
-            if (S && S.info.date === date) { S = m; this.rerender(); }
+            if (S && S.info.date === date) { if (!m.deleted) S = m; this.rerender(); }
             s = m;
           }
         }
       } catch (e) {}
+      if (this.uid() !== uid) return;   // PUT 직전 재확인 → 새 계정 데이터가 이전 uid로 새지 않게
       const res = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json", {
         method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(s),
       });
@@ -1550,6 +1686,7 @@ const Cloud = {
     const uid = this.uid(); if (!uid) return;
     try {
       const v = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json").then((r) => r.json());
+      if (this.uid() !== uid) return;   // 응답 도착 전 계정 전환 → 폐기 (교차 오염 차단)
       this.applyRemote(v || {});
       const all = Store.getAll();
       Object.keys(all).forEach((d) => { if (!v || !v[d]) this.queue(d); });
@@ -1563,6 +1700,7 @@ const Cloud = {
     try {
       this.es = new EventSource(HUB_DB + "/callbacksheets/" + uid + ".json");
       const onEv = (e) => {
+        if (this.uid() !== uid) return;   // 계정 전환 후 잔여 이벤트 무시
         try {
           const d = JSON.parse(e.data);
           if (!d || d.data === null) return;
@@ -1673,20 +1811,37 @@ const Team = {
       return;
     }
     box.innerHTML = '<div class="empty">팀원 명단 불러오는 중…</div>';
-    let users = {};
-    try { users = await fetch(HUB_DB + "/users.json").then((r) => r.json()) || {}; }
+    let users = {}, removed = [];
+    try {
+      [users, removed] = await Promise.all([
+        fetch(HUB_DB + "/users.json").then((r) => r.json()).then((v) => v || {}),
+        fetch(HUB_DB + "/removedMembers.json").then((r) => r.json()).then((v) => v || []).catch(() => []),
+      ]);
+    }
     catch (e) { box.innerHTML = '<div class="empty">허브 연결 실패 — 인터넷을 확인해주세요</div>'; return; }
+    const nrm = (s) => String(s || "").replace(/\s+/g, "");
+    const rmSet = new Set((removed || []).map(nrm));
+    const isAdminU = (u) => u.uid === "admin" || u.name === "임재영";
+    /* 임재영(AOP)을 항상 맨 위에 고정, 나머지는 이름순 · 퇴사자(removedMembers) 제외 */
     const list = Object.values(users)
-      .filter((u) => u && u.name && u.uid && u.status !== "retired" && !u.test)
-      .sort((a, b) => (a.name > b.name ? 1 : -1));
-    box.innerHTML = list.map((u) => `
+      .filter((u) => u && u.name && u.uid && u.status !== "retired" && !u.test && !rmSet.has(nrm(u.name)))
+      .sort((a, b) => {
+        const aa = isAdminU(a), bb = isAdminU(b);
+        if (aa !== bb) return aa ? -1 : 1;
+        return a.name > b.name ? 1 : -1;
+      });
+    box.innerHTML = list.map((u) => {
+      const admin = isAdminU(u);
+      const role = u.role || (admin ? "AOP" : "");
+      return `
       <div class="rh-item" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <b style="font-size:14px">${esc(u.name)}</b><span class="chip">${esc(u.role || "")}</span>
+        <b style="font-size:14px">${admin ? "👑 " : ""}${esc(u.name)}</b><span class="chip">${esc(role)}</span>
         <span style="flex:1"></span>
         <button class="btn btn-outline btn-sm" data-tcopy="${esc(u.uid)}">🔗 링크 복사</button>
         <button class="btn btn-outline btn-sm" data-tshare="${esc(u.uid)}">💬 카톡</button>
         <button class="btn btn-primary btn-sm" data-tview="${esc(u.uid)}" data-tname="${esc(u.name)}">📊 데이터 보기</button>
-      </div>`).join("") || '<div class="empty">팀원이 없습니다</div>';
+      </div>`;
+    }).join("") || '<div class="empty">팀원이 없습니다</div>';
     box.querySelectorAll("[data-tcopy]").forEach((b) => (b.onclick = () => { const u = list.find((x) => x.uid === b.dataset.tcopy); if (u) this.copy(this.linkFor(u)); }));
     box.querySelectorAll("[data-tshare]").forEach((b) => (b.onclick = () => { const u = list.find((x) => x.uid === b.dataset.tshare); if (u) this.share(u); }));
     box.querySelectorAll("[data-tview]").forEach((b) => (b.onclick = () => this.view(b.dataset.tview, b.dataset.tname)));
@@ -1699,7 +1854,7 @@ const Team = {
     let all = {};
     try { all = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json").then((r) => r.json()) || {}; }
     catch (e) { box.innerHTML = '<div class="empty">불러오기 실패 — 인터넷을 확인해주세요</div>'; return; }
-    const dates = Object.keys(all).sort().reverse().slice(0, 14);
+    const dates = Object.keys(all).filter((d) => all[d] && !all[d].deleted && all[d].info).sort().reverse().slice(0, 14);
     if (!dates.length) {
       box.innerHTML = '<div class="empty">' + esc(name) + '님은 아직 기록이 없어요 — 개인 링크로 접속해 기록하면 여기 실시간으로 쌓입니다</div>';
       return;
@@ -1714,11 +1869,12 @@ const Team = {
       STAGES.forEach((k) => (tot[k] += c[k]));
       arr(s.rehashes).forEach((r) => donors.push({ date: d, ...r }));
       rows += `<tr><td>${d.slice(5)}</td>` + STAGES.map((k) => `<td>${c[k] || ""}</td>`).join("")
-        + `<td style="font-size:11px">${esc(((s.info && s.info.site) || "").split("/")[0])}</td></tr>`;
+        + `<td style="font-size:11px">${esc(((s.info && s.info.site) || "").split("/")[0])}</td>`
+        + `<td><button class="btn btn-ghost btn-sm" data-tdel="${esc(d)}" title="이 세션 삭제" style="padding:2px 7px">🗑</button></td></tr>`;
     });
     box.innerHTML =
       `<h3 style="font-size:14px;margin:4px 0 8px">👤 ${esc(name)} — 최근 ${dates.length}일 · Close ${tot.close} · Rehash ${tot.rehash} (KPI ${pct(tot.rehash, tot.close)}%)</h3>
-      <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>사이트</th></tr>${rows}</table></div>`
+      <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>사이트</th><th></th></tr>${rows}</table></div>`
       + (donors.length
         ? `<p class="hint" style="margin:12px 0 4px;font-weight:800">후원자 ${donors.length}건</p>`
           + donors.slice(0, 20).map((r) => `<div class="rh-item">
@@ -1726,6 +1882,23 @@ const Team = {
               <div class="rh-sub">${r.date} · ${esc(r.place || r.site || "-")}</div>
             </div>`).join("")
         : "");
+    /* 🗑 세션 삭제 (관리자 복구 도구) — tombstone PUT */
+    box.querySelectorAll("[data-tdel]").forEach((b) => (b.onclick = () => this.delSession(uid, name, b.dataset.tdel)));
+  },
+
+  /* 세션 tombstone 삭제 — 단순 DELETE는 팀원 기기의 pullAll이 로컬 사본을
+     되살리므로 반드시 {deleted:true} 표식을 PUT한다 (모든 기기에서 사라짐) */
+  async delSession(uid, name, date) {
+    if (!confirm(`${name}님의 ${date} 세션을 삭제할까요? 모든 기기에서 사라집니다`)) return;
+    try {
+      const res = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deleted: true, info: { date }, up: Date.now() }),
+      });
+      if (!res.ok) throw new Error("del " + res.status);
+      toast("세션을 삭제했습니다");
+      this.view(uid, name);
+    } catch (e) { toast("삭제 실패 — 인터넷을 확인해주세요"); }
   },
 
   tabVis() {
@@ -1740,26 +1913,42 @@ const Team = {
       const u = q.get("u"), n = q.get("n");
       if (u && n) {
         const cur = Hub.identity();
-        if (u !== "admin" && n !== "임재영") localStorage.setItem(this.LOCK_KEY, "1");
-        else localStorage.removeItem(this.LOCK_KEY);
-        if (!cur || cur.uid !== u) {
+        const wasAdmin = localStorage.getItem("fcos_was_admin") === "1";
+        const connect = () => {
+          if (u !== "admin" && n !== "임재영") localStorage.setItem(this.LOCK_KEY, "1");
+          else localStorage.removeItem(this.LOCK_KEY);
           Hub.setIdentity({ uid: u, name: n });
           location.replace(location.pathname);   // 새 계정으로 동기화 재시작
-          return;
+        };
+        if (!cur) { connect(); return; }          // 첫 연결(새 기기)만 비밀번호 없이
+        if (cur.uid !== u) {
+          /* ★ 이미 다른 계정이 연결된 기기 — 관리자 비밀번호 없이는 링크로도 전환 불가
+             (남의 링크·QR로 다른 사람 콜백싯에 들어가던 문제 차단) */
+          if (this.isAdmin() || wasAdmin) { connect(); return; }
+          (async () => {
+            const pw = prompt(`이 기기는 이미 ${cur.name}님 계정으로 연결돼 있어요 🔒\n다른 계정으로 전환하려면 관리자 비밀번호가 필요합니다:`);
+            if (pw !== null && pw !== "") {
+              let real = "0691";
+              try { const v = await fetch(HUB_DB + "/settings/cbAdminPw.json").then((r) => r.json()); if (v) real = String(v); } catch (e) {}
+              if (String(pw).trim() === real) { localStorage.setItem("fcos_was_admin", "1"); connect(); return; }
+              Hub.toast("비밀번호가 맞지 않아요 🔒");
+            }
+          })();
         }
         history.replaceState(null, "", location.pathname);
       }
     } catch (e) {}
-    /* 링크로 잠긴 팀원은 계정 변경 불가.
-       - 관리자로 연결된 적 있는 기기(임재영 기기)는 잠금과 무관하게 자유 전환
-       - 그 외 기기에서도 관리자 비밀번호를 입력하면 전환 가능
+    /* ★ 계정 연결·전환은 항상 관리자 비밀번호 필요 (2026-07-11 보안 강화)
+       - QR/기본 주소로 들어온 사람이 비밀번호 없이 아무 계정이나 선택해
+         남의 콜백싯에 들어가던 문제 차단
+       - 팀원은 관리자가 보내준 개인 링크(?u=&n=)로만 자동 연결됨
+       - 관리자 본인/관리자 인증된 기기만 자유 전환
          (비밀번호 0691 · Firebase settings/cbAdminPw 로 변경 가능) */
     const orig = Hub.openPicker.bind(Hub);
     Hub.openPicker = async () => {
-      const locked = localStorage.getItem(this.LOCK_KEY) === "1";
       const wasAdmin = localStorage.getItem("fcos_was_admin") === "1";
-      if (locked && !this.isAdmin() && !wasAdmin) {
-        const pw = prompt("이 기기는 내 계정으로 잠겨 있어요 🔒\n관리자 비밀번호를 입력하면 계정을 전환할 수 있습니다:");
+      if (!this.isAdmin() && !wasAdmin) {
+        const pw = prompt("계정 연결·전환은 관리자만 할 수 있어요 🔒\n관리자 비밀번호를 입력하세요.\n(팀원은 관리자가 카톡으로 보내준 개인 링크로 접속하면 자동 연결됩니다)");
         if (pw === null || pw === "") return;
         let real = "0691";
         try {
