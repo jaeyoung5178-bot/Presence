@@ -1255,6 +1255,8 @@ const Hub = {
   setIdentity(v) {
     let prev = null; try { prev = JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) {}
     localStorage.setItem(HUB_ID_KEY, JSON.stringify(v)); this.badge();
+    /* 관리자로 연결된 적 있는 기기 표시 — 이후 팀원 계정을 열어봐도 잠기지 않음 */
+    if (v && (v.uid === "admin" || v.name === "임재영")) localStorage.setItem("fcos_was_admin", "1");
     /* 계정이 바뀌면 새 계정 전용 저장소로 다시 시작 (데이터 섞임 방지) */
     if (!prev || prev.uid !== v.uid) setTimeout(() => location.reload(), 700);
   },
@@ -1717,12 +1719,25 @@ const Team = {
         history.replaceState(null, "", location.pathname);
       }
     } catch (e) {}
-    /* 링크로 잠긴 팀원은 계정 변경 불가 (관리자는 예외) */
+    /* 링크로 잠긴 팀원은 계정 변경 불가.
+       - 관리자로 연결된 적 있는 기기(임재영 기기)는 잠금과 무관하게 자유 전환
+       - 그 외 기기에서도 관리자 비밀번호를 입력하면 전환 가능
+         (비밀번호 0691 · Firebase settings/cbAdminPw 로 변경 가능) */
     const orig = Hub.openPicker.bind(Hub);
-    Hub.openPicker = () => {
-      if (localStorage.getItem(this.LOCK_KEY) === "1" && !this.isAdmin()) {
-        Hub.toast("관리자가 연결해준 내 계정으로 잠겨 있어요 🔒");
-        return;
+    Hub.openPicker = async () => {
+      const locked = localStorage.getItem(this.LOCK_KEY) === "1";
+      const wasAdmin = localStorage.getItem("fcos_was_admin") === "1";
+      if (locked && !this.isAdmin() && !wasAdmin) {
+        const pw = prompt("이 기기는 내 계정으로 잠겨 있어요 🔒\n관리자 비밀번호를 입력하면 계정을 전환할 수 있습니다:");
+        if (pw === null || pw === "") return;
+        let real = "0691";
+        try {
+          const v = await fetch(HUB_DB + "/settings/cbAdminPw.json").then((r) => r.json());
+          if (v) real = String(v);
+        } catch (e) {}
+        if (String(pw).trim() !== real) { Hub.toast("비밀번호가 맞지 않아요 🔒"); return; }
+        localStorage.setItem("fcos_was_admin", "1");
+        Hub.toast("관리자 확인 ✓ — 계정을 선택하세요");
       }
       return orig();
     };
