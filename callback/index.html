@@ -50,6 +50,11 @@
   </div>
 
   <div class="card">
+    <h2>📊 최근 7일 결과</h2>
+    <div id="dash-week"></div>
+  </div>
+
+  <div class="card">
     <h2>최근 활동</h2>
     <div id="dash-recent" class="timeline compact"></div>
   </div>
@@ -279,6 +284,24 @@
   </div>
 </section>
 
+<!-- ================= TEAM (관리자 전용) ================= -->
+<section id="view-team" class="view hidden">
+  <div class="view-head">
+    <h1>팀관리</h1>
+    <p class="sub">팀원별 개인 링크 공유 · 팀원 콜백싯 데이터 열람 (관리자 전용)</p>
+  </div>
+  <div class="card">
+    <h2>👥 팀원별 개인 링크</h2>
+    <p class="hint">🔗 복사한 링크를 카톡으로 보내주세요. 팀원이 링크를 열면 자동으로 본인 계정으로 연결되고, 기록이 관리자에게 실시간 공유됩니다. (팀원은 서로의 데이터를 볼 수 없어요)</p>
+    <div id="team-list"></div>
+  </div>
+  <div class="card">
+    <h2>📊 팀원 데이터</h2>
+    <p class="hint">위에서 "데이터 보기"를 누르면 그 팀원의 최근 기록이 여기 표시됩니다</p>
+    <div id="team-view"><div class="empty">팀원을 선택하세요</div></div>
+  </div>
+</section>
+
 </main>
 
 <!-- ===== Bottom Nav ===== -->
@@ -287,6 +310,7 @@
   <button class="tab" data-nav="plan"><span class="tab-ico">☰</span>Plan</button>
   <button class="tab tab-do" data-nav="do"><span class="tab-ico">●</span>Do</button>
   <button class="tab" data-nav="see"><span class="tab-ico">▤</span>See</button>
+  <button class="tab" data-nav="team" style="display:none"><span class="tab-ico">👥</span>팀관리</button>
 </nav>
 
 <!-- ===== Objection Modal ===== -->

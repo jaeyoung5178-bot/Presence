@@ -134,6 +134,7 @@ function nav(view) {
   if (view === "plan") renderPlan();
   if (view === "do") renderDo();
   if (view === "see") renderSee();
+  if (view === "team") { try { Team.render(); } catch (e) {} }
 }
 
 /* ==================== Header ==================== */
@@ -516,6 +517,57 @@ function renderDashboard() {
   }).join("");
 
   renderTimeline($("dash-recent"), S.logs, false, 5);
+  renderWeek();
+}
+
+/* ==================== 최근 7일 요약 (홈) ==================== */
+function localDateStr(offset) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function renderWeek() {
+  const el = $("dash-week");
+  if (!el) return;
+  const all = Store.getAll();
+  const days = [];
+  for (let i = 6; i >= 0; i--) days.push(localDateStr(-i));
+  const tot = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
+  let rows = "", any = false;
+  days.forEach((d) => {
+    const s = all[d];
+    const c = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
+    ((s && s.logs) || []).forEach((l) => { if (c[l.type] !== undefined) c[l.type]++; });
+    STAGES.forEach((k) => (tot[k] += c[k]));
+    if (s && s.logs && s.logs.length) any = true;
+    const dd = new Date(d + "T00:00:00");
+    rows += `<tr><td>${dd.getMonth() + 1}/${dd.getDate()} (${"일월화수목금토"[dd.getDay()]})</td>`
+      + STAGES.map((k) => `<td>${c[k] || ""}</td>`).join("")
+      + `<td style="font-size:11px">${s && s.info.site ? esc(s.info.site.split("/")[0]) : ""}</td></tr>`;
+  });
+  if (!any) { el.innerHTML = `<div class="empty">최근 7일 기록이 없습니다</div>`; return; }
+  const kpi = pct(tot.rehash, tot.close);          // Close 대비 Rehash
+  const closeRate = pct(tot.close, tot.contact);   // Contact 대비 Close
+  /* 사이트별 (최근 7일) */
+  const siteMap = {};
+  days.forEach((d) => {
+    const s = all[d]; if (!s || !s.logs || !s.logs.length) return;
+    const key = (s.info.site || "미설정").split("/")[0];
+    if (!siteMap[key]) siteMap[key] = { contact: 0, close: 0, rehash: 0 };
+    s.logs.forEach((l) => { if (siteMap[key][l.type] !== undefined) siteMap[key][l.type]++; });
+  });
+  const siteRows = Object.entries(siteMap).sort((a, b) => b[1].close - a[1].close).map(([k, v]) =>
+    `<tr><td>${esc(k)}</td><td>${v.contact}</td><td>${v.close}</td><td>${v.rehash}</td><td><b style="color:var(--blue)">${pct(v.close, v.contact)}%</b></td></tr>`).join("");
+  el.innerHTML =
+    `<div class="result-cards" style="grid-template-columns:repeat(3,1fr)">
+      <div class="result-card"><div class="k">7일 CLOSE</div><div class="v" style="color:${STAGE_COLOR.close}">${tot.close}</div><div class="g">Contact ${tot.contact} · ${closeRate}%</div></div>
+      <div class="result-card"><div class="k">7일 REHASH</div><div class="v" style="color:${STAGE_COLOR.rehash}">${tot.rehash}</div><div class="g">후원자 기록</div></div>
+      <div class="result-card"><div class="k">KPI</div><div class="v" style="color:var(--blue)">${kpi}%</div><div class="g">Close 대비 Rehash</div></div>
+    </div>
+    <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>사이트</th></tr>${rows}</table></div>`
+    + (siteRows ? `<p class="hint" style="margin:12px 0 4px;font-weight:800">사이트별 (7일)</p><div class="table-wrap"><table class="mini-table"><tr><th>사이트</th><th>Contact</th><th>Close</th><th>Rehash</th><th>Close율</th></tr>${siteRows}</table></div>` : "");
 }
 
 /* ==================== SEE ==================== */
@@ -1468,3 +1520,138 @@ const Cloud = {
   },
 };
 Cloud.init();
+
+/* ════════════════════════════════════════════════════════════════════
+   TEAM — 팀관리 (관리자 임재영 전용 탭)
+   - 팀원별 개인 링크: ?u={uid}&n={이름} → 열면 자동으로 본인 계정 연결
+   - 링크로 연결된 팀원은 계정이 잠겨 다른 팀원 데이터를 볼 수 없음
+   - 관리자는 팀원별 콜백싯 데이터(최근 14일 + 후원자)를 열람
+   ════════════════════════════════════════════════════════════════════ */
+const Team = {
+  LOCK_KEY: "fcos_locked",
+
+  isAdmin() {
+    const w = Hub.identity();
+    return !!(w && (w.uid === "admin" || w.name === "임재영"));
+  },
+  appUrl() { return location.origin + location.pathname; },
+  linkFor(u) { return this.appUrl() + "?u=" + encodeURIComponent(u.uid) + "&n=" + encodeURIComponent(u.name); },
+
+  copy(text) {
+    const fb = () => {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.cssText = "position:fixed;top:-999px";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); toast("📋 복사 완료 — 카톡에 붙여넣기"); }
+      catch (e) { prompt("복사해서 보내세요:", text); }
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText(text).then(() => toast("📋 복사 완료 — 카톡에 붙여넣기"), fb);
+    else fb();
+  },
+  share(u) {
+    const text = `📋 ${u.name}님 전용 콜백싯\n${this.linkFor(u)}\n\n링크를 열면 자동으로 ${u.name}님 계정으로 연결돼요. 사파리 공유 → "홈 화면에 추가" 하면 앱처럼 쓸 수 있어요!`;
+    if (navigator.share) navigator.share({ text }).catch(() => this.copy(text));
+    else this.copy(text);
+  },
+
+  async render() {
+    const box = $("team-list");
+    if (!box) return;
+    if (!this.isAdmin()) {
+      box.innerHTML = '<div class="empty">관리자(임재영) 계정으로 허브 연결 시 사용할 수 있어요</div>';
+      return;
+    }
+    box.innerHTML = '<div class="empty">팀원 명단 불러오는 중…</div>';
+    let users = {};
+    try { users = await fetch(HUB_DB + "/users.json").then((r) => r.json()) || {}; }
+    catch (e) { box.innerHTML = '<div class="empty">허브 연결 실패 — 인터넷을 확인해주세요</div>'; return; }
+    const list = Object.values(users)
+      .filter((u) => u && u.name && u.uid && u.status !== "retired" && !u.test)
+      .sort((a, b) => (a.name > b.name ? 1 : -1));
+    box.innerHTML = list.map((u) => `
+      <div class="rh-item" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <b style="font-size:14px">${esc(u.name)}</b><span class="chip">${esc(u.role || "")}</span>
+        <span style="flex:1"></span>
+        <button class="btn btn-outline btn-sm" data-tcopy="${esc(u.uid)}">🔗 링크 복사</button>
+        <button class="btn btn-outline btn-sm" data-tshare="${esc(u.uid)}">💬 카톡</button>
+        <button class="btn btn-primary btn-sm" data-tview="${esc(u.uid)}" data-tname="${esc(u.name)}">📊 데이터 보기</button>
+      </div>`).join("") || '<div class="empty">팀원이 없습니다</div>';
+    box.querySelectorAll("[data-tcopy]").forEach((b) => (b.onclick = () => { const u = list.find((x) => x.uid === b.dataset.tcopy); if (u) this.copy(this.linkFor(u)); }));
+    box.querySelectorAll("[data-tshare]").forEach((b) => (b.onclick = () => { const u = list.find((x) => x.uid === b.dataset.tshare); if (u) this.share(u); }));
+    box.querySelectorAll("[data-tview]").forEach((b) => (b.onclick = () => this.view(b.dataset.tview, b.dataset.tname)));
+  },
+
+  async view(uid, name) {
+    const box = $("team-view");
+    if (!box) return;
+    box.innerHTML = '<div class="empty">' + esc(name) + '님 데이터 불러오는 중…</div>';
+    let all = {};
+    try { all = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json").then((r) => r.json()) || {}; }
+    catch (e) { box.innerHTML = '<div class="empty">불러오기 실패 — 인터넷을 확인해주세요</div>'; return; }
+    const dates = Object.keys(all).sort().reverse().slice(0, 14);
+    if (!dates.length) {
+      box.innerHTML = '<div class="empty">' + esc(name) + '님은 아직 기록이 없어요 — 개인 링크로 접속해 기록하면 여기 실시간으로 쌓입니다</div>';
+      return;
+    }
+    const arr = (v) => (Array.isArray(v) ? v : v ? Object.values(v) : []);
+    let rows = "", donors = [];
+    const tot = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
+    dates.forEach((d) => {
+      const s = all[d];
+      const c = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
+      arr(s.logs).forEach((l) => { if (c[l.type] !== undefined) c[l.type]++; });
+      STAGES.forEach((k) => (tot[k] += c[k]));
+      arr(s.rehashes).forEach((r) => donors.push({ date: d, ...r }));
+      rows += `<tr><td>${d.slice(5)}</td>` + STAGES.map((k) => `<td>${c[k] || ""}</td>`).join("")
+        + `<td style="font-size:11px">${esc(((s.info && s.info.site) || "").split("/")[0])}</td></tr>`;
+    });
+    box.innerHTML =
+      `<h3 style="font-size:14px;margin:4px 0 8px">👤 ${esc(name)} — 최근 ${dates.length}일 · Close ${tot.close} · Rehash ${tot.rehash} (KPI ${pct(tot.rehash, tot.close)}%)</h3>
+      <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>사이트</th></tr>${rows}</table></div>`
+      + (donors.length
+        ? `<p class="hint" style="margin:12px 0 4px;font-weight:800">후원자 ${donors.length}건</p>`
+          + donors.slice(0, 20).map((r) => `<div class="rh-item">
+              <div class="rh-top"><span>${esc(r.name) || "이름 없음"}</span><span class="chip">${esc(r.pay || "")}</span>${r.code ? `<span class="chip">${esc(r.code)}</span>` : ""}<span class="rh-amount">${r.amount ? Number(r.amount).toLocaleString() + "원" : "-"}</span></div>
+              <div class="rh-sub">${r.date} · ${esc(r.place || r.site || "-")}</div>
+            </div>`).join("")
+        : "");
+  },
+
+  tabVis() {
+    const t = document.querySelector('[data-nav="team"]');
+    if (t) t.style.display = this.isAdmin() ? "" : "none";
+  },
+
+  init() {
+    /* 개인 링크(?u=uid&n=이름)로 접속 → 자동 계정 연결 + 잠금 */
+    try {
+      const q = new URLSearchParams(location.search);
+      const u = q.get("u"), n = q.get("n");
+      if (u && n) {
+        const cur = Hub.identity();
+        if (u !== "admin" && n !== "임재영") localStorage.setItem(this.LOCK_KEY, "1");
+        else localStorage.removeItem(this.LOCK_KEY);
+        if (!cur || cur.uid !== u) {
+          Hub.setIdentity({ uid: u, name: n });
+          location.replace(location.pathname);   // 새 계정으로 동기화 재시작
+          return;
+        }
+        history.replaceState(null, "", location.pathname);
+      }
+    } catch (e) {}
+    /* 링크로 잠긴 팀원은 계정 변경 불가 (관리자는 예외) */
+    const orig = Hub.openPicker.bind(Hub);
+    Hub.openPicker = () => {
+      if (localStorage.getItem(this.LOCK_KEY) === "1" && !this.isAdmin()) {
+        Hub.toast("관리자가 연결해준 내 계정으로 잠겨 있어요 🔒");
+        return;
+      }
+      return orig();
+    };
+    this.tabVis();
+    setInterval(() => this.tabVis(), 3000);
+  },
+};
+Team.init();
