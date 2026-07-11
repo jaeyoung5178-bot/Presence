@@ -1518,8 +1518,22 @@ const Cloud = {
   },
   async push(date) {
     const uid = this.uid(); if (!uid) return;
-    const s = Store.getSession(date); if (!s) return;
+    let s = Store.getSession(date); if (!s) return;
     try {
+      /* ★ 업로드 전 서버 데이터와 병합 — 빈/부분 세션이 서버 기록을
+         통째로 덮어쓰는 사고를 원천 차단 */
+      try {
+        const remote = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json").then((r) => r.json());
+        if (remote && remote.info) {
+          this.normalize(remote);
+          const m = this.merge(s, remote);
+          if (JSON.stringify(m) !== JSON.stringify(s)) {
+            const all = Store.getAll(); all[date] = m; Store.importAll(all);
+            if (S && S.info.date === date) { S = m; this.rerender(); }
+            s = m;
+          }
+        }
+      } catch (e) {}
       const res = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json", {
         method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(s),
       });
