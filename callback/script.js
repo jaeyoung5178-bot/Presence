@@ -15,7 +15,16 @@ const OBJECTIONS = ["이미 후원", "경제적 부담", "배우자 상의", "�
    All persistence goes through this object only.
    Swap implementation for Supabase/Firebase later.        */
 const Store = {
-  KEY: "fcos_sessions_v1",
+  /* 계정(uid)별 저장소 분리 — 같은 기기에서 팀원 계정으로 바꿔도
+     서로의 데이터가 절대 보이지 않음. 임재영(admin)은 기존 키 유지. */
+  KEY_BASE: "fcos_sessions_v1",
+  get KEY() {
+    try {
+      const w = JSON.parse(localStorage.getItem("fcos_hub_identity"));
+      if (w && w.uid && w.uid !== "admin") return this.KEY_BASE + "__" + w.uid;
+    } catch (e) {}
+    return this.KEY_BASE;
+  },
   _read() {
     try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; }
     catch { return {}; }
@@ -528,26 +537,62 @@ function localDateStr(offset) {
   return d.toISOString().slice(0, 10);
 }
 
+/* 프레젠스 웹앱(워크북) 세일즈 기록 — 내 이름 기준으로 가져와서
+   콜백싯 기록이 없는 날도 최근 결과가 보이게 (계정별 자기 데이터만) */
+let _wkSales = null, _wkSalesAt = 0, _wkSalesLoading = false;
+function fetchWeekSales(days) {
+  const who = (typeof Hub !== "undefined" && Hub.identity()) || null;
+  if (!who || !who.name) return;
+  if (_wkSalesLoading || (Date.now() - _wkSalesAt < 60000 && _wkSales)) return;
+  _wkSalesLoading = true;
+  const nrm = (s) => String(s || "").replace(/\s+/g, "");
+  Promise.all(days.map((d) =>
+    fetch(HUB_DB + "/sales/" + d + ".json").then((r) => r.json()).catch(() => null)
+  )).then((arr) => {
+    const out = {};
+    arr.forEach((day, i) => {
+      if (!day) return;
+      for (const k in day) {
+        const e = day[k];
+        if (e && nrm(e.name) === nrm(who.name) && !e.na && !e.rally) { out[days[i]] = +e.count || 0; break; }
+      }
+    });
+    _wkSales = out; _wkSalesAt = Date.now(); _wkSalesLoading = false;
+    renderWeek();   // 데이터 도착 → 다시 그림
+  }).catch(() => { _wkSalesLoading = false; });
+}
+
 function renderWeek() {
   const el = $("dash-week");
   if (!el) return;
   const all = Store.getAll();
   const days = [];
   for (let i = 6; i >= 0; i--) days.push(localDateStr(-i));
+  fetchWeekSales(days);
+  const sales = _wkSales || {};
   const tot = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
-  let rows = "", any = false;
+  let rows = "", any = false, donorTot = 0;
   days.forEach((d) => {
     const s = all[d];
     const c = { contact: 0, stop: 0, presentation: 0, close: 0, rehash: 0 };
     ((s && s.logs) || []).forEach((l) => { if (c[l.type] !== undefined) c[l.type]++; });
     STAGES.forEach((k) => (tot[k] += c[k]));
-    if (s && s.logs && s.logs.length) any = true;
+    /* 후원자 수: 콜백싯 후원자 기록 우선, 없으면 웹앱(워크북) 세일즈 기록 */
+    const cbDonors = (s && s.rehashes && s.rehashes.length) || 0;
+    const donors = Math.max(cbDonors, sales[d] || 0);
+    donorTot += donors;
+    if ((s && s.logs && s.logs.length) || donors) any = true;
     const dd = new Date(d + "T00:00:00");
+    const src = donors ? (cbDonors >= (sales[d] || 0) ? "" : " <span style='color:var(--ink-3);font-size:9px'>웹앱</span>") : "";
     rows += `<tr><td>${dd.getMonth() + 1}/${dd.getDate()} (${"일월화수목금토"[dd.getDay()]})</td>`
       + STAGES.map((k) => `<td>${c[k] || ""}</td>`).join("")
+      + `<td><b>${donors || ""}</b>${src}</td>`
       + `<td style="font-size:11px">${s && s.info.site ? esc(s.info.site.split("/")[0]) : ""}</td></tr>`;
   });
-  if (!any) { el.innerHTML = `<div class="empty">최근 7일 기록이 없습니다</div>`; return; }
+  if (!any) {
+    el.innerHTML = `<div class="empty">최근 7일 기록이 없습니다${Hub.identity() ? "" : " · 허브 연결하면 웹앱 세일즈 기록도 가져와요"}</div>`;
+    return;
+  }
   const kpi = pct(tot.rehash, tot.close);          // Close 대비 Rehash
   const closeRate = pct(tot.close, tot.contact);   // Contact 대비 Close
   /* 사이트별 (최근 7일) */
@@ -561,12 +606,13 @@ function renderWeek() {
   const siteRows = Object.entries(siteMap).sort((a, b) => b[1].close - a[1].close).map(([k, v]) =>
     `<tr><td>${esc(k)}</td><td>${v.contact}</td><td>${v.close}</td><td>${v.rehash}</td><td><b style="color:var(--blue)">${pct(v.close, v.contact)}%</b></td></tr>`).join("");
   el.innerHTML =
-    `<div class="result-cards" style="grid-template-columns:repeat(3,1fr)">
+    `<div class="result-cards" style="grid-template-columns:repeat(2,1fr)">
+      <div class="result-card"><div class="k">7일 후원자</div><div class="v" style="color:${STAGE_COLOR.rehash}">${donorTot}</div><div class="g">콜백싯+웹앱 세일즈</div></div>
       <div class="result-card"><div class="k">7일 CLOSE</div><div class="v" style="color:${STAGE_COLOR.close}">${tot.close}</div><div class="g">Contact ${tot.contact} · ${closeRate}%</div></div>
-      <div class="result-card"><div class="k">7일 REHASH</div><div class="v" style="color:${STAGE_COLOR.rehash}">${tot.rehash}</div><div class="g">후원자 기록</div></div>
+      <div class="result-card"><div class="k">7일 REHASH 기록</div><div class="v" style="color:${STAGE_COLOR.presentation}">${tot.rehash}</div><div class="g">후원자 정보 입력</div></div>
       <div class="result-card"><div class="k">KPI</div><div class="v" style="color:var(--blue)">${kpi}%</div><div class="g">Close 대비 Rehash</div></div>
     </div>
-    <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>사이트</th></tr>${rows}</table></div>`
+    <div class="table-wrap"><table class="mini-table"><tr><th>날짜</th><th>C</th><th>S</th><th>PT</th><th>Cl</th><th>Rh</th><th>후원</th><th>사이트</th></tr>${rows}</table></div>`
     + (siteRows ? `<p class="hint" style="margin:12px 0 4px;font-weight:800">사이트별 (7일)</p><div class="table-wrap"><table class="mini-table"><tr><th>사이트</th><th>Contact</th><th>Close</th><th>Rehash</th><th>Close율</th></tr>${siteRows}</table></div>` : "");
 }
 
@@ -1207,7 +1253,12 @@ const HUB_SYNCED_KEY = "fcos_hub_synced"; // {rn_cb_t:1,...}
 
 const Hub = {
   identity() { try { return JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) { return null; } },
-  setIdentity(v) { localStorage.setItem(HUB_ID_KEY, JSON.stringify(v)); this.badge(); },
+  setIdentity(v) {
+    let prev = null; try { prev = JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) {}
+    localStorage.setItem(HUB_ID_KEY, JSON.stringify(v)); this.badge();
+    /* 계정이 바뀌면 새 계정 전용 저장소로 다시 시작 (데이터 섞임 방지) */
+    if (!prev || prev.uid !== v.uid) setTimeout(() => location.reload(), 700);
+  },
   synced() { try { return JSON.parse(localStorage.getItem(HUB_SYNCED_KEY)) || {}; } catch (e) { return {}; } },
   markSynced(id) { const m = this.synced(); m[id] = 1; localStorage.setItem(HUB_SYNCED_KEY, JSON.stringify(m)); },
 
@@ -1339,19 +1390,45 @@ const Cloud = {
       keys.forEach((k) => { const v = (n || {})[k]; out[k] = (v === "" || v == null) ? (o || {})[k] : v; });
       return out;
     };
-    const uni = (x, y, keyFn) => {
-      const m = {};
-      [...(x || []), ...(y || [])].forEach((it) => {
-        if (!it) return;
-        const k = keyFn(it);
-        if (tomb[k]) return;
-        if (!m[k]) m[k] = it;   // 앞(최신 세션) 항목 우선
-      });
-      return Object.values(m);
-    };
-    const logs = uni(nw.logs, od.logs, (l) => "l:" + l.t + "|" + l.type).sort((p, q) => String(p.t).localeCompare(String(q.t)));
-    const objections = uni(nw.objections, od.objections, (o) => "o:" + o.t);
-    const rehashes = uni(nw.rehashes, od.rehashes, (r) => "r:" + r.t);
+    /* ── 로그 병합: 정확히 같은 기록은 1개로, 시간대(시)+유형별로는
+       "두 기기 중 많은 쪽" 개수만 유지 → 같은 날을 두 기기에 넣어도 2배가 되지 않음 ── */
+    const clean = (arr, keyEx) => (arr || []).filter((it) => it && !tomb[keyEx(it)]);
+    const exK = (l) => "l:" + l.t + "|" + l.type;
+    const hrK = (l) => String(l.t).slice(0, 13) + "|" + l.type;
+    const nLogs = clean(nw.logs, exK), oLogs = clean(od.logs, exK);
+    const seen = {}, nCnt = {}, oCnt = {};
+    nLogs.forEach((l) => { seen[exK(l)] = 1; nCnt[hrK(l)] = (nCnt[hrK(l)] || 0) + 1; });
+    oLogs.forEach((l) => { oCnt[hrK(l)] = (oCnt[hrK(l)] || 0) + 1; });
+    const extra = {};
+    Object.keys(oCnt).forEach((k) => { extra[k] = Math.max(0, oCnt[k] - (nCnt[k] || 0)); });
+    const logs = [...nLogs];
+    oLogs.forEach((l) => {
+      const k = exK(l); if (seen[k]) return;
+      const h = hrK(l); if ((extra[h] || 0) <= 0) return;
+      extra[h]--; seen[k] = 1; logs.push(l);
+    });
+    logs.sort((p, q) => String(p.t).localeCompare(String(q.t)));
+    /* 오브젝션: 같은 방식 (시간대별 max) */
+    const exO = (o) => "o:" + o.t;
+    const hrO = (o) => "o" + String(o.t).slice(0, 13);
+    const nObj = clean(nw.objections, exO), oObj = clean(od.objections, exO);
+    const oSeen = {}, onCnt = {}, ooCnt = {};
+    nObj.forEach((o) => { oSeen[exO(o)] = 1; onCnt[hrO(o)] = (onCnt[hrO(o)] || 0) + 1; });
+    oObj.forEach((o) => { ooCnt[hrO(o)] = (ooCnt[hrO(o)] || 0) + 1; });
+    const oExtra = {};
+    Object.keys(ooCnt).forEach((k) => { oExtra[k] = Math.max(0, ooCnt[k] - (onCnt[k] || 0)); });
+    const objections = [...nObj];
+    oObj.forEach((o) => {
+      const k = exO(o); if (oSeen[k]) return;
+      const h = hrO(o); if ((oExtra[h] || 0) <= 0) return;
+      oExtra[h]--; oSeen[k] = 1; objections.push(o);
+    });
+    /* 후원자: 날짜+이름 기준 1건 (같은 후원자가 두 기기에 있어도 중복 없음) */
+    const rk = (r) => (r.name ? "r:" + (r.date || "") + "|" + String(r.name).replace(/\s+/g, "") : "rt:" + r.t);
+    const rMap = {};
+    clean(nw.rehashes, (r) => "r:" + r.t).forEach((r) => { rMap[rk(r)] = r; });
+    clean(od.rehashes, (r) => "r:" + r.t).forEach((r) => { if (!rMap[rk(r)]) rMap[rk(r)] = r; });
+    const rehashes = Object.values(rMap);
     const retro = {};
     ["number", "skill", "attitude"].forEach((k) => { retro[k] = filled((nw.retro || {})[k] || {}, (od.retro || {})[k] || {}); });
     const out = {
