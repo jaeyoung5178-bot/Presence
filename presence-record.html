@@ -457,12 +457,12 @@
         if(v>=2)b++; if(v>=3)go++; if(v>=5)h++; if(v>=10)tn++;
         if(k>=CUTOVER){cl+=c; if(c>0)cd+=v;}}
       /* 연속 NO ZERO — 2026-06-01까지는 검증 기준값(과거 0은 휴무), 이후는 실기록으로 이어감 */
-      st=Math.max(baseAgg.streak||0,NOZERO_BASE);
+      st=NOZERO_BASE; /* 시트 연속값은 6/1 이후 일수를 이미 포함 → 기준점(6/1=312)만 사용해 이중집계 방지 */
       for(const k of days) if(k>CUTOVER){const v=m[k].d; if(v>=1)st++; else st=0; streakMap[k]=st;}
       setAgg(st,d,days.length,nz,z,b,go,h,tn,cl,cd);
     }else{
       const fb=Object.keys(m).filter(k=>k>CUTOVER).sort();
-      let st=Math.max(baseAgg.streak||0,NOZERO_BASE),d=0,nz=0,z=0,b=0,go=0,h=0,tn=0,cl=0,cd=0;
+      let st=NOZERO_BASE,d=0,nz=0,z=0,b=0,go=0,h=0,tn=0,cl=0,cd=0;
       for(const k of fb){const v=m[k].d,c=m[k].c||0;
         d+=v; if(v>=1){nz++;st++;}else{z++;st=0;} streakMap[k]=st;
         if(v>=2)b++; if(v>=3)go++; if(v>=5)h++; if(v>=10)tn++;
