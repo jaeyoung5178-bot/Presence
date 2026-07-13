@@ -1409,6 +1409,7 @@ const HUB_ID_KEY = "fcos_hub_identity";   // {uid,name}
 const HUB_SYNCED_KEY = "fcos_hub_synced"; // {rn_cb_t:1,...}
 
 const Hub = {
+  _activeCache: { uid: "", ok: false, at: 0 },
   identity() { try { return JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) { return null; } },
   setIdentity(v) {
     let prev = null; try { prev = JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) {}
@@ -1456,8 +1457,38 @@ const Hub = {
 
   allRehashes() { return Object.values(Store.getAll()).filter((s) => s && !s.deleted).flatMap((s) => s.rehashes || []); },
 
+  async activeIdentity(who) {
+    if (!who || !who.uid) return false;
+    if (who.uid === "admin" || who.name === "임재영") return true;
+    if (this._activeCache.uid === who.uid && Date.now() - this._activeCache.at < 60000) return this._activeCache.ok;
+    let profile = null, removed = [];
+    try {
+      [profile, removed] = await Promise.all([
+        fetch(HUB_DB + "/users/" + encodeURIComponent(who.uid) + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()),
+        fetch(HUB_DB + "/removedMembers.json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).catch(() => []),
+      ]);
+    } catch (e) { return true; }
+    const nrm = (s) => String(s || "").replace(/\s+/g, "");
+    const removedSet = new Set((Array.isArray(removed) ? removed : Object.values(removed || {})).map(nrm));
+    const ok = !!(profile && profile.name && profile.status === "active" && nrm(profile.name) === nrm(who.name) && !removedSet.has(nrm(who.name)));
+    this._activeCache = { uid: who.uid, ok, at: Date.now() };
+    return ok;
+  },
+
+  revokeIdentity(who) {
+    const localKey = Store.KEY;
+    try { Cloud.shutdown(); } catch (e) {}
+    localStorage.removeItem(HUB_ID_KEY);
+    localStorage.removeItem(localKey);
+    localStorage.removeItem(HUB_SYNCED_KEY);
+    localStorage.removeItem("fcos_locked");
+    this.badge();
+    this.toast((who && who.name ? who.name + "님은 " : "") + "활성 팀원 명단에서 제외되어 콜백 연결을 종료했습니다");
+  },
+
   async syncAll(showToast) {
     const who = this.identity(); if (!who) return 0;
+    if (!(await this.activeIdentity(who))) { this.revokeIdentity(who); return 0; }
     const done = this.synced(); let n = 0;
     for (const r of this.allRehashes()) {
       const id = "rn_cb_" + r.t;
@@ -2046,10 +2077,12 @@ const Team = {
       if (u && n) {
         const cur = Hub.identity();
         const wasAdmin = localStorage.getItem("fcos_was_admin") === "1";
-        const connect = () => {
+        const connect = async () => {
+          const candidate = { uid: u, name: n };
+          if (!(await Hub.activeIdentity(candidate))) { Hub.toast(n + "님은 현재 활성 팀원 명단에 없습니다"); history.replaceState(null, "", location.pathname); return; }
           if (u !== "admin" && n !== "임재영") localStorage.setItem(this.LOCK_KEY, "1");
           else localStorage.removeItem(this.LOCK_KEY);
-          Hub.setIdentity({ uid: u, name: n });
+          Hub.setIdentity(candidate);
           location.replace(location.pathname);   // 새 계정으로 동기화 재시작
         };
         if (!cur) { connect(); return; }          // 첫 연결(새 기기)만 비밀번호 없이
