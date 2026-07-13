@@ -686,4 +686,28 @@
   }
   window.addEventListener('load', function () { setTimeout(galleryBtn, 800); });
   setTimeout(galleryBtn, 2000);
+
+  /* ---------- 실시간 팀 디렉터리 — Workbook memberDirectory 연동 ---------- */
+  var DIR_FB='https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app';
+  function dirSafe(v){return String(v==null?'':v).replace(/[&<>\"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})}
+  function dirSection(role){return /^(LR|TL|AOP|OP|O)$/.test(String(role||''))?'LEADER':'IC'}
+  function dirName(m){return String(m.englishName||m.enName||m.id||m.name||'').trim()}
+  function renderTeamDirectory(rows){
+    var host=document.getElementById('presence-live-directory');
+    if(!host){host=document.createElement('section');host.id='presence-live-directory';host.innerHTML='<div class="pld-head"><span>CONNECTED DIRECTORY</span><h2>PRESENCE · PEOPLE</h2><p>Presence Workbook의 활성 계정과 직급을 기준으로 자동 갱신됩니다.</p></div><div class="pld-groups"></div>';
+      var anchor=document.querySelector('footer')||document.querySelector('.footer');if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(host,anchor);else document.body.appendChild(host);}
+    var box=host.querySelector('.pld-groups'),active=rows.filter(function(m){return m&&m.status==='active'});
+    var group=function(key,label){var list=active.filter(function(m){return (m.hubSection||dirSection(m.role))===key}).sort(function(a,b){return dirName(a).localeCompare(dirName(b),'en')});return '<article><div class="pld-label"><span>'+label+'</span><b>'+list.length+'</b></div><div class="pld-names">'+(list.length?list.map(function(m){return '<span title="'+dirSafe(m.name||'')+'">'+dirSafe(dirName(m))+'<small>'+dirSafe(m.role||key)+'</small></span>'}).join(''):'<em>등록된 팀원이 없습니다.</em>')+'</div></article>'};
+    box.innerHTML=group('LEADER','LEADERS')+group('IC','INDEPENDENT CONTRACTORS');
+  }
+  function loadTeamDirectory(){
+    Promise.all([fetch(DIR_FB+'/memberDirectory.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}),fetch(DIR_FB+'/users.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})]).then(function(all){
+      var directory=all[0]||{},users=all[1]||{},rows=[];
+      Object.keys(users).forEach(function(uid){var u=users[uid]||{},d=directory[uid]||{};rows.push(Object.assign({},u,d,{uid:uid,status:d.status||u.status||'pending',role:d.role||u.role||'IC'}))});
+      Object.keys(directory).forEach(function(uid){if(!users[uid])rows.push(Object.assign({uid:uid},directory[uid]||{}))});
+      renderTeamDirectory(rows);
+    });
+  }
+  var dirCss=document.createElement('style');dirCss.textContent='#presence-live-directory{max-width:1180px;margin:54px auto 40px;padding:34px 38px;border-top:1px solid rgba(215,190,130,.28);border-bottom:1px solid rgba(215,190,130,.16);color:#eae4d8;font-family:"Courier New",monospace}.pld-head span{font-size:9px;letter-spacing:.3em;color:#b7914f}.pld-head h2{margin:8px 0 5px;font-family:"Times New Roman",serif;font-size:27px;font-weight:400;letter-spacing:.08em}.pld-head p{margin:0;color:#746f67;font-size:10px}.pld-groups{display:grid;grid-template-columns:1fr 1.35fr;gap:34px;margin-top:27px}.pld-groups article{min-width:0}.pld-label{display:flex;align-items:center;justify-content:space-between;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);font-size:9px;letter-spacing:.22em;color:#a99a7d}.pld-label b{color:#d8b36c}.pld-names{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.pld-names>span{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:4px;background:rgba(255,255,255,.025);font-size:11px}.pld-names small{color:#766e60;font-size:8px}.pld-names em{color:#68635b;font-size:10px;font-style:normal}@media(max-width:720px){#presence-live-directory{margin:35px 18px 25px;padding:27px 4px}.pld-groups{grid-template-columns:1fr;gap:24px}.pld-head h2{font-size:23px}}';document.head.appendChild(dirCss);
+  window.addEventListener('load',function(){setTimeout(loadTeamDirectory,1400)});setTimeout(loadTeamDirectory,3000);setInterval(loadTeamDirectory,60000);
 })();
