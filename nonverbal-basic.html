@@ -218,15 +218,15 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
 .tipbox .tnum{flex:none;width:40px;height:40px;border-radius:12px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;margin-top:1px}
 .vlayout .video-stage{width:100%;height:auto;aspect-ratio:16/9;transition:opacity .3s ease}
 
-/* video expands to full screen on play, returns on next/end */
-.video-stage.expanded{position:absolute;inset:0;width:100%;height:100%;z-index:300;border-radius:0;aspect-ratio:auto;
+/* video expands to the browser's real fullscreen layer on play, returns on next/end */
+.video-stage.expanded,.video-stage:fullscreen,.video-stage:-webkit-full-screen{position:fixed;inset:0;width:100vw!important;height:100vh!important;margin:0;z-index:300;border:0;border-radius:0;aspect-ratio:auto;background:#000;
   animation:vzoom .5s cubic-bezier(.16,.84,.44,1)}
-.video-stage.expanded video{object-fit:contain;background:#000}
+.video-stage.expanded video,.video-stage:fullscreen video,.video-stage:-webkit-full-screen video{object-fit:contain;background:#000}
 @keyframes vzoom{from{transform:scale(.66);opacity:.35}to{transform:scale(1);opacity:1}}
 /* YouTube embed */
 .yt-stage{background:#000}
 .yt-stage .ytmount,.yt-stage iframe{width:100%;height:100%;border:0;display:block;border-radius:inherit}
-.video-stage.expanded.yt-stage{border-radius:0}
+.video-stage.expanded.yt-stage,.video-stage:fullscreen.yt-stage,.video-stage:-webkit-full-screen.yt-stage{border-radius:0}
 </style>
 </head>
 <body>
@@ -743,8 +743,8 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     frags(s).forEach(f=>f.classList.add('on'));   // all content visible immediately
     runSlideAnims(s);
     // pause/shrink YouTube players not on this slide; reset this slide's video state
-    document.querySelectorAll('.yt-stage').forEach(st=>{ if(!s.contains(st)){ ytPause(st); st.classList.remove('expanded'); st._vs=0; } });
-    s.querySelectorAll('.yt-stage').forEach(st=>{ st._vs=0; st.classList.remove('expanded'); });
+    document.querySelectorAll('.yt-stage').forEach(st=>{ if(!s.contains(st)){ ytPause(st); leaveVideoFull(st); st._vs=0; } });
+    s.querySelectorAll('.yt-stage').forEach(st=>{ st._vs=0; leaveVideoFull(st); });
     updateUI(); hintTimer();
   }
 
@@ -752,11 +752,11 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
   // On every other slide: press = go straight to next slide (content already fully shown).
   function revealNext(){
     const s=slides[cur];
-    const stage=s.querySelector('.yt-stage');
+    const stage=s.querySelector('.yt-stage')||document.querySelector('.yt-stage.expanded');
     if(stage){
       if(stage._vs===undefined) stage._vs=0;
-      if(stage._vs===0){ stage._vs=1; stage.classList.add('expanded'); ytPlay(stage); return; }   // play + 확대
-      if(stage._vs===1){ stage._vs=2; stage.classList.remove('expanded'); ytPause(stage); return; } // 다음 -> 축소 제자리
+      if(stage._vs===0){ stage._vs=1; enterVideoFull(stage); ytPlay(stage); return; }   // play + 실제 전체화면
+      if(stage._vs===1){ stage._vs=2; leaveVideoFull(stage); ytPause(stage); return; } // 다음 -> 전체화면 해제 + 축소 제자리
     }
     if(cur<slides.length-1) showSlide(cur+1);
   }
@@ -810,15 +810,51 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     else if(e.key==='Home'){ showSlide(0); }
     else if(e.key==='End'){ showSlide(slides.length-1); }
   });
-  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
-  function enterFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(()=>{}); }
+  function fullElement(){ return document.fullscreenElement||document.webkitFullscreenElement; }
+  function fullscreenCall(fn,ctx){
+    if(!fn) return;
+    try{ const p=fn.call(ctx); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
+  }
+  function toggleFull(){
+    if(!fullElement()) fullscreenCall(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen,document.documentElement);
+    else fullscreenCall(document.exitFullscreen||document.webkitExitFullscreen,document);
+  }
+  function enterFull(){ if(!fullElement()) fullscreenCall(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen,document.documentElement); }
+  function enterVideoFull(stage){
+    // Move outside the scaled 1920x1080 deck first. This is also the fallback
+    // for hub viewers/browsers that block the Fullscreen API.
+    if(!stage._videoHome){
+      stage._videoHome={parent:stage.parentNode,next:stage.nextSibling};
+      document.body.appendChild(stage);
+    }
+    stage.classList.add('expanded');
+    fullscreenCall(stage.requestFullscreen||stage.webkitRequestFullscreen,stage);
+  }
+  function leaveVideoFull(stage){
+    stage.classList.remove('expanded');
+    const fs=fullElement();
+    if(fs===stage||stage.contains(fs)) fullscreenCall(document.exitFullscreen||document.webkitExitFullscreen,document);
+    if(stage._videoHome){
+      const home=stage._videoHome;
+      home.parent.insertBefore(stage,home.next&&home.next.parentNode===home.parent?home.next:null);
+      stage._videoHome=null;
+    }
+  }
   const fsBtn=document.getElementById('fsBtn');
   fsBtn?.addEventListener('click',e=>{ e.stopPropagation(); toggleFull(); });
-  document.addEventListener('fullscreenchange',()=>{
+  function syncFullscreenUI(){
     const ic=document.getElementById('fsIcon');
-    if(document.fullscreenElement){ ic.innerHTML='<path d="M9 4H5a1 1 0 00-1 1v4M15 4h4a1 1 0 011 1v4M9 20H5a1 1 0 01-1-1v-4M15 20h4a1 1 0 001-1v-4"/>'; fsBtn.title='창모드로 (F)'; }
+    if(fullElement()){ ic.innerHTML='<path d="M9 4H5a1 1 0 00-1 1v4M15 4h4a1 1 0 011 1v4M9 20H5a1 1 0 01-1-1v-4M15 20h4a1 1 0 001-1v-4"/>'; fsBtn.title='창모드로 (F)'; }
     else{ ic.innerHTML='<path d="M4 9V5a1 1 0 011-1h4M20 9V5a1 1 0 00-1-1h-4M4 15v4a1 1 0 001 1h4M20 15v4a1 1 0 01-1 1h-4"/>'; fsBtn.title='전체화면 (F)'; }
-  });
+    const fs=fullElement();
+    document.querySelectorAll('.yt-stage').forEach(st=>{
+      if(st._vs===1&&fs!==st&&!st.contains(fs)){
+        leaveVideoFull(st); st._vs=2; ytPause(st);
+      }
+    });
+  }
+  document.addEventListener('fullscreenchange',syncFullscreenUI);
+  document.addEventListener('webkitfullscreenchange',syncFullscreenUI);
 
   /* ---- click / tap to advance (ignore controls) ---- */
   document.getElementById('stage').addEventListener('click',e=>{
@@ -835,7 +871,7 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
   function onYtState(e){
     if(e.data===0){ // ENDED -> shrink back to place
       const fr=e.target.getIframe(); const st=fr&&fr.closest('.video-stage');
-      if(st){ st.classList.remove('expanded'); st._vs=2; }
+      if(st){ leaveVideoFull(st); st._vs=2; }
     }
   }
   window.onYouTubeIframeAPIReady=function(){
