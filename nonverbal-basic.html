@@ -226,6 +226,10 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
 /* YouTube embed */
 .yt-stage{background:#000}
 .yt-stage .ytmount,.yt-stage iframe{width:100%;height:100%;border:0;display:block;border-radius:inherit}
+.yt-stage .yt-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:2;border-radius:inherit;
+  opacity:1;visibility:visible;transition:opacity .22s ease,visibility .22s ease;background:#000;pointer-events:none}
+.yt-stage.expanded .yt-poster,.yt-stage:fullscreen .yt-poster,.yt-stage:-webkit-full-screen .yt-poster,.yt-stage.is-playing .yt-poster{
+  opacity:0;visibility:hidden}
 .video-stage.expanded.yt-stage,.video-stage:fullscreen.yt-stage,.video-stage:-webkit-full-screen.yt-stage{border-radius:0}
 </style>
 </head>
@@ -361,6 +365,7 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     </div>
     <div class="video-stage yt-stage" data-frag="" data-order="3">
       <div class="ytmount" id="yt-v1" data-ytid="iFiMb64cITM"></div>
+      <img class="yt-poster" src="nonverbal-basic/assets/poster1.jpg" alt="이수지 표정과 호흡 영상 미리보기">
     </div>
   </div>
 </section>
@@ -380,6 +385,7 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     </div>
     <div class="video-stage yt-stage" data-frag="" data-order="3">
       <div class="ytmount" id="yt-v2" data-ytid="PVXwexGaKqA"></div>
+      <img class="yt-poster" src="nonverbal-basic/assets/poster2.jpg" alt="정승제 바디랭귀지와 목소리 영상 미리보기">
     </div>
   </div>
 </section>
@@ -510,6 +516,7 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     </div>
     <div class="video-stage yt-stage" data-frag="" data-order="3">
       <div class="ytmount" id="yt-v3" data-ytid="DMam2o2rDfM"></div>
+      <img class="yt-poster" src="nonverbal-basic/assets/poster3.jpg" alt="시선의 힘과 눈맞춤 영상 미리보기">
     </div>
   </div>
 </section>
@@ -831,9 +838,12 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     // Keep both actions inside the same user gesture. This makes unmuted
     // autoplay reliable in browsers that enforce media activation policies.
     requestVideoPlay(stage);
+    watchVideoEnd(stage);
     fullscreenCall(stage.requestFullscreen||stage.webkitRequestFullscreen,stage);
   }
   function leaveVideoFull(stage){
+    stopVideoEndWatch(stage);
+    stage.classList.remove('is-playing');
     stage.classList.remove('expanded');
     const fs=fullElement();
     if(fs===stage||stage.contains(fs)) fullscreenCall(document.exitFullscreen||document.webkitExitFullscreen,document);
@@ -904,6 +914,25 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
       if(stage._vs===1&&stage._autoplayWanted) ytPlay(stage);
     },ms));
   }
+  function stopVideoEndWatch(stage){
+    if(stage._endWatch){ clearInterval(stage._endWatch); stage._endWatch=null; }
+  }
+  function finishVideo(stage){
+    if(!stage) return;
+    stage._autoplayWanted=false;
+    stopVideoEndWatch(stage);
+    leaveVideoFull(stage);
+    stage._vs=2;
+  }
+  function watchVideoEnd(stage){
+    stopVideoEndWatch(stage);
+    stage._endWatch=setInterval(()=>{
+      if(stage._vs!==1){ stopVideoEndWatch(stage); return; }
+      const p=ytPlayers[ytIdOf(stage)];
+      if(!p||typeof p.getPlayerState!=='function') return;
+      try{ if(p.getPlayerState()===0) finishVideo(stage); }catch(e){}
+    },500);
+  }
   function ytPause(stage){
     stage._autoplayWanted=false;
     const p=ytPlayers[ytIdOf(stage)]; if(p&&p.pauseVideo){ try{p.pauseVideo();}catch(e){} }
@@ -916,10 +945,10 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     const fr=e.target.getIframe(); const st=fr&&fr.closest('.video-stage');
     if(st) st.dataset.ytState=String(e.data);
     if(e.data===1){
-      if(st) st._autoplayWanted=false;
+      if(st){ st._autoplayWanted=false; st.classList.add('is-playing'); watchVideoEnd(st); }
     }
     if(e.data===0){ // ENDED -> shrink back to place
-      if(st){ leaveVideoFull(st); st._vs=2; }
+      finishVideo(st);
     }
   }
   window.onYouTubeIframeAPIReady=function(){
