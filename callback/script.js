@@ -1408,6 +1408,22 @@ const HUB_DB = "https://presence-team-default-rtdb.asia-southeast1.firebasedatab
 const HUB_ID_KEY = "fcos_hub_identity";   // {uid,name}
 const HUB_SYNCED_KEY = "fcos_hub_synced"; // {rn_cb_t:1,...}
 
+/* 개인 전용 링크는 다른 모듈보다 먼저 본인 uid를 고정한다.
+   기존에는 Cloud.init 뒤에 Team.init이 실행되어 첫 접속에서 관리자 연결을
+   한 번 눌러야 실시간 동기화가 시작되는 기기가 있었다. */
+function bootstrapPersonalLinkIdentity() {
+  try {
+    const q = new URLSearchParams(location.search), uid = q.get("u"), name = q.get("n");
+    if (!uid || !name) return false;
+    const current = JSON.parse(localStorage.getItem(HUB_ID_KEY) || "null");
+    if (current && current.uid !== uid) return false; // 다른 사람 전환은 아래 관리자 검증 유지
+    localStorage.setItem(HUB_ID_KEY, JSON.stringify({ uid, name }));
+    if (uid !== "admin" && name !== "임재영") localStorage.setItem("fcos_locked", "1");
+    return true;
+  } catch (e) { return false; }
+}
+const PERSONAL_LINK_BOOTSTRAPPED = bootstrapPersonalLinkIdentity();
+
 const Hub = {
   _activeCache: { uid: "", ok: false, at: 0 },
   identity() { try { return JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) { return null; } },
@@ -1555,11 +1571,15 @@ const Hub = {
       b = document.createElement("button"); b.id = "hub-badge";
       b.style.cssText = "border:0;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:1;display:inline-flex;align-items:center;gap:2px";
       const meta = document.querySelector(".header-meta"); if (meta) meta.appendChild(b); else document.body.appendChild(b);
-      b.onclick = () => this.openPicker();
+      b.onclick = () => {
+        const current = this.identity();
+        if (current && current.uid !== "admin" && current.name !== "임재영") Cloud.forceSync();
+        else this.openPicker();
+      };
     }
     const who = this.identity();
     b.textContent = who ? "✓ " + shortName(who.name) : "허브 연결";
-    b.title = who ? "허브 계정: " + who.name + " (탭하면 계정 변경)" : "허브 연결";
+    b.title = who ? (who.uid === "admin" || who.name === "임재영" ? "허브 계정: " + who.name + " (탭하면 계정 변경)" : who.name + "님 개인 콜백싯 · 탭하면 동기화") : "개인 링크로 허브 연결";
     b.style.background = who ? "#DCFCE7" : "#FEE2E2";
     b.style.color = who ? "#166534" : "#991B1B";
   },
@@ -1847,9 +1867,11 @@ const Cloud = {
     this._tt = setTimeout(() => Hub.toast(msg), 300);
   },
 
-  start() {
+  async start() {
     if (this.started) return;
     if (!this.uid()) { this.setStatus("off"); return; }
+    const who = Hub.identity();
+    if (!(await Hub.activeIdentity(who))) { Hub.revokeIdentity(who); this.setStatus("off"); return; }
     this.started = true;
     this.pullAll().then(() => this.stream());
   },
@@ -2086,6 +2108,15 @@ const Team = {
           location.replace(location.pathname);   // 새 계정으로 동기화 재시작
         };
         if (!cur) { connect(); return; }          // 첫 연결(새 기기)만 비밀번호 없이
+        if (cur.uid === u) {
+          if (u !== "admin" && n !== "임재영") localStorage.setItem(this.LOCK_KEY, "1");
+          else localStorage.removeItem(this.LOCK_KEY);
+          history.replaceState(null, "", location.pathname);
+          Cloud.start();
+          Hub.syncAll(false);
+          if (PERSONAL_LINK_BOOTSTRAPPED) Hub.toast(n + "님 개인 콜백싯 자동 연결 ✓");
+          return;
+        }
         if (cur.uid !== u) {
           /* ★ 이미 다른 계정이 연결된 기기 — 관리자 비밀번호 없이는 링크로도 전환 불가
              (남의 링크·QR로 다른 사람 콜백싯에 들어가던 문제 차단) */

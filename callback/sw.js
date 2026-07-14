@@ -1,7 +1,7 @@
 /* Field Callback OS — Service Worker
    v2: 네트워크 우선(코어 파일) — 업데이트가 즉시 반영되고, 오프라인일 때만 캐시 사용.
    (기존 캐시 우선 방식은 수정해도 아이폰 PWA에 옛 버전이 계속 뜨던 원인) */
-const CACHE = "fcos-v9"; /* v9: 모바일 헤더 정리 — 날짜·사이트 칩 제거, 이름 축약(병준), 배지 한 줄 컴팩트 */
+const CACHE = "fcos-v11"; /* v11: 개인 링크 즉시 연결 · 관리자 비밀번호 없이 본인 자동 동기화 */
 const ASSETS = [
   "./",
   "./index.html",
