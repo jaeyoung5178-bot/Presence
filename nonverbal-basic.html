@@ -755,7 +755,7 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     const stage=s.querySelector('.yt-stage')||document.querySelector('.yt-stage.expanded');
     if(stage){
       if(stage._vs===undefined) stage._vs=0;
-      if(stage._vs===0){ stage._vs=1; enterVideoFull(stage); ytPlay(stage); return; }   // play + 실제 전체화면
+      if(stage._vs===0){ stage._vs=1; enterVideoFull(stage); return; }   // 실제 전체화면 + 자동 재생
       if(stage._vs===1){ stage._vs=2; leaveVideoFull(stage); ytPause(stage); return; } // 다음 -> 전체화면 해제 + 축소 제자리
     }
     if(cur<slides.length-1) showSlide(cur+1);
@@ -828,6 +828,9 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
       document.body.appendChild(stage);
     }
     stage.classList.add('expanded');
+    // Keep both actions inside the same user gesture. This makes unmuted
+    // autoplay reliable in browsers that enforce media activation policies.
+    requestVideoPlay(stage);
     fullscreenCall(stage.requestFullscreen||stage.webkitRequestFullscreen,stage);
   }
   function leaveVideoFull(stage){
@@ -848,6 +851,7 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
     else{ ic.innerHTML='<path d="M4 9V5a1 1 0 011-1h4M20 9V5a1 1 0 00-1-1h-4M4 15v4a1 1 0 001 1h4M20 15v4a1 1 0 01-1 1h-4"/>'; fsBtn.title='전체화면 (F)'; }
     const fs=fullElement();
     document.querySelectorAll('.yt-stage').forEach(st=>{
+      if(st._vs===1&&(fs===st||st.contains(fs))) requestVideoPlay(st);
       if(st._vs===1&&fs!==st&&!st.contains(fs)){
         leaveVideoFull(st); st._vs=2; ytPause(st);
       }
@@ -866,20 +870,65 @@ h3{font-size:60px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
   /* ---- YouTube IFrame players ---- */
   const ytPlayers={};   // mount/iframe id -> YT.Player
   function ytIdOf(stage){ const el=stage.querySelector('iframe')||stage.querySelector('.ytmount'); return el?el.id:null; }
-  function ytPlay(stage){ const p=ytPlayers[ytIdOf(stage)]; if(p&&p.playVideo){ try{p.playVideo();}catch(e){} } }
-  function ytPause(stage){ const p=ytPlayers[ytIdOf(stage)]; if(p&&p.pauseVideo){ try{p.pauseVideo();}catch(e){} } }
+  function ytPlay(stage){
+    stage.dataset.autoplayAttempted='1';
+    const p=ytPlayers[ytIdOf(stage)];
+    stage.dataset.playerReady=p?'1':'0';
+    let sent=false;
+    if(p&&p.playVideo){
+      try{
+        const state=typeof p.getPlayerState==='function'?p.getPlayerState():-1;
+        const videoId=stage.dataset.ytid;
+        if(state===-1&&videoId&&typeof p.loadVideoById==='function') p.loadVideoById(videoId);
+        else p.playVideo();
+        sent=true;
+      }catch(e){}
+    }
+    // The iframe can already exist while the YT.Player registry is still
+    // settling. Send the documented IFrame API command directly as backup.
+    const fr=stage.querySelector('iframe');
+    if(fr&&fr.contentWindow){
+      try{
+        const videoId=stage.dataset.ytid;
+        if(videoId) fr.contentWindow.postMessage(JSON.stringify({event:'command',func:'loadVideoById',args:[videoId]}),'*');
+        fr.contentWindow.postMessage(JSON.stringify({event:'command',func:'playVideo',args:[]}),'*');
+        sent=true;
+      }catch(e){}
+    }
+    return sent;
+  }
+  function requestVideoPlay(stage){
+    stage._autoplayWanted=true;
+    ytPlay(stage);
+    [120,400,900,1600].forEach(ms=>setTimeout(()=>{
+      if(stage._vs===1&&stage._autoplayWanted) ytPlay(stage);
+    },ms));
+  }
+  function ytPause(stage){
+    stage._autoplayWanted=false;
+    const p=ytPlayers[ytIdOf(stage)]; if(p&&p.pauseVideo){ try{p.pauseVideo();}catch(e){} }
+  }
+  function onYtReady(e){
+    const fr=e.target.getIframe(); const st=fr&&fr.closest('.video-stage');
+    if(st&&st._vs===1&&st._autoplayWanted){ try{e.target.playVideo();}catch(err){} }
+  }
   function onYtState(e){
+    const fr=e.target.getIframe(); const st=fr&&fr.closest('.video-stage');
+    if(st) st.dataset.ytState=String(e.data);
+    if(e.data===1){
+      if(st) st._autoplayWanted=false;
+    }
     if(e.data===0){ // ENDED -> shrink back to place
-      const fr=e.target.getIframe(); const st=fr&&fr.closest('.video-stage');
       if(st){ leaveVideoFull(st); st._vs=2; }
     }
   }
   window.onYouTubeIframeAPIReady=function(){
     document.querySelectorAll('.ytmount').forEach(function(m){
+      const stage=m.closest('.yt-stage'); if(stage) stage.dataset.ytid=m.getAttribute('data-ytid');
       ytPlayers[m.id]=new YT.Player(m.id,{
         videoId:m.getAttribute('data-ytid'),
         playerVars:{rel:0,modestbranding:1,playsinline:1,controls:1,fs:1},
-        events:{onStateChange:onYtState}
+        events:{onReady:onYtReady,onStateChange:onYtState}
       });
     });
   };
