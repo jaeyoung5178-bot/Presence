@@ -135,6 +135,7 @@
     folders:["신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
     items:[
       {id:uid(),tag:"CLASS",title:"Onboarding I·II",sub:"인천 신입교육 — 피스메이커 루키 클래스",href:"토픽/topic-onboarding.html",target:"",folder:"신입"},
+      {id:uid(),tag:"CLASS",title:"말보다 먼저 전달되는 것",sub:"비언어적 소통의 힘 — F2F 베이직 클래스",href:"nonverbal-basic.html",target:"",folder:"신입"},
       {id:uid(),tag:"TRAIN",title:"Rookie Training Guide",sub:"신입을 세일즈하는 사람으로 키우는 법",href:"토픽/topic-training.html",target:"",folder:"신입"},
       {id:uid(),tag:"PITCH",title:"옥스팜 피치",sub:"Oxfam 후원 피치덱",href:"https://jaeyoung5178-bot.github.io/oxfam-pitch/",target:"_blank",folder:"피치카드"},
       {id:uid(),tag:"PITCH",title:"위페어 피치",sub:"WePair 피치덱",href:"https://jaeyoung5178-bot.github.io/wepair-pitch/",target:"_blank",folder:"피치카드"},
@@ -155,13 +156,31 @@
   var editingItemId = null;
   var $ = function(s){ return document.querySelector(s); };
 
+  // PRESENCE 기본 교육 자료: 원격 목록 상태와 관계없이 항상 노출합니다.
+  function ensureCallbackGuide(d){
+    if(!d || !d.items) return d;
+    var found=d.items.some(function(it){ return it.href==="call-back-sheet-guide.html" || it.title==="Call Back Sheet 작성법"; });
+    if(!found){
+      d.items.unshift({
+        id:"presence-callback-guide",
+        tag:"FIELD",
+        title:"Call Back Sheet 작성법",
+        sub:"Plan · Do · See로 오늘을 기록하고 내일의 필드를 바꾸는 법",
+        href:"call-back-sheet-guide.html",
+        target:"",
+        folder:"신입"
+      });
+    }
+    return d;
+  }
+
   function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
 
   function load(){
     fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
-      if(j && j.folders && j.items){ data=j; render(); }
-      else { data=JSON.parse(JSON.stringify(SEED)); save(true); render(); }
-    }).catch(function(){ data=JSON.parse(JSON.stringify(SEED)); render(); });
+      if(j && j.folders && j.items){ data=ensureCallbackGuide(j); render(); }
+      else { data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); save(true); render(); }
+    }).catch(function(){ data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); render(); });
   }
   function save(silent){
     if(!data) return;
