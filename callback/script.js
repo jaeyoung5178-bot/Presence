@@ -573,7 +573,7 @@ function fetchWeekSales(days) {
   _wkSalesLoading = true;
   const nrm = (s) => String(s || "").replace(/\s+/g, "");
   Promise.all(days.map((d) =>
-    fetch(HUB_DB + "/sales/" + d + ".json").then((r) => r.json()).catch(() => null)
+    CallbackAuth.json("sales/" + d, null).catch(() => null)
   )).then((arr) => {
     const out = {};
     arr.forEach((day, i) => {
@@ -665,7 +665,7 @@ function fetchAllTimeSales() {
   if (_atSalesLoading || (Date.now() - _atSalesAt < 300000 && _atSales)) return;
   _atSalesLoading = true;
   const nrm = (s) => String(s || "").replace(/\s+/g, "");
-  fetch(HUB_DB + "/sales.json").then((r) => r.json()).then((all) => {
+  CallbackAuth.json("sales", {}).then((all) => {
     const out = {};
     for (const d in (all || {})) {
       const day = all[d]; if (!day) continue;
@@ -1407,17 +1407,84 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
 const HUB_DB = "https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app";
 const HUB_ID_KEY = "fcos_hub_identity";   // {uid,name}
 const HUB_SYNCED_KEY = "fcos_hub_synced"; // {rn_cb_t:1,...}
+const CALLBACK_ACCESS_KEY = "fcos_callback_access_key";
+const CALLBACK_FB_CONFIG = {
+  apiKey: "AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0",
+  authDomain: "presence-team.firebaseapp.com",
+  databaseURL: HUB_DB,
+  projectId: "presence-team",
+  storageBucket: "presence-team.appspot.com",
+  messagingSenderId: "1056684483470",
+  appId: "1:1056684483470:web:1f50113d410b53458d3adf",
+};
+
+/* 개인 콜백싯 전용 인증.
+   링크의 장기 accessKey는 DB 규칙에서만 대조하고, 실제 읽기·쓰기는
+   Firebase 익명 로그인 토큰 + callbackSessions로 수행한다. */
+const CallbackAuth = {
+  _ready: null, auth: null, token: "", authUid: "", refreshTimer: null,
+  key() { return localStorage.getItem(CALLBACK_ACCESS_KEY) || ""; },
+  dbUrl(path, token) {
+    const p = String(path || "").replace(/^\/+/, ""), bits = p.split("?"), q = new URLSearchParams(bits[1] || "");
+    if (token) q.set("auth", token);
+    return HUB_DB + "/" + bits[0].replace(/\.json$/, "") + ".json" + (q.toString() ? "?" + q.toString() : "");
+  },
+  async _open() {
+    const who = (() => { try { return JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) { return null; } })();
+    const accessKey = this.key();
+    if (!who || !who.uid) throw new Error("개인 콜백 계정이 연결되지 않았어요");
+    if (!accessKey) throw new Error("새 개인 콜백 링크가 필요해요");
+    const appMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+    let app; try { app = appMod.getApp("presence-callback"); } catch (e) { app = appMod.initializeApp(CALLBACK_FB_CONFIG, "presence-callback"); }
+    this.auth = authMod.getAuth(app);
+    try { await authMod.setPersistence(this.auth, authMod.browserLocalPersistence); } catch (e) {}
+    const cred = this.auth.currentUser ? { user: this.auth.currentUser } : await authMod.signInAnonymously(this.auth);
+    this.authUid = cred.user.uid;
+    this.token = await cred.user.getIdToken();
+    const session = { userUid: who.uid, accessKey, createdAt: Date.now(), device: "callback-web-v3" };
+    const res = await fetch(this.dbUrl("callbackSessions/" + this.authUid, this.token), {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(session), cache: "no-store"
+    });
+    if (!res.ok) throw new Error("개인 콜백 인증 실패 " + res.status);
+    clearInterval(this.refreshTimer);
+    this.refreshTimer = setInterval(async () => { try { this.token = await this.auth.currentUser.getIdToken(true); } catch (e) {} }, 45 * 60 * 1000);
+    return true;
+  },
+  ensure() {
+    if (!this._ready) this._ready = this._open().catch((e) => { this._ready = null; throw e; });
+    return this._ready;
+  },
+  async request(path, options) {
+    await this.ensure();
+    const opt = Object.assign({ cache: "no-store" }, options || {});
+    let res = await fetch(this.dbUrl(path, this.token), opt);
+    if (res.status === 401 && this.auth && this.auth.currentUser) {
+      this.token = await this.auth.currentUser.getIdToken(true);
+      res = await fetch(this.dbUrl(path, this.token), opt);
+    }
+    return res;
+  },
+  async json(path, fallback) {
+    const res = await this.request(path);
+    if (!res.ok) throw new Error("callback db " + res.status);
+    const v = await res.json(); return v == null ? fallback : v;
+  },
+  async streamUrl(path) { await this.ensure(); return this.dbUrl(path, this.token); },
+  reset() { this._ready = null; this.token = ""; this.authUid = ""; clearInterval(this.refreshTimer); this.refreshTimer = null; },
+};
 
 /* 개인 전용 링크는 다른 모듈보다 먼저 본인 uid를 고정한다.
    기존에는 Cloud.init 뒤에 Team.init이 실행되어 첫 접속에서 관리자 연결을
    한 번 눌러야 실시간 동기화가 시작되는 기기가 있었다. */
 function bootstrapPersonalLinkIdentity() {
   try {
-    const q = new URLSearchParams(location.search), uid = q.get("u"), name = q.get("n");
+    const q = new URLSearchParams(location.search), uid = q.get("u"), name = q.get("n"), key = q.get("k");
     if (!uid || !name) return false;
     const current = JSON.parse(localStorage.getItem(HUB_ID_KEY) || "null");
     if (current && current.uid !== uid) return false; // 다른 사람 전환은 아래 관리자 검증 유지
     localStorage.setItem(HUB_ID_KEY, JSON.stringify({ uid, name }));
+    if (key) localStorage.setItem(CALLBACK_ACCESS_KEY, key);
     if (uid !== "admin" && name !== "임재영") localStorage.setItem("fcos_locked", "1");
     return true;
   } catch (e) { return false; }
@@ -1427,10 +1494,12 @@ const PERSONAL_LINK_BOOTSTRAPPED = bootstrapPersonalLinkIdentity();
 const Hub = {
   _activeCache: { uid: "", ok: false, at: 0 },
   identity() { try { return JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) { return null; } },
-  setIdentity(v) {
+  setIdentity(v, accessKey) {
     let prev = null; try { prev = JSON.parse(localStorage.getItem(HUB_ID_KEY)); } catch (e) {}
     const uidChanged = !prev || prev.uid !== (v && v.uid);
     localStorage.setItem(HUB_ID_KEY, JSON.stringify(v)); this.badge();
+    if (accessKey) localStorage.setItem(CALLBACK_ACCESS_KEY, accessKey);
+    try { CallbackAuth.reset(); } catch (e) {}
     /* 관리자로 연결된 적 있는 기기 표시 — 이후 팀원 계정을 열어봐도 잠기지 않음 */
     if (v && (v.uid === "admin" || v.name === "임재영")) localStorage.setItem("fcos_was_admin", "1");
     /* 계정이 바뀌면 새 계정 전용 저장소로 다시 시작 (데이터 섞임 방지).
@@ -1464,7 +1533,7 @@ const Hub = {
   },
 
   async put(uid, rec) {
-    const res = await fetch(HUB_DB + "/rejectnotes/" + uid + "/" + rec.id + ".json", {
+    const res = await CallbackAuth.request("rejectnotes/" + uid + "/" + rec.id, {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(rec)
     });
     if (!res.ok) throw new Error("hub " + res.status);
@@ -1475,18 +1544,17 @@ const Hub = {
 
   async activeIdentity(who) {
     if (!who || !who.uid) return false;
-    if (who.uid === "admin" || who.name === "임재영") return true;
     if (this._activeCache.uid === who.uid && Date.now() - this._activeCache.at < 60000) return this._activeCache.ok;
-    let profile = null, removed = [];
+    let profile = null;
     try {
-      [profile, removed] = await Promise.all([
-        fetch(HUB_DB + "/users/" + encodeURIComponent(who.uid) + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()),
-        fetch(HUB_DB + "/removedMembers.json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).catch(() => []),
-      ]);
-    } catch (e) { return true; }
+      await CallbackAuth.ensure();
+      profile = await CallbackAuth.json("callbackProfiles/" + encodeURIComponent(who.uid) + "?t=" + Date.now(), null);
+    } catch (e) {
+      this.toast(e && e.message && e.message.includes("새 개인") ? "워크북에서 내 콜백싯 링크를 다시 열어주세요" : "개인 콜백 연결을 확인하는 중이에요");
+      return false;
+    }
     const nrm = (s) => String(s || "").replace(/\s+/g, "");
-    const removedSet = new Set((Array.isArray(removed) ? removed : Object.values(removed || {})).map(nrm));
-    const ok = !!(profile && profile.name && profile.status === "active" && nrm(profile.name) === nrm(who.name) && !removedSet.has(nrm(who.name)));
+    const ok = !!(profile && profile.name && profile.status === "active" && nrm(profile.name) === nrm(who.name));
     this._activeCache = { uid: who.uid, ok, at: Date.now() };
     return ok;
   },
@@ -1495,6 +1563,8 @@ const Hub = {
     const localKey = Store.KEY;
     try { Cloud.shutdown(); } catch (e) {}
     localStorage.removeItem(HUB_ID_KEY);
+    localStorage.removeItem(CALLBACK_ACCESS_KEY);
+    try { CallbackAuth.reset(); } catch (e) {}
     localStorage.removeItem(localKey);
     localStorage.removeItem(HUB_SYNCED_KEY);
     localStorage.removeItem("fcos_locked");
@@ -1519,18 +1589,13 @@ const Hub = {
 
   /* ---- 계정 연결 피커 ---- */
   async openPicker() {
-    let users = {}, removed = [];
+    let profiles = {};
     try {
-      [users, removed] = await Promise.all([
-        fetch(HUB_DB + "/users.json").then((r) => r.json()).then((v) => v || {}),
-        fetch(HUB_DB + "/removedMembers.json").then((r) => r.json()).then((v) => v || []).catch(() => []),
-      ]);
+      profiles = await CallbackAuth.json("callbackProfiles?t=" + Date.now(), {});
     }
-    catch (e) { this.toast("허브 연결 실패 — 인터넷 확인"); return; }
-    const nrm = (s) => String(s || "").replace(/\s+/g, "");
-    const rmSet = new Set((removed || []).map(nrm));
+    catch (e) { this.toast("관리자 개인 링크로 먼저 연결해 주세요"); return; }
     const isAdminU = (u) => u.uid === "admin" || u.name === "임재영";
-    const list = Object.values(users).filter((u) => u && u.name && u.status !== "retired" && !u.test && !rmSet.has(nrm(u.name)));
+    const list = Object.values(profiles).filter((u) => u && u.name && u.uid && u.status === "active" && u.accessKey);
     const old = document.getElementById("hub-picker"); if (old) old.remove();
     const ov = document.createElement("div"); ov.id = "hub-picker";
     ov.style.cssText = "position:fixed;inset:0;background:rgba(15,18,24,.55);z-index:99;display:flex;align-items:center;justify-content:center;padding:20px";
@@ -1549,7 +1614,7 @@ const Hub = {
       const role = u.role || (admin ? "AOP" : "");
       b.textContent = (admin ? "👑 " : "") + u.name + (role ? " · " + role : "");
       b.style.cssText = "display:block;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border:1.5px solid #e5e9f0;border-radius:12px;background:#f8fafc;font-weight:700;font-size:14px;cursor:pointer";
-      b.onclick = () => { this.setIdentity({ uid: u.uid, name: u.name }); ov.remove(); this.toast(u.name + "님으로 연결 ✓"); this.syncAll(); };
+      b.onclick = () => { this.setIdentity({ uid: u.uid, name: u.name }, u.accessKey); ov.remove(); this.toast(u.name + "님으로 연결 ✓"); };
       box.appendChild(b);
     });
     const x = document.createElement("button"); x.textContent = "닫기";
@@ -1761,7 +1826,7 @@ const Cloud = {
       /* ★ 업로드 전 서버 데이터와 병합 — 빈/부분 세션이 서버 기록을
          통째로 덮어쓰는 사고를 원천 차단 */
       try {
-        const remote = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json());
+        const remote = await CallbackAuth.json("callbacksheets/" + uid + "/" + date + "?t=" + Date.now(), null);
         if (this.uid() !== uid) return;   // 요청 중 계정 전환 → 폐기
         if (remote && remote.info) {
           this.normalize(remote);
@@ -1774,7 +1839,7 @@ const Cloud = {
         }
       } catch (e) {}
       if (this.uid() !== uid) return;   // PUT 직전 재확인 → 새 계정 데이터가 이전 uid로 새지 않게
-      const res = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json", {
+      const res = await CallbackAuth.request("callbacksheets/" + uid + "/" + date, {
         method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(s),
       });
       if (!res.ok) throw new Error("push " + res.status);
@@ -1804,7 +1869,7 @@ const Cloud = {
   async pullAll() {
     const uid = this.uid(); if (!uid) return;
     try {
-      const v = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json());
+      const v = await CallbackAuth.json("callbacksheets/" + uid + "?t=" + Date.now(), {});
       if (this.uid() !== uid) return;   // 응답 도착 전 계정 전환 → 폐기 (교차 오염 차단)
       this.applyRemote(v || {});
       const all = Store.getAll();
@@ -1814,10 +1879,10 @@ const Cloud = {
   },
 
   /* ---- 실시간 수신 (Firebase SSE 스트림) ---- */
-  stream() {
+  async stream() {
     const uid = this.uid(); if (!uid || this.es) return;
     try {
-      this.es = new EventSource(HUB_DB + "/callbacksheets/" + uid + ".json");
+      this.es = new EventSource(await CallbackAuth.streamUrl("callbacksheets/" + uid));
       const onEv = (e) => {
         if (this.uid() !== uid) return;   // 계정 전환 후 잔여 이벤트 무시
         try {
@@ -1929,7 +1994,7 @@ const Team = {
     return !!(w && (w.uid === "admin" || w.name === "임재영"));
   },
   appUrl() { return location.origin + location.pathname; },
-  linkFor(u) { return this.appUrl() + "?u=" + encodeURIComponent(u.uid) + "&n=" + encodeURIComponent(u.name); },
+  linkFor(u) { return this.appUrl() + "?u=" + encodeURIComponent(u.uid) + "&n=" + encodeURIComponent(u.name) + (u.accessKey ? "&k=" + encodeURIComponent(u.accessKey) : ""); },
 
   copy(text) {
     const fb = () => {
@@ -1958,20 +2023,15 @@ const Team = {
       return;
     }
     box.innerHTML = '<div class="empty">팀원 명단 불러오는 중…</div>';
-    let users = {}, removed = [];
+    let profiles = {};
     try {
-      [users, removed] = await Promise.all([
-        fetch(HUB_DB + "/users.json").then((r) => r.json()).then((v) => v || {}),
-        fetch(HUB_DB + "/removedMembers.json").then((r) => r.json()).then((v) => v || []).catch(() => []),
-      ]);
+      profiles = await CallbackAuth.json("callbackProfiles?t=" + Date.now(), {});
     }
     catch (e) { box.innerHTML = '<div class="empty">허브 연결 실패 — 인터넷을 확인해주세요</div>'; return; }
-    const nrm = (s) => String(s || "").replace(/\s+/g, "");
-    const rmSet = new Set((removed || []).map(nrm));
     const isAdminU = (u) => u.uid === "admin" || u.name === "임재영";
-    /* 임재영(AOP)을 항상 맨 위에 고정, 나머지는 이름순 · 퇴사자(removedMembers) 제외 */
-    const list = Object.values(users)
-      .filter((u) => u && u.name && u.uid && u.status !== "retired" && !u.test && !rmSet.has(nrm(u.name)))
+    /* 임재영(AOP)을 항상 맨 위에 고정, 활성 콜백 프로필만 노출 */
+    const list = Object.values(profiles)
+      .filter((u) => u && u.name && u.uid && u.status === "active" && u.accessKey)
       .sort((a, b) => {
         const aa = isAdminU(a), bb = isAdminU(b);
         if (aa !== bb) return aa ? -1 : 1;
@@ -1997,7 +2057,7 @@ const Team = {
   /* 팀원 데이터 열람 — 실시간 스트림(SSE) 구독 + 캐시버스터.
      기존엔 1회성 fetch라 팀원이 기록해도 관리자 화면이 안 바뀌고,
      캐시된 옛 응답(빈 데이터)을 받아 "안 보인다"는 문제가 있었음. */
-  view(uid, name) {
+  async view(uid, name) {
     const box = $("team-view");
     if (!box) return;
     this.closeView();
@@ -2006,7 +2066,7 @@ const Team = {
     this.fetchView(uid, name);
     /* 실시간 수신 — 팀원이 기록하는 즉시 관리자 화면 자동 갱신 */
     try {
-      this.viewES = new EventSource(HUB_DB + "/callbacksheets/" + uid + ".json");
+      this.viewES = new EventSource(await CallbackAuth.streamUrl("callbacksheets/" + uid));
       const onEv = () => {
         if (this.viewUid !== uid) return;
         clearTimeout(this._vt);
@@ -2033,7 +2093,7 @@ const Team = {
     if (!box) return;
     let all = {};
     try {
-      all = await fetch(HUB_DB + "/callbacksheets/" + uid + ".json?t=" + Date.now(), { cache: "no-store" }).then((r) => r.json()) || {};
+      all = await CallbackAuth.json("callbacksheets/" + uid + "?t=" + Date.now(), {});
     } catch (e) {
       if (!box.querySelector(".mini-table")) box.innerHTML = '<div class="empty">불러오기 실패 — 인터넷을 확인해주세요</div>';
       return;
@@ -2076,7 +2136,7 @@ const Team = {
   async delSession(uid, name, date) {
     if (!confirm(`${name}님의 ${date} 세션을 삭제할까요? 모든 기기에서 사라집니다`)) return;
     try {
-      const res = await fetch(HUB_DB + "/callbacksheets/" + uid + "/" + date + ".json", {
+      const res = await CallbackAuth.request("callbacksheets/" + uid + "/" + date, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deleted: true, info: { date }, up: Date.now() }),
       });
@@ -2092,20 +2152,19 @@ const Team = {
   },
 
   init() {
-    /* 개인 링크(?u=uid&n=이름)로 접속 → 자동 계정 연결 + 잠금 */
+    /* 개인 링크(?u=uid&n=이름&k=전용키)로 접속 → 자동 계정 연결 + 잠금 */
     try {
       const q = new URLSearchParams(location.search);
-      const u = q.get("u"), n = q.get("n");
+      const u = q.get("u"), n = q.get("n"), key = q.get("k");
       if (u && n) {
         const cur = Hub.identity();
         const wasAdmin = localStorage.getItem("fcos_was_admin") === "1";
         const connect = async () => {
           const candidate = { uid: u, name: n };
-          if (!(await Hub.activeIdentity(candidate))) { Hub.toast(n + "님은 현재 활성 팀원 명단에 없습니다"); history.replaceState(null, "", location.pathname); return; }
+          if (!key) { Hub.toast("워크북에서 새 개인 콜백 링크를 열어주세요"); return; }
           if (u !== "admin" && n !== "임재영") localStorage.setItem(this.LOCK_KEY, "1");
           else localStorage.removeItem(this.LOCK_KEY);
-          Hub.setIdentity(candidate);
-          location.replace(location.pathname);   // 새 계정으로 동기화 재시작
+          Hub.setIdentity(candidate, key);       // 새 계정으로 동기화 재시작
         };
         if (!cur) { connect(); return; }          // 첫 연결(새 기기)만 비밀번호 없이
         if (cur.uid === u) {
@@ -2125,7 +2184,7 @@ const Team = {
             const pw = prompt(`이 기기는 이미 ${cur.name}님 계정으로 연결돼 있어요 🔒\n다른 계정으로 전환하려면 관리자 비밀번호가 필요합니다:`);
             if (pw !== null && pw !== "") {
               let real = "0691";
-              try { const v = await fetch(HUB_DB + "/settings/cbAdminPw.json").then((r) => r.json()); if (v) real = String(v); } catch (e) {}
+              try { const v = await CallbackAuth.json("settings/cbAdminPw", null); if (v) real = String(v); } catch (e) {}
               if (String(pw).trim() === real) { localStorage.setItem("fcos_was_admin", "1"); connect(); return; }
               Hub.toast("비밀번호가 맞지 않아요 🔒");
             }
@@ -2148,7 +2207,7 @@ const Team = {
         if (pw === null || pw === "") return;
         let real = "0691";
         try {
-          const v = await fetch(HUB_DB + "/settings/cbAdminPw.json").then((r) => r.json());
+          const v = await CallbackAuth.json("settings/cbAdminPw", null);
           if (v) real = String(v);
         } catch (e) {}
         if (String(pw).trim() !== real) { Hub.toast("비밀번호가 맞지 않아요 🔒"); return; }
