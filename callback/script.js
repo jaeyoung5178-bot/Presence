@@ -1480,7 +1480,7 @@ const CallbackAuth = {
 function bootstrapPersonalLinkIdentity() {
   try {
     const q = new URLSearchParams(location.search), uid = q.get("u"), name = q.get("n"), key = q.get("k");
-    if (!uid || !name) return false;
+    if (!uid || !name || !key) return false;
     const current = JSON.parse(localStorage.getItem(HUB_ID_KEY) || "null");
     if (current && current.uid !== uid) return false; // 다른 사람 전환은 아래 관리자 검증 유지
     localStorage.setItem(HUB_ID_KEY, JSON.stringify({ uid, name }));
@@ -1588,12 +1588,27 @@ const Hub = {
   },
 
   /* ---- 계정 연결 피커 ---- */
+  showConnectGuide() {
+    const old = document.getElementById("callback-connect-guide"); if (old) old.remove();
+    const ov = document.createElement("div"); ov.id = "callback-connect-guide";
+    ov.style.cssText = "position:fixed;inset:0;z-index:140;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.56);backdrop-filter:blur(8px)";
+    ov.innerHTML = `<div style="width:min(440px,100%);padding:26px;border:1px solid #e6eaf0;border-radius:24px;background:#fff;box-shadow:0 24px 80px rgba(15,23,42,.28);text-align:center">
+      <div style="width:58px;height:58px;display:grid;place-items:center;margin:0 auto 15px;border-radius:19px;background:linear-gradient(145deg,#eff6ff,#dbeafe);font-size:27px">🔗</div>
+      <div style="font-size:19px;font-weight:850;letter-spacing:-.02em">내 콜백싯 연결이 필요해요</div>
+      <p style="margin:10px auto 18px;color:#64748b;font-size:13.5px;line-height:1.7">Presence Workbook의 <b>Profit → 콜백싯 → 내 콜백싯 열기</b>를 눌러주세요.<br>본인 전용 보안 링크가 연결되면 이 기기에서도 자동 동기화됩니다.</p>
+      <a href="https://presence.co.kr/" style="display:flex;align-items:center;justify-content:center;min-height:46px;border-radius:13px;background:#2563eb;color:#fff;text-decoration:none;font-size:14px;font-weight:800">Presence Workbook 열기 →</a>
+      <button type="button" data-close style="width:100%;margin-top:8px;padding:11px;border-radius:12px;background:#f4f6f8;color:#64748b;font-size:13px;font-weight:750">닫기</button>
+    </div>`;
+    ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-close]")) ov.remove(); });
+    document.body.appendChild(ov);
+  },
+
   async openPicker() {
     let profiles = {};
     try {
       profiles = await CallbackAuth.json("callbackProfiles?t=" + Date.now(), {});
     }
-    catch (e) { this.toast("관리자 개인 링크로 먼저 연결해 주세요"); return; }
+    catch (e) { this.toast("개인 연결을 확인할 수 없어요 · 워크북에서 다시 열어주세요"); return; }
     const isAdminU = (u) => u.uid === "admin" || u.name === "임재영";
     const list = Object.values(profiles).filter((u) => u && u.name && u.uid && u.status === "active" && u.accessKey);
     const old = document.getElementById("hub-picker"); if (old) old.remove();
@@ -1638,7 +1653,8 @@ const Hub = {
       const meta = document.querySelector(".header-meta"); if (meta) meta.appendChild(b); else document.body.appendChild(b);
       b.onclick = () => {
         const current = this.identity();
-        if (current && current.uid !== "admin" && current.name !== "임재영") Cloud.forceSync();
+        if (!current) this.showConnectGuide();
+        else if (current.uid !== "admin" && current.name !== "임재영") Cloud.forceSync();
         else this.openPicker();
       };
     }
@@ -1855,7 +1871,7 @@ const Cloud = {
   /* 강제 동기화 — 로컬 모든 세션을 허브로 즉시 밀어올리고 다시 내려받음.
      실시간 스트림이 안 붙어도 이 버튼으로 바로 올릴 수 있음. */
   async forceSync() {
-    const uid = this.uid(); if (!uid) { Hub.openPicker(); return; }
+    const uid = this.uid(); if (!uid) { Hub.showConnectGuide(); return; }
     Hub.toast("☁️ 강제 동기화 중…");
     const all = Store.getAll();
     const dates = Object.keys(all).filter((d) => all[d] && !all[d].deleted);
@@ -1917,7 +1933,7 @@ const Cloud = {
       const meta = document.querySelector(".header-meta");
       if (meta) meta.appendChild(b); else document.body.appendChild(b);
       b.onclick = () => {
-        if (!this.uid()) Hub.openPicker();
+        if (!this.uid()) Hub.showConnectGuide();
         else this.forceSync();
       };
     }
