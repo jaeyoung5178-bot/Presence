@@ -1,12 +1,13 @@
 /* Field Callback OS — Service Worker
    v2: 네트워크 우선(코어 파일) — 업데이트가 즉시 반영되고, 오프라인일 때만 캐시 사용.
    (기존 캐시 우선 방식은 수정해도 아이폰 PWA에 옛 버전이 계속 뜨던 원인) */
-const CACHE = "fcos-v13"; /* v13: 와이드 대시보드 · 개인 링크 자동 복구 안내 */
+const CACHE = "fcos-v14"; /* v14: 개인 URL 보존 · 홈 화면 설치 후 자동 연결 */
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./script.js",
+  "./personal-install.js",
   "./manifest.json",
   "./icon.svg",
   "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",

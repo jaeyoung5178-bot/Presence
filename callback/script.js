@@ -2186,7 +2186,6 @@ const Team = {
         if (cur.uid === u) {
           if (u !== "admin" && n !== "임재영") localStorage.setItem(this.LOCK_KEY, "1");
           else localStorage.removeItem(this.LOCK_KEY);
-          history.replaceState(null, "", location.pathname);
           Cloud.start();
           Hub.syncAll(false);
           if (PERSONAL_LINK_BOOTSTRAPPED) Hub.toast(n + "님 개인 콜백싯 자동 연결 ✓");
@@ -2206,7 +2205,6 @@ const Team = {
             }
           })();
         }
-        history.replaceState(null, "", location.pathname);
       }
     } catch (e) {}
     /* ★ 계정 연결·전환은 항상 관리자 비밀번호 필요 (2026-07-11 보안 강화)
