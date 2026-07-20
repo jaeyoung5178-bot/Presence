@@ -40,12 +40,15 @@ const Store = {
   /* 계정(uid)별 저장소 분리 — 같은 기기에서 팀원 계정으로 바꿔도
      서로의 데이터가 절대 보이지 않음. 임재영(admin)은 기존 키 유지. */
   KEY_BASE: "fcos_sessions_v1",
+  /* 2026-07-21 ★ 연결이 끊겼을 때 예전엔 관리자(임재영) 저장소로 떨어져
+     "누구 링크를 눌러도 임재영 데이터가 보이는" 현상이 있었다.
+     이제 연결이 없으면 guest 저장소를 쓰고, 남의 기록은 절대 노출되지 않는다. */
   get KEY() {
     try {
       const w = JSON.parse(localStorage.getItem("fcos_hub_identity"));
-      if (w && w.uid && w.uid !== "admin") return this.KEY_BASE + "__" + w.uid;
+      if (w && w.uid) return w.uid === "admin" ? this.KEY_BASE : this.KEY_BASE + "__" + w.uid;
     } catch (e) {}
-    return this.KEY_BASE;
+    return this.KEY_BASE + "__guest";
   },
   _read() {
     try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; }
@@ -1428,6 +1431,7 @@ const HUB_DB = "https://presence-team-default-rtdb.asia-southeast1.firebasedatab
 const HUB_ID_KEY = "fcos_hub_identity";   // {uid,name}
 const HUB_SYNCED_KEY = "fcos_hub_synced"; // {rn_cb_t:1,...}
 const CALLBACK_ACCESS_KEY = "fcos_callback_access_key";
+const ADMIN_IDENTITY_KEY = "fcos_admin_identity";   // 관리자 복귀용 {uid,name,accessKey}
 const CALLBACK_FB_CONFIG = {
   apiKey: "AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0",
   authDomain: "presence-team.firebaseapp.com",
@@ -1459,16 +1463,52 @@ const CallbackAuth = {
     let app; try { app = appMod.getApp("presence-callback"); } catch (e) { app = appMod.initializeApp(CALLBACK_FB_CONFIG, "presence-callback"); }
     this.auth = authMod.getAuth(app);
     try { await authMod.setPersistence(this.auth, authMod.browserLocalPersistence); } catch (e) {}
-    const cred = this.auth.currentUser ? { user: this.auth.currentUser } : await authMod.signInAnonymously(this.auth);
-    this.authUid = cred.user.uid;
-    this.token = await cred.user.getIdToken();
-    const session = { userUid: who.uid, accessKey, createdAt: Date.now(), device: "callback-web-v3" };
-    const res = await fetch(this.dbUrl("callbackSessions/" + this.authUid, this.token), {
-      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(session), cache: "no-store"
-    });
-    if (!res.ok) throw new Error("개인 콜백 인증 실패 " + res.status);
+    /* ★ 2026-07-21 계정 전환 버그 수정 (이 앱이 "임재영"에서 안 바뀌던 진짜 원인)
+       보안 규칙상 callbackSessions/{authUid} 는 한 번 생기면 userUid 를 바꿔 쓸 수 없다.
+       (허용되는 변경은 "완전 삭제" 뿐)
+       그래서 관리자 기기에서 팀원 계정으로 바꾸면 PUT 이 403 으로 거부되고,
+       인증이 죽어 → activeIdentity 실패 → revokeIdentity → 관리자 저장소로 복귀
+       = "다른 사람을 눌러도 임재영으로만 뜨는" 증상이 났다.
+       이제 기존 세션을 지우고 새로 발급하며, 그래도 막히면 익명 계정을 새로 받아 복구한다. */
+    let user = this.auth.currentUser || (await authMod.signInAnonymously(this.auth)).user;
+
+    const claim = async (u) => {
+      this.authUid = u.uid;
+      this.token = await u.getIdToken(true);
+      const body = JSON.stringify({ userUid: who.uid, accessKey, createdAt: Date.now(), device: "callback-web-v4" });
+      const head = { "Content-Type": "application/json" };
+      let res = await fetch(this.dbUrl("callbackSessions/" + u.uid, this.token), { method: "PUT", headers: head, body, cache: "no-store" });
+      if (res.ok) return 0;
+      const status = res.status;
+      /* 남아 있던 이전 계정 세션 제거 후 재시도 (규칙상 삭제는 허용됨) */
+      try {
+        const del = await fetch(this.dbUrl("callbackSessions/" + u.uid, this.token), { method: "DELETE", cache: "no-store" });
+        if (del.ok) {
+          res = await fetch(this.dbUrl("callbackSessions/" + u.uid, this.token), { method: "PUT", headers: head, body, cache: "no-store" });
+          if (res.ok) return 0;
+        }
+      } catch (e) {}
+      return res.status || status;
+    };
+
+    let bad = await claim(user);
+    if (bad) {
+      /* 익명 계정 자체를 새로 발급 — 완전히 깨끗한 세션으로 한 번 더 */
+      try { await authMod.signOut(this.auth); } catch (e) {}
+      try { user = (await authMod.signInAnonymously(this.auth)).user; bad = await claim(user); } catch (e) { bad = bad || 401; }
+    }
+    if (bad) throw new Error(bad === 401 || bad === 403
+      ? "이 링크는 만료됐어요 — 워크북에서 콜백싯 링크를 다시 열어주세요"
+      : "개인 콜백 인증 실패 " + bad);
+
     clearInterval(this.refreshTimer);
-    this.refreshTimer = setInterval(async () => { try { this.token = await this.auth.currentUser.getIdToken(true); } catch (e) {} }, 45 * 60 * 1000);
+    this.refreshTimer = setInterval(async () => {
+      try {
+        this.token = await this.auth.currentUser.getIdToken(true);
+        /* 토큰이 바뀌면 실시간 스트림도 새 토큰으로 다시 연결 (1시간 뒤 조용히 끊기던 문제) */
+        try { if (typeof Cloud !== "undefined" && Cloud.es) { Cloud.es.close(); Cloud.es = null; Cloud.stream(); } } catch (e) {}
+      } catch (e) {}
+    }, 45 * 60 * 1000);
     return true;
   },
   ensure() {
@@ -1492,6 +1532,15 @@ const CallbackAuth = {
   },
   async streamUrl(path) { await this.ensure(); return this.dbUrl(path, this.token); },
   reset() { this._ready = null; this.token = ""; this.authUid = ""; clearInterval(this.refreshTimer); this.refreshTimer = null; },
+  /* 계정 전환·연결 해제 시 서버의 내 세션을 정리 (best-effort, 실패해도 무시) */
+  release() {
+    if (!this.authUid || !this.token) return;
+    const url = this.dbUrl("callbackSessions/" + this.authUid, this.token);
+    try {
+      if (navigator.sendBeacon) { fetch(url, { method: "DELETE", cache: "no-store", keepalive: true }).catch(() => {}); }
+      else fetch(url, { method: "DELETE", cache: "no-store" }).catch(() => {});
+    } catch (e) {}
+  },
 };
 
 /* 개인 전용 링크는 다른 모듈보다 먼저 본인 uid를 고정한다.
@@ -1519,9 +1568,20 @@ const Hub = {
     const uidChanged = !prev || prev.uid !== (v && v.uid);
     localStorage.setItem(HUB_ID_KEY, JSON.stringify(v)); this.badge();
     if (accessKey) localStorage.setItem(CALLBACK_ACCESS_KEY, accessKey);
+    /* 계정이 바뀌면 서버의 이전 세션을 먼저 지운다 (규칙상 덮어쓰기 불가) */
+    if (uidChanged) { try { CallbackAuth.release(); } catch (e) {} }
     try { CallbackAuth.reset(); } catch (e) {}
     /* 관리자로 연결된 적 있는 기기 표시 — 이후 팀원 계정을 열어봐도 잠기지 않음 */
-    if (v && (v.uid === "admin" || v.name === "임재영")) localStorage.setItem("fcos_was_admin", "1");
+    if (v && (v.uid === "admin" || v.name === "임재영")) {
+      localStorage.setItem("fcos_was_admin", "1");
+      /* ★ 관리자 자격을 따로 보관 — 팀원 계정을 열어본 뒤 한 번에 돌아오기 위함.
+         (팀원 계정 상태에서는 callbackProfiles 목록을 읽을 권한이 없어
+          기존에는 계정 선택창 자체를 다시 열 수 없었다) */
+      try {
+        const k = accessKey || localStorage.getItem(CALLBACK_ACCESS_KEY) || "";
+        if (k) localStorage.setItem(ADMIN_IDENTITY_KEY, JSON.stringify({ uid: v.uid, name: v.name, accessKey: k }));
+      } catch (e) {}
+    }
     /* 계정이 바뀌면 새 계정 전용 저장소로 다시 시작 (데이터 섞임 방지).
        ★ localStorage 쓰기 직후 동기적으로 Cloud를 끊어, 이전 uid로 열린
        SSE 스트림·진행 중 fetch 응답이 새 계정 저장소에 이전 데이터를 쓰거나
@@ -1570,8 +1630,12 @@ const Hub = {
       await CallbackAuth.ensure();
       profile = await CallbackAuth.json("callbackProfiles/" + encodeURIComponent(who.uid) + "?t=" + Date.now(), null);
     } catch (e) {
-      this.toast(e && e.message && e.message.includes("새 개인") ? "워크북에서 내 콜백싯 링크를 다시 열어주세요" : "개인 콜백 연결을 확인하는 중이에요");
-      return false;
+      this.toast(e && e.message && (e.message.includes("새 개인") || e.message.includes("만료"))
+        ? "워크북에서 내 콜백싯 링크를 다시 열어주세요"
+        : "개인 콜백 연결을 확인하는 중이에요");
+      /* ★ null = "확인 실패(네트워크·토큰)". false 로 돌려주면 아래 syncAll 이
+         연결을 끊어버려 관리자 저장소로 되돌아갔다. 이제는 끊지 않는다. */
+      return null;
     }
     const nrm = (s) => String(s || "").replace(/\s+/g, "");
     const ok = !!(profile && profile.name && profile.status === "active" && nrm(profile.name) === nrm(who.name));
@@ -1582,6 +1646,7 @@ const Hub = {
   revokeIdentity(who) {
     const localKey = Store.KEY;
     try { Cloud.shutdown(); } catch (e) {}
+    try { CallbackAuth.release(); } catch (e) {}
     localStorage.removeItem(HUB_ID_KEY);
     localStorage.removeItem(CALLBACK_ACCESS_KEY);
     try { CallbackAuth.reset(); } catch (e) {}
@@ -1594,7 +1659,9 @@ const Hub = {
 
   async syncAll(showToast) {
     const who = this.identity(); if (!who) return 0;
-    if (!(await this.activeIdentity(who))) { this.revokeIdentity(who); return 0; }
+    const alive = await this.activeIdentity(who);
+    if (alive === false) { this.revokeIdentity(who); return 0; }   // 명단에서 실제로 빠진 경우만 해제
+    if (alive !== true) return 0;                                   // 일시적 확인 실패 → 연결 유지
     const done = this.synced(); let n = 0;
     for (const r of this.allRehashes()) {
       const id = "rn_cb_" + r.t;
@@ -1673,9 +1740,18 @@ const Hub = {
       const meta = document.querySelector(".header-meta"); if (meta) meta.appendChild(b); else document.body.appendChild(b);
       b.onclick = () => {
         const current = this.identity();
-        if (!current) this.showConnectGuide();
-        else if (current.uid !== "admin" && current.name !== "임재영") Cloud.forceSync();
-        else this.openPicker();
+        if (!current) { this.showConnectGuide(); return; }
+        if (current.uid === "admin" || current.name === "임재영") { this.openPicker(); return; }
+        /* 관리자 기기에서 팀원 계정을 열어본 상태 → 한 번에 관리자로 복귀 */
+        let saved = null;
+        try { if (localStorage.getItem("fcos_was_admin") === "1") saved = JSON.parse(localStorage.getItem(ADMIN_IDENTITY_KEY) || "null"); } catch (e) {}
+        if (saved && saved.uid && saved.accessKey) {
+          if (confirm("지금은 " + current.name + "님 계정을 보고 있어요.\n관리자(" + (saved.name || "임재영") + ") 계정으로 돌아갈까요?")) {
+            this.setIdentity({ uid: saved.uid, name: saved.name }, saved.accessKey);
+            return;
+          }
+        }
+        Cloud.forceSync();
       };
     }
     const who = this.identity();
