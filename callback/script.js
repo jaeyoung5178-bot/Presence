@@ -6,6 +6,26 @@
    차단(Cloud.shutdown + uid 캡처 + 세션 tombstone) · 팀명단 임재영 고정.
 ============================================================ */
 "use strict";
+/* ── 주소 통일 (2026-07-20) ─────────────────────────────────
+   어떤 주소(github.io·http)로 들어와도 https://hub.presence.co.kr/callback/ 로 통일.
+   http 주소에 저장돼 있던 개인 연결 정보(u·n·k)는 쿼리로 안전하게 들고 이동한다.
+   → 새 창·홈 화면·즐겨찾기 어디서 열어도 항상 같은 저장소를 쓰게 됨 */
+(function(){
+  try{
+    var CANON="hub.presence.co.kr";
+    if(location.hostname===CANON&&location.protocol==="https:")return;
+    var q=new URLSearchParams(location.search);
+    if(!q.get("u")||!q.get("k")){
+      try{
+        var who=JSON.parse(localStorage.getItem("fcos_hub_identity")||"null");
+        var key=localStorage.getItem("fcos_callback_access_key")||"";
+        if(who&&who.uid&&key){q.set("u",who.uid);q.set("n",who.name||"");q.set("k",key);}
+      }catch(e){}
+    }
+    var qs=q.toString();
+    location.replace("https://"+CANON+"/callback/"+(qs?"?"+qs:"")+location.hash);
+  }catch(e){}
+})();
 
 /* ==================== Constants ==================== */
 const STAGES = ["contact", "stop", "presentation", "close", "rehash"];
@@ -2060,11 +2080,13 @@ const Team = {
       <div class="rh-item" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <b style="font-size:14px">${admin ? "👑 " : ""}${esc(u.name)}</b><span class="chip">${esc(role)}</span>
         <span style="flex:1"></span>
+        <button class="btn btn-primary btn-sm" data-topen="${esc(u.uid)}">🌐 사이트 열기</button>
         <button class="btn btn-outline btn-sm" data-tcopy="${esc(u.uid)}">🔗 링크 복사</button>
         <button class="btn btn-outline btn-sm" data-tshare="${esc(u.uid)}">💬 카톡</button>
         <button class="btn btn-primary btn-sm" data-tview="${esc(u.uid)}" data-tname="${esc(u.name)}">📊 데이터 보기</button>
       </div>`;
     }).join("") || '<div class="empty">팀원이 없습니다</div>';
+    box.querySelectorAll("[data-topen]").forEach((b) => (b.onclick = () => { const u = list.find((x) => x.uid === b.dataset.topen); if (u) window.open(this.linkFor(u), "_blank", "noopener"); }));
     box.querySelectorAll("[data-tcopy]").forEach((b) => (b.onclick = () => { const u = list.find((x) => x.uid === b.dataset.tcopy); if (u) this.copy(this.linkFor(u)); }));
     box.querySelectorAll("[data-tshare]").forEach((b) => (b.onclick = () => { const u = list.find((x) => x.uid === b.dataset.tshare); if (u) this.share(u); }));
     box.querySelectorAll("[data-tview]").forEach((b) => (b.onclick = () => this.view(b.dataset.tview, b.dataset.tname)));
@@ -2194,11 +2216,11 @@ const Team = {
         if (cur.uid !== u) {
           /* ★ 이미 다른 계정이 연결된 기기 — 관리자 비밀번호 없이는 링크로도 전환 불가
              (남의 링크·QR로 다른 사람 콜백싯에 들어가던 문제 차단) */
-          if (this.isAdmin() || wasAdmin) { connect(); return; }
+          /* 2026-07-20: 관리자를 포함해 누구든 "다른 사람" 콜백싯으로 전환하려면 비밀번호 필요 */
           (async () => {
-            const pw = prompt(`이 기기는 이미 ${cur.name}님 계정으로 연결돼 있어요 🔒\n다른 계정으로 전환하려면 관리자 비밀번호가 필요합니다:`);
+            const pw = prompt(`이 기기는 ${cur.name}님 계정으로 연결돼 있어요 🔒\n${n}님 콜백싯으로 전환하려면 비밀번호를 입력하세요:`);
             if (pw !== null && pw !== "") {
-              let real = "0691";
+              let real = "0001";
               try { const v = await CallbackAuth.json("settings/cbAdminPw", null); if (v) real = String(v); } catch (e) {}
               if (String(pw).trim() === real) { localStorage.setItem("fcos_was_admin", "1"); connect(); return; }
               Hub.toast("비밀번호가 맞지 않아요 🔒");
@@ -2212,14 +2234,13 @@ const Team = {
          남의 콜백싯에 들어가던 문제 차단
        - 팀원은 관리자가 보내준 개인 링크(?u=&n=)로만 자동 연결됨
        - 관리자 본인/관리자 인증된 기기만 자유 전환
-         (비밀번호 0691 · Firebase settings/cbAdminPw 로 변경 가능) */
+         (비밀번호 0001 · Firebase settings/cbAdminPw 로 변경 가능) */
     const orig = Hub.openPicker.bind(Hub);
     Hub.openPicker = async () => {
-      const wasAdmin = localStorage.getItem("fcos_was_admin") === "1";
-      if (!this.isAdmin() && !wasAdmin) {
-        const pw = prompt("계정 연결·전환은 관리자만 할 수 있어요 🔒\n관리자 비밀번호를 입력하세요.\n(팀원은 관리자가 카톡으로 보내준 개인 링크로 접속하면 자동 연결됩니다)");
+      { /* 2026-07-20: 계정 전환은 관리자 포함 항상 비밀번호 확인 */
+        const pw = prompt("다른 계정으로 전환하려면 비밀번호가 필요해요 🔒\n비밀번호를 입력하세요.\n(팀원은 관리자가 카톡으로 보내준 개인 링크로 접속하면 자동 연결됩니다)");
         if (pw === null || pw === "") return;
-        let real = "0691";
+        let real = "0001";
         try {
           const v = await CallbackAuth.json("settings/cbAdminPw", null);
           if (v) real = String(v);
