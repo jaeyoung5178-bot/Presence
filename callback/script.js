@@ -1587,8 +1587,23 @@ const Hub = {
        SSE 스트림·진행 중 fetch 응답이 새 계정 저장소에 이전 데이터를 쓰거나
        새 uid 클라우드로 재업로드하는 교차 오염을 원천 차단 */
     if (uidChanged) {
+      /* ★ 2026-07-21 계정을 바꾸면 "홈 화면/개인 링크" 기록도 새 사람으로 갱신하고,
+         주소에 남아 있는 이전 사람의 ?u=&n=&k= 를 반드시 떼고 새로고침한다.
+         (그대로 reload 하면 예전 링크가 되살아나 다시 이전 계정으로 끌려갔다) */
+      try {
+        const k = accessKey || "";
+        if (v && v.uid && k) {
+          localStorage.setItem("fcos_personal_launch_v2", JSON.stringify({ u: v.uid, n: v.name || "", k: k, savedAt: Date.now() }));
+          const pu = new URL("./index.html", location.href);
+          pu.searchParams.set("u", v.uid); pu.searchParams.set("n", v.name || ""); pu.searchParams.set("k", k);
+          localStorage.setItem("fcos_personal_launch", pu.href);
+        } else {
+          localStorage.removeItem("fcos_personal_launch_v2");
+          localStorage.removeItem("fcos_personal_launch");
+        }
+      } catch (e) {}
       try { Cloud.shutdown(); } catch (e) {}
-      setTimeout(() => location.reload(), 700);
+      setTimeout(() => location.replace(location.pathname), 700);
     }
   },
   synced() { try { return JSON.parse(localStorage.getItem(HUB_SYNCED_KEY)) || {}; } catch (e) { return {}; } },

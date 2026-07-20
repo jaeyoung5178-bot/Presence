@@ -6,9 +6,21 @@
   function read(){try{return JSON.parse(localStorage.getItem(STORE)||'null');}catch(e){return null;}}
   function save(v){if(!valid(v))return;try{localStorage.setItem(STORE,JSON.stringify(Object.assign({},v,{savedAt:Date.now()})));localStorage.setItem('fcos_personal_launch',personalUrl(v));}catch(e){}}
   function personalUrl(v){var u=new URL('./index.html',location.href);u.searchParams.set('u',v.u);u.searchParams.set('n',v.n);u.searchParams.set('k',v.k);return u.href;}
+  function connected(){try{return JSON.parse(localStorage.getItem('fcos_hub_identity')||'null');}catch(e){return null;}}
   var identity=fromQuery();
   if(identity)save(identity);
-  else{identity=read();if(valid(identity)){var restored=new URL(personalUrl(identity));history.replaceState(null,'',restored.pathname+restored.search);}}
+  else{
+    identity=read();
+    /* ★ 2026-07-21 계정 전환이 되돌아가던 원인.
+       예전에는 저장된 개인 링크(u·n·k)를 무조건 주소에 다시 넣었다.
+       관리자가 피커에서 다른 팀원을 고른 뒤 새로고침되면 주소에는 여전히
+       관리자 링크가 살아나고 → script.js 가 "다른 사람으로 전환하시겠습니까"
+       비밀번호 창을 띄워 → 결국 임재영으로 되돌아갔다.
+       지금 연결된 계정과 어긋나는 옛 링크는 무시한다. */
+    var cur=connected();
+    if(valid(identity)&&cur&&cur.uid&&identity.u!==cur.uid)identity=null;
+    if(valid(identity)){var restored=new URL(personalUrl(identity));history.replaceState(null,'',restored.pathname+restored.search);}
+  }
   function manifest(){if(!valid(identity))return;var m={name:(identity.n||'나')+'의 Field Callback OS',short_name:(identity.n||'나')+' 콜백싯',description:'내 전용 Presence 콜백싯',id:'./index.html?u='+encodeURIComponent(identity.u),start_url:'./index.html?u='+encodeURIComponent(identity.u)+'&n='+encodeURIComponent(identity.n)+'&k='+encodeURIComponent(identity.k),scope:'./',display:'standalone',background_color:'#F7F8FA',theme_color:'#2563EB',icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]};var blob=new Blob([JSON.stringify(m)],{type:'application/manifest+json'}),href=URL.createObjectURL(blob),link=document.querySelector('link[rel="manifest"]');if(!link){link=document.createElement('link');link.rel='manifest';document.head.appendChild(link);}link.href=href;}
   manifest();
   window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;draw();});
