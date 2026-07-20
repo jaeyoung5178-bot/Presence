@@ -11,7 +11,7 @@
   try{
     var callbackMenu=document.querySelector('a[href="callback/index.html"]');
     var personalCallback=localStorage.getItem('fcos_personal_launch');
-    if(callbackMenu&&personalCallback&&/^https:\/\/jaeyoung5178-bot\.github\.io\/Presence\/callback\//.test(personalCallback))callbackMenu.href=personalCallback;
+    if(callbackMenu&&personalCallback&&/^https:\/\/(hub\.presence\.co\.kr|jaeyoung5178-bot\.github\.io\/Presence)\/callback\//.test(personalCallback))callbackMenu.href=personalCallback;
   }catch(e){}
   var FB    = 'https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/hub_photos';
   var PASS  = '0001';                    // 관리자 비밀번호
