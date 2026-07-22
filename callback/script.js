@@ -1603,7 +1603,21 @@ const Hub = {
         }
       } catch (e) {}
       try { Cloud.shutdown(); } catch (e) {}
-      setTimeout(() => location.replace(location.pathname), 700);
+      /* 주소에도 새 개인 연결을 남겨야 iOS의 "홈 화면에 추가"가
+         u/n/k가 빠진 공용 페이지를 저장하지 않는다. personal-install.js의
+         동적 manifest도 같은 값으로 즉시 갱신한다. */
+      try {
+        const next = new URL("./index.html", location.href);
+        if (v && v.uid && accessKey) {
+          next.searchParams.set("u", v.uid);
+          next.searchParams.set("n", v.name || "");
+          next.searchParams.set("k", accessKey);
+          if (window.FcosPersonalInstall && window.FcosPersonalInstall.refresh) {
+            window.FcosPersonalInstall.refresh({ u: v.uid, n: v.name || "", k: accessKey });
+          }
+        }
+        setTimeout(() => location.replace(next.href), 700);
+      } catch (e) { setTimeout(() => location.reload(), 700); }
     }
   },
   synced() { try { return JSON.parse(localStorage.getItem(HUB_SYNCED_KEY)) || {}; } catch (e) { return {}; } },

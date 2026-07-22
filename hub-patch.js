@@ -8,11 +8,20 @@
   'use strict';
   /* 콜백싯은 같은 GitHub origin에 저장된 마지막 개인 실행 URL을 사용한다.
      따라서 허브에서 열거나 홈 화면으로 복사해도 관리자/팀원 본인 연결이 유지된다. */
-  try{
-    var callbackMenu=document.querySelector('a[href="callback/index.html"]');
-    var personalCallback=localStorage.getItem('fcos_personal_launch');
-    if(callbackMenu&&personalCallback&&/^https:\/\/(hub\.presence\.co\.kr|jaeyoung5178-bot\.github\.io\/Presence)\/callback\//.test(personalCallback))callbackMenu.href=personalCallback;
-  }catch(e){}
+  var callbackMenu=document.querySelector('a[href="callback/index.html"]');
+  function safeCallbackUrl(raw){
+    try{var u=new URL(raw,location.href);return /^(hub\.presence\.co\.kr|jaeyoung5178-bot\.github\.io)$/.test(u.hostname)&&/\/callback\/(index\.html)?$/.test(u.pathname)&&u.searchParams.get('u')&&u.searchParams.get('n')&&u.searchParams.get('k')?u.href:'';}catch(e){return '';}
+  }
+  function savedCallbackUrl(preferAdmin){
+    try{
+      if(preferAdmin){var a=JSON.parse(localStorage.getItem('fcos_admin_identity')||'null');if(a&&a.uid&&a.name&&a.accessKey){var u=new URL('callback/index.html',location.href);u.searchParams.set('u',a.uid);u.searchParams.set('n',a.name);u.searchParams.set('k',a.accessKey);return u.href;}}
+      return safeCallbackUrl(localStorage.getItem('fcos_personal_launch')||'');
+    }catch(e){return '';}
+  }
+  if(callbackMenu){
+    var firstCallback=savedCallbackUrl(false);if(firstCallback)callbackMenu.href=firstCallback;
+    callbackMenu.addEventListener('click',function(){var fresh=savedCallbackUrl(isAdmin());if(fresh)callbackMenu.href=fresh;},true);
+  }
   var FB    = 'https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/hub_photos';
   var PASS  = '0001';                    // 관리자 비밀번호
   var TPASS = '1004';                    // 팀원 비밀번호
@@ -148,6 +157,10 @@
   }
   addMenuItem('PHOTO','📸 필름 사진 추가', openPanel);
   addMenuItem('TEAM','👥 팀원 사진 공간', openTeam);
+  addMenuItem('CALLBACK','📋 팀원 콜백싯 관리', function(){
+    var go=function(role){if(role!=='admin'){alert('콜백싯 팀 관리는 관리자 전용이에요');return;}var url=savedCallbackUrl(true)||new URL('callback/index.html',location.href).href;location.href=url;};
+    if(isAdmin())go('admin');else askPass(go);
+  });
   addMenuItem('LOCK','🔒 관리자 잠금', function(){
     setAdmin(false); setTeam(false); syncDLState();
     alert('잠금 완료 — 다음에 ⋯ 누르면 '+(bioGet()?'Face ID로':'비밀번호를')+' 다시 확인해요');
