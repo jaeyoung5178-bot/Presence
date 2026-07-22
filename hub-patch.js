@@ -159,7 +159,11 @@
   addMenuItem('TEAM','👥 팀원 사진 공간', openTeam);
   addMenuItem('CALLBACK','📋 팀원 콜백싯 관리', function(){
     var go=function(role){if(role!=='admin'){alert('콜백싯 팀 관리는 관리자 전용이에요');return;}var url=savedCallbackUrl(true)||new URL('callback/index.html',location.href).href;location.href=url;};
-    if(isAdmin())go('admin');else askPass(go);
+    /* 관리자 상태가 저장된 기기여도 팀원 자료 진입은 매번 0001 확인 */
+    var p=prompt('팀원 콜백싯 관리는 관리자 전용이에요 · 비밀번호를 입력하세요');
+    if(p===null)return;
+    if(p===PASS){setAdmin(true);syncDLState();go('admin');}
+    else alert('비밀번호가 올바르지 않습니다');
   });
   addMenuItem('LOCK','🔒 관리자 잠금', function(){
     setAdmin(false); setTeam(false); syncDLState();

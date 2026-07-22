@@ -1767,7 +1767,7 @@ const Hub = {
       b = document.createElement("button"); b.id = "hub-badge";
       b.style.cssText = "border:0;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:1;display:inline-flex;align-items:center;gap:2px";
       const meta = document.querySelector(".header-meta"); if (meta) meta.appendChild(b); else document.body.appendChild(b);
-      b.onclick = () => {
+      b.onclick = async () => {
         const current = this.identity();
         if (!current) { this.showConnectGuide(); return; }
         if (current.uid === "admin" || current.name === "임재영") { this.openPicker(); return; }
@@ -1775,12 +1775,18 @@ const Hub = {
         let saved = null;
         try { if (localStorage.getItem("fcos_was_admin") === "1") saved = JSON.parse(localStorage.getItem(ADMIN_IDENTITY_KEY) || "null"); } catch (e) {}
         if (saved && saved.uid && saved.accessKey) {
-          if (confirm("지금은 " + current.name + "님 계정을 보고 있어요.\n관리자(" + (saved.name || "임재영") + ") 계정으로 돌아갈까요?")) {
+          const pw = prompt("지금은 " + current.name + "님 계정이에요 🔒\n관리자(" + (saved.name || "임재영") + ") 계정으로 돌아가려면 비밀번호를 입력하세요:");
+          if (pw === null || pw === "") return;
+          let real = "0001";
+          try { const v = await CallbackAuth.json("settings/cbAdminPw", null); if (v) real = String(v); } catch (e) {}
+          if (String(pw).trim() === real) {
             this.setIdentity({ uid: saved.uid, name: saved.name }, saved.accessKey);
             return;
           }
+          this.toast("비밀번호가 맞지 않아요 🔒");
+          return;
         }
-        Cloud.forceSync();
+        this.toast("관리자 개인 링크를 먼저 한 번 열어주세요");
       };
     }
     const who = this.identity();
