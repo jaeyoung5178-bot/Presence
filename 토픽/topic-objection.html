@@ -920,7 +920,8 @@ h3{font-size:34px;letter-spacing:-.025em;font-weight:800}
   function prev(){
     if(!started)return;                               // 준비화면에서는 이전 동작 무시
     if(subStep>0){subStep=0;var s=slides[cur];s.classList.remove('step1','step2');resetCursor();return;}
-    cur=(cur-1+slides.length)%slides.length;subStep=0;render();
+    if(cur===0)return;                                // 첫 화면에서는 더 뒤로 가지 않음(마지막으로 순환 방지)
+    cur=cur-1;subStep=0;render();
   }
   nextBtn.addEventListener('click',next);
   prevBtn.addEventListener('click',prev);
