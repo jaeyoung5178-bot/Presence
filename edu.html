@@ -52,7 +52,7 @@
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:6px;}
   .item{
     position:relative; background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:16px 16px 15px; text-decoration:none; color:var(--ink); display:block; transition:.15s; overflow:hidden;
+    padding:16px 16px 15px; text-decoration:none; color:var(--ink); display:block; transition:.15s; overflow:hidden; cursor:pointer;
   }
   .item:hover{transform:translateY(-2px); border-color:var(--line2); background:var(--card2);}
   .item .tg{display:inline-block; font-size:11px; letter-spacing:1.5px; font-weight:800; color:var(--accent); border:1px solid var(--line2); border-radius:6px; padding:3px 8px; margin-bottom:9px;}
@@ -64,7 +64,8 @@
   .editing .item .xdel{display:flex;}
   .item .mv{display:none; margin-top:10px;}
   .editing .item .mv{display:block;}
-  .item .mv select{width:100%; background:var(--bg2); color:var(--ink); border:1px solid var(--line2); border-radius:8px; padding:7px 8px; font-size:12px;}
+  .item .mv label{display:block; font-size:11px; color:var(--sub); margin-bottom:4px; letter-spacing:.2px;}
+  .item .mv select{width:100%; background:var(--bg2); color:var(--ink); border:1px solid var(--line2); border-radius:8px; padding:7px 8px; font-size:12px; cursor:pointer;}
 
   .empty{grid-column:1/-1; text-align:center; color:var(--sub); padding:40px 10px; font-size:14px;}
   .additem{border:1px dashed var(--line2); background:transparent; color:var(--accent); border-radius:16px; padding:16px; font-size:14px; cursor:pointer; display:none; align-items:center; justify-content:center; min-height:90px;}
@@ -234,14 +235,14 @@
     if(list.length===0){ gh = '<div class="empty">아직 자료가 없어요.'+(isAdmin?' 아래 ＋로 추가하세요.':'')+'</div>'; }
     list.forEach(function(it){
       var opts = data.folders.map(function(f){ return '<option value="'+esc(f)+'" '+(f===it.folder?"selected":"")+'>'+esc(f)+'</option>'; }).join("");
-      gh += '<a class="item" href="'+esc(it.href||"#")+'" '+(it.target==="_blank"?'target="_blank" rel="noopener"':"")+' data-id="'+it.id+'">'
+      gh += '<div class="item" data-href="'+esc(it.href||"#")+'" data-target="'+esc(it.target||"")+'" data-id="'+it.id+'">'
           + '<button class="xdel" data-xdel="'+it.id+'" title="삭제">×</button>'
           + '<span class="tg">'+esc(it.tag||"자료")+'</span>'
           + '<p class="ti">'+esc(it.title||"")+'</p>'
           + '<p class="su">'+esc(it.sub||"")+'</p>'
           + '<span class="arw">→</span>'
-          + '<div class="mv"><select data-mv="'+it.id+'">'+opts+'</select></div>'
-          + '</a>';
+          + '<div class="mv"><label>폴더 이동</label><select data-mv="'+it.id+'">'+opts+'</select></div>'
+          + '</div>';
     });
     if(isAdmin){ gh += '<div class="additem" id="addItem">＋ 자료 추가</div>'; }
     $("#grid").innerHTML = gh;
@@ -283,9 +284,15 @@
       return;
     }
     if(e.target.id==="addItem"){ e.preventDefault(); openItemModal(null); return; }
-    if(isAdmin){ // in edit mode, block navigation so admin can manage; allow via long-press? simply prevent
-      var a=e.target.closest("a.item");
-      if(a && !e.target.closest(".mv")){ e.preventDefault(); }
+    // clicks inside the move dropdown must never navigate or edit
+    if(e.target.closest(".mv")) return;
+    var card=e.target.closest(".item[data-href]");
+    if(!card) return;
+    if(isAdmin){ openItemModal(card.getAttribute("data-id")); return; } // edit mode: tap card to edit
+    var href=card.getAttribute("data-href")||"#";
+    if(href && href!=="#"){
+      if(card.getAttribute("data-target")==="_blank") window.open(href,"_blank","noopener");
+      else window.location.href=href;
     }
   });
   $("#grid").addEventListener("change", function(e){
@@ -327,5 +334,6 @@
   load();
 })();
 </script>
+<script defer src="update-check.js"></script>
 </body>
 </html>
