@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b14">
+<title>오브젝션 핸들링 · PRESENCE</title>
+<link rel="preconnect" href="https://fonts.gstatic.com/">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root{
+  --night:#070b14;--navy:#0d1424;--paper:#f6f8fb;--ink:#0b1220;--muted:#8290a7;
+  --blue:#3b82f6;--sky:#38bdf8;--green:#2caf68;--lime:#8fd14f;--gold:#e8c877;--red:#f06a73;
+  --line:rgba(255,255,255,.12);--font:"Pretendard","Apple SD Gothic Neo",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02040a;font-family:var(--font);-webkit-font-smoothing:antialiased}
+button,a{font:inherit}
+h1,h2,h3,p{margin:0}
+h1{font-size:104px;line-height:.98;letter-spacing:-.055em;font-weight:850}
+h2{font-size:72px;line-height:1.05;letter-spacing:-.045em;font-weight:850}
+h3{font-size:34px;letter-spacing:-.025em;font-weight:800}
+.lead{margin-top:28px;font-size:30px;line-height:1.5;color:#a9b8ce;font-weight:500}
+.light .lead,.green .lead{color:#5d6b7e}
+.grad{background:linear-gradient(115deg,#60a5fa,#38bdf8 55%,#64d998);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.gold{color:var(--gold)}.sky{color:var(--sky)}.rd{color:var(--red)}.gr{color:var(--green)}
+
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% -20%,#18253e 0,#070b14 48%,#02040a 100%)}
+#deck{position:relative;width:1600px;height:900px;transform-origin:center;background:var(--night);overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.55)}
+
+.slide{position:absolute;inset:0;display:none;flex-direction:column;padding:88px 112px 96px;opacity:0;overflow:hidden}
+.slide.active{display:flex;opacity:1;animation:slideIn .55s cubic-bezier(.16,.84,.44,1)}
+@keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.slide.stage{padding:0}
+
+.dark{color:#eef5ff;background:radial-gradient(circle at 28% 0,#14233d 0,#09101e 55%,#060a12 100%)}
+.black{color:#fff;background:radial-gradient(circle at 50% 40%,#0d1526 0,#05080f 70%)}
+.green{color:#07150d;background:linear-gradient(145deg,#effbf4 0,#dbf3e6 100%)}
+
+.kicker{display:flex;align-items:center;gap:16px;color:var(--sky);font-size:19px;font-weight:800;letter-spacing:.25em;text-transform:uppercase;margin-bottom:24px}
+.kicker:before{content:"";width:42px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--sky))}
+.green .kicker{color:#1f9b5c}.green .kicker:before{background:linear-gradient(90deg,#2caf68,#8fd14f)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;width:max-content;padding:9px 15px;border:1px solid rgba(56,189,248,.28);border-radius:999px;color:var(--sky);font-size:16px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+
+/* progress + chrome */
+#progressTrack{position:fixed;top:0;left:0;right:0;height:5px;background:rgba(255,255,255,.08);z-index:10001}
+#progress{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--sky),#64d998);transition:width .45s cubic-bezier(.16,.84,.44,1)}
+#sectionName{position:fixed;top:26px;left:40px;z-index:100;color:rgba(210,225,245,.5);font-size:14px;font-weight:850;letter-spacing:.2em;text-transform:uppercase;mix-blend-mode:difference}
+#pageNo{position:fixed;top:26px;right:40px;z-index:100;color:rgba(210,225,245,.5);font-size:14px;font-weight:850;letter-spacing:.2em;mix-blend-mode:difference}
+.nav{position:fixed;right:34px;bottom:30px;z-index:10002;display:flex;gap:10px}
+.nav button{height:52px;border-radius:16px;border:1px solid rgba(255,255,255,.16);cursor:pointer;font-weight:800;transition:.2s;backdrop-filter:blur(14px);color:#fff}
+#prevBtn{width:52px;background:rgba(10,16,29,.68);color:#c7d5e8;font-size:23px}
+#nextBtn{min-width:150px;padding:0 22px;background:linear-gradient(120deg,var(--blue),#248fd0);color:#fff;border:0;box-shadow:0 14px 35px rgba(37,99,235,.32);font-size:18px}
+.nav button:hover{transform:translateY(-2px)}
+
+/* ===== COVER ===== */
+.cover{justify-content:center;display:none;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center}
+.cover.active{display:grid}
+.cover:after{content:"";position:absolute;width:640px;height:640px;border-radius:50%;right:-210px;top:-200px;border:1px solid rgba(56,189,248,.18);box-shadow:0 0 0 78px rgba(56,189,248,.035),0 0 0 156px rgba(56,189,248,.018)}
+.cover-copy{position:relative;z-index:4}
+.cover h1{font-size:92px;max-width:720px;margin-top:22px}
+.cover .lead{font-size:27px;max-width:560px}
+.cover .micro{margin-top:52px;color:#73839d;font-size:16px;letter-spacing:.14em;font-weight:700}
+.cover-art{position:relative;z-index:3;justify-self:center;width:520px;height:520px}
+
+/* ===== ANIMATION STAGE ===== */
+.stage-wrap{position:relative;width:100%;height:100%;background:radial-gradient(circle at 50% 42%,#101e37 0,#0a1120 55%,#05080f 100%);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.anim-title{position:absolute;top:64px;left:0;right:0;text-align:center;z-index:6}
+.anim-title .k{color:var(--sky);font-size:17px;font-weight:800;letter-spacing:.34em;text-transform:uppercase}
+.anim-title h2{font-size:56px;margin-top:14px;color:#eaf3ff}
+.anim-sub{position:absolute;bottom:78px;left:0;right:0;text-align:center;color:#95a7c2;font-size:23px;font-weight:500;z-index:6;line-height:1.5}
+.anim-hint{position:absolute;bottom:30px;left:0;right:0;text-align:center;color:rgba(150,170,200,.55);font-size:15px;letter-spacing:.08em;z-index:6}
+.loopbadge{position:absolute;top:30px;right:34px;z-index:6;display:flex;align-items:center;gap:8px;color:#7f93b4;font-size:13px;font-weight:800;letter-spacing:.18em}
+.loopbadge i{width:8px;height:8px;border-radius:50%;background:var(--sky);box-shadow:0 0 12px var(--sky);animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.scene{position:relative;width:820px;height:560px}
+
+/* ===== CONTENT COMPONENTS ===== */
+.body{margin-top:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:44px}
+.card{border:1px solid var(--line);border-radius:22px;padding:38px 40px;background:rgba(255,255,255,.03);position:relative;overflow:hidden}
+.card .tag{display:inline-block;font-size:16px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--sky);margin-bottom:16px}
+.card h3{font-size:40px;margin-bottom:14px}
+.card p{font-size:22px;line-height:1.5;color:#aebdd3}
+.card.a{border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.06)}
+.card.b{border-color:rgba(240,106,115,.36);background:rgba(240,106,115,.05)}
+.card.b .tag{color:var(--red)}
+.card.g{border-color:rgba(44,175,104,.4);background:rgba(44,175,104,.07)}
+.card.g .tag{color:var(--green)}
+
+.flow{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap}
+.pill{padding:9px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font-size:19px;font-weight:700;color:#dbe6f6}
+.pill.on{background:var(--sky);border-color:var(--sky);color:#04121f;font-weight:800}
+.arrow{color:var(--sky);font-size:24px;font-weight:900}
+
+/* proposition slide */
+.prop{justify-content:center}
+.prop h2{font-size:82px;line-height:1.16;max-width:1240px}
+.prop .u{position:relative;white-space:nowrap}
+.prop .u:after{content:"";position:absolute;left:0;right:0;bottom:2px;height:16px;background:rgba(56,189,248,.28);z-index:-1;border-radius:8px}
+.prop .r:after{background:rgba(240,106,115,.28)}
+
+/* six grid */
+.six{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px}
+.obj{border:1px solid var(--line);border-radius:20px;padding:30px 30px 32px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:12px;min-height:186px}
+.obj .no{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:850;color:#04121f;background:linear-gradient(135deg,var(--sky),#4f9be6)}
+.obj h3{font-size:33px}
+.obj p{font-size:19px;color:#94a4bc;line-height:1.45}
+
+/* single objection slide */
+.osolo{display:grid;grid-template-columns:1.18fr .82fr;gap:42px;align-items:stretch;padding-top:90px}
+.oleft{display:flex;flex-direction:column;justify-content:center;gap:26px}
+.oid{display:flex;align-items:center;gap:26px}
+.oid .no{flex:none;width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:850;color:#04121f;background:linear-gradient(135deg,var(--sky),#4f9be6);box-shadow:0 18px 44px rgba(56,189,248,.3)}
+.oid h2{font-size:58px;line-height:1}
+.oid .quote{margin-top:12px;font-size:22px;line-height:1.4;color:#9fb0c8;border-left:3px solid var(--red);padding-left:18px}
+.hbox{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.03);padding:32px 36px}
+.hbox .tag{color:var(--green);font-size:16px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.hbox h3{font-size:31px;margin:12px 0 22px}
+.hlist{display:flex;flex-direction:column;gap:15px}
+.hitem{display:flex;gap:16px;align-items:flex-start}
+.hitem .dot{flex:none;margin-top:6px;width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(44,175,104,.16)}
+.hitem b{display:block;font-size:22px;color:#eaf3ff;margin-bottom:3px;font-weight:800}
+.hitem span{font-size:19px;color:#a4b4cb;line-height:1.4}
+.vtags{display:flex;gap:10px;margin-top:22px}
+.vtags span{padding:7px 15px;border-radius:999px;font-size:16px;font-weight:800;border:1px solid rgba(44,175,104,.4);color:#7fe0a6;background:rgba(44,175,104,.08)}
+/* objection right animation panel */
+.oanim{position:relative;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:radial-gradient(circle at 50% 36%,rgba(56,189,248,.08),rgba(255,255,255,.015) 68%);display:flex;align-items:center;justify-content:center}
+.olabel{position:absolute;top:22px;left:24px;z-index:3;font-size:13px;font-weight:850;letter-spacing:.22em;text-transform:uppercase;color:var(--sky)}
+.oanim svg{width:100%;height:100%;display:block}
+.oanim text{font-family:var(--font)}
+/* shared objection anim keyframes */
+@keyframes oRise{0%,12%{transform:translateY(0);opacity:.5}30%,72%{transform:translateY(-18px);opacity:1}92%,100%{transform:translateY(0);opacity:.5}}
+@keyframes oRing{0%,15%{transform:scale(.6);opacity:0}35%{opacity:.9}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+@keyframes oDrop{0%{transform:translateY(-60px);opacity:0}25%{opacity:1}60%,100%{transform:translateY(0);opacity:1}}
+@keyframes oDraw{0%{stroke-dashoffset:300}45%{stroke-dashoffset:0}85%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
+@keyframes oTravel{0%{offset-distance:0%}100%{offset-distance:100%}}
+@keyframes oPop{0%,40%{transform:scale(0);opacity:0}55%{transform:scale(1.2);opacity:1}70%,100%{transform:scale(1);opacity:1}}
+@keyframes oFill{0%,10%{width:0}45%,100%{width:var(--w,80%)}}
+@keyframes oPulse2{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.08);opacity:1}}
+@keyframes oSlideUp{0%{transform:translateY(70px);opacity:0}35%{opacity:1}70%,100%{transform:translateY(0);opacity:1}}
+@keyframes oGlow{0%,100%{opacity:.25}50%{opacity:.75}}
+@keyframes oDash{to{stroke-dashoffset:-40}}
+@keyframes oFade{0%,20%{opacity:0}45%{opacity:1}80%{opacity:1}100%{opacity:0}}
+
+/* conclusion */
+.concl{justify-content:center;align-items:center;text-align:center}
+.concl h2{font-size:78px;max-width:1180px}
+.concl .duo{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:60px;width:1180px}
+.cbox{border-radius:26px;padding:48px 40px;background:rgba(255,255,255,.55);border:1px solid rgba(7,21,13,.1)}
+.cbox .sym{font-size:76px;font-weight:850;line-height:1}
+.cbox h3{font-size:40px;margin:20px 0 12px}
+.cbox p{font-size:22px;color:#3f5a4c;line-height:1.5}
+
+/* finish */
+.finish{justify-content:center;align-items:center;text-align:center}
+.finish h2{font-size:76px;max-width:1200px}
+.finish .lead{max-width:820px;margin-left:auto;margin-right:auto}
+.finish .sign{margin-top:54px;color:#73839d;font-size:16px;letter-spacing:.24em;font-weight:800}
+</style>
+</head>
+<body>
+<div id="progressTrack"><div id="progress"></div></div>
+<div id="sectionName"></div>
+<div id="pageNo"></div>
+
+<div id="viewport">
+  <div id="deck">
+
+    <!-- 1. COVER -->
+    <section class="slide cover dark active" data-section="Opening">
+      <div class="cover-copy">
+        <span class="eyebrow">Presence Education · Sales</span>
+        <h1>오브젝션<br><span class="grad">핸들링</span></h1>
+        <p class="lead">거절은 잠긴 문이 아니라,<br>상대의 마음을 여는 <b class="gold">열쇠</b>입니다.</p>
+        <p class="micro">OBJECTION HANDLING · FIELD FUNDRAISING</p>
+      </div>
+      <div class="cover-art">
+        <svg viewBox="0 0 520 520" width="520" height="520">
+          <defs>
+            <linearGradient id="kpanel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c3652"/><stop offset="100%" stop-color="#141b2c"/></linearGradient>
+            <linearGradient id="kbrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbeec2"/><stop offset="42%" stop-color="#e6c26e"/><stop offset="100%" stop-color="#b2842b"/></linearGradient>
+            <radialGradient id="kwarm" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe8b4"/><stop offset="45%" stop-color="#ff9f4d"/><stop offset="100%" stop-color="rgba(255,120,40,0)"/></radialGradient>
+            <radialGradient id="kbloomg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="rgba(255,247,226,.95)"/><stop offset="100%" stop-color="rgba(255,215,150,0)"/></radialGradient>
+            <filter id="kgrain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+            <mask id="kmask"><rect x="80" y="64" width="360" height="392" rx="30" fill="#fff"/><circle cx="260" cy="232" r="40" fill="#000"/><path d="M246,246 L274,246 L286,338 L234,338 Z" fill="#000"/></mask>
+          </defs>
+
+          <ellipse cx="260" cy="474" rx="150" ry="20" fill="rgba(0,0,0,.4)" filter="url(#kgrain)" opacity=".0"/>
+          <ellipse cx="260" cy="470" rx="150" ry="20" fill="rgba(0,0,0,.45)"/>
+
+          <!-- warm light behind keyhole -->
+          <circle class="k-light" cx="260" cy="252" r="140" fill="url(#kwarm)"/>
+
+          <!-- lock face panel with keyhole cut -->
+          <rect x="80" y="64" width="360" height="392" rx="30" fill="url(#kpanel)" mask="url(#kmask)"/>
+          <rect x="80" y="64" width="360" height="150" rx="30" fill="rgba(255,255,255,.05)" mask="url(#kmask)"/>
+          <rect x="98" y="82" width="324" height="356" rx="22" fill="none" stroke="rgba(232,200,119,.22)" stroke-width="1.4"/>
+          <circle cx="260" cy="232" r="40" fill="none" stroke="url(#kbrass)" stroke-width="2" opacity=".55"/>
+          <path d="M246,246 L274,246 L286,338 L234,338 Z" fill="none" stroke="url(#kbrass)" stroke-width="2" opacity=".55"/>
+          <rect x="80" y="64" width="360" height="392" rx="30" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1.5"/>
+          <rect x="80" y="64" width="360" height="392" filter="url(#kgrain)" opacity=".06" mask="url(#kmask)"/>
+
+          <!-- unlock light burst -->
+          <g class="k-rays" stroke="url(#kbrass)" stroke-width="2.6" stroke-linecap="round">
+            <line x1="260" y1="240" x2="260" y2="172"/><line x1="260" y1="240" x2="260" y2="308"/>
+            <line x1="260" y1="240" x2="192" y2="240"/><line x1="260" y1="240" x2="328" y2="240"/>
+            <line x1="260" y1="240" x2="212" y2="192"/><line x1="260" y1="240" x2="308" y2="192"/>
+            <line x1="260" y1="240" x2="212" y2="288"/><line x1="260" y1="240" x2="308" y2="288"/>
+          </g>
+          <circle class="k-bloom" cx="260" cy="240" r="66" fill="url(#kbloomg)"/>
+
+          <!-- ===== KEY (gold) : slides in and turns ===== -->
+          <g fill="url(#kbrass)">
+            <path d="M262,231 L218,231 L218,268 L232,268 L232,251 L246,251 L246,268 L262,268 Z"/>
+            <rect x="260" y="231" width="150" height="17" rx="4"/>
+            <rect x="266" y="233" width="132" height="4" rx="2" fill="rgba(255,255,255,.45)" class="k-sheen"/>
+            <circle cx="442" cy="240" r="30" fill="none" stroke="url(#kbrass)" stroke-width="15"/>
+            <circle cx="442" cy="240" r="30" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+            <animateTransform attributeName="transform" type="translate" additive="sum" values="160,0; 0,0; 0,0; 0,0; 160,0" keyTimes="0;0.22;0.34;0.9;1" dur="7s" calcMode="spline" keySplines="0.5 0 0.1 1;0.5 0 0.5 1;0 0 1 1;0.5 0 0.1 1" repeatCount="indefinite"/>
+            <animateTransform attributeName="transform" type="rotate" additive="sum" values="0 256 246; 0 256 246; 30 256 246; 30 256 246; 0 256 246" keyTimes="0;0.34;0.46;0.9;1" dur="7s" calcMode="spline" keySplines="0 0 1 1;0.5 0 0.1 1;0 0 1 1;0.5 0 0.5 1" repeatCount="indefinite"/>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 2. ANIMATION STAGE -->
+    <section class="slide stage black" data-section="Motion" data-anim="1">
+      <div class="stage-wrap">
+        <div class="loopbadge"><i></i>LOOP</div>
+        <div class="anim-title">
+          <div class="k">Value Through Conversation</div>
+          <h2>대화를 통한 <span class="grad">가치 결정</span></h2>
+        </div>
+        <svg class="scene" viewBox="0 0 820 560">
+          <defs>
+            <linearGradient id="ln" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#2caf68"/></linearGradient>
+            <radialGradient id="core2" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#2563eb"/></radialGradient>
+            <filter id="glow2"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <circle class="ring r1" cx="150" cy="280" r="60" fill="none" stroke="rgba(56,189,248,.5)" stroke-width="2"/>
+          <circle class="ring r2" cx="150" cy="280" r="60" fill="none" stroke="rgba(44,175,104,.4)" stroke-width="2"/>
+          <circle class="ring r3" cx="150" cy="280" r="60" fill="none" stroke="rgba(143,209,79,.3)" stroke-width="2"/>
+          <path class="branch b1" d="M150,280 C320,280 380,120 560,120" fill="none" stroke="url(#ln)" stroke-width="3"/>
+          <path class="branch b2" d="M150,280 C320,280 380,215 560,215" fill="none" stroke="url(#ln)" stroke-width="3"/>
+          <path class="branch b3" d="M150,280 C320,280 380,345 560,345" fill="none" stroke="url(#ln)" stroke-width="3"/>
+          <path class="branch b4" d="M150,280 C320,280 380,440 560,440" fill="none" stroke="url(#ln)" stroke-width="3"/>
+          <g class="opt o1"><circle cx="560" cy="120" r="16" fill="#38bdf8"/><text x="592" y="129" font-size="25" font-weight="800" fill="#e2edfb">정보</text></g>
+          <g class="opt o2"><circle cx="560" cy="215" r="16" fill="#2caf68"/><text x="592" y="224" font-size="25" font-weight="800" fill="#e2edfb">가치</text></g>
+          <g class="opt o3"><circle cx="560" cy="345" r="16" fill="#8fd14f"/><text x="592" y="354" font-size="25" font-weight="800" fill="#e2edfb">신념</text></g>
+          <g class="opt o4"><circle cx="560" cy="440" r="16" fill="#e8c877"/><text x="592" y="449" font-size="25" font-weight="800" fill="#e2edfb">선택</text></g>
+          <path class="loop" d="M690,180 a115,150 0 1 1 -2,0" fill="none" stroke="rgba(143,209,79,.55)" stroke-width="2.5" stroke-dasharray="6 10"/>
+          <polygon class="loop" points="688,175 700,182 686,190" fill="#8fd14f"/>
+          <circle class="core-pulse" cx="150" cy="280" r="54" fill="url(#core2)" filter="url(#glow2)"/>
+          <text x="150" y="290" text-anchor="middle" font-size="28" font-weight="850" fill="#04121f">대화</text>
+        </svg>
+        <div class="anim-sub">어떻게 말하느냐에 따라 <b class="sky">선택지가 늘어나고</b>,<br>결정으로 이어지는 <b class="gr">가치가 넓어집니다.</b></div>
+        <div class="anim-hint">다음 내용으로 넘어가려면 &nbsp;다음 →&nbsp; 을 누르세요</div>
+      </div>
+    </section>
+
+    <!-- 3. CLOSE STRUCTURE -->
+    <section class="slide dark" data-section="Close">
+      <div class="kicker">Close = Sales + Objection</div>
+      <h2>클로즈는 <span class="grad">두 갈래</span>로 나뉜다</h2>
+      <p class="lead">거절의 신호를 읽고, 그에 맞는 길을 선택하는 것에서 핸들링이 시작됩니다.</p>
+      <div class="two">
+        <div class="card a">
+          <span class="tag">① Yes … But</span>
+          <h3>우리의 핸들링 대상</h3>
+          <p>“하고 싶긴 한데…” &nbsp;“~이유 때문에…”<br>망설임의 <b class="sky">진짜 이유</b>에 대응해 결정을 돕는 구간.</p>
+        </div>
+        <div class="card b">
+          <span class="tag">② No! Sorry~</span>
+          <h3>빠른 퀄리파잉 + 마지막 10초</h3>
+          <p>과감히 정리하되 <b class="rd">좋은 말과 인상</b>을 남기고,<br>여지를 열어 <b>Re-Close</b>로 연결한다.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PROPOSITION -->
+    <section class="slide prop black" data-section="Principle">
+      <div class="kicker" style="justify-content:center;margin-bottom:34px">The Core</div>
+      <h2 class="prop-h2" style="text-align:center;margin:0 auto">
+        <span class="pl pl1">"<span class="u u1">오브젝션</span>" 없는 "<span class="u u2">핸들링</span>" 없고,</span>
+        <span class="pl pl2">"<span class="u u3 r">리클로즈</span>" 없는 <span class="grad">세일즈</span> 없다.</span>
+      </h2>
+      <p class="lead prop-lead" style="text-align:center;max-width:1080px;margin:30px auto 0">거절을 피하지 않아야 핸들링이고, 리클로즈까지 가야 세일즈가 됩니다.</p>
+    </section>
+
+    <!-- 5. DEFINITION -->
+    <section class="slide dark def" data-section="Definition" data-steps="2">
+      <div class="kicker">Definition</div>
+      <h2>두 단어를 <span class="grad">정확히</span> 정의한다</h2>
+      <div class="def-grid">
+        <div class="def-col">
+          <div class="card b def-card" id="cardObj"><span class="cring"></span>
+            <span class="tag">Objection</span>
+            <h3>오브젝션</h3>
+            <p>아직 해소되지 않은 거절 의견과 우려사항.</p>
+          </div>
+          <div class="def-explain xObj">
+            <svg viewBox="0 0 640 280" width="640" height="280">
+              <circle class="xob-pulse" cx="150" cy="138" r="70" fill="rgba(240,106,115,.12)" stroke="#f06a73" stroke-width="2.5"/>
+              <text x="150" y="170" text-anchor="middle" font-size="86" font-weight="850" fill="#f06a73">?</text>
+              <text x="150" y="250" text-anchor="middle" font-size="22" font-weight="700" fill="#c9d7ea">해소되지 않은 물음표</text>
+              <g class="xob-c1"><rect x="300" y="50" width="290" height="54" rx="27" fill="rgba(240,106,115,.12)" stroke="#f06a73" stroke-width="1.5"/><text x="445" y="85" text-anchor="middle" font-size="24" font-weight="800" fill="#f7a9af">이미 후원하고 있어요</text></g>
+              <g class="xob-c2"><rect x="322" y="115" width="246" height="54" rx="27" fill="rgba(240,106,115,.12)" stroke="#f06a73" stroke-width="1.5"/><text x="445" y="150" text-anchor="middle" font-size="24" font-weight="800" fill="#f7a9af">금액이 부담돼요</text></g>
+              <g class="xob-c3"><rect x="300" y="180" width="290" height="54" rx="27" fill="rgba(240,106,115,.12)" stroke="#f06a73" stroke-width="1.5"/><text x="445" y="215" text-anchor="middle" font-size="24" font-weight="800" fill="#f7a9af">단체를 잘 모르겠어요</text></g>
+            </svg>
+          </div>
+        </div>
+        <div class="def-col">
+          <div class="card g def-card" id="cardHan"><span class="cring"></span>
+            <span class="tag">Handling</span>
+            <h3>핸들링</h3>
+            <p>정보·가치·신념으로 그 물음표를 지우는 과정.</p>
+          </div>
+          <div class="def-explain xHan">
+            <svg viewBox="0 0 640 280" width="640" height="280">
+              <g class="xha-t1"><rect x="40" y="50" width="180" height="52" rx="26" fill="rgba(56,189,248,.14)" stroke="#38bdf8" stroke-width="1.5"/><text x="130" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="#bfe4fb">정보</text></g>
+              <g class="xha-t2"><rect x="40" y="114" width="180" height="52" rx="26" fill="rgba(44,175,104,.14)" stroke="#2caf68" stroke-width="1.5"/><text x="130" y="148" text-anchor="middle" font-size="24" font-weight="800" fill="#9bedbf">가치</text></g>
+              <g class="xha-t3"><rect x="40" y="178" width="180" height="52" rx="26" fill="rgba(143,209,79,.14)" stroke="#8fd14f" stroke-width="1.5"/><text x="130" y="212" text-anchor="middle" font-size="24" font-weight="800" fill="#d7f0b3">신념</text></g>
+              <path d="M250,140 L332,140 M320,128 L334,140 L320,152" fill="none" stroke="#6a809c" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="474" cy="138" r="72" fill="rgba(44,175,104,.10)" stroke="#2caf68" stroke-width="2.5"/>
+              <text class="xha-q" x="474" y="170" text-anchor="middle" font-size="86" font-weight="850" fill="#f06a73">?</text>
+              <path class="xha-check" d="M440,140 l22,24 l46,-54" fill="none" stroke="#2caf68" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="474" y="250" text-anchor="middle" font-size="22" font-weight="700" fill="#c9d7ea">물음표를 지우는 과정</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="cursor" id="defCursor"><svg viewBox="0 0 24 24" width="44" height="44"><path d="M3,2 L3,20 L8,15.5 L11.5,22.5 L14.5,21 L11,14 L18,14 Z" fill="#ffffff" stroke="#0a0e16" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+      <div class="def-hint">다음 &rarr; 을 누르면 하나씩 눌러 살펴봅니다</div>
+    </section>
+
+    <!-- 6. SIX OBJECTIONS OVERVIEW -->
+    <section class="slide dark" data-section="Map">
+      <div class="kicker">주요 오브젝션 · 6</div>
+      <h2>현장에서 만나는 <span class="grad">여섯 가지</span></h2>
+      <p class="lead">표면은 달라도, 모든 핸들링은 결국 <b class="sky">가치 · 신념</b>으로 돌아옵니다.</p>
+      <div class="six">
+        <div class="obj"><div class="no">1</div><h3>타단체</h3><p>“이미 다른 단체를 후원 중이에요.”</p></div>
+        <div class="obj"><div class="no">2</div><h3>금전부담</h3><p>“금액이 부담스러워요.”</p></div>
+        <div class="obj"><div class="no">3</div><h3>일시희망</h3><p>“한 번만(일시로) 후원할게요.”</p></div>
+        <div class="obj"><div class="no">4</div><h3>개인정보</h3><p>“개인정보를 남기기 꺼려져요.”</p></div>
+        <div class="obj"><div class="no">5</div><h3>단체불신</h3><p>“단체를 믿기 어려워요.”</p></div>
+        <div class="obj"><div class="no">6</div><h3>국내만</h3><p>“국내를 먼저 돕고 싶어요.”</p></div>
+      </div>
+    </section>
+
+    <!-- 7. ① 타단체 -->
+    <section class="slide osolo dark" data-section="Objection 01">
+      <div class="oleft">
+        <div class="oid">
+          <div class="no">1</div>
+          <div><h2>타단체</h2><p class="quote">"이미 다른 단체를 후원하고 있어요."</p></div>
+        </div>
+        <div class="hbox">
+          <span class="tag">Handling</span>
+          <h3>옥스팜만의 '구분'을 만든다</h3>
+          <div class="hlist">
+            <div class="hitem"><span class="dot"></span><div><b>비교가 아닌 구분</b><span>옥스팜의 특징으로 컴페어 — 무엇이 다른지 한 문장으로.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>정보·가치·신념으로 차별점</b><span>활동 방식·투명성·철학의 차이를 상대의 언어로.</span></div></div>
+          </div>
+          <div class="vtags"><span>정보</span><span>가치</span><span>신념</span></div>
+        </div>
+      </div>
+      <div class="oanim">
+        <span class="olabel">구분 · Compare</span>
+        <svg viewBox="0 0 440 470" width="440" height="470">
+          <defs><radialGradient id="q1g" cx="50%" cy="40%" r="66%"><stop offset="0" stop-color="#8ce6ad"/><stop offset="100%" stop-color="#1f9b5c"/></radialGradient></defs>
+          <line x1="72" y1="205" x2="368" y2="205" stroke="rgba(255,255,255,.07)" stroke-width="2"/>
+          <circle cx="96" cy="205" r="26" fill="#2b3448"/>
+          <circle cx="262" cy="205" r="26" fill="#2b3448"/>
+          <circle cx="346" cy="205" r="26" fill="#2b3448"/>
+          <circle cx="176" cy="205" r="41" fill="none" stroke="#2caf68" stroke-width="2" style="transform-box:fill-box;transform-origin:center;animation:oRing 3.6s ease-out infinite"/>
+          <g style="transform-box:fill-box;transform-origin:center;animation:oRise 3.6s ease-in-out infinite">
+            <circle cx="176" cy="205" r="33" fill="url(#q1g)"/>
+            <path d="M162,205 l10,11 l19,-22" fill="none" stroke="#06280f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <text x="220" y="392" text-anchor="middle" font-size="30" font-weight="800" fill="#d3deee">여러 단체 속, <tspan fill="#7fe0a6">하나의 기준</tspan></text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 8. ② 금전부담 -->
+    <section class="slide osolo dark" data-section="Objection 02">
+      <div class="oleft">
+        <div class="oid">
+          <div class="no">2</div>
+          <div><h2>금전부담</h2><p class="quote">"매달 내는 금액이 부담스러워요."</p></div>
+        </div>
+        <div class="hbox">
+          <span class="tag">Handling</span>
+          <h3>부담을 '체감 단위'로 낮춘다</h3>
+          <div class="hlist">
+            <div class="hitem"><span class="dot"></span><div><b>하루 단위로 환산</b><span>월 금액이 아닌 하루 커피 한 잔 수준으로.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>지속 가능한 금액으로</b><span>무리한 액수보다, 오래 이어질 선택이 더 큰 임팩트.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>금액 대비 가치</b><span>이 돈이 현장에서 만드는 변화를 구체적 장면으로.</span></div></div>
+          </div>
+          <div class="vtags"><span>정보</span><span>가치</span></div>
+        </div>
+      </div>
+      <div class="oanim">
+        <span class="olabel">하루 한 잔</span>
+        <svg viewBox="0 0 440 470" width="440" height="470">
+          <defs><radialGradient id="q2g" cx="50%" cy="36%" r="68%"><stop offset="0" stop-color="#f7dd97"/><stop offset="100%" stop-color="#cf9a1f"/></radialGradient></defs>
+          <g style="transform-box:fill-box;transform-origin:center;animation:oPulse2 3s ease-in-out infinite">
+            <circle cx="220" cy="150" r="58" fill="url(#q2g)"/>
+            <text x="220" y="172" text-anchor="middle" font-size="52" font-weight="850" fill="#5a3d06">₩</text>
+          </g>
+          <path d="M220,222 l0,40 M203,250 l17,15 l17,-15" fill="none" stroke="#41597a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="152" cy="322" r="24" fill="url(#q2g)" style="transform-box:fill-box;transform-origin:center;animation:oDrop 3.4s ease-out infinite"/>
+          <circle cx="220" cy="322" r="24" fill="url(#q2g)" style="transform-box:fill-box;transform-origin:center;animation:oDrop 3.4s ease-out infinite .3s"/>
+          <circle cx="288" cy="322" r="24" fill="url(#q2g)" style="transform-box:fill-box;transform-origin:center;animation:oDrop 3.4s ease-out infinite .6s"/>
+          <text x="220" y="408" text-anchor="middle" font-size="30" font-weight="800" fill="#d3deee">큰 부담도, 나누면 <tspan fill="#f2cf7e">가볍게</tspan></text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 9. ③ 일시희망 -->
+    <section class="slide osolo dark" data-section="Objection 03">
+      <div class="oleft">
+        <div class="oid">
+          <div class="no">3</div>
+          <div><h2>일시희망</h2><p class="quote">"정기 말고, 한 번만 후원할게요."</p></div>
+        </div>
+        <div class="hbox">
+          <span class="tag">Handling</span>
+          <h3>지속의 필요를 이해시킨다</h3>
+          <div class="hlist">
+            <div class="hitem"><span class="dot"></span><div><b>소식지 — 옥스팜의 미래</b><span>정기 후원자가 함께 그려가는 변화의 흐름을.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>일시로는 해소되지 않는다</b><span>근본 문제는 한 번의 지원으로 끝나지 않는다.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>지속의 중요성</b><span>꾸준함이 만드는 구조적 변화의 가치를 강조.</span></div></div>
+          </div>
+          <div class="vtags"><span>가치</span><span>신념</span></div>
+        </div>
+      </div>
+      <div class="oanim">
+        <span class="olabel">일시 → 지속</span>
+        <svg viewBox="0 0 440 470" width="440" height="470">
+          <defs><linearGradient id="q3l" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f06a73"/><stop offset="1" stop-color="#8fd14f"/></linearGradient></defs>
+          <circle cx="72" cy="205" r="20" fill="#f06a73"/>
+          <text x="72" y="256" text-anchor="middle" font-size="21" font-weight="800" fill="#f2a3aa">일시</text>
+          <line x1="102" y1="205" x2="360" y2="205" stroke="url(#q3l)" stroke-width="6" stroke-dasharray="5 12" style="animation:oDash 1.4s linear infinite"/>
+          <polygon points="356,191 380,205 356,219" fill="#8fd14f"/>
+          <circle cx="150" cy="205" r="13" fill="#8fd14f" style="transform-box:fill-box;transform-origin:center;animation:oPop 3s ease-out infinite"/>
+          <circle cx="204" cy="205" r="13" fill="#8fd14f" style="transform-box:fill-box;transform-origin:center;animation:oPop 3s ease-out infinite .3s"/>
+          <circle cx="258" cy="205" r="13" fill="#8fd14f" style="transform-box:fill-box;transform-origin:center;animation:oPop 3s ease-out infinite .6s"/>
+          <circle cx="312" cy="205" r="13" fill="#8fd14f" style="transform-box:fill-box;transform-origin:center;animation:oPop 3s ease-out infinite .9s"/>
+          <text x="300" y="256" text-anchor="middle" font-size="21" font-weight="800" fill="#c6e59a">지속</text>
+          <text x="220" y="392" text-anchor="middle" font-size="30" font-weight="800" fill="#d3deee">한 번이 아니라, <tspan fill="#c6e59a">계속</tspan> 이어질 때</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 10. ④ 개인정보 -->
+    <section class="slide osolo dark" data-section="Objection 04">
+      <div class="oleft">
+        <div class="oid">
+          <div class="no">4</div>
+          <div><h2>개인정보</h2><p class="quote">"개인정보를 남기는 게 꺼려져요."</p></div>
+        </div>
+        <div class="hbox">
+          <span class="tag">Handling</span>
+          <h3>안전한 관리 체계를 안내한다</h3>
+          <div class="hlist">
+            <div class="hitem"><span class="dot"></span><div><b>도너스(Donus) 시스템</b><span>후원자 정보는 공식 체계에서 안전하게 관리된다.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>목적과 범위를 투명하게</b><span>무엇을·왜 받는지 먼저 설명해 신뢰의 근거를.</span></div></div>
+          </div>
+          <div class="vtags"><span>정보</span><span>신념</span></div>
+        </div>
+      </div>
+      <div class="oanim">
+        <span class="olabel">안전 · 보호</span>
+        <svg viewBox="0 0 440 470" width="440" height="470">
+          <defs><linearGradient id="q4s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(56,189,248,.16)"/><stop offset="1" stop-color="rgba(56,189,248,.03)"/></linearGradient></defs>
+          <path d="M220,80 L318,118 L318,236 C318,322 270,366 220,392 C170,366 122,322 122,236 L122,118 Z" fill="url(#q4s)" stroke="#38bdf8" stroke-width="3" style="animation:oGlow 3s ease-in-out infinite"/>
+          <g style="transform-box:fill-box;transform-origin:center;animation:oSlideUp 3.4s ease-out infinite">
+            <path d="M197,214 v-11 a23,23 0 0 1 46,0 v11" fill="none" stroke="#7dd3fc" stroke-width="4"/>
+            <rect x="184" y="214" width="72" height="56" rx="10" fill="#38bdf8"/>
+            <circle cx="220" cy="238" r="8" fill="#0d1424"/><rect x="216" y="242" width="8" height="16" rx="3" fill="#0d1424"/>
+          </g>
+          <text x="220" y="428" text-anchor="middle" font-size="30" font-weight="800" fill="#d3deee">남기는 정보, <tspan fill="#7dd3fc">안전하게</tspan></text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 11. ⑤ 단체불신 -->
+    <section class="slide osolo dark" data-section="Objection 05">
+      <div class="oleft">
+        <div class="oid">
+          <div class="no">5</div>
+          <div><h2>단체불신</h2><p class="quote">"단체를 정말 믿어도 될지 모르겠어요."</p></div>
+        </div>
+        <div class="hbox">
+          <span class="tag">Handling</span>
+          <h3>증거로 신뢰를 세운다</h3>
+          <div class="hlist">
+            <div class="hitem"><span class="dot"></span><div><b>옥스팜 공식 홈페이지</b><span>직접 확인할 수 있는 공개된 근거로.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>후원금 사용 내역</b><span>어디에·어떻게 쓰이는지 투명하게.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>실제 후원자 스토리</b><span>사람의 경험이 가장 강한 신뢰의 증거.</span></div></div>
+          </div>
+          <div class="vtags"><span>정보</span><span>가치</span><span>신념</span></div>
+        </div>
+      </div>
+      <div class="oanim">
+        <span class="olabel">증거 · 신뢰</span>
+        <svg viewBox="0 0 440 470" width="440" height="470">
+          <defs><linearGradient id="q5b" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2caf68"/><stop offset="1" stop-color="#43c481"/></linearGradient></defs>
+          <text x="70" y="104" font-size="23" font-weight="800" fill="#d3deee">옥스팜 홈</text>
+          <rect x="70" y="120" width="228" height="26" rx="13" fill="rgba(255,255,255,.06)"/>
+          <rect x="70" y="120" height="26" rx="13" fill="url(#q5b)" width="178" style="--w:178px;animation:oFill 3.8s ease-out infinite"/>
+          <g style="transform-box:fill-box;transform-origin:center;animation:oPop 3.8s ease-out infinite .5s"><circle cx="320" cy="133" r="18" fill="#2caf68"/><path d="M311,133 l6,7 l12,-15" fill="none" stroke="#06280f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <text x="70" y="206" font-size="23" font-weight="800" fill="#d3deee">후원금 사용</text>
+          <rect x="70" y="222" width="228" height="26" rx="13" fill="rgba(255,255,255,.06)"/>
+          <rect x="70" y="222" height="26" rx="13" fill="url(#q5b)" width="178" style="--w:178px;animation:oFill 3.8s ease-out infinite .35s"/>
+          <g style="transform-box:fill-box;transform-origin:center;animation:oPop 3.8s ease-out infinite .85s"><circle cx="320" cy="235" r="18" fill="#2caf68"/><path d="M311,235 l6,7 l12,-15" fill="none" stroke="#06280f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <text x="70" y="308" font-size="23" font-weight="800" fill="#d3deee">후원자 스토리</text>
+          <rect x="70" y="324" width="228" height="26" rx="13" fill="rgba(255,255,255,.06)"/>
+          <rect x="70" y="324" height="26" rx="13" fill="url(#q5b)" width="178" style="--w:178px;animation:oFill 3.8s ease-out infinite .7s"/>
+          <g style="transform-box:fill-box;transform-origin:center;animation:oPop 3.8s ease-out infinite 1.2s"><circle cx="320" cy="337" r="18" fill="#2caf68"/><path d="M311,337 l6,7 l12,-15" fill="none" stroke="#06280f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <text x="220" y="414" text-anchor="middle" font-size="30" font-weight="800" fill="#d3deee">보여줄수록, <tspan fill="#7fe0a6">믿는다</tspan></text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 12. ⑥ 국내만 -->
+    <section class="slide osolo dark" data-section="Objection 06">
+      <div class="oleft">
+        <div class="oid">
+          <div class="no">6</div>
+          <div><h2>국내만</h2><p class="quote">"국내부터 먼저 돕고 싶어요."</p></div>
+        </div>
+        <div class="hbox">
+          <span class="tag">Handling</span>
+          <h3>연결의 접점을 보여준다</h3>
+          <div class="hlist">
+            <div class="hitem"><span class="dot"></span><div><b>국내 연관 자료</b><span>옥스팜 활동이 국내와 어떻게 이어지는지 자료로.</span></div></div>
+            <div class="hitem"><span class="dot"></span><div><b>대립을 넘어 연결로</b><span>'어디를'이 아니라 '함께 만드는 변화'로 관점을.</span></div></div>
+          </div>
+          <div class="vtags"><span>정보</span><span>가치</span></div>
+        </div>
+      </div>
+      <div class="oanim">
+        <span class="olabel">연결 · Connect</span>
+        <svg viewBox="0 0 440 470" width="440" height="470">
+          <defs>
+            <linearGradient id="q6l" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#2caf68"/></linearGradient>
+            <radialGradient id="q6a" cx="50%" cy="40%" r="66%"><stop offset="0" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#2f8fd6"/></radialGradient>
+            <radialGradient id="q6b" cx="50%" cy="40%" r="66%"><stop offset="0" stop-color="#86efac"/><stop offset="100%" stop-color="#1f9b5c"/></radialGradient>
+          </defs>
+          <path id="q6p" d="M96,318 C166,318 236,150 318,120" fill="none" stroke="url(#q6l)" stroke-width="3.5" stroke-dasharray="3 10" style="animation:oDash 1.5s linear infinite"/>
+          <circle cx="96" cy="318" r="36" fill="url(#q6a)"/>
+          <text x="96" y="326" text-anchor="middle" font-size="22" font-weight="850" fill="#04121f">국내</text>
+          <circle cx="318" cy="120" r="36" fill="url(#q6b)"/>
+          <text x="318" y="128" text-anchor="middle" font-size="22" font-weight="850" fill="#04121f">세계</text>
+          <circle r="10" fill="#ffffff"><animateMotion dur="2.8s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#q6p"/></animateMotion></circle>
+          <text x="220" y="414" text-anchor="middle" font-size="30" font-weight="800" fill="#d3deee">국내와 세계는 <tspan fill="#7fe0a6">이어져</tspan> 있다</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 13. CONCLUSION -->
+    <section class="slide concl green" data-section="Essence">
+      <div class="kicker" style="justify-content:center;margin-bottom:30px">Why Handling Matters</div>
+      <h2>핸들링은 결국, 상대의<br><span class="expand" style="color:#1f9b5c">세계를 넓히는 일</span>이다</h2>
+      <div class="duo">
+        <div class="cbox">
+          <div class="sym gr">＋</div>
+          <h3>선택지를 넓힌다</h3>
+          <p>거절의 이유와 우려사항을 함께 풀어가며, 상대를 위한 적합한 선택지(옵션)를 제시한다.</p>
+        </div>
+        <div class="cbox">
+          <div class="sym gr">↻</div>
+          <h3>사고를 순환시킨다</h3>
+          <p>거절의 이유라 여겼던 우려사항에 '사고의 전환'이 될 긍정적 포인트를 제공해, 결정을 돕는다.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14. THE PROCESS (정보·가치·신념) -->
+    <section class="slide dark proc" data-section="The Process">
+      <div class="kicker">The Process · 정보 · 가치 · 신념</div>
+      <h2>이해를 넓히는 <span class="grad">세 가지</span> 과정</h2>
+      <p class="lead">좋은 핸들링은 현장이 아니라, 준비에서 시작됩니다.</p>
+      <div class="proc-grid">
+        <div class="proc-card c1">
+          <span class="proc-tag">01 · 정보</span>
+          <h3>정보를 확장하기</h3>
+          <p class="proc-sub">아는 만큼 제공할 수 있다.</p>
+          <ul>
+            <li>홈페이지·인스타·유튜브로 옥스팜 알기</li>
+            <li>본사·클라이언트 제공 정보 꼼꼼히 읽기</li>
+            <li>클라이언트 행사 정보까지 찾아보기</li>
+          </ul>
+        </div>
+        <div class="proc-card c2">
+          <span class="proc-tag">02 · 가치</span>
+          <h3>가치를 이해하기</h3>
+          <p class="proc-sub">정보 너머에 담긴 가치를 이해하려는 노력.</p>
+          <ul>
+            <li>직접 후원자가 되어보기</li>
+            <li>후원자 인터뷰 찾아보기</li>
+            <li>클라이언트 행사에 직접 참여해보기</li>
+          </ul>
+        </div>
+        <div class="proc-card c3">
+          <span class="proc-tag">03 · 신념</span>
+          <h3>신념을 가지기</h3>
+          <p class="proc-sub">나의 소신, 옥스팜의 신념을 대변하기.</p>
+          <ul>
+            <li>내 일을 더 진심으로 대하기</li>
+            <li>옥스팜 관계자 미팅에 참여하기</li>
+            <li>나를 통한 변화를 떠올려보기</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15. FINISH -->
+    <section class="slide finish black fin" data-section="Closing" data-steps="2">
+      <div class="kicker" style="justify-content:center;margin-bottom:30px">Objection Handling</div>
+      <h2 class="fin-h2">
+        <span class="fl fl1">거절 뒤에 <span class="grad word w-dae">대화</span>가 있고,</span>
+        <span class="fl fl2">대화 끝에 <span class="grad word w-gyul">결정</span>이 있다.</span>
+      </h2>
+      <div class="fin-key">
+        <svg viewBox="0 0 320 160" width="320" height="160">
+          <defs>
+            <linearGradient id="fkbrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbeec2"/><stop offset="42%" stop-color="#e6c26e"/><stop offset="100%" stop-color="#b2842b"/></linearGradient>
+            <radialGradient id="fkwarm" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe8b4"/><stop offset="50%" stop-color="#ff9f4d"/><stop offset="100%" stop-color="rgba(255,120,40,0)"/></radialGradient>
+            <linearGradient id="fkpanel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c3652"/><stop offset="100%" stop-color="#141b2c"/></linearGradient>
+            <mask id="fkmask"><rect x="30" y="24" width="120" height="112" rx="16" fill="#fff"/><circle cx="90" cy="66" r="16" fill="#000"/><path d="M83,74 L97,74 L102,110 L78,110 Z" fill="#000"/></mask>
+          </defs>
+          <circle class="fk-light" cx="90" cy="76" r="54" fill="url(#fkwarm)"/>
+          <rect x="30" y="24" width="120" height="112" rx="16" fill="url(#fkpanel)" mask="url(#fkmask)"/>
+          <rect x="30" y="24" width="120" height="112" rx="16" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1.2"/>
+          <circle cx="90" cy="66" r="16" fill="none" stroke="url(#fkbrass)" stroke-width="1.6" opacity=".55"/>
+          <g class="fk-rays" stroke="url(#fkbrass)" stroke-width="1.8" stroke-linecap="round">
+            <line x1="90" y1="72" x2="90" y2="40"/><line x1="90" y1="72" x2="58" y2="72"/><line x1="90" y1="72" x2="122" y2="72"/>
+            <line x1="90" y1="72" x2="66" y2="48"/><line x1="90" y1="72" x2="114" y2="48"/>
+          </g>
+          <g class="fk-key" fill="url(#fkbrass)">
+            <path d="M96,66 L74,66 L74,84 L82,84 L82,76 L89,76 L89,84 L96,84 Z"/>
+            <rect x="94" y="67" width="86" height="10" rx="5"/>
+            <circle cx="196" cy="72" r="18" fill="none" stroke="url(#fkbrass)" stroke-width="9"/>
+          </g>
+        </svg>
+      </div>
+      <p class="lead fin-lead">우리는 오브젝션 안에서 더 나은 결정을 만들어 내는 사람들입니다.</p>
+      <p class="sign">PRESENCE &middot; 임재영 AOP</p>
+    </section>
+
+  </div>
+</div>
+
+<div class="nav">
+  <button id="prevBtn" aria-label="이전">‹</button>
+  <button id="nextBtn">다음 →</button>
+</div>
+
+<style>
+/* ===== cover : keyhole unlock (7s loop) ===== */
+.k-light{transform-box:fill-box;transform-origin:center;animation:kLight 7s ease-in-out infinite}
+@keyframes kLight{0%,32%{opacity:.22}48%{opacity:1}86%{opacity:1}100%{opacity:.22}}
+.k-bloom{transform-box:fill-box;transform-origin:center;opacity:0;animation:kBloom 7s ease-out infinite}
+@keyframes kBloom{0%,40%{opacity:0;transform:scale(.5)}52%{opacity:.95;transform:scale(1)}84%{opacity:.7;transform:scale(1.05)}100%{opacity:0;transform:scale(1.3)}}
+.k-rays{transform-box:fill-box;transform-origin:center;opacity:0;animation:kRays 7s ease-out infinite}
+@keyframes kRays{0%,40%{opacity:0;transform:scale(.55)}54%{opacity:.55;transform:scale(1)}84%{opacity:.4}100%{opacity:0;transform:scale(1.25)}}
+.k-sheen{animation:kSheen 7s ease-in-out infinite}
+@keyframes kSheen{0%,44%{opacity:0}56%{opacity:.65}72%{opacity:0}100%{opacity:0}}
+
+/* ===== slide 2 : conversation -> value (6s loop) ===== */
+.core-pulse{transform-box:fill-box;transform-origin:center;animation:corepulse 2.6s ease-in-out infinite}
+@keyframes corepulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.ring{transform-box:fill-box;transform-origin:center;opacity:0}
+.r1{animation:ripple 4s ease-out infinite}
+.r2{animation:ripple 4s ease-out infinite 1.33s}
+.r3{animation:ripple 4s ease-out infinite 2.66s}
+@keyframes ripple{0%{transform:scale(.7);opacity:.8}70%{opacity:.35}100%{transform:scale(3.4);opacity:0}}
+.branch{stroke-dasharray:520;stroke-dashoffset:520}
+.b1{animation:draw 6s ease-in-out infinite}
+.b2{animation:draw 6s ease-in-out infinite .5s}
+.b3{animation:draw 6s ease-in-out infinite 1s}
+.b4{animation:draw 6s ease-in-out infinite 1.5s}
+@keyframes draw{0%{stroke-dashoffset:520}35%{stroke-dashoffset:0}80%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
+.opt{opacity:0;transform-box:fill-box;transform-origin:center}
+.o1{animation:pop 6s ease-out infinite .7s}
+.o2{animation:pop 6s ease-out infinite 1.2s}
+.o3{animation:pop 6s ease-out infinite 1.7s}
+.o4{animation:pop 6s ease-out infinite 2.2s}
+@keyframes pop{0%,8%{opacity:0;transform:scale(.4)}20%{opacity:1;transform:scale(1.15)}30%,85%{opacity:1;transform:scale(1)}100%{opacity:1;transform:scale(1)}}
+.loop{opacity:0;animation:loopfade 6s ease-in-out infinite 2.6s}
+@keyframes loopfade{0%,40%{opacity:0}55%{opacity:1}90%{opacity:1}100%{opacity:0}}
+</style>
+
+<style>
+/* ---- objection layout FIX : big animation panel on the RIGHT ---- */
+.slide.osolo.active{display:grid}
+.oanim{min-height:648px}
+
+/* ---- proposition : grand entrance ---- */
+.prop .pl{display:block}
+.prop .u{display:inline-block}
+.prop-h2{font-size:82px;line-height:1.2}
+.prop .u1{color:#fff}
+.prop .u1:after{background:rgba(240,106,115,.34)}
+.prop.active .pl1{animation:propIn .85s cubic-bezier(.2,.75,.2,1) .1s both}
+.prop.active .pl2{animation:propIn .85s cubic-bezier(.2,.75,.2,1) .5s both}
+@keyframes propIn{0%{opacity:0;transform:translateY(46px) scale(.93);filter:blur(8px)}100%{opacity:1;transform:none;filter:blur(0)}}
+.prop .u:after{transform-origin:left center;transform:scaleX(0)}
+.prop.active .u1:after{animation:uSweep .5s ease .75s both}
+.prop.active .u2:after{animation:uSweep .5s ease 1s both}
+.prop.active .u3:after{animation:uSweep .5s ease 1.2s both}
+@keyframes uSweep{to{transform:scaleX(1)}}
+.prop.active .u1{animation:impPop 1.1s ease .7s both}
+@keyframes impPop{0%{transform:scale(1)}26%{transform:scale(1.18)}56%,100%{transform:scale(1)}}
+.prop-lead{opacity:0}
+.prop.active .prop-lead{animation:fadeUp .7s ease 1.25s both}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:none}}
+
+/* ---- definition : interactive cursor reveal ---- */
+.def{position:relative}
+.def-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:42px}
+.def-col{display:flex;flex-direction:column;gap:22px}
+.def-card{position:relative;transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease}
+.def-card h3{font-size:40px;margin-bottom:14px}
+.def-card p{font-size:21px;line-height:1.5;color:#aebdd3}
+.def-explain{min-height:296px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.02);overflow:hidden;opacity:0;transform:translateY(26px);transition:opacity .55s ease,transform .55s ease}
+.def-explain svg{width:100%;height:100%;display:block}
+.def.step1 .xObj{opacity:1;transform:none}
+.def.step2 .xHan{opacity:1;transform:none}
+.def.step1 #cardObj{transform:translateY(-4px);box-shadow:0 20px 52px rgba(240,106,115,.28);border-color:rgba(240,106,115,.6)}
+.def.step2 #cardHan{transform:translateY(-4px);box-shadow:0 20px 52px rgba(44,175,104,.28);border-color:rgba(44,175,104,.6)}
+.cursor{position:absolute;left:820px;top:840px;width:44px;height:44px;opacity:0;pointer-events:none;z-index:30;filter:drop-shadow(0 5px 10px rgba(0,0,0,.55));transition:left .6s cubic-bezier(.45,0,.2,1),top .6s cubic-bezier(.45,0,.2,1),opacity .3s ease}
+.def.step1 .cursor{opacity:1;left:432px;top:322px}
+.def.step2 .cursor{opacity:1;left:1146px;top:322px}
+.def-hint{position:absolute;bottom:30px;left:0;right:0;text-align:center;color:#6a7c98;font-size:17px;font-weight:600;letter-spacing:.02em;transition:opacity .4s ease}
+.def.step2 .def-hint{opacity:0}
+.xob-pulse{transform-box:fill-box;transform-origin:center;animation:xPulse 2.4s ease-in-out infinite}
+@keyframes xPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.xob-c1,.xob-c2,.xob-c3{transform-box:fill-box;transform-origin:center;opacity:0;animation:xPop 4.2s ease-in-out infinite}
+.xob-c2{animation-delay:.5s}.xob-c3{animation-delay:1s}
+@keyframes xPop{0%,5%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:scale(1)}70%{opacity:1}82%,100%{opacity:0;transform:scale(.9)}}
+.xha-t1,.xha-t2,.xha-t3{transform-box:fill-box;transform-origin:center;opacity:0;animation:xTok 4.6s ease-in-out infinite}
+.xha-t2{animation-delay:.3s}.xha-t3{animation-delay:.6s}
+@keyframes xTok{0%,4%{opacity:0;transform:translateX(-30px)}20%{opacity:1;transform:translateX(0)}58%{opacity:1;transform:translateX(0)}72%,100%{opacity:0;transform:translateX(36px)}}
+.xha-q{animation:xQ 4.6s ease-in-out infinite}
+@keyframes xQ{0%,42%{opacity:1}52%,100%{opacity:0}}
+.xha-check{transform-box:fill-box;transform-origin:center;opacity:0;animation:xChk 4.6s ease-in-out infinite}
+@keyframes xChk{0%,46%{opacity:0;transform:scale(.4)}56%{opacity:1;transform:scale(1.12)}64%,92%{opacity:1;transform:scale(1)}100%{opacity:0}}
+
+/* ---- conclusion : title expands open ---- */
+.concl .expand{display:inline-block;opacity:0}
+.concl.active .expand{animation:expandIn 1.1s cubic-bezier(.2,.7,.2,1) .35s both}
+@keyframes expandIn{0%{opacity:0;letter-spacing:-.34em;transform:scaleX(.86)}60%{opacity:1}100%{opacity:1;letter-spacing:normal;transform:none}}
+.concl .cbox{opacity:0}
+.concl.active .cbox:nth-child(1){animation:fadeUp .7s ease .85s both}
+.concl.active .cbox:nth-child(2){animation:fadeUp .7s ease 1.05s both}
+
+/* ---- finish : grand composed entrance ---- */
+.fin .fl{display:block;opacity:0}
+.fin-h2{font-size:80px;line-height:1.22}
+.fin.active .fl1{animation:finIn .9s cubic-bezier(.2,.7,.2,1) .2s both}
+.fin.active .fl2{animation:finIn .9s cubic-bezier(.2,.7,.2,1) .58s both}
+@keyframes finIn{0%{opacity:0;transform:translateY(42px);letter-spacing:-.05em;filter:blur(6px)}100%{opacity:1;transform:none;letter-spacing:normal;filter:blur(0)}}
+.fin-lead{opacity:0}
+.fin.active .fin-lead{animation:fadeUp .8s ease 1.05s both}
+.fin .sign{opacity:0;color:#8aa0c2}
+.fin.active .sign{animation:fadeUp .8s ease 1.35s both}
+</style>
+<style>
+/* ===== ROUND 2 refinements ===== */
+/* proposition : remove highlighter, letter-wipe entrance */
+.prop .u:after{content:none}
+.prop .u1{color:#fff}
+.prop .u3{color:#f6a9b0}
+.prop .pl{clip-path:inset(0 100% 0 0)}
+.prop.active .pl1{animation:wipeIn .9s cubic-bezier(.55,0,.15,1) .2s both}
+.prop.active .pl2{animation:wipeIn .9s cubic-bezier(.55,0,.15,1) .62s both}
+@keyframes wipeIn{0%{clip-path:inset(0 100% 0 0);filter:blur(5px)}100%{clip-path:inset(0 0 0 0);filter:blur(0)}}
+.prop.active .u1{animation:impPop2 1s ease 1s both}
+@keyframes impPop2{0%{transform:scale(1)}30%{transform:scale(1.12)}60%,100%{transform:scale(1)}}
+
+/* definition : one-shot explainers, click ring, cursor click/hide */
+.def-card{position:relative;overflow:hidden}
+.cring{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:rgba(255,255,255,.35);opacity:0;pointer-events:none}
+.def.step1 #cardObj .cring{animation:clickRing .6s ease .55s 1 both}
+.def.step2 #cardHan .cring{animation:clickRing .6s ease .55s 1 both}
+@keyframes clickRing{0%{opacity:.55;transform:scale(.25)}100%{opacity:0;transform:scale(1.5)}}
+.cursor.show{opacity:1}
+.cursor.clicking{scale:.82}
+.xob-pulse,.xob-c1,.xob-c2,.xob-c3,.xha-t1,.xha-t2,.xha-t3,.xha-check{animation:none;opacity:0}
+.xha-q{animation:none;opacity:1}
+.def.step1 .xObj .xob-pulse{animation:xBub .5s ease .1s 1 both}
+.def.step1 .xObj .xob-c1{animation:xIn .55s ease .45s 1 both}
+.def.step1 .xObj .xob-c2{animation:xIn .55s ease .72s 1 both}
+.def.step1 .xObj .xob-c3{animation:xIn .55s ease .99s 1 both}
+.def.step2 .xHan .xha-t1{animation:xTokIn .55s ease .3s 1 both}
+.def.step2 .xHan .xha-t2{animation:xTokIn .55s ease .52s 1 both}
+.def.step2 .xHan .xha-t3{animation:xTokIn .55s ease .74s 1 both}
+.def.step2 .xHan .xha-q{animation:qOut .5s ease 1.05s 1 both}
+.def.step2 .xHan .xha-check{animation:chkIn .6s ease 1.25s 1 both}
+@keyframes xBub{0%{opacity:0;transform:scale(.7)}100%{opacity:1;transform:scale(1)}}
+@keyframes xIn{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+@keyframes xTokIn{0%{opacity:0;transform:translateX(-26px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes qOut{0%{opacity:1}100%{opacity:0}}
+@keyframes chkIn{0%{opacity:0;transform:scale(.4)}60%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
+
+/* objection panels : remove box, align + constrain size (premium redraw in markup) */
+.oanim{border:none;background:none;align-items:center;justify-content:center;min-height:0}
+.oanim svg{width:auto;height:auto;max-width:98%;max-height:470px;margin:auto}
+.olabel{top:4px;left:8px;opacity:.85}
+
+/* finish : words fade-in per step + gold key bookend */
+.fin.active .fl1,.fin.active .fl2{animation:finFade .7s ease both}
+.fin.active .fl2{animation-delay:.15s}
+@keyframes finFade{0%{opacity:0;transform:translateY(18px)}100%{opacity:1;transform:none}}
+.fin .word{opacity:0;filter:blur(12px)}
+.fin.step1 .w-dae{animation:wordIn .85s cubic-bezier(.3,.7,.2,1) both}
+.fin.step2 .w-gyul{animation:wordIn .85s cubic-bezier(.3,.7,.2,1) both}
+@keyframes wordIn{0%{opacity:0;filter:blur(12px);transform:scale(1.08)}100%{opacity:1;filter:blur(0);transform:none}}
+.fin-key{width:320px;height:160px;margin:22px auto 0;opacity:0}
+.fin.step2 .fin-key{opacity:1;transition:opacity .4s ease}
+.fk-key{transform:translateX(130px)}
+.fin.step2 .fk-key{animation:fkIn 1s cubic-bezier(.5,0,.15,1) .1s both}
+@keyframes fkIn{0%{transform:translateX(130px)}100%{transform:translateX(0)}}
+.fk-light{opacity:.15}
+.fin.step2 .fk-light{animation:fkLight 1.5s ease .7s both}
+@keyframes fkLight{0%{opacity:.15}60%{opacity:1}100%{opacity:.85}}
+.fk-rays{transform-box:fill-box;transform-origin:center;opacity:0}
+.fin.step2 .fk-rays{animation:fkRays 1.3s ease-out .85s both}
+@keyframes fkRays{0%{opacity:0;transform:scale(.5)}55%{opacity:.6;transform:scale(1)}100%{opacity:.3;transform:scale(1.1)}}
+</style>
+<style>
+/* ===== The Process slide (정보·가치·신념) ===== */
+.proc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:42px}
+.proc-card{border:1px solid var(--line);border-radius:22px;padding:34px 30px;background:rgba(255,255,255,.03)}
+.proc-tag{font-size:16px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.proc-card h3{font-size:31px;margin:14px 0 8px}
+.proc-sub{font-size:19px;color:#aebdd3;margin-bottom:22px;line-height:1.4}
+.proc-card ul{list-style:none;display:flex;flex-direction:column;gap:13px}
+.proc-card li{position:relative;padding-left:26px;font-size:18px;line-height:1.42;color:#c2d0e4}
+.proc-card li:before{content:"";position:absolute;left:0;top:8px;width:11px;height:11px;border-radius:50%}
+.c1{border-color:rgba(56,189,248,.35)}.c1 .proc-tag{color:var(--sky)}.c1 li:before{background:var(--sky)}
+.c2{border-color:rgba(44,175,104,.35)}.c2 .proc-tag{color:var(--green)}.c2 li:before{background:var(--green)}
+.c3{border-color:rgba(143,209,79,.42)}.c3 .proc-tag{color:var(--lime)}.c3 li:before{background:var(--lime)}
+.proc .proc-card{opacity:0}
+.proc.active .c1{animation:fadeUp .6s ease .2s both}
+.proc.active .c2{animation:fadeUp .6s ease .38s both}
+.proc.active .c3{animation:fadeUp .6s ease .56s both}
+</style>
+<script>
+(function(){
+  var deck=document.getElementById('deck');
+  function fit(){var s=Math.min(innerWidth/1600,innerHeight/900);deck.style.transform='scale('+s+')';}
+  addEventListener('resize',fit);fit();
+
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var progress=document.getElementById('progress');
+  var sectionName=document.getElementById('sectionName');
+  var pageNo=document.getElementById('pageNo');
+  var prevBtn=document.getElementById('prevBtn');
+  var nextBtn=document.getElementById('nextBtn');
+  var cur=0;
+
+  var subStep=0,ct1,ct2;
+  function stepsOf(s){return parseInt(s.dataset.steps||'0',10)||0;}
+  function applyStep(){var s=slides[cur];s.classList.toggle('step1',subStep>=1);s.classList.toggle('step2',subStep>=2);}
+  function resetCursor(){var d=document.querySelector('.def');if(d){var c=d.querySelector('.cursor');if(c)c.classList.remove('show','clicking');}}
+  function cursorSeq(n){
+    var d=slides[cur];var c=d.querySelector('.cursor');if(!c)return;
+    var p=(n===1)?{l:432,t:322}:{l:1146,t:322};
+    c.style.left=p.l+'px';c.style.top=p.t+'px';c.classList.add('show');
+    clearTimeout(ct1);clearTimeout(ct2);
+    ct1=setTimeout(function(){c.classList.add('clicking');setTimeout(function(){c.classList.remove('clicking');},280);},560);
+    ct2=setTimeout(function(){c.classList.remove('show');},1250);
+  }
+  function render(){
+    slides.forEach(function(s,i){s.classList.toggle('active',i===cur);s.classList.remove('step1','step2');});
+    applyStep();resetCursor();
+    progress.style.width=(cur/(slides.length-1))*100+'%';
+    sectionName.textContent=slides[cur].dataset.section||'';
+    pageNo.textContent=String(cur+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');
+    prevBtn.style.visibility=(cur===0&&subStep===0)?'hidden':'visible';
+    nextBtn.textContent=(cur===slides.length-1&&subStep>=stepsOf(slides[cur]))?'처음으로 \u21ba':'다음 \u2192';
+  }
+  function tryFullscreen(){if(slides[cur].dataset.anim&&!document.fullscreenElement){var el=document.getElementById('viewport');if(el.requestFullscreen){el.requestFullscreen().catch(function(){});}}}
+  function next(){
+    var s=slides[cur],st=stepsOf(s);
+    if(st>0&&subStep<st){subStep++;applyStep();if(s.classList.contains('def'))cursorSeq(subStep);return;}
+    cur=(cur+1)%slides.length;subStep=0;render();tryFullscreen();
+  }
+  function prev(){
+    if(subStep>0){subStep=0;var s=slides[cur];s.classList.remove('step1','step2');resetCursor();return;}
+    cur=(cur-1+slides.length)%slides.length;subStep=0;render();
+  }
+  nextBtn.addEventListener('click',next);
+  prevBtn.addEventListener('click',prev);
+  addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+  });
+  render();
+})();
+</script>
+</body>
+</html>
