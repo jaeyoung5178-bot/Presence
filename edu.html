@@ -191,13 +191,19 @@
     return d;
   }
 
+  function ensureNeedsObjectionGuide(d){
+    if(!d || !d.items || d.items.some(function(it){ return it.href==="토픽/topic-objection-needs.html"; })) return false;
+    d.items.unshift({id:"presence-objection-needs",tag:"HANDLE",title:"Objection Handling · 니즈파악",sub:"니즈파악을 중심으로 하는 오브젝션 핸들링",href:"토픽/topic-objection-needs.html",target:"",folder:"세일즈"});
+    return true;
+  }
+
   function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
 
   function load(){
     fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
-      if(j && j.folders && j.items){ data=ensureCallbackGuide(j); render(); }
-      else { data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); save(true); render(); }
-    }).catch(function(){ data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); render(); });
+      if(j && j.folders && j.items){ data=ensureCallbackGuide(j); if(ensureNeedsObjectionGuide(data)) save(true); render(); }
+      else { data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); ensureNeedsObjectionGuide(data); save(true); render(); }
+    }).catch(function(){ data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); ensureNeedsObjectionGuide(data); render(); });
   }
   function save(silent){
     if(!data) return;
