@@ -198,12 +198,14 @@
   }
 
   function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
+  function titleStorageKey(it){ return "presence.edu.title."+(it.id||it.href||it.title); }
+  function restoreLocalTitles(d){ if(d && d.items) d.items.forEach(function(it){ var saved=localStorage.getItem(titleStorageKey(it)); if(saved) it.title=saved; }); return d; }
 
   function load(){
     fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
-      if(j && j.folders && j.items){ data=ensureCallbackGuide(j); if(ensureNeedsObjectionGuide(data)) save(true); render(); }
-      else { data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); ensureNeedsObjectionGuide(data); save(true); render(); }
-    }).catch(function(){ data=ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))); ensureNeedsObjectionGuide(data); render(); });
+      if(j && j.folders && j.items){ data=restoreLocalTitles(ensureCallbackGuide(j)); if(ensureNeedsObjectionGuide(data)) save(true); render(); }
+      else { data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); save(true); render(); }
+    }).catch(function(){ data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); render(); });
   }
   function save(silent){
     if(!data) return;
@@ -332,7 +334,7 @@
   $("#itemSave").addEventListener("click", function(){
     var t=$("#fTitle").value.trim(); if(!t){ alert("제목을 입력하세요."); return; }
     var obj={ tag:$("#fTag").value.trim()||"자료", title:t, sub:$("#fSub").value.trim(), href:$("#fHref").value.trim(), target:$("#fBlank").checked?"_blank":"", folder:$("#fFolder").value };
-    if(editingItemId){ var it=data.items.filter(function(x){return x.id===editingItemId;})[0]; if(it) Object.assign(it,obj); }
+    if(editingItemId){ var it=data.items.filter(function(x){return x.id===editingItemId;})[0]; if(it){ Object.assign(it,obj); localStorage.setItem(titleStorageKey(it),t); } }
     else { obj.id=uid(); data.items.push(obj); }
     $("#itemMask").classList.remove("on"); save(); render();
   });
