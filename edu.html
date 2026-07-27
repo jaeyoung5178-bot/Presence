@@ -157,6 +157,7 @@
       {id:uid(),tag:"GRASP",title:"GRASP",sub:"이끌던지, 따르던지 — 리더십 원칙",href:"토픽/topic-grasp.html",target:"",folder:"섹터리더"},
       {id:uid(),tag:"WIN",title:"Win Analysis",sub:"How We Run Presence — 팀 운영과 성장 동력",href:"토픽/topic-howwerun.html",target:"",folder:"섹터리더"},
       {id:uid(),tag:"SSG",title:"Sector Leader Standard Guide",sub:"팀에 섹터리더를 길러내는 방법",href:"https://jaeyoung5178-bot.github.io/Pesentation/",target:"_blank",folder:"섹터리더"},
+      {id:"presence-field-rookie",tag:"FIELD",title:"신입과 필드 뛰는 법",sub:"신입의 자립을 만드는 필드 리더십 · 임재영 AOP",href:"education/sector-leader/field-rookie/index.html",target:"_blank",folder:"섹터리더"},
       {id:uid(),tag:"RECAP",title:"Team Recap · April",sub:"2026년 4월 팀 세일즈 현황 & 팀 피드백",href:"토픽/recap-2026-04.html",target:"_blank",folder:"리캡"},
       {id:uid(),tag:"NOZERO",title:"NoZero 300 Days",sub:"흔들리지 않는 세 가지 확신",href:"토픽/topic-nozero300.html",target:"",folder:"멘탈리티"},
       {id:uid(),tag:"STEADY",title:"Steady Rolling",sub:"꾸준히 잘하는 방법 — 컨시스턴시 플레이북",href:"토픽/topic-steady.html",target:"",folder:"멘탈리티"},
@@ -197,15 +198,21 @@
     return true;
   }
 
+  function ensureFieldRookieGuide(d){
+    if(!d || !d.items || d.items.some(function(it){ return it.id==="presence-field-rookie" || it.href==="education/sector-leader/field-rookie/index.html"; })) return false;
+    d.items.unshift({id:"presence-field-rookie",tag:"FIELD",title:"신입과 필드 뛰는 법",sub:"신입의 자립을 만드는 필드 리더십 · 임재영 AOP",href:"education/sector-leader/field-rookie/index.html",target:"_blank",folder:"섹터리더"});
+    return true;
+  }
+
   function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
   function titleStorageKey(it){ return "presence.edu.title."+(it.id||it.href||it.title); }
   function restoreLocalTitles(d){ if(d && d.items) d.items.forEach(function(it){ var saved=localStorage.getItem(titleStorageKey(it)); if(saved) it.title=saved; }); return d; }
 
   function load(){
     fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
-      if(j && j.folders && j.items){ data=restoreLocalTitles(ensureCallbackGuide(j)); if(ensureNeedsObjectionGuide(data)) save(true); render(); }
-      else { data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); save(true); render(); }
-    }).catch(function(){ data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); render(); });
+      if(j && j.folders && j.items){ data=restoreLocalTitles(ensureCallbackGuide(j)); var changed=ensureNeedsObjectionGuide(data); changed=ensureFieldRookieGuide(data)||changed; if(changed) save(true); render(); }
+      else { data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); save(true); render(); }
+    }).catch(function(){ data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); render(); });
   }
   function save(silent){
     if(!data) return;
