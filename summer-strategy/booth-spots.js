@@ -63,16 +63,24 @@ function setupText(brand,index){
   ];
   return `${brand} 앞 ${options[index%options.length]}`;
 }
-const spots=incheon.concat(metro).map((item,index)=>({
+const baseSpots=incheon.concat(metro).map((item,index)=>({
   ...item,
+  key:`base-${String(index+1).padStart(3,"0")}`,
   brand:brandOf(item.name),
   city:cityOf(item),
   setup:setupText(brandOf(item.name),index),
   risk:index%5===0?"경계 재확인":"공공보도 추정",
   shade:index%3===0?"나무+건물 복합 그늘":index%3===1?"가로수 그늘":"건물 입면 그늘"
 }));
-const customSpots=JSON.parse(localStorage.getItem("presence-custom-sites")||"[]");
-customSpots.forEach((item,index)=>spots.push({...item,id:101+index,custom:true}));
+const localCustomSpots=JSON.parse(localStorage.getItem("presence-custom-sites")||"[]");
+let cloudCustomSpots=[];
+let spots=[...baseSpots];
+function rebuildSpots(){
+  const source=cloudCustomSpots.length?cloudCustomSpots:localCustomSpots;
+  spots=[...baseSpots,...source.map((item,index)=>({...item,key:item.key||`custom-${item.createdAt||index}`,id:101+index,custom:true}))];
+  window.__presenceBoothSpots=spots;
+}
+rebuildSpots();
 window.__presenceBoothSpots=spots;
 
 const grid=document.querySelector("#spot-grid");
@@ -87,6 +95,11 @@ let viewMode=localStorage.getItem("presence-booth-view")||"photo";
 const saved=new Set(JSON.parse(localStorage.getItem("presence-booth-spots")||"[]"));
 let reviews=JSON.parse(localStorage.getItem("presence-site-reviews")||"{}");
 let activeReviewId=null;
+let sharedDb=null;
+let firebaseApi=null;
+let sharedReady=false;
+const itemKey=item=>item.key||String(item.id);
+const reviewFor=item=>reviews[itemKey(item)]||reviews[item.id];
 
 function mapUrl(provider,name,item){
   if(provider==="kakao"&&item?.kakaoUrl)return item.kakaoUrl;
@@ -99,7 +112,7 @@ function escapeHtml(value){
 function card(item){
   const safeName=escapeHtml(item.name);
   const imageSource=item.imageData||`./assets/streetview/${item.file}`;
-  const review=reviews[item.id];
+  const review=reviewFor(item);
   const reviewLabel=review?`${review.status||"후기"}${review.photos?.length?` · 셋업사진 ${review.photos.length}장`:""}`:"";
   const recentResult=review?.result?.trim();
   return `<article class="spot-card">
@@ -117,7 +130,7 @@ function card(item){
       <p class="risk-note">점포 대지·화단·주차면에는 설치하지 않음 · 관할 구청 확인 전 확정 금지</p>
       ${reviewLabel?`<span class="review-badge">${escapeHtml(reviewLabel)}</span>`:""}
       ${recentResult?`<span class="recent-result"><b>최근 결과</b> · ${escapeHtml(recentResult)}</span>`:""}
-      <div class="card-actions"><a href="${mapUrl("naver",item.name,item)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name,item)}" target="_blank" rel="noreferrer">카카오맵 확인</a><button type="button" class="review-open" data-review="${item.id}">${review?"후기·셋업사진 수정":"후기·셋업사진 추가"}</button></div>
+      <div class="card-actions"><a href="${mapUrl("naver",item.name,item)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name,item)}" target="_blank" rel="noreferrer">카카오맵 확인</a><button type="button" class="review-open" data-review="${itemKey(item)}">${review?"후기·셋업사진 수정":"후기·셋업사진 추가"}</button></div>
     </div>
   </article>`;
 }
@@ -127,7 +140,7 @@ function render(){
   const filtered=spots.filter(item=>
     (region==="전체"||item.region===region)&&
     (brand==="전체"||item.brand===brand)&&
-    `${item.name} ${item.city} ${item.address||""} ${item.brand} ${reviews[item.id]?.status||""} ${reviews[item.id]?.result||""} ${reviews[item.id]?.text||""}`.toLowerCase().includes(q)
+    `${item.name} ${item.city} ${item.address||""} ${item.brand} ${reviewFor(item)?.status||""} ${reviewFor(item)?.result||""} ${reviewFor(item)?.text||""}`.toLowerCase().includes(q)
   );
   grid.innerHTML=filtered.map(card).join("");
   grid.classList.toggle("text-view",viewMode==="text");
@@ -156,7 +169,7 @@ regionButtons.forEach(button=>button.addEventListener("click",()=>{
 }));
 grid.addEventListener("click",event=>{
   const reviewButton=event.target.closest("[data-review]");
-  if(reviewButton){openReview(Number(reviewButton.dataset.review));return;}
+  if(reviewButton){openReview(reviewButton.dataset.review);return;}
   const button=event.target.closest("[data-save]");
   if(!button)return;
   const id=Number(button.dataset.save);
@@ -173,15 +186,20 @@ const reviewText=document.querySelector("#review-text");
 const reviewPhoto=document.querySelector("#review-photo");
 const reviewPreview=document.querySelector("#review-preview");
 const reviewMessage=document.querySelector("#review-message");
-function persistReviews(){
-  try{localStorage.setItem("presence-site-reviews",JSON.stringify(reviews));return true;}
+async function persistReviews(key){
+  try{
+    localStorage.setItem("presence-site-reviews",JSON.stringify(reviews));
+    if(sharedReady&&key)await firebaseApi.set(firebaseApi.ref(sharedDb,`summerStrategy/reviews/${key}`),reviews[key]||null);
+    return true;
+  }
   catch(error){reviewMessage.textContent="저장 공간이 부족합니다. 오래된 셋업사진을 일부 삭제해 주세요.";return false;}
 }
-function openReview(id){
-  activeReviewId=id;
-  const item=spots.find(spot=>spot.id===id);
-  const review=reviews[id]||{status:"미답사",rating:"0",result:"",text:"",photos:[]};
-  document.querySelector("#review-site").textContent=`#${String(id).padStart(3,"0")} · ${item.name}`;
+function openReview(key){
+  const item=spots.find(spot=>itemKey(spot)===key);
+  if(!item)return;
+  activeReviewId=itemKey(item);
+  const review=reviewFor(item)||{status:"미답사",rating:"0",result:"",text:"",photos:[]};
+  document.querySelector("#review-site").textContent=`#${String(item.id).padStart(3,"0")} · ${item.name}`;
   reviewStatus.value=review.status||"미답사";reviewRating.value=String(review.rating||0);reviewResult.value=review.result||"";reviewText.value=review.text||"";reviewPhoto.value="";reviewMessage.textContent="";
   drawReviewPhotos(review.photos||[]);
   reviewDialog.showModal();document.body.style.overflow="hidden";
@@ -214,21 +232,21 @@ reviewPhoto.addEventListener("change",async()=>{
   try{
     const photo=await resizePhoto(file);
     const review=reviews[activeReviewId]||{status:reviewStatus.value,rating:reviewRating.value,result:reviewResult.value,text:reviewText.value,photos:[]};
-    review.photos=[...(review.photos||[]),photo].slice(-3);reviews[activeReviewId]=review;
-    if(persistReviews()){drawReviewPhotos(review.photos);reviewMessage.textContent="셋업사진을 추가했습니다. 최대 3장까지 저장됩니다.";}
+    review.photos=[...(review.photos||[]),photo].slice(-3);review.updatedAt=new Date().toISOString();reviews[activeReviewId]=review;
+    if(await persistReviews(activeReviewId)){drawReviewPhotos(review.photos);reviewMessage.textContent=sharedReady?"셋업사진을 공용 저장했습니다. 다른 기기에도 반영됩니다.":"사진을 기기에 보관했습니다. 연결되면 공용 저장됩니다.";}
   }catch(error){reviewMessage.textContent="사진을 처리하지 못했습니다. 다른 사진을 선택해 주세요.";}
 });
-reviewPreview.addEventListener("click",event=>{
+reviewPreview.addEventListener("click",async event=>{
   const button=event.target.closest("[data-remove-photo]");if(!button||!activeReviewId)return;
-  const review=reviews[activeReviewId];review.photos.splice(Number(button.dataset.removePhoto),1);persistReviews();drawReviewPhotos(review.photos);
+  const review=reviews[activeReviewId];review.photos.splice(Number(button.dataset.removePhoto),1);await persistReviews(activeReviewId);drawReviewPhotos(review.photos);
 });
-reviewForm.addEventListener("submit",event=>{
+reviewForm.addEventListener("submit",async event=>{
   event.preventDefault();if(!activeReviewId)return;
   const previous=reviews[activeReviewId]||{};
   reviews[activeReviewId]={status:reviewStatus.value,rating:reviewRating.value,result:reviewResult.value.trim(),text:reviewText.value.trim(),photos:previous.photos||[],updatedAt:new Date().toISOString()};
-  if(persistReviews()){render();reviewMessage.textContent="후기와 셋업사진을 이 기기에 저장했습니다.";setTimeout(closeReview,450);}
+  if(await persistReviews(activeReviewId)){render();reviewMessage.textContent=sharedReady?"후기·최근 결과·사진을 Firebase에 공용 저장했습니다.":"기기에 임시 저장했습니다. 연결되면 자동 동기화됩니다.";setTimeout(closeReview,650);}
 });
-document.querySelector("#review-delete").addEventListener("click",()=>{if(!activeReviewId)return;delete reviews[activeReviewId];persistReviews();render();closeReview();});
+document.querySelector("#review-delete").addEventListener("click",async()=>{if(!activeReviewId)return;delete reviews[activeReviewId];await persistReviews(activeReviewId);render();closeReview();});
 document.querySelector("#review-close").addEventListener("click",closeReview);
 reviewDialog.addEventListener("click",event=>{if(event.target===reviewDialog)closeReview();});
 const siteDialog=document.querySelector("#site-dialog");
@@ -265,7 +283,7 @@ sitePhoto.addEventListener("change",async()=>{
   try{pendingSitePhoto=await resizePhoto(file);document.querySelector("#site-photo-preview").innerHTML=`<img src="${pendingSitePhoto}" alt="추가할 현장 사진 미리보기">`;siteMessage.textContent="현장 사진을 준비했습니다.";}
   catch(error){siteMessage.textContent="사진을 처리하지 못했습니다. 다른 사진을 선택해 주세요.";}
 });
-siteForm.addEventListener("submit",event=>{
+siteForm.addEventListener("submit",async event=>{
   event.preventDefault();
   const name=document.querySelector("#site-name").value.trim();
   const address=document.querySelector("#site-address").value.trim();
@@ -273,13 +291,22 @@ siteForm.addEventListener("submit",event=>{
   const shade=document.querySelector("#site-shade").value;
   const manualSetup=document.querySelector("#site-setup").value.trim();
   if(!/^https:\/\/(place\.map\.kakao\.com|map\.kakao\.com|kko\.to)\//i.test(kakaoUrl)){siteMessage.textContent="카카오맵에서 공유한 정확한 https 주소를 넣어주세요.";return;}
+  const key=`custom-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
   const custom={
+    key,
     name,address,kakaoUrl,shade,region:autoRegion(address),city:autoCity(address),brand:brandOf(name),
     risk:"경계 재확인",setup:manualSetup||`${brandOf(name)} 앞 그늘 후보. 정확한 보도 경계와 출입 동선을 현장에서 확인한 뒤 평행 배치.`,
     imageData:pendingSitePhoto||placeholderImage(name,address),createdAt:new Date().toISOString()
   };
   const stored=JSON.parse(localStorage.getItem("presence-custom-sites")||"[]");stored.unshift(custom);
-  try{localStorage.setItem("presence-custom-sites",JSON.stringify(stored));siteMessage.textContent="사이트를 생성했습니다.";setTimeout(()=>location.reload(),350);}
+  try{
+    localStorage.setItem("presence-custom-sites",JSON.stringify(stored));
+    if(sharedReady){
+      await firebaseApi.set(firebaseApi.ref(sharedDb,`summerStrategy/sites/${key}`),custom);
+      siteMessage.textContent="사이트를 Firebase에 공용 저장했습니다. 다른 기기에도 바로 표시됩니다.";
+    }else siteMessage.textContent="사이트를 기기에 임시 저장했습니다. 연결되면 자동 동기화됩니다.";
+    setTimeout(()=>location.reload(),650);
+  }
   catch(error){siteMessage.textContent="저장 공간이 부족합니다. 사진 없이 다시 저장하거나 오래된 사진을 정리해 주세요.";}
 });
 const menuButton=document.querySelector(".menu-button");
@@ -291,5 +318,58 @@ menuButton.addEventListener("click",()=>{
 });
 mobileMenu.addEventListener("click",()=>{mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false")});
 document.addEventListener("keydown",event=>{if(event.key==="Escape"){mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false");if(reviewDialog.open)closeReview();if(siteDialog.open)closeSiteDialog();}});
+function setSyncStatus(mode,title,detail){
+  const el=document.querySelector("#sync-status");
+  el.className=`sync-status is-${mode}`;
+  el.querySelector("b").textContent=title;
+  el.querySelector("span:last-child").textContent=detail;
+}
+async function initSharedData(){
+  const config={apiKey:"AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0",authDomain:"presence-team.firebaseapp.com",databaseURL:"https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"presence-team",storageBucket:"presence-team.firebasestorage.app",messagingSenderId:"1056684483470",appId:"1:1056684483470:web:1f50113d410b53458d3adf"};
+  try{
+    const [appApi,authApi,dbApi]=await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js")
+    ]);
+    let app;try{app=appApi.getApp("presence-summer-strategy");}catch(error){app=appApi.initializeApp(config,"presence-summer-strategy");}
+    const auth=authApi.getAuth(app);
+    if(typeof auth.authStateReady==="function")await auth.authStateReady();
+    if(!auth.currentUser)await authApi.signInAnonymously(auth);
+    sharedDb=dbApi.getDatabase(app);firebaseApi=dbApi;
+    dbApi.onValue(dbApi.ref(sharedDb,".info/connected"),snapshot=>{
+      if(snapshot.val())setSyncStatus("live","Firebase 공용 동기화 ON","사이트·후기·최근 결과·셋업사진이 모든 기기에 실시간 반영됩니다.");
+      else setSyncStatus("offline","오프라인 임시 저장","연결이 복구되면 Firebase와 다시 맞춥니다.");
+    });
+    const rootRef=dbApi.ref(sharedDb,"summerStrategy");
+    dbApi.onValue(rootRef,async snapshot=>{
+      const data=snapshot.val()||{};
+      const remoteSites=Object.values(data.sites||{}).sort((a,b)=>String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
+      const remoteReviews=data.reviews||{};
+      if(!sharedReady){
+        sharedReady=true;
+        for(const [index,item] of localCustomSpots.entries()){
+          const key=item.key||`legacy-${String(item.createdAt||Date.now()).replace(/[^a-zA-Z0-9-]/g,"-")}-${index}`;
+          if(!data.sites?.[key])await dbApi.set(dbApi.ref(sharedDb,`summerStrategy/sites/${key}`),{...item,key});
+        }
+        for(const [oldKey,value] of Object.entries(reviews)){
+          const key=/^\d+$/.test(oldKey)?`base-${String(oldKey).padStart(3,"0")}`:oldKey;
+          if(!remoteReviews[key])await dbApi.set(dbApi.ref(sharedDb,`summerStrategy/reviews/${key}`),value);
+        }
+      }
+      cloudCustomSpots=remoteSites;
+      reviews={...reviews,...remoteReviews};
+      localStorage.setItem("presence-site-reviews",JSON.stringify(reviews));
+      rebuildSpots();updateTotals();render();
+    },error=>{
+      console.error("Presence summer sync failed",error);
+      setSyncStatus("offline","공용 동기화 권한 확인 필요","현재는 이 기기에 안전하게 저장합니다.");
+    });
+  }catch(error){
+    console.error("Presence summer Firebase unavailable",error);
+    setSyncStatus("offline","오프라인 임시 저장","Firebase 연결이 복구되면 공용 데이터로 전환됩니다.");
+  }
+}
 updateTotals();
 render();
+initSharedData();

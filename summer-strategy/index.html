@@ -56,6 +56,11 @@
       </section>
 
       <section class="controls" aria-label="후보 검색과 필터">
+        <div id="sync-status" class="sync-status is-connecting" role="status" aria-live="polite">
+          <span class="sync-dot" aria-hidden="true"></span>
+          <b>공용 데이터 연결 중</b>
+          <span>기기 간 사이트·후기·사진을 맞추고 있습니다.</span>
+        </div>
         <label class="search-box">
           <span aria-hidden="true">⌕</span>
           <input id="search" type="search" placeholder="매장명·지역·브랜드 검색" autocomplete="off">
@@ -146,13 +151,13 @@
         <label><span>현장 점수</span><select id="review-rating"><option value="0">선택 안 함</option><option value="5">★★★★★ 매우 좋음</option><option value="4">★★★★☆ 좋음</option><option value="3">★★★☆☆ 보통</option><option value="2">★★☆☆☆ 아쉬움</option><option value="1">★☆☆☆☆ 비추천</option></select></label>
         <label class="review-wide"><span>최근 결과</span><input id="review-result" type="text" maxlength="120" placeholder="예: 재영 2 · 윤경 2 · 채영 2"></label>
         <label class="review-wide"><span>현장 후기</span><textarea id="review-text" rows="5" maxlength="600" placeholder="그늘 시간대, 보행 폭, 유동 인구, 민원 가능성 등을 기록하세요."></textarea></label>
-        <label class="review-wide photo-field"><span>실제 셋업사진</span><input id="review-photo" type="file" accept="image/*" capture="environment"><small>휴대폰에서 촬영하거나 앨범 사진을 선택할 수 있습니다. 사진은 이 기기에 압축 저장됩니다.</small></label>
+        <label class="review-wide photo-field"><span>실제 셋업사진</span><input id="review-photo" type="file" accept="image/*" capture="environment"><small>휴대폰에서 촬영하거나 앨범 사진을 선택할 수 있습니다. 사진은 압축 후 Firebase에 공용 저장됩니다.</small></label>
       </div>
       <div id="review-preview" class="review-preview"></div>
       <div class="dialog-actions"><button type="button" id="review-delete" class="danger-action">기록 삭제</button><button type="submit" class="primary-action">후기 저장</button></div>
       <p id="review-message" class="review-message" aria-live="polite"></p>
     </form>
   </dialog>
-  <script src="./booth-spots.js?v=4"></script>
+  <script src="./booth-spots.js?v=5"></script>
 </body>
 </html>
