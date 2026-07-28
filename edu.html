@@ -57,6 +57,11 @@
   .item:hover{transform:translateY(-2px); border-color:var(--line2); background:var(--card2);}
   .item .tg{display:inline-block; font-size:11px; letter-spacing:1.5px; font-weight:800; color:var(--accent); border:1px solid var(--line2); border-radius:6px; padding:3px 8px; margin-bottom:9px;}
   .item .ti{font-size:16px; font-weight:700; margin:0 0 4px; letter-spacing:-.3px;}
+  .item .title-edit{display:none; width:100%; margin:0 0 7px; background:var(--bg2); color:var(--ink); border:1px solid var(--line2); border-radius:8px; padding:8px 9px; font:inherit; font-size:15px; font-weight:700; letter-spacing:-.3px;}
+  .item .title-edit:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(143,209,79,.12);}
+  .item .rename-hint{display:none; margin:-1px 0 8px; color:var(--accent); font-size:11px; font-weight:600;}
+  .editing .item .ti{display:none;}
+  .editing .item .title-edit,.editing .item .rename-hint{display:block;}
   .item .su{font-size:13px; color:var(--sub); line-height:1.45; margin:0;}
   .item .arw{position:absolute; right:14px; top:15px; color:var(--sub); opacity:0; transition:.15s;}
   .item:hover .arw{opacity:1; right:12px;}
@@ -99,7 +104,11 @@
   .b-cc{background:var(--card); color:var(--sub); border:1px solid var(--line2)!important;}
   .save-toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--accent); color:#0d0e12; padding:10px 20px; border-radius:999px; font-weight:700; font-size:13px; opacity:0; transition:.3s; pointer-events:none; z-index:60;}
   .save-toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
+  @media(max-width:1024px){
+    .back,.adminbtn,.chip,.mbtns button{min-height:44px;}
+  }
   @media(max-width:560px){ .grid{grid-template-columns:1fr 1fr;} .item .ti{font-size:15px;} h1{font-size:22px;} .wepair-head{align-items:flex-start; padding:14px;} .wepair-title span{white-space:normal;} .wepair-open{padding:8px 10px;} .wepair-frame-wrap{height:72vh; min-height:520px;} }
+  @media(max-width:560px){ .item .title-edit,.fld input,.fld select{font-size:16px;min-height:44px;} }
   @media(max-width:400px){ .grid{grid-template-columns:1fr;} }
 </style>
 </head>
@@ -143,6 +152,16 @@
   var DB = "https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app";
   var NODE = "/edu_lib.json";
   var ADMIN_PW = "0001";
+  var ADMIN_PROOF = "03bb60b16f62d35bc12be70d475c58de28e39127831e9e1d7028308e21af5366";
+  var FIREBASE_CONFIG = {
+    apiKey:"AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0",
+    authDomain:"presence-team.firebaseapp.com",
+    databaseURL:DB,
+    projectId:"presence-team",
+    storageBucket:"presence-team.firebasestorage.app",
+    messagingSenderId:"1056684483470",
+    appId:"1:1056684483470:web:1f50113d410b53458d3adf"
+  };
   var uid = function(){ return "e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); };
 
   var SEED = {
@@ -167,11 +186,13 @@
   };
 
   var data = null;         // {v,folders,items}
+  var LOCAL_KEY = "presence.edu.library.v2";
   var WEPAIR_VIEW = "__WEPAIR__";
   var WEPAIR_URL = "https://jaeyoung5178-bot.github.io/wepair-presentation/";
   var active = new URLSearchParams(location.search).get("tab") === "wepair" ? WEPAIR_VIEW : "__ALL__";  // current folder filter
   var isAdmin = false;
   var editingItemId = null;
+  var firebaseRuntimePromise = null;
   var $ = function(s){ return document.querySelector(s); };
 
   // PRESENCE 기본 교육 자료: 원격 목록 상태와 관계없이 항상 노출합니다.
@@ -192,9 +213,20 @@
     return d;
   }
 
+  // 기존 핸들링 자료와 별도로, 니즈파악 중심의 발표형 교육 자료를 유지합니다.
   function ensureNeedsObjectionGuide(d){
-    if(!d || !d.items || d.items.some(function(it){ return it.href==="토픽/topic-objection-needs.html"; })) return false;
-    d.items.unshift({id:"presence-objection-needs",tag:"HANDLE",title:"Objection Handling · 니즈파악",sub:"니즈파악을 중심으로 하는 오브젝션 핸들링",href:"토픽/topic-objection-needs.html",target:"",folder:"세일즈"});
+    if(!d || !d.items) return false;
+    var found=d.items.some(function(it){ return it.href==="토픽/topic-objection-needs.html" || it.id==="presence-objection-needs"; });
+    if(found) return false;
+    d.items.unshift({
+      id:"presence-objection-needs",
+      tag:"HANDLE",
+      title:"Objection Handling · 니즈파악",
+      sub:"니즈파악을 중심으로 하는 오브젝션 핸들링",
+      href:"토픽/topic-objection-needs.html",
+      target:"",
+      folder:"세일즈"
+    });
     return true;
   }
 
@@ -205,18 +237,102 @@
   }
 
   function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
-  function titleStorageKey(it){ return "presence.edu.title."+(it.id||it.href||it.title); }
-  function restoreLocalTitles(d){ if(d && d.items) d.items.forEach(function(it){ var saved=localStorage.getItem(titleStorageKey(it)); if(saved) it.title=saved; }); return d; }
+  function titleStorageKey(it){
+    // href는 새로고침 뒤에도 바뀌지 않으므로 랜덤 생성 id보다 우선합니다.
+    return "presence.edu.title."+(it.href ? "href."+it.href : "id."+(it.id||it.title));
+  }
+  function legacyTitleStorageKey(it){ return "presence.edu.title."+(it.id||it.href||it.title); }
+  function restoreLocalTitles(d){
+    if(!d || !d.items) return d;
+    d.items.forEach(function(it){
+      var saved=localStorage.getItem(titleStorageKey(it)) || localStorage.getItem(legacyTitleStorageKey(it));
+      if(saved) it.title=saved;
+    });
+    return d;
+  }
+
+  function validData(d){ return !!(d && Array.isArray(d.folders) && Array.isArray(d.items)); }
+  function readLocalData(){
+    try{
+      var d=JSON.parse(localStorage.getItem(LOCAL_KEY)||"null");
+      return validData(d) ? restoreLocalTitles(ensureCallbackGuide(d)) : null;
+    }catch(e){ return null; }
+  }
+  function writeLocalData(){
+    if(!validData(data)) return false;
+    try{ localStorage.setItem(LOCAL_KEY,JSON.stringify(data)); return true; }
+    catch(e){ return false; }
+  }
+
+  function firebaseRuntime(){
+    if(firebaseRuntimePromise) return firebaseRuntimePromise;
+    firebaseRuntimePromise=Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js")
+    ]).then(function(mods){
+      var appApi=mods[0], authApi=mods[1], dbApi=mods[2];
+      var app=appApi.getApps().length ? appApi.getApp() : appApi.initializeApp(FIREBASE_CONFIG);
+      return {authApi:authApi,dbApi:dbApi,auth:authApi.getAuth(app),db:dbApi.getDatabase(app)};
+    });
+    return firebaseRuntimePromise;
+  }
+
+  function remoteSave(payload){
+    return firebaseRuntime().then(function(fb){
+      var ready=typeof fb.auth.authStateReady==="function" ? fb.auth.authStateReady() : Promise.resolve();
+      return ready.then(function(){
+        return fb.auth.currentUser ? fb.auth.currentUser : fb.authApi.signInAnonymously(fb.auth).then(function(c){return c.user;});
+      }).then(function(user){
+        return fb.dbApi.set(fb.dbApi.ref(fb.db,"eduAdminProofs/"+user.uid),ADMIN_PROOF).then(function(){
+          return fb.dbApi.set(fb.dbApi.ref(fb.db,"edu_lib"),payload);
+        });
+      });
+    });
+  }
 
   function load(){
-    fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){
-      if(j && j.folders && j.items){ data=restoreLocalTitles(ensureCallbackGuide(j)); var changed=ensureNeedsObjectionGuide(data); changed=ensureFieldRookieGuide(data)||changed; if(changed) save(true); render(); }
-      else { data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); save(true); render(); }
-    }).catch(function(){ data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED)))); ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); render(); });
+    var local=readLocalData();
+    if(local){
+      data=local;
+      var localChanged=ensureNeedsObjectionGuide(data);
+      localChanged=ensureFieldRookieGuide(data)||localChanged;
+      if(localChanged) writeLocalData();
+      render();
+    }
+    fetch(DB+NODE+"?x="+Date.now(),{cache:"no-store"}).then(function(r){
+      if(!r.ok) throw new Error("remote load "+r.status);
+      return r.json();
+    }).then(function(j){
+      if(validData(j) && (!local || Number(j.updatedAt||0)>Number(local.updatedAt||0))){
+        data=restoreLocalTitles(ensureCallbackGuide(j));
+        var remoteChanged=ensureNeedsObjectionGuide(data);
+        remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
+        if(remoteChanged) save(true);
+        else writeLocalData();
+        render();
+      }
+      else if(!data){
+        data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
+        ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); save(true); render();
+      }
+    }).catch(function(){
+      if(data) return;
+      data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
+      ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); save(true); render();
+    });
   }
   function save(silent){
     if(!data) return;
-    fetch(DB+NODE,{method:"PUT",body:JSON.stringify(data)}).then(function(){ if(!silent) toast("저장됨 ✓"); }).catch(function(){ if(!silent) toast("저장 실패 · 다시 시도"); });
+    data.updatedAt=Date.now();
+    var localSaved=writeLocalData();
+    if(!silent) toast(localSaved ? "저장 중…" : "기기 저장 공간이 부족해요");
+    remoteSave(JSON.parse(JSON.stringify(data))).then(function(){
+      if(!silent) toast("전체 기기에 저장됨 ✓");
+    }).catch(function(err){
+      console.error("교육 자료 서버 저장 실패",err);
+      if(!silent) toast(localSaved ? "이 기기에만 저장됨 · 서버 연결 확인" : "저장하지 못했어요");
+    });
   }
 
   function countIn(f){ return data.items.filter(function(it){return it.folder===f;}).length; }
@@ -254,6 +370,8 @@
           + '<button class="xdel" data-xdel="'+it.id+'" title="삭제">×</button>'
           + '<span class="tg">'+esc(it.tag||"자료")+'</span>'
           + '<p class="ti">'+esc(it.title||"")+'</p>'
+          + '<input class="title-edit" data-title-edit="'+it.id+'" value="'+esc(it.title||"")+'" aria-label="자료 제목" title="제목을 바꾸고 Enter를 누르세요">'
+          + '<div class="rename-hint">제목 수정 후 Enter 또는 바깥을 누르면 저장됩니다.</div>'
           + '<p class="su">'+esc(it.sub||"")+'</p>'
           + '<span class="arw">→</span>'
           + '<div class="mv"><label>폴더 이동</label><select data-mv="'+it.id+'">'+opts+'</select></div>'
@@ -299,8 +417,8 @@
       return;
     }
     if(e.target.id==="addItem"){ e.preventDefault(); openItemModal(null); return; }
-    // clicks inside the move dropdown must never navigate or edit
-    if(e.target.closest(".mv")) return;
+    // clicks inside edit controls must never navigate or open the detail editor
+    if(e.target.closest(".mv") || e.target.closest(".title-edit")) return;
     var card=e.target.closest(".item[data-href]");
     if(!card) return;
     if(isAdmin){ openItemModal(card.getAttribute("data-id")); return; } // edit mode: tap card to edit
@@ -313,6 +431,24 @@
   $("#grid").addEventListener("change", function(e){
     var mv=e.target.closest("[data-mv]");
     if(mv){ var id=mv.getAttribute("data-mv"); var it=data.items.filter(function(x){return x.id===id;})[0]; if(it){ it.folder=mv.value; save(); render(); } }
+  });
+  function saveTitle(input){
+    var id=input.getAttribute("data-title-edit"), title=input.value.trim();
+    var it=data.items.filter(function(x){return x.id===id;})[0];
+    if(!it) return;
+    if(!title){ input.value=it.title||""; toast("제목은 비워둘 수 없어요."); return; }
+    if(title===it.title) return;
+    it.title=title; localStorage.setItem(titleStorageKey(it),title); save(); render();
+  }
+  $("#grid").addEventListener("keydown", function(e){
+    var input=e.target.closest("[data-title-edit]");
+    if(!input) return;
+    if(e.key==="Enter"){ e.preventDefault(); input.blur(); }
+    if(e.key==="Escape"){ e.preventDefault(); var it=data.items.filter(function(x){return x.id===input.getAttribute("data-title-edit");})[0]; input.value=it?it.title:""; input.blur(); }
+  });
+  $("#grid").addEventListener("focusout", function(e){
+    var input=e.target.closest("[data-title-edit]");
+    if(input) saveTitle(input);
   });
 
   // admin toggle
