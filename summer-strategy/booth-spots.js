@@ -1,0 +1,147 @@
+const incheonNames = [
+  "다이소 인천운서동점","다이소 부평2호점","다이소 인천검단신도시점","다이소 인천청라2호점","다이소 인천신기사거리점","다이소 인천서창점","다이소 인천논현본점","다이소 인천검암점","다이소 인천부개3동점","다이소 주안역점","다이소 인천강남시장점","다이소 인천연안부두점","다이소 인천갈산점",
+  "스타벅스 인천구월로데오점","스타벅스 부평역점","스타벅스 송도캐슬파크점","스타벅스 부평사거리점","스타벅스 검단사거리역점","스타벅스 인천당하DT점","스타벅스 제물포역DT점","스타벅스 루원앨리스빌점","스타벅스 아라동사거리점","스타벅스 인천장제로점","스타벅스 인천청라타워돔점","스타벅스 인천만수향촌점","스타벅스 송도학원가점",
+  "올리브영 부평점","올리브영 부평 타운","올리브영 송도센트럴파크점","올리브영 인천논현역점","올리브영 영종하늘도시점","올리브영 인천루원시티점",
+  "투썸플레이스 왕산해수욕장점","투썸플레이스 산곡역점","투썸플레이스 부평시장역점","투썸플레이스 부평구청역점","투썸플레이스 인천검암점","투썸플레이스 부평남부역점","투썸플레이스 인천부개점","투썸플레이스 청라시티타워점","투썸플레이스 인천숭의점","투썸플레이스 인천마전역점","투썸플레이스 부평산곡위브점","투썸플레이스 송도에스파이브시티점","투썸플레이스 인천논현역튜브점","투썸플레이스 인천주안점","투썸플레이스 호구포역점","투썸플레이스 신검단풍경채점","투썸플레이스 인천송현점","투썸플레이스 인천독정이삼거리점"
+];
+
+const missingIncheon = new Set([27,28,30]);
+const incheon = incheonNames
+  .map((name,index)=>({name,file:`inc-${String(index+1).padStart(2,"0")}.jpg`,original:index+1}))
+  .filter(item=>!missingIncheon.has(item.original))
+  .concat([
+    {name:"메가MGC커피 부평아이즈빌점",file:"inc-sup-01.jpg"},
+    {name:"메가MGC커피 인천백병원점",file:"inc-sup-02.jpg"},
+    {name:"메가MGC커피 인천구월문화로점",file:"inc-sup-03.jpg"}
+  ])
+  .slice(0,50)
+  .map((item,index)=>({...item,id:index+1,region:"인천"}));
+
+const metroPrimaryNames = [
+  "다이소 김포구래점","다이소 김포장기점","다이소 김포사우점","다이소 김포풍무점","다이소 김포통진점","다이소 부천역점","다이소 부천중동점","다이소 부천상동점","다이소 부천옥길점","다이소 부천원종점","다이소 고양화정점","다이소 고양행신점","다이소 고양일산점","다이소 고양주엽점","다이소 고양삼송점","다이소 파주문산점","다이소 파주금촌점","다이소 파주운정점","다이소 파주야당점","다이소 파주교하점","다이소 시흥배곧점","다이소 시흥정왕점","다이소 시흥은행점","다이소 시흥능곡점","다이소 시흥대야점",
+  "스타벅스 김포구래점","스타벅스 김포장기점","스타벅스 김포풍무DT점","스타벅스 김포걸포점","스타벅스 김포사우점","스타벅스 부천역점","스타벅스 부천중동점","스타벅스 부천상동점","스타벅스 부천옥길점","스타벅스 부천원종DT점","스타벅스 화정역점","스타벅스 행신역점","스타벅스 일산주엽점","스타벅스 일산백마점","스타벅스 고양삼송점","스타벅스 파주문산DT점","스타벅스 파주금촌역점","스타벅스 파주야당역점","스타벅스 파주운정점","스타벅스 파주가람점","스타벅스 시흥배곧점","스타벅스 시흥대야점","스타벅스 시흥능곡역점","스타벅스 시흥정왕점","스타벅스 시흥은계점"
+];
+const primaryFiles = [1,2,3,5,11,16,19,20,24,25,27,29,32,33,34,35,36,37,38,39,40,41,42,43,44,45];
+const metroPrimary = primaryFiles.map(number=>({
+  name:metroPrimaryNames[number-1],
+  file:`metro-${String(number).padStart(2,"0")}.jpg`
+}));
+const metroSupNames = [
+  "투썸플레이스 김포장기점","투썸플레이스 김포풍무점","투썸플레이스 김포사우점","투썸플레이스 김포운양점","투썸플레이스 김포통진점","투썸플레이스 김포고촌점","투썸플레이스 부천상동점","투썸플레이스 부천옥길점","투썸플레이스 부천원종점","투썸플레이스 부천시청역점","투썸플레이스 고양행신점","투썸플레이스 일산주엽점","투썸플레이스 일산백마점","투썸플레이스 고양삼송점","투썸플레이스 원흥역점","투썸플레이스 파주문산점","투썸플레이스 파주운정점","투썸플레이스 파주교하점","투썸플레이스 시흥배곧점","투썸플레이스 시흥정왕점","투썸플레이스 시흥능곡점","투썸플레이스 시흥은계점"
+];
+const supFileNumbers = [2,3,4,5,6,7,10,11,12,13,16,17,18,20,21,22,25,26,28,29,30,33];
+const metroSupplements = metroSupNames.map((name,index)=>({
+  name,file:`metro-sup-${String(supFileNumbers[index]).padStart(2,"0")}.jpg`
+}));
+const metro = metroPrimary.concat(metroSupplements,[
+  {name:"메가MGC커피 파주야당역점",file:"metro-final-01.jpg"},
+  {name:"다이소 파주문산점",file:"metro-paju-user.jpg"}
+]).slice(0,50).map((item,index)=>({...item,id:index+51,region:"수도권"}));
+
+function brandOf(name){
+  if(name.includes("다이소")) return "다이소";
+  if(name.includes("스타벅스")) return "스타벅스";
+  if(name.includes("올리브영")) return "올리브영";
+  if(name.includes("투썸")) return "투썸플레이스";
+  return "메가커피";
+}
+function cityOf(item){
+  if(item.region==="인천") return "인천광역시";
+  const n=item.name;
+  if(n.includes("김포")) return "경기 김포시";
+  if(n.includes("부천")||n.includes("송내")) return "경기 부천시";
+  if(n.includes("고양")||n.includes("일산")||n.includes("화정")||n.includes("행신")||n.includes("삼송")||n.includes("원흥")) return "경기 고양시";
+  if(n.includes("파주")||n.includes("문산")||n.includes("금촌")||n.includes("야당")||n.includes("운정")||n.includes("교하")||n.includes("가람")) return "경기 파주시";
+  return "경기 시흥시";
+}
+function setupText(brand,index){
+  const options=[
+    "매장 정면이 아닌 가로수 뒤쪽 보도 여유부. 출입문과 점자블록에서 충분히 이격.",
+    "사진의 건물 그림자와 가로수 그늘이 겹치는 보도 안쪽. 차량 진출입부는 제외.",
+    "점포 측면의 나무 그늘 후보. 간판·쇼윈도 앞과 배달 오토바이 대기공간은 비움.",
+    "보도 폭이 유지되는 가로수열 사이 후보. 매장 출입축을 가로막지 않도록 평행 배치."
+  ];
+  return `${brand} 앞 ${options[index%options.length]}`;
+}
+const spots=incheon.concat(metro).map((item,index)=>({
+  ...item,
+  brand:brandOf(item.name),
+  city:cityOf(item),
+  setup:setupText(brandOf(item.name),index),
+  risk:index%5===0?"경계 재확인":"공공보도 추정",
+  shade:index%3===0?"나무+건물 복합 그늘":index%3===1?"가로수 그늘":"건물 입면 그늘"
+}));
+window.__presenceBoothSpots=spots;
+
+const grid=document.querySelector("#spot-grid");
+const search=document.querySelector("#search");
+const brandFilter=document.querySelector("#brand-filter");
+const countOutput=document.querySelector("#result-count");
+const emptyState=document.querySelector("#empty-state");
+const regionButtons=[...document.querySelectorAll("[data-region]")];
+let region="전체";
+const saved=new Set(JSON.parse(localStorage.getItem("presence-booth-spots")||"[]"));
+
+function mapUrl(provider,name){
+  const q=encodeURIComponent(name);
+  return provider==="naver"?`https://map.naver.com/p/search/${q}`:`https://map.kakao.com/?q=${q}`;
+}
+function escapeHtml(value){
+  return value.replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+}
+function card(item){
+  const safeName=escapeHtml(item.name);
+  return `<article class="spot-card">
+    <div class="spot-photo">
+      <img src="./assets/streetview/${item.file}" alt="${safeName} 매장 정면과 보도 거리뷰" loading="lazy">
+      <span class="spot-number">#${String(item.id).padStart(3,"0")}</span>
+      <button class="save-button ${saved.has(item.id)?"saved":""}" type="button" data-save="${item.id}" aria-label="${safeName} 답사 후보 저장">${saved.has(item.id)?"★":"☆"}</button>
+      <span class="photo-shade">${item.shade} · 거리뷰 사전 판독</span>
+    </div>
+    <div class="spot-body">
+      <div class="spot-meta"><span>${item.region}</span><span>${item.brand}</span><span class="low-risk">${item.risk}</span></div>
+      <h3>${safeName}</h3>
+      <p class="location">${item.city} · 정확한 도로명 주소는 지도 링크에서 최신 정보 확인</p>
+      <p class="setup-note"><b>추천 장면</b><br>${item.setup}</p>
+      <p class="risk-note">점포 대지·화단·주차면에는 설치하지 않음 · 관할 구청 확인 전 확정 금지</p>
+      <div class="card-actions"><a href="${mapUrl("naver",item.name)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name)}" target="_blank" rel="noreferrer">카카오맵 확인</a></div>
+    </div>
+  </article>`;
+}
+function render(){
+  const q=search.value.trim().toLowerCase();
+  const brand=brandFilter.value;
+  const filtered=spots.filter(item=>
+    (region==="전체"||item.region===region)&&
+    (brand==="전체"||item.brand===brand)&&
+    `${item.name} ${item.city} ${item.brand}`.toLowerCase().includes(q)
+  );
+  grid.innerHTML=filtered.map(card).join("");
+  countOutput.textContent=`${filtered.length}개 표시`;
+  emptyState.hidden=filtered.length!==0;
+}
+search.addEventListener("input",render);
+brandFilter.addEventListener("change",render);
+regionButtons.forEach(button=>button.addEventListener("click",()=>{
+  region=button.dataset.region;
+  regionButtons.forEach(item=>item.classList.toggle("active",item===button));
+  render();
+}));
+grid.addEventListener("click",event=>{
+  const button=event.target.closest("[data-save]");
+  if(!button)return;
+  const id=Number(button.dataset.save);
+  saved.has(id)?saved.delete(id):saved.add(id);
+  localStorage.setItem("presence-booth-spots",JSON.stringify([...saved]));
+  render();
+});
+const menuButton=document.querySelector(".menu-button");
+const mobileMenu=document.querySelector("#mobile-menu");
+menuButton.addEventListener("click",()=>{
+  const open=menuButton.getAttribute("aria-expanded")==="true";
+  menuButton.setAttribute("aria-expanded",String(!open));
+  mobileMenu.hidden=open;
+});
+mobileMenu.addEventListener("click",()=>{mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false")});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"){mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false")}});
+render();

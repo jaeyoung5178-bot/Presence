@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Presence 여름전략 사이트</title>
+  <meta name="description" content="인천 50곳과 인근 수도권 50곳의 가로변 점포 앞 나무·건물 그늘 부스 후보 아카이브">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23d7ff55'/%3E%3Cpath d='M19 48V16h14c9 0 15 5 15 13 0 9-6 14-16 14h-5v5h-8zm8-12h6c5 0 8-2 8-7 0-4-3-6-8-6h-6v13z' fill='%230d1110'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./booth-spots.css?v=2">
+</head>
+<body>
+  <div class="presence-page">
+    <header class="presence-header">
+      <a class="presence-brand" href="../site-operations.html" aria-label="사이트운영으로 돌아가기">
+        <span class="presence-mark">P</span>
+        <span><b>Presence</b><small>Summer Strategy</small></span>
+      </a>
+      <nav class="presence-nav" aria-label="프레젠스 워크스페이스">
+        <a href="../index.html">Hub</a>
+        <a href="../site-operations.html">Sites</a>
+        <a href="#today">Today</a>
+        <a href="#spots" class="active">Places</a>
+        <a href="#checklist">Guide</a>
+      </nav>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu">Menu</button>
+    </header>
+
+    <nav id="mobile-menu" class="mobile-menu" hidden aria-label="모바일 워크스페이스">
+      <a href="../index.html">Hub</a><a href="../site-operations.html">Sites</a>
+      <a href="#today">Today</a><a href="#spots">Places</a><a href="#checklist">Guide</a>
+    </nav>
+
+    <main id="top">
+      <section class="hero" id="today">
+        <div class="hero-copy">
+          <p class="eyebrow">PRESENCE 여름전략 사이트 · 2026</p>
+          <h1>그늘이 보이는<br>가로변 점포 100</h1>
+          <p class="lead">실내·주차장·광장 대신 다이소, 카페, 올리브영 같은 1층 점포 앞을 골랐습니다. 거리뷰에서 매장 정면과 인도, 나무 또는 건물 그늘이 함께 보이는 구도를 우선했습니다.</p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#spots">후보 둘러보기</a>
+            <a class="secondary-action" href="#checklist">현장 체크 기준</a>
+          </div>
+        </div>
+        <div class="summary-card" aria-label="후보 요약">
+          <div><strong>100</strong><span>전체 후보</span></div>
+          <div><strong>50</strong><span>인천</span></div>
+          <div><strong>50</strong><span>인근 수도권</span></div>
+          <div><strong>0</strong><span>실내 후보</span></div>
+        </div>
+      </section>
+
+      <section class="safety-banner" id="guide">
+        <span class="safety-icon">!</span>
+        <p><b>공공보도처럼 보여도 무단 설치 가능하다는 뜻은 아닙니다.</b> 사진은 사전답사용입니다. 토지이음·지적도와 관할 구청에서 보도 경계를 확인하고, 점포 출입문·점자블록·소방 동선에서 충분히 이격하세요.</p>
+      </section>
+
+      <section class="controls" aria-label="후보 검색과 필터">
+        <label class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <input id="search" type="search" placeholder="매장명·지역·브랜드 검색" autocomplete="off">
+        </label>
+        <div class="filter-row" role="group" aria-label="지역 필터">
+          <button type="button" data-region="전체" class="active">전체 100</button>
+          <button type="button" data-region="인천">인천 50</button>
+          <button type="button" data-region="수도권">수도권 50</button>
+        </div>
+        <label class="select-box">
+          <span>브랜드</span>
+          <select id="brand-filter">
+            <option value="전체">전체</option>
+            <option value="다이소">다이소</option>
+            <option value="스타벅스">스타벅스</option>
+            <option value="올리브영">올리브영</option>
+            <option value="투썸플레이스">투썸플레이스</option>
+            <option value="메가커피">메가커피</option>
+          </select>
+        </label>
+        <output id="result-count">100개 표시</output>
+      </section>
+
+      <section id="spots" class="spots-section" aria-labelledby="spots-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">STREET-VIEW FIRST</p><h2 id="spots-title">부스 후보 위치</h2></div>
+          <p>★ 버튼으로 현장답사 후보를 브라우저에 임시 저장할 수 있습니다.</p>
+        </div>
+        <div id="spot-grid" class="spot-grid" aria-live="polite"></div>
+        <div id="empty-state" class="empty-state" hidden>
+          <strong>조건에 맞는 후보가 없습니다.</strong>
+          <p>검색어를 줄이거나 지역·브랜드 필터를 초기화해 보세요.</p>
+        </div>
+      </section>
+
+      <section id="checklist" class="checklist">
+        <div>
+          <p class="eyebrow">BEFORE SETUP</p>
+          <h2>5분 현장 체크</h2>
+          <p>거리뷰는 계절과 촬영 시점이 다릅니다. 실제 설치 전에는 정오와 오후 시간대에 한 번씩 확인하세요.</p>
+        </div>
+        <ol>
+          <li><b>경계</b><span>점포 대지와 공공보도의 경계를 지적도로 확인</span></li>
+          <li><b>그늘</b><span>12–16시 중 부스 전체가 들어가는지 확인</span></li>
+          <li><b>동선</b><span>출입문·점자블록·버스정류장·소화전 이격</span></li>
+          <li><b>폭</b><span>설치 후 보행 유효폭 2m 이상을 보수적으로 확보</span></li>
+          <li><b>승인</b><span>관할 구청 도로부서와 인접 점포에 사전 확인</span></li>
+        </ol>
+      </section>
+    </main>
+
+    <footer><span>Presence · Summer Strategy</span><a href="../site-operations.html">사이트운영으로 돌아가기</a></footer>
+  </div>
+  <script src="./booth-spots.js?v=2"></script>
+</body>
+</html>
