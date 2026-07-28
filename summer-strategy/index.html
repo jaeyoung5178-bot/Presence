@@ -35,7 +35,7 @@
       <section class="hero" id="today">
         <div class="hero-copy">
           <p class="eyebrow">PRESENCE 여름전략 사이트 · 2026</p>
-          <h1>그늘이 보이는<br>가로변 점포 100</h1>
+          <h1>그늘이 보이는<br>가로변 점포 100+</h1>
           <p class="lead">실내·주차장·광장 대신 다이소, 카페, 올리브영 같은 1층 점포 앞을 골랐습니다. 거리뷰에서 매장 정면과 인도, 나무 또는 건물 그늘이 함께 보이는 구도를 우선했습니다.</p>
           <div class="hero-actions">
             <a class="primary-action" href="#spots">후보 둘러보기</a>
@@ -43,9 +43,9 @@
           </div>
         </div>
         <div class="summary-card" aria-label="후보 요약">
-          <div><strong>100</strong><span>전체 후보</span></div>
-          <div><strong>50</strong><span>인천</span></div>
-          <div><strong>50</strong><span>인근 수도권</span></div>
+          <div><strong id="summary-total">100</strong><span>전체 후보</span></div>
+          <div><strong id="summary-incheon">50</strong><span>인천</span></div>
+          <div><strong id="summary-metro">50</strong><span>인근 수도권</span></div>
           <div><strong>0</strong><span>실내 후보</span></div>
         </div>
       </section>
@@ -113,6 +113,27 @@
 
     <footer><span>Presence · Summer Strategy</span><a href="../site-operations.html">사이트운영으로 돌아가기</a></footer>
   </div>
+  <button type="button" id="add-site-button" class="add-site-button" aria-label="새 사이트 추가"><span>＋</span><b>사이트 추가</b></button>
+  <dialog id="site-dialog" class="review-dialog site-dialog" aria-labelledby="site-dialog-title">
+    <form id="site-form">
+      <div class="dialog-head">
+        <div><p class="eyebrow">ADD NEW SITE</p><h2 id="site-dialog-title">새 사이트 추가</h2></div>
+        <button type="button" id="site-close" class="dialog-close" aria-label="사이트 추가 창 닫기">×</button>
+      </div>
+      <p class="site-form-guide">사이트명과 정확한 주소, 카카오맵 링크를 넣으면 기존 카드 형식으로 자동 생성됩니다.</p>
+      <div class="review-fields">
+        <label class="review-wide"><span>사이트 이름</span><input id="site-name" type="text" maxlength="80" required placeholder="예: 다이소 인천운서동점"></label>
+        <label class="review-wide"><span>정확한 주소</span><input id="site-address" type="text" maxlength="160" required placeholder="예: 인천 중구 영종대로 100"></label>
+        <label class="review-wide"><span>카카오맵 주소</span><input id="site-kakao" type="url" required inputmode="url" placeholder="https://place.map.kakao.com/..."></label>
+        <label><span>그늘 유형</span><select id="site-shade"><option>가로수 그늘</option><option>건물 입면 그늘</option><option>나무+건물 복합 그늘</option></select></label>
+        <label><span>현장 사진</span><input id="site-photo" type="file" accept="image/*" capture="environment"></label>
+        <label class="review-wide"><span>자동 생성될 추천 장면</span><textarea id="site-setup" rows="3" maxlength="300" placeholder="비워두면 매장 앞 그늘과 보행 동선을 기준으로 자동 작성됩니다."></textarea></label>
+      </div>
+      <div id="site-photo-preview" class="single-photo-preview"></div>
+      <div class="dialog-actions"><button type="button" id="site-cancel" class="danger-action">취소</button><button type="submit" class="primary-action">사이트 자동 생성</button></div>
+      <p id="site-message" class="review-message" aria-live="polite"></p>
+    </form>
+  </dialog>
   <dialog id="review-dialog" class="review-dialog" aria-labelledby="review-title">
     <form id="review-form" method="dialog">
       <div class="dialog-head">
@@ -123,6 +144,7 @@
       <div class="review-fields">
         <label><span>답사 상태</span><select id="review-status"><option>미답사</option><option>답사완료</option><option>셋업완료</option><option>보류</option></select></label>
         <label><span>현장 점수</span><select id="review-rating"><option value="0">선택 안 함</option><option value="5">★★★★★ 매우 좋음</option><option value="4">★★★★☆ 좋음</option><option value="3">★★★☆☆ 보통</option><option value="2">★★☆☆☆ 아쉬움</option><option value="1">★☆☆☆☆ 비추천</option></select></label>
+        <label class="review-wide"><span>최근 결과</span><input id="review-result" type="text" maxlength="120" placeholder="예: 재영 2 · 윤경 2 · 채영 2"></label>
         <label class="review-wide"><span>현장 후기</span><textarea id="review-text" rows="5" maxlength="600" placeholder="그늘 시간대, 보행 폭, 유동 인구, 민원 가능성 등을 기록하세요."></textarea></label>
         <label class="review-wide photo-field"><span>실제 셋업사진</span><input id="review-photo" type="file" accept="image/*" capture="environment"><small>휴대폰에서 촬영하거나 앨범 사진을 선택할 수 있습니다. 사진은 이 기기에 압축 저장됩니다.</small></label>
       </div>
@@ -131,6 +153,6 @@
       <p id="review-message" class="review-message" aria-live="polite"></p>
     </form>
   </dialog>
-  <script src="./booth-spots.js?v=3"></script>
+  <script src="./booth-spots.js?v=4"></script>
 </body>
 </html>

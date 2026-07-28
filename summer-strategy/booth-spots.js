@@ -71,6 +71,8 @@ const spots=incheon.concat(metro).map((item,index)=>({
   risk:index%5===0?"경계 재확인":"공공보도 추정",
   shade:index%3===0?"나무+건물 복합 그늘":index%3===1?"가로수 그늘":"건물 입면 그늘"
 }));
+const customSpots=JSON.parse(localStorage.getItem("presence-custom-sites")||"[]");
+customSpots.forEach((item,index)=>spots.push({...item,id:101+index,custom:true}));
 window.__presenceBoothSpots=spots;
 
 const grid=document.querySelector("#spot-grid");
@@ -86,7 +88,8 @@ const saved=new Set(JSON.parse(localStorage.getItem("presence-booth-spots")||"[]
 let reviews=JSON.parse(localStorage.getItem("presence-site-reviews")||"{}");
 let activeReviewId=null;
 
-function mapUrl(provider,name){
+function mapUrl(provider,name,item){
+  if(provider==="kakao"&&item?.kakaoUrl)return item.kakaoUrl;
   const q=encodeURIComponent(name);
   return provider==="naver"?`https://map.naver.com/p/search/${q}`:`https://map.kakao.com/?q=${q}`;
 }
@@ -95,23 +98,26 @@ function escapeHtml(value){
 }
 function card(item){
   const safeName=escapeHtml(item.name);
+  const imageSource=item.imageData||`./assets/streetview/${item.file}`;
   const review=reviews[item.id];
   const reviewLabel=review?`${review.status||"후기"}${review.photos?.length?` · 셋업사진 ${review.photos.length}장`:""}`:"";
+  const recentResult=review?.result?.trim();
   return `<article class="spot-card">
     <div class="spot-photo">
-      <img src="./assets/streetview/${item.file}" alt="${safeName} 매장 정면과 보도 거리뷰" loading="lazy">
+      <img src="${imageSource}" alt="${safeName} 매장 정면과 보도 후보 사진" loading="lazy">
       <span class="spot-number">#${String(item.id).padStart(3,"0")}</span>
       <button class="save-button ${saved.has(item.id)?"saved":""}" type="button" data-save="${item.id}" aria-label="${safeName} 답사 후보 저장">${saved.has(item.id)?"★":"☆"}</button>
       <span class="photo-shade">${item.shade} · 거리뷰 사전 판독</span>
     </div>
     <div class="spot-body">
-      <div class="spot-meta"><span>${item.region}</span><span>${item.brand}</span><span class="low-risk">${item.risk}</span></div>
+      <div class="spot-meta"><span>${item.region}</span><span>${item.brand}</span>${item.custom?'<span class="custom-badge">직접 추가</span>':""}<span class="low-risk">${item.risk}</span></div>
       <h3>${safeName}</h3>
-      <p class="location">${item.city} · 정확한 도로명 주소는 지도 링크에서 최신 정보 확인</p>
+      <p class="location">${item.address?escapeHtml(item.address):`${item.city} · 정확한 도로명 주소는 지도 링크에서 최신 정보 확인`}</p>
       <p class="setup-note"><b>추천 장면</b><br>${item.setup}</p>
       <p class="risk-note">점포 대지·화단·주차면에는 설치하지 않음 · 관할 구청 확인 전 확정 금지</p>
       ${reviewLabel?`<span class="review-badge">${escapeHtml(reviewLabel)}</span>`:""}
-      <div class="card-actions"><a href="${mapUrl("naver",item.name)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name)}" target="_blank" rel="noreferrer">카카오맵 확인</a><button type="button" class="review-open" data-review="${item.id}">${review?"후기·셋업사진 수정":"후기·셋업사진 추가"}</button></div>
+      ${recentResult?`<span class="recent-result"><b>최근 결과</b> · ${escapeHtml(recentResult)}</span>`:""}
+      <div class="card-actions"><a href="${mapUrl("naver",item.name,item)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name,item)}" target="_blank" rel="noreferrer">카카오맵 확인</a><button type="button" class="review-open" data-review="${item.id}">${review?"후기·셋업사진 수정":"후기·셋업사진 추가"}</button></div>
     </div>
   </article>`;
 }
@@ -121,13 +127,24 @@ function render(){
   const filtered=spots.filter(item=>
     (region==="전체"||item.region===region)&&
     (brand==="전체"||item.brand===brand)&&
-    `${item.name} ${item.city} ${item.brand}`.toLowerCase().includes(q)
+    `${item.name} ${item.city} ${item.address||""} ${item.brand} ${reviews[item.id]?.status||""} ${reviews[item.id]?.result||""} ${reviews[item.id]?.text||""}`.toLowerCase().includes(q)
   );
   grid.innerHTML=filtered.map(card).join("");
   grid.classList.toggle("text-view",viewMode==="text");
   viewButtons.forEach(button=>{const active=button.dataset.view===viewMode;button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active));});
   countOutput.textContent=`${filtered.length}개 표시`;
   emptyState.hidden=filtered.length!==0;
+}
+function updateTotals(){
+  const incCount=spots.filter(item=>item.region==="인천").length;
+  const metroCount=spots.filter(item=>item.region==="수도권").length;
+  document.querySelector("#summary-total").textContent=spots.length;
+  document.querySelector("#summary-incheon").textContent=incCount;
+  document.querySelector("#summary-metro").textContent=metroCount;
+  regionButtons.forEach(button=>{
+    const count=button.dataset.region==="전체"?spots.length:button.dataset.region==="인천"?incCount:metroCount;
+    button.textContent=`${button.dataset.region} ${count}`;
+  });
 }
 search.addEventListener("input",render);
 brandFilter.addEventListener("change",render);
@@ -151,6 +168,7 @@ const reviewDialog=document.querySelector("#review-dialog");
 const reviewForm=document.querySelector("#review-form");
 const reviewStatus=document.querySelector("#review-status");
 const reviewRating=document.querySelector("#review-rating");
+const reviewResult=document.querySelector("#review-result");
 const reviewText=document.querySelector("#review-text");
 const reviewPhoto=document.querySelector("#review-photo");
 const reviewPreview=document.querySelector("#review-preview");
@@ -162,9 +180,9 @@ function persistReviews(){
 function openReview(id){
   activeReviewId=id;
   const item=spots.find(spot=>spot.id===id);
-  const review=reviews[id]||{status:"미답사",rating:"0",text:"",photos:[]};
+  const review=reviews[id]||{status:"미답사",rating:"0",result:"",text:"",photos:[]};
   document.querySelector("#review-site").textContent=`#${String(id).padStart(3,"0")} · ${item.name}`;
-  reviewStatus.value=review.status||"미답사";reviewRating.value=String(review.rating||0);reviewText.value=review.text||"";reviewPhoto.value="";reviewMessage.textContent="";
+  reviewStatus.value=review.status||"미답사";reviewRating.value=String(review.rating||0);reviewResult.value=review.result||"";reviewText.value=review.text||"";reviewPhoto.value="";reviewMessage.textContent="";
   drawReviewPhotos(review.photos||[]);
   reviewDialog.showModal();document.body.style.overflow="hidden";
 }
@@ -195,7 +213,7 @@ reviewPhoto.addEventListener("change",async()=>{
   reviewMessage.textContent="사진 압축 중…";
   try{
     const photo=await resizePhoto(file);
-    const review=reviews[activeReviewId]||{status:reviewStatus.value,rating:reviewRating.value,text:reviewText.value,photos:[]};
+    const review=reviews[activeReviewId]||{status:reviewStatus.value,rating:reviewRating.value,result:reviewResult.value,text:reviewText.value,photos:[]};
     review.photos=[...(review.photos||[]),photo].slice(-3);reviews[activeReviewId]=review;
     if(persistReviews()){drawReviewPhotos(review.photos);reviewMessage.textContent="셋업사진을 추가했습니다. 최대 3장까지 저장됩니다.";}
   }catch(error){reviewMessage.textContent="사진을 처리하지 못했습니다. 다른 사진을 선택해 주세요.";}
@@ -207,12 +225,63 @@ reviewPreview.addEventListener("click",event=>{
 reviewForm.addEventListener("submit",event=>{
   event.preventDefault();if(!activeReviewId)return;
   const previous=reviews[activeReviewId]||{};
-  reviews[activeReviewId]={status:reviewStatus.value,rating:reviewRating.value,text:reviewText.value.trim(),photos:previous.photos||[],updatedAt:new Date().toISOString()};
+  reviews[activeReviewId]={status:reviewStatus.value,rating:reviewRating.value,result:reviewResult.value.trim(),text:reviewText.value.trim(),photos:previous.photos||[],updatedAt:new Date().toISOString()};
   if(persistReviews()){render();reviewMessage.textContent="후기와 셋업사진을 이 기기에 저장했습니다.";setTimeout(closeReview,450);}
 });
 document.querySelector("#review-delete").addEventListener("click",()=>{if(!activeReviewId)return;delete reviews[activeReviewId];persistReviews();render();closeReview();});
 document.querySelector("#review-close").addEventListener("click",closeReview);
 reviewDialog.addEventListener("click",event=>{if(event.target===reviewDialog)closeReview();});
+const siteDialog=document.querySelector("#site-dialog");
+const siteForm=document.querySelector("#site-form");
+const sitePhoto=document.querySelector("#site-photo");
+const siteMessage=document.querySelector("#site-message");
+let pendingSitePhoto="";
+function autoRegion(address){
+  if(address.includes("인천"))return "인천";
+  return "수도권";
+}
+function autoCity(address){
+  const parts=address.trim().split(/\s+/);
+  return parts.slice(0,2).join(" ")||"직접 추가";
+}
+function placeholderImage(name,address){
+  const initial=escapeHtml(name.slice(0,2));
+  const line=escapeHtml(address.slice(0,28));
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#17251d"/><stop offset="1" stop-color="#31543e"/></linearGradient></defs><rect width="1280" height="720" fill="url(#g)"/><circle cx="1030" cy="140" r="230" fill="#d7ff55" opacity=".09"/><text x="90" y="250" fill="#d7ff55" font-family="Arial,sans-serif" font-size="76" font-weight="800">${initial}</text><text x="90" y="345" fill="#f7f9f6" font-family="Arial,sans-serif" font-size="52" font-weight="800">${escapeHtml(name)}</text><text x="90" y="420" fill="#c7d0ca" font-family="Arial,sans-serif" font-size="30">${line}</text><text x="90" y="590" fill="#d7ff55" font-family="Arial,sans-serif" font-size="24" font-weight="700">KAKAO MAP LINKED · 현장 사진 추가 가능</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+function openSiteDialog(){
+  siteForm.reset();pendingSitePhoto="";document.querySelector("#site-photo-preview").innerHTML="";siteMessage.textContent="";
+  siteDialog.showModal();document.body.style.overflow="hidden";
+}
+function closeSiteDialog(){siteDialog.close();document.body.style.overflow="";}
+document.querySelector("#add-site-button").addEventListener("click",openSiteDialog);
+document.querySelector("#site-close").addEventListener("click",closeSiteDialog);
+document.querySelector("#site-cancel").addEventListener("click",closeSiteDialog);
+siteDialog.addEventListener("click",event=>{if(event.target===siteDialog)closeSiteDialog();});
+sitePhoto.addEventListener("change",async()=>{
+  const file=sitePhoto.files?.[0];if(!file)return;
+  siteMessage.textContent="현장 사진 압축 중…";
+  try{pendingSitePhoto=await resizePhoto(file);document.querySelector("#site-photo-preview").innerHTML=`<img src="${pendingSitePhoto}" alt="추가할 현장 사진 미리보기">`;siteMessage.textContent="현장 사진을 준비했습니다.";}
+  catch(error){siteMessage.textContent="사진을 처리하지 못했습니다. 다른 사진을 선택해 주세요.";}
+});
+siteForm.addEventListener("submit",event=>{
+  event.preventDefault();
+  const name=document.querySelector("#site-name").value.trim();
+  const address=document.querySelector("#site-address").value.trim();
+  const kakaoUrl=document.querySelector("#site-kakao").value.trim();
+  const shade=document.querySelector("#site-shade").value;
+  const manualSetup=document.querySelector("#site-setup").value.trim();
+  if(!/^https:\/\/(place\.map\.kakao\.com|map\.kakao\.com|kko\.to)\//i.test(kakaoUrl)){siteMessage.textContent="카카오맵에서 공유한 정확한 https 주소를 넣어주세요.";return;}
+  const custom={
+    name,address,kakaoUrl,shade,region:autoRegion(address),city:autoCity(address),brand:brandOf(name),
+    risk:"경계 재확인",setup:manualSetup||`${brandOf(name)} 앞 그늘 후보. 정확한 보도 경계와 출입 동선을 현장에서 확인한 뒤 평행 배치.`,
+    imageData:pendingSitePhoto||placeholderImage(name,address),createdAt:new Date().toISOString()
+  };
+  const stored=JSON.parse(localStorage.getItem("presence-custom-sites")||"[]");stored.unshift(custom);
+  try{localStorage.setItem("presence-custom-sites",JSON.stringify(stored));siteMessage.textContent="사이트를 생성했습니다.";setTimeout(()=>location.reload(),350);}
+  catch(error){siteMessage.textContent="저장 공간이 부족합니다. 사진 없이 다시 저장하거나 오래된 사진을 정리해 주세요.";}
+});
 const menuButton=document.querySelector(".menu-button");
 const mobileMenu=document.querySelector("#mobile-menu");
 menuButton.addEventListener("click",()=>{
@@ -221,5 +290,6 @@ menuButton.addEventListener("click",()=>{
   mobileMenu.hidden=open;
 });
 mobileMenu.addEventListener("click",()=>{mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false")});
-document.addEventListener("keydown",event=>{if(event.key==="Escape"){mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false");if(reviewDialog.open)closeReview();}});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"){mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false");if(reviewDialog.open)closeReview();if(siteDialog.open)closeSiteDialog();}});
+updateTotals();
 render();
