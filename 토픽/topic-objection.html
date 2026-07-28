@@ -17,6 +17,8 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02040a;font-family:var(--font);-webkit-font-smoothing:antialiased}
 button,a{font:inherit}
 h1,h2,h3,p{margin:0}
+h1,h2,h3{word-break:keep-all;text-wrap:balance}
+p,.lead,.hitem span,.proc-card li{word-break:keep-all;text-wrap:pretty}
 h1{font-size:104px;line-height:.98;letter-spacing:-.055em;font-weight:850}
 h2{font-size:72px;line-height:1.05;letter-spacing:-.045em;font-weight:850}
 h3{font-size:34px;letter-spacing:-.025em;font-weight:800}
@@ -636,15 +638,15 @@ h3{font-size:34px;letter-spacing:-.025em;font-weight:800}
       <h2>세일즈가 나오는 <span class="grad">액션의 흐름</span></h2>
       <p class="lead">클로즈 뒤의 반응을 읽는 순간, 다음 액션이 결정됩니다.</p>
       <div class="action-track" aria-label="세일즈 액션 5단계">
-        <div class="action-node"><span class="action-no">01</span><strong>Contact</strong><small>접촉과 첫 연결</small></div>
+        <div class="action-node"><span class="action-no">01</span><strong>Contact</strong><small><span>주목시키기</span><span>경계심 ↓ · 호기심 ↑</span></small></div>
         <span class="action-arrow">→</span>
-        <div class="action-node"><span class="action-no">02</span><strong>Stop</strong><small>멈춰 세우기</small></div>
+        <div class="action-node"><span class="action-no">02</span><strong>Stop</strong><small><span>문제의식 고취</span><span>흥미 유발</span></small></div>
         <span class="action-arrow">→</span>
-        <div class="action-node"><span class="action-no">03</span><strong>Presentation</strong><small>가치 전달</small></div>
+        <div class="action-node"><span class="action-no">03</span><strong>Presentation</strong><small><span>해결책으로 구매욕구 MAX</span><span>앞으로의 미래를 상상하게 하기</span></small></div>
         <span class="action-arrow">→</span>
-        <div class="action-node hot"><span class="action-no">04</span><strong>Close</strong><small>결정 요청</small></div>
+        <div class="action-node hot"><span class="action-no">04</span><strong>Close</strong><small><span>지금 이 자리에서 후원할</span><span>명확한 이유 제시 · 결정 촉구</span></small></div>
         <span class="action-arrow">→</span>
-        <div class="action-node react"><span class="action-no">05</span><strong>First Reaction</strong><small>반응을 읽는 구간</small></div>
+        <div class="action-node react"><span class="action-no">05</span><strong>First Reaction</strong><small><span>오브젝션에 대한</span><span>긍정적 첫 반응 만들기</span></small></div>
       </div>
       <div class="reaction-split">
         <div><span class="split-mark yes">YES</span><b>충분한 Impulse</b><small>바로 Rehash</small></div>
@@ -967,7 +969,7 @@ h3{font-size:34px;letter-spacing:-.025em;font-weight:800}
 .action-node.hot{border-color:rgba(56,189,248,.5);background:rgba(56,189,248,.08);box-shadow:0 16px 46px rgba(37,99,235,.18)}
 .action-node.react{border-color:rgba(232,200,119,.5);background:rgba(232,200,119,.06)}
 .action-no{position:absolute;top:18px;right:18px;color:#64748b;font-size:14px;font-weight:850;letter-spacing:.14em}
-.action-node strong{font-size:28px;letter-spacing:-.02em}.action-node small{margin-top:10px;color:#91a2ba;font-size:17px}
+.action-node strong{font-size:27px;letter-spacing:-.025em;white-space:nowrap}.action-node small{display:flex;flex-direction:column;gap:3px;margin-top:10px;color:#91a2ba;font-size:14px;line-height:1.38;word-break:keep-all}.action-node small span{display:block}
 .action-arrow{text-align:center;color:#48627f;font-size:27px;font-weight:900}
 .reaction-split{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:650px;margin:34px 0 0 auto}
 .reaction-split>div{display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;padding:16px 20px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.03)}
@@ -1069,7 +1071,7 @@ h3{font-size:34px;letter-spacing:-.025em;font-weight:800}
 
   var subStep=0,ct1,ct2;
   function stepsOf(s){return parseInt(s.dataset.steps||'0',10)||0;}
-  function applyStep(){var s=slides[cur];s.classList.toggle('step1',subStep>=1);s.classList.toggle('step2',subStep>=2);}
+  function applyStep(){var s=slides[cur];s.classList.toggle('step1',subStep>=1);s.classList.toggle('step2',subStep>=2);s.classList.toggle('step3',subStep>=3);}
   function resetCursor(){var d=document.querySelector('.def');if(d){var c=d.querySelector('.cursor');if(c)c.classList.remove('show','clicking');}}
   function cursorSeq(n){
     var d=slides[cur];var c=d.querySelector('.cursor');if(!c)return;
