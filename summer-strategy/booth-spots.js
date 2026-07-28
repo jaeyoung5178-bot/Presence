@@ -79,8 +79,12 @@ const brandFilter=document.querySelector("#brand-filter");
 const countOutput=document.querySelector("#result-count");
 const emptyState=document.querySelector("#empty-state");
 const regionButtons=[...document.querySelectorAll("[data-region]")];
+const viewButtons=[...document.querySelectorAll("[data-view]")];
 let region="전체";
+let viewMode=localStorage.getItem("presence-booth-view")||"photo";
 const saved=new Set(JSON.parse(localStorage.getItem("presence-booth-spots")||"[]"));
+let reviews=JSON.parse(localStorage.getItem("presence-site-reviews")||"{}");
+let activeReviewId=null;
 
 function mapUrl(provider,name){
   const q=encodeURIComponent(name);
@@ -91,6 +95,8 @@ function escapeHtml(value){
 }
 function card(item){
   const safeName=escapeHtml(item.name);
+  const review=reviews[item.id];
+  const reviewLabel=review?`${review.status||"후기"}${review.photos?.length?` · 셋업사진 ${review.photos.length}장`:""}`:"";
   return `<article class="spot-card">
     <div class="spot-photo">
       <img src="./assets/streetview/${item.file}" alt="${safeName} 매장 정면과 보도 거리뷰" loading="lazy">
@@ -104,7 +110,8 @@ function card(item){
       <p class="location">${item.city} · 정확한 도로명 주소는 지도 링크에서 최신 정보 확인</p>
       <p class="setup-note"><b>추천 장면</b><br>${item.setup}</p>
       <p class="risk-note">점포 대지·화단·주차면에는 설치하지 않음 · 관할 구청 확인 전 확정 금지</p>
-      <div class="card-actions"><a href="${mapUrl("naver",item.name)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name)}" target="_blank" rel="noreferrer">카카오맵 확인</a></div>
+      ${reviewLabel?`<span class="review-badge">${escapeHtml(reviewLabel)}</span>`:""}
+      <div class="card-actions"><a href="${mapUrl("naver",item.name)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name)}" target="_blank" rel="noreferrer">카카오맵 확인</a><button type="button" class="review-open" data-review="${item.id}">${review?"후기·셋업사진 수정":"후기·셋업사진 추가"}</button></div>
     </div>
   </article>`;
 }
@@ -117,17 +124,22 @@ function render(){
     `${item.name} ${item.city} ${item.brand}`.toLowerCase().includes(q)
   );
   grid.innerHTML=filtered.map(card).join("");
+  grid.classList.toggle("text-view",viewMode==="text");
+  viewButtons.forEach(button=>{const active=button.dataset.view===viewMode;button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active));});
   countOutput.textContent=`${filtered.length}개 표시`;
   emptyState.hidden=filtered.length!==0;
 }
 search.addEventListener("input",render);
 brandFilter.addEventListener("change",render);
+viewButtons.forEach(button=>button.addEventListener("click",()=>{viewMode=button.dataset.view;localStorage.setItem("presence-booth-view",viewMode);render();}));
 regionButtons.forEach(button=>button.addEventListener("click",()=>{
   region=button.dataset.region;
   regionButtons.forEach(item=>item.classList.toggle("active",item===button));
   render();
 }));
 grid.addEventListener("click",event=>{
+  const reviewButton=event.target.closest("[data-review]");
+  if(reviewButton){openReview(Number(reviewButton.dataset.review));return;}
   const button=event.target.closest("[data-save]");
   if(!button)return;
   const id=Number(button.dataset.save);
@@ -135,6 +147,72 @@ grid.addEventListener("click",event=>{
   localStorage.setItem("presence-booth-spots",JSON.stringify([...saved]));
   render();
 });
+const reviewDialog=document.querySelector("#review-dialog");
+const reviewForm=document.querySelector("#review-form");
+const reviewStatus=document.querySelector("#review-status");
+const reviewRating=document.querySelector("#review-rating");
+const reviewText=document.querySelector("#review-text");
+const reviewPhoto=document.querySelector("#review-photo");
+const reviewPreview=document.querySelector("#review-preview");
+const reviewMessage=document.querySelector("#review-message");
+function persistReviews(){
+  try{localStorage.setItem("presence-site-reviews",JSON.stringify(reviews));return true;}
+  catch(error){reviewMessage.textContent="저장 공간이 부족합니다. 오래된 셋업사진을 일부 삭제해 주세요.";return false;}
+}
+function openReview(id){
+  activeReviewId=id;
+  const item=spots.find(spot=>spot.id===id);
+  const review=reviews[id]||{status:"미답사",rating:"0",text:"",photos:[]};
+  document.querySelector("#review-site").textContent=`#${String(id).padStart(3,"0")} · ${item.name}`;
+  reviewStatus.value=review.status||"미답사";reviewRating.value=String(review.rating||0);reviewText.value=review.text||"";reviewPhoto.value="";reviewMessage.textContent="";
+  drawReviewPhotos(review.photos||[]);
+  reviewDialog.showModal();document.body.style.overflow="hidden";
+}
+function closeReview(){reviewDialog.close();document.body.style.overflow="";}
+function drawReviewPhotos(photos){
+  reviewPreview.innerHTML=photos.map((photo,index)=>`<figure><img src="${photo}" alt="실제 부스 셋업사진 ${index+1}"><button type="button" data-remove-photo="${index}" aria-label="셋업사진 ${index+1} 삭제">×</button></figure>`).join("");
+}
+function resizePhoto(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=reject;
+    reader.onload=()=>{
+      const image=new Image();
+      image.onerror=reject;
+      image.onload=()=>{
+        const max=1280,scale=Math.min(1,max/Math.max(image.width,image.height));
+        const canvas=document.createElement("canvas");canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);
+        canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL("image/jpeg",.76));
+      };
+      image.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+reviewPhoto.addEventListener("change",async()=>{
+  const file=reviewPhoto.files?.[0];if(!file||!activeReviewId)return;
+  reviewMessage.textContent="사진 압축 중…";
+  try{
+    const photo=await resizePhoto(file);
+    const review=reviews[activeReviewId]||{status:reviewStatus.value,rating:reviewRating.value,text:reviewText.value,photos:[]};
+    review.photos=[...(review.photos||[]),photo].slice(-3);reviews[activeReviewId]=review;
+    if(persistReviews()){drawReviewPhotos(review.photos);reviewMessage.textContent="셋업사진을 추가했습니다. 최대 3장까지 저장됩니다.";}
+  }catch(error){reviewMessage.textContent="사진을 처리하지 못했습니다. 다른 사진을 선택해 주세요.";}
+});
+reviewPreview.addEventListener("click",event=>{
+  const button=event.target.closest("[data-remove-photo]");if(!button||!activeReviewId)return;
+  const review=reviews[activeReviewId];review.photos.splice(Number(button.dataset.removePhoto),1);persistReviews();drawReviewPhotos(review.photos);
+});
+reviewForm.addEventListener("submit",event=>{
+  event.preventDefault();if(!activeReviewId)return;
+  const previous=reviews[activeReviewId]||{};
+  reviews[activeReviewId]={status:reviewStatus.value,rating:reviewRating.value,text:reviewText.value.trim(),photos:previous.photos||[],updatedAt:new Date().toISOString()};
+  if(persistReviews()){render();reviewMessage.textContent="후기와 셋업사진을 이 기기에 저장했습니다.";setTimeout(closeReview,450);}
+});
+document.querySelector("#review-delete").addEventListener("click",()=>{if(!activeReviewId)return;delete reviews[activeReviewId];persistReviews();render();closeReview();});
+document.querySelector("#review-close").addEventListener("click",closeReview);
+reviewDialog.addEventListener("click",event=>{if(event.target===reviewDialog)closeReview();});
 const menuButton=document.querySelector(".menu-button");
 const mobileMenu=document.querySelector("#mobile-menu");
 menuButton.addEventListener("click",()=>{
@@ -143,5 +221,5 @@ menuButton.addEventListener("click",()=>{
   mobileMenu.hidden=open;
 });
 mobileMenu.addEventListener("click",()=>{mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false")});
-document.addEventListener("keydown",event=>{if(event.key==="Escape"){mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false")}});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"){mobileMenu.hidden=true;menuButton.setAttribute("aria-expanded","false");if(reviewDialog.open)closeReview();}});
 render();

@@ -76,6 +76,10 @@
             <option value="메가커피">메가커피</option>
           </select>
         </label>
+        <div class="view-toggle" role="group" aria-label="목록 보기 방식">
+          <button type="button" data-view="photo" class="active" aria-pressed="true">사진형</button>
+          <button type="button" data-view="text" aria-pressed="false">글자형</button>
+        </div>
         <output id="result-count">100개 표시</output>
       </section>
 
@@ -109,6 +113,24 @@
 
     <footer><span>Presence · Summer Strategy</span><a href="../site-operations.html">사이트운영으로 돌아가기</a></footer>
   </div>
-  <script src="./booth-spots.js?v=2"></script>
+  <dialog id="review-dialog" class="review-dialog" aria-labelledby="review-title">
+    <form id="review-form" method="dialog">
+      <div class="dialog-head">
+        <div><p class="eyebrow">FIELD REVIEW</p><h2 id="review-title">사이트 후기</h2></div>
+        <button type="button" id="review-close" class="dialog-close" aria-label="후기 창 닫기">×</button>
+      </div>
+      <p id="review-site" class="review-site"></p>
+      <div class="review-fields">
+        <label><span>답사 상태</span><select id="review-status"><option>미답사</option><option>답사완료</option><option>셋업완료</option><option>보류</option></select></label>
+        <label><span>현장 점수</span><select id="review-rating"><option value="0">선택 안 함</option><option value="5">★★★★★ 매우 좋음</option><option value="4">★★★★☆ 좋음</option><option value="3">★★★☆☆ 보통</option><option value="2">★★☆☆☆ 아쉬움</option><option value="1">★☆☆☆☆ 비추천</option></select></label>
+        <label class="review-wide"><span>현장 후기</span><textarea id="review-text" rows="5" maxlength="600" placeholder="그늘 시간대, 보행 폭, 유동 인구, 민원 가능성 등을 기록하세요."></textarea></label>
+        <label class="review-wide photo-field"><span>실제 셋업사진</span><input id="review-photo" type="file" accept="image/*" capture="environment"><small>휴대폰에서 촬영하거나 앨범 사진을 선택할 수 있습니다. 사진은 이 기기에 압축 저장됩니다.</small></label>
+      </div>
+      <div id="review-preview" class="review-preview"></div>
+      <div class="dialog-actions"><button type="button" id="review-delete" class="danger-action">기록 삭제</button><button type="submit" class="primary-action">후기 저장</button></div>
+      <p id="review-message" class="review-message" aria-live="polite"></p>
+    </form>
+  </dialog>
+  <script src="./booth-spots.js?v=3"></script>
 </body>
 </html>
