@@ -104,7 +104,8 @@ function statsHtml(site){
   if(!stats)return "";
   const seasonal=stats.seasonalAverage===null?"기록 없음":compactNumber(stats.seasonalAverage);
   const best=stats.best?.score>0?`${stats.best.date.slice(2).replaceAll("-",".")} · ${compactNumber(stats.best.score)}`:"결과 없음";
-  return `<div class="site-stats" aria-label="${escapeHtml(site)} 성과 요약"><span><b>전체 AVG</b>${compactNumber(stats.average)}</span><span><b>작년 이맘때</b>${seasonal}</span><span><b>최고 결과</b>${best}</span></div>`;
+  const bestControl=stats.best?.score>0?`<button type="button" data-best-site="${escapeHtml(site)}" data-best-date="${stats.best.date}"><b>최고 결과 ↗</b>${best}</button>`:`<span><b>최고 결과</b>${best}</span>`;
+  return `<div class="site-stats" aria-label="${escapeHtml(site)} 성과 요약"><span><b>전체 AVG</b>${compactNumber(stats.average)}</span><span><b>작년 이맘때</b>${seasonal}</span>${bestControl}</div>`;
 }
 function populate(){
   state.records=dedupeDailyRecords(mergeSimilarSites(state.records));
@@ -123,7 +124,7 @@ function render(){
   const visible=state.filtered.slice(0,state.limit);
   $("#result-list").innerHTML=visible.map(item=>{
     const detail=detailName(item.siteOriginal,item.siteGroup);
-    return `<article class="record"><time datetime="${item.date}">${formatDate(item.date)}</time><div class="site-name"><h3>${escapeHtml(item.siteGroup)}</h3>${detail?`<span>${escapeHtml(detail)}</span>`:""}${statsHtml(item.siteGroup)}</div><p class="crew"><b>셋업 인원 · 결과</b>${escapeHtml(item.result)}</p></article>`;
+    return `<article class="record" data-site="${escapeHtml(item.siteGroup)}" data-date="${item.date}"><time datetime="${item.date}">${formatDate(item.date)}</time><div class="site-name"><h3>${escapeHtml(item.siteGroup)}</h3>${detail?`<span>${escapeHtml(detail)}</span>`:""}${statsHtml(item.siteGroup)}</div><p class="crew"><b>셋업 인원 · 결과</b>${escapeHtml(item.result)}</p></article>`;
   }).join("");
   $("#shown-count").textContent=`${state.filtered.length.toLocaleString("ko-KR")}건 중 ${visible.length.toLocaleString("ko-KR")}건 표시`;
   $("#empty").hidden=state.filtered.length!==0;
@@ -133,3 +134,18 @@ fetch("./data/incheon-score-room.json").then(response=>{if(!response.ok)throw ne
 ["query","year","site"].forEach(id=>$("#"+id).addEventListener(id==="query"?"input":"change",()=>{state.limit=100;render();}));
 $("#reset").addEventListener("click",()=>{$("#query").value="";$("#year").value="";$("#site").value="";state.limit=100;render();});
 $("#more").addEventListener("click",()=>{state.limit+=100;render();});
+$("#result-list").addEventListener("click",event=>{
+  const button=event.target.closest("[data-best-site]");
+  if(!button)return;
+  $("#query").value="";
+  $("#site").value=button.dataset.bestSite;
+  $("#year").value=button.dataset.bestDate.slice(0,4);
+  state.limit=100;render();
+  requestAnimationFrame(()=>{
+    const target=[...document.querySelectorAll(".record")].find(card=>card.dataset.site===button.dataset.bestSite&&card.dataset.date===button.dataset.bestDate);
+    if(!target)return;
+    target.classList.add("is-highlighted");
+    target.scrollIntoView({behavior:"smooth",block:"center"});
+    target.setAttribute("tabindex","-1");target.focus({preventScroll:true});
+  });
+});
