@@ -69,6 +69,17 @@ function resultScore(value){
   for(const match of String(value||"").matchAll(/[가-힣]{2,}\s*(\d+(?:\.\d+)?)/g))total+=Number(match[1]);
   return total;
 }
+function dedupeDailyRecords(records){
+  const finalByDay=new Map();
+  records.forEach(item=>{
+    const key=`${item.siteGroup}|${item.date}`,score=resultScore(item.result);
+    const previous=finalByDay.get(key);
+    if(!previous||score>previous._score||(score===previous._score&&item.result.length>previous.result.length)){
+      finalByDay.set(key,{...item,_score:score});
+    }
+  });
+  return [...finalByDay.values()].map(({_score,...item})=>item).sort((a,b)=>b.date.localeCompare(a.date)||a.siteGroup.localeCompare(b.siteGroup,"ko"));
+}
 const compactNumber=value=>Number.isInteger(value)?String(value):value.toFixed(1);
 function buildSiteStats(){
   const bySite=new Map();
@@ -96,7 +107,7 @@ function statsHtml(site){
   return `<div class="site-stats" aria-label="${escapeHtml(site)} 성과 요약"><span><b>전체 AVG</b>${compactNumber(stats.average)}</span><span><b>작년 이맘때</b>${seasonal}</span><span><b>최고 결과</b>${best}</span></div>`;
 }
 function populate(){
-  state.records=mergeSimilarSites(state.records);
+  state.records=dedupeDailyRecords(mergeSimilarSites(state.records));
   buildSiteStats();
   const years=[...new Set(state.records.map(item=>item.date.slice(0,4)))].sort().reverse();
   $("#year").insertAdjacentHTML("beforeend",years.map(year=>`<option>${year}</option>`).join(""));
