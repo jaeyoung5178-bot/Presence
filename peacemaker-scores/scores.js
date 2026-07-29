@@ -1,4 +1,4 @@
-const state={records:[],filtered:[],limit:100};
+const state={records:[],filtered:[],limit:100,stats:new Map()};
 const $=selector=>document.querySelector(selector);
 const escapeHtml=value=>String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const formatDate=value=>new Intl.DateTimeFormat("ko-KR",{year:"numeric",month:"short",day:"numeric",weekday:"short"}).format(new Date(`${value}T00:00:00`));
@@ -8,11 +8,14 @@ const typoRules=[
 ];
 function cleanSiteName(value){
   let name=String(value||"").normalize("NFKC").replace(/[️⃣⃣]/g,"").replace(/^(?:\d+\s*[.)]?\s*)+/,"").replace(/^[^A-Za-z가-힣]+/u,"").replace(/\s+/g," ").trim();
+  name=name.replace(/^E[.\s]*(?=[가-힣])/i,"");
   typoRules.forEach(([pattern,replacement])=>{name=name.replace(pattern,replacement);});
   return name.replace(/\s*\/\s*/g," / ").replace(/\s+/g," ").trim();
 }
 function siteGroup(value){
   const clean=cleanSiteName(value);
+  const branded=clean.match(/^(다이소|스타벅스|ABC마트|홈플러스|롯데마트|이마트24?|롯데리아|버거킹|맥도날드|빽다방|컴포즈커피|메가MGC커피|올리브영|공차|노브랜드|세븐일레븐|CU|에덴마트|하나은행|신한은행|뚜레쥬르)/i);
+  if(branded)return clean.replace(/\s*\([^)]*(?:구|이동|사용|팀|우천|섹터)[^)]*\)\s*/g," ").replace(/\s+/g," ").trim();
   const station=clean.match(/([가-힣A-Za-z0-9]{2,}역)(?:\s|$|\/|\d)/);
   if(station)return station[1];
   return clean.replace(/\s*\([^)]*(?:구|이동|사용|팀)[^)]*\)\s*/g," ").replace(/\s+/g," ").trim();
@@ -36,10 +39,15 @@ function samePlace(a,b){
   const left=fingerprint(a),right=fingerprint(b);
   if(left===right)return true;
   if(!left||!right)return false;
+  const brand=value=>value.match(/^(다이소|스타벅스|ABC마트|홈플러스|롯데마트|이마트24?|롯데리아|버거킹|맥도날드|빽다방|컴포즈커피|메가MGC커피|올리브영|공차|노브랜드|세븐일레븐|CU|에덴마트|하나은행|신한은행|뚜레쥬르)/i)?.[0]?.toLowerCase();
+  const brandA=brand(a),brandB=brand(b);
+  if(brandA||brandB){
+    if(brandA!==brandB)return false;
+    const brandDistance=editDistance(left,right),brandLimit=Math.max(left.length,right.length)>=12?2:1;
+    return brandDistance<=brandLimit||(Math.min(left.length,right.length)>=8&&(left.includes(right)||right.includes(left))&&Math.abs(left.length-right.length)<=2);
+  }
   const stationA=a.match(/[가-힣A-Za-z0-9]{2,}역/)?.[0],stationB=b.match(/[가-힣A-Za-z0-9]{2,}역/)?.[0];
   if(stationA||stationB)return stationA===stationB;
-  const brand=value=>value.match(/^(다이소|스타벅스|ABC마트|홈플러스|롯데마트|롯데리아|버거킹|빽다방|컴포즈커피|메가MGC커피|올리브영|공차|노브랜드|세븐일레븐|CU|에덴마트|하나은행|신한은행)/i)?.[0]?.toLowerCase();
-  if(brand(a)!==brand(b))return false;
   const distance=editDistance(left,right),limit=Math.max(left.length,right.length)>=12?2:1;
   return distance<=limit||(Math.min(left.length,right.length)>=8&&(left.includes(right)||right.includes(left))&&Math.abs(left.length-right.length)<=2);
 }
@@ -56,8 +64,40 @@ function mergeSimilarSites(records){
   });
   return records.map(item=>({...item,siteOriginal:cleanSiteName(item.site),siteGroup:aliases.get(siteGroup(item.site))}));
 }
+function resultScore(value){
+  let total=0;
+  for(const match of String(value||"").matchAll(/[가-힣]{2,}\s*(\d+(?:\.\d+)?)/g))total+=Number(match[1]);
+  return total;
+}
+const compactNumber=value=>Number.isInteger(value)?String(value):value.toFixed(1);
+function buildSiteStats(){
+  const bySite=new Map();
+  state.records.forEach(item=>{
+    const key=`${item.siteGroup}|${item.date}`,score=resultScore(item.result);
+    const previous=bySite.get(key);
+    if(!previous||score>previous.score)bySite.set(key,{site:item.siteGroup,date:item.date,score,result:item.result});
+  });
+  const grouped=new Map();
+  bySite.forEach(day=>{if(!grouped.has(day.site))grouped.set(day.site,[]);grouped.get(day.site).push(day);});
+  const now=new Date(),lastYear=now.getFullYear()-1,target=Date.UTC(lastYear,now.getMonth(),now.getDate());
+  grouped.forEach((days,site)=>{
+    const average=days.reduce((sum,day)=>sum+day.score,0)/days.length;
+    const seasonal=days.filter(day=>{const date=new Date(`${day.date}T00:00:00Z`);return date.getUTCFullYear()===lastYear&&Math.abs(date.getTime()-target)<=30*86400000;});
+    const seasonalAverage=seasonal.length?seasonal.reduce((sum,day)=>sum+day.score,0)/seasonal.length:null;
+    const best=days.reduce((top,day)=>!top||day.score>top.score?day:top,null);
+    state.stats.set(site,{average,seasonalAverage,best,days:days.length});
+  });
+}
+function statsHtml(site){
+  const stats=state.stats.get(site);
+  if(!stats)return "";
+  const seasonal=stats.seasonalAverage===null?"기록 없음":compactNumber(stats.seasonalAverage);
+  const best=stats.best?.score>0?`${stats.best.date.slice(2).replaceAll("-",".")} · ${compactNumber(stats.best.score)}`:"결과 없음";
+  return `<div class="site-stats" aria-label="${escapeHtml(site)} 성과 요약"><span><b>전체 AVG</b>${compactNumber(stats.average)}</span><span><b>작년 이맘때</b>${seasonal}</span><span><b>최고 결과</b>${best}</span></div>`;
+}
 function populate(){
   state.records=mergeSimilarSites(state.records);
+  buildSiteStats();
   const years=[...new Set(state.records.map(item=>item.date.slice(0,4)))].sort().reverse();
   $("#year").insertAdjacentHTML("beforeend",years.map(year=>`<option>${year}</option>`).join(""));
   const sites=[...new Set(state.records.map(item=>item.siteGroup))].sort((a,b)=>a.localeCompare(b,"ko"));
@@ -72,7 +112,7 @@ function render(){
   const visible=state.filtered.slice(0,state.limit);
   $("#result-list").innerHTML=visible.map(item=>{
     const detail=detailName(item.siteOriginal,item.siteGroup);
-    return `<article class="record"><time datetime="${item.date}">${formatDate(item.date)}</time><div class="site-name"><h3>${escapeHtml(item.siteGroup)}</h3>${detail?`<span>${escapeHtml(detail)}</span>`:""}</div><p class="crew"><b>셋업 인원 · 결과</b>${escapeHtml(item.result)}</p></article>`;
+    return `<article class="record"><time datetime="${item.date}">${formatDate(item.date)}</time><div class="site-name"><h3>${escapeHtml(item.siteGroup)}</h3>${detail?`<span>${escapeHtml(detail)}</span>`:""}${statsHtml(item.siteGroup)}</div><p class="crew"><b>셋업 인원 · 결과</b>${escapeHtml(item.result)}</p></article>`;
   }).join("");
   $("#shown-count").textContent=`${state.filtered.length.toLocaleString("ko-KR")}건 중 ${visible.length.toLocaleString("ko-KR")}건 표시`;
   $("#empty").hidden=state.filtered.length!==0;
