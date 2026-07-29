@@ -14,6 +14,7 @@ function cleanSiteName(value){
 }
 function siteGroup(value){
   const clean=cleanSiteName(value);
+  if(/^ABC마트[^/]{0,30}인천[^/]{0,20}구월/i.test(clean))return "ABC마트 GS인천구월점";
   const branded=clean.match(/^(다이소|스타벅스|ABC마트|홈플러스|롯데마트|이마트24?|롯데리아|버거킹|맥도날드|빽다방|컴포즈커피|메가MGC커피|올리브영|공차|노브랜드|세븐일레븐|CU|에덴마트|하나은행|신한은행|뚜레쥬르)/i);
   if(branded)return clean.replace(/\s*\([^)]*(?:구|이동|사용|팀|우천|섹터)[^)]*\)\s*/g," ").replace(/\s+/g," ").trim();
   const station=clean.match(/([가-힣A-Za-z0-9]{2,}역)(?:\s|$|\/|\d)/);
@@ -22,6 +23,10 @@ function siteGroup(value){
 }
 function detailName(value,group){
   const clean=cleanSiteName(value);
+  if(group==="ABC마트 GS인천구월점"){
+    const detail=clean.split("/").slice(1).join(" / ").trim();
+    return detail;
+  }
   if(clean===group)return "";
   if(clean.startsWith(group))return clean.slice(group.length).replace(/^[\s/·-]+/,"")||"기본 위치";
   return clean;
