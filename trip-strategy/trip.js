@@ -7,9 +7,22 @@ const storeGroups=[
   ["메가MGC커피",["KFC 제주아라","메가MGC커피 제주중문점","KFC 제주삼화","배스킨라빈스 제주함덕점","배스킨라빈스 제주서귀포","메가MGC커피 제주동홍중앙점","메가MGC커피 제주아라점","배스킨라빈스 제주하귀점","메가MGC커피 협재해수욕장점"]],
   ["컴포즈커피",["컴포즈커피 서귀포일호광장점","배스킨라빈스 제주삼화","컴포즈커피 제주함덕점","컴포즈커피 제주이호테우점","배스킨라빈스 제주서사라점","컴포즈커피 제주서사라점","배스킨라빈스 제주도청점","컴포즈커피 제주아라점","컴포즈커피 제주연동점"]],
   ["이디야커피",["이디야커피 제주일도점","배스킨라빈스 신제주점","이디야커피 제주연동점","이디야커피 제주외도점","이디야커피 서귀포위미점","이디야커피 제주삼도점","이디야커피 제주연북로점","이디야커피 서귀포동홍점"]],
-  ["맥도날드",["맥도날드 제주노형DT점","맥도날드 서귀포DT점","맥도날드 제주 외도DT점","맥도날드 제주중문DT점","맥도날드 제주탑동점","맥도날드 제주일도DT점","맥도날드 제주시청DT점","맥도날드 제주공항DT점"]]
+  ["맥도날드",["맥도날드 제주노형DT점","맥도날드 서귀포DT점","맥도날드 제주 외도DT점","맥도날드 제주중문DT점","맥도날드 제주탑동점","맥도날드 제주일도DT점","맥도날드 제주시청DT점","맥도날드 제주공항DT점"]],
+  ["다이소 추가",["다이소 제주연동점","다이소 롯데마트제주점","다이소 제주노형점","다이소 제주도남점","다이소 제주동문시장점","다이소 제주본점","다이소 제주봉개점","다이소 제주삼양점","다이소 제주세화점","다이소 제주애월점"]]
 ];
 const capturedStreetviews=new Set(Array.from({length:70},(_,index)=>index+1));
+const officialDaisoInfo={
+  "다이소 제주연동점":"제주특별자치도 제주시 신대로 105 (연동)",
+  "다이소 롯데마트제주점":"제주특별자치도 제주시 연북로 1 (노형동) 2층",
+  "다이소 제주노형점":"제주특별자치도 제주시 1100로 3325 (노형동)",
+  "다이소 제주도남점":"제주특별자치도 제주시 연북로 424 (도남동)",
+  "다이소 제주동문시장점":"제주특별자치도 제주시 관덕로 68 (일도일동)",
+  "다이소 제주본점":"제주특별자치도 제주시 남광로 220 (건입동)",
+  "다이소 제주봉개점":"제주특별자치도 제주시 번영로 526 (봉개동)",
+  "다이소 제주삼양점":"제주특별자치도 제주시 일주동로 422 (삼양이동)",
+  "다이소 제주세화점":"제주특별자치도 제주시 구좌읍 일주동로 3126",
+  "다이소 제주애월점":"제주특별자치도 제주시 애월읍 애원로 38"
+};
 function zoneOf(name){
   if(/서귀포|중문|남원|동홍|위미|표선|대정/.test(name))return "서귀포권";
   if(/협재|한림|애월|곽지|하귀/.test(name))return "제주서부";
@@ -23,13 +36,13 @@ const baseSites=verifiedNames.map((name,index)=>{
   const number=index+1,zone=zoneOf(name),hasStreetview=capturedStreetviews.has(number);
   return {
   id:`jeju-${String(number).padStart(3,"0")}`,region:"제주",zone,name,flow:/공항|시청|연동|노형|동문|중문|성산/.test(name)?5:/협재|애월|함덕|서귀포/.test(name)?4:3,day:/협재|애월|함덕|성산|중문/.test(name)?"토·일":"금·토",
-  address:`제주특별자치도 ${zone} · 네이버 지도 등록 지점`,
+  address:officialDaisoInfo[name]||`제주특별자치도 ${zone} · 네이버 지도 등록 지점`,
   shade:hasStreetview?"거리뷰에서 그늘 재판독":"거리뷰 미제공·현장 확인",
   sunlight:hasStreetview?(index%3===1?"partial":"shade"):"sun",
   imageData:hasStreetview?`./assets/streetview/thumbs/jeju-${String(number).padStart(3,"0")}.jpg`:null,
   photoVerified:hasStreetview,
-  note:"매장·상가 출입축을 피한 보도 안쪽 후보. 12–16시 그늘과 보행 유효폭을 현장에서 재확인.",
-  source:hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":"네이버 지도 등록 지점 · 거리뷰 미제공"
+  note:name==="다이소 제주연동점"?"팀 현장 성과 우수 지점 · 실제 후원자 접점이 좋았던 연동권 최우선 재답사 후보. 출입축과 12–16시 건물 그늘을 재확인.":"매장·상가 출입축을 피한 보도 안쪽 후보. 12–16시 그늘과 보행 유효폭을 현장에서 재확인.",
+  source:hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":officialDaisoInfo[name]?"다이소 공식 매장검색 확인 · 거리뷰 추가 수집 대상":"네이버 지도 등록 지점 · 거리뷰 미제공"
 }});
 let regions=[...defaultRegions];
 let cloudRegions=[];
@@ -65,7 +78,7 @@ function lightInfo(item){
 function allSites(){return [...baseSites,...customSites].filter(item=>item.region===activeRegion)}
 function renderRegions(){
   regions=[...new Set([...defaultRegions,...cloudRegions])];
-  $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?" · 70":""}</button>`).join("");
+  $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${verifiedNames.length}`:""}</button>`).join("");
 }
 function card(item){
   const stars="★".repeat(item.flow)+"☆".repeat(5-item.flow);

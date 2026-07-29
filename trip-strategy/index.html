@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="dark">
   <title>Trip 운영 전략 — Presence</title>
-  <meta name="description" content="Presence 지역별 Trip 사이트 운영 전략과 제주 그늘 후보 70곳">
+  <meta name="description" content="Presence 지역별 Trip 사이트 운영 전략과 제주 그늘 후보 80곳">
   <link rel="stylesheet" href="./trip.css?v=4">
 </head>
 <body>
@@ -16,8 +16,8 @@
     </header>
     <main>
       <section class="hero">
-        <div><p class="eyebrow">PRESENCE · TRIP OPERATIONS 2026</p><h1>제주에서 먼저,<br><em>좋은 그늘과 흐름을 찾기.</em></h1><p class="lead">지역별 트립 후보를 한곳에서 관리합니다. 제주는 공항·상권·시장·관광 거점을 기준으로 70곳을 추렸고, 유동 우선순위와 추천 요일을 함께 기록했습니다.</p></div>
-        <div class="hero-stat"><strong id="total-count">70</strong><span>제주 사전답사 후보</span><small>유동 5 = 최우선 답사</small></div>
+        <div><p class="eyebrow">PRESENCE · TRIP OPERATIONS 2026</p><h1>제주에서 먼저,<br><em>좋은 그늘과 흐름을 찾기.</em></h1><p class="lead">지역별 트립 후보를 한곳에서 관리합니다. 제주는 다이소 연동점과 공식 확인 매장을 보강해 80곳으로 확대했고, 유동 우선순위와 추천 요일을 함께 기록했습니다.</p></div>
+        <div class="hero-stat"><strong id="total-count">80</strong><span>제주 사전답사 후보</span><small>유동 5 = 최우선 답사</small></div>
       </section>
       <section class="notice"><b>운영 전 확인</b><span>유동 등급은 공식 실측 인원수가 아닌 관광·상권·교통 입지 기반 우선순위입니다. 설치 전 공공보도 경계, 점자블록, 출입구, 관할기관·점포 승인을 확인하세요.</span></section>
       <section class="region-panel" aria-labelledby="region-title">
@@ -29,7 +29,7 @@
         <label class="search"><span>⌕</span><input id="search" type="search" placeholder="사이트·상권·주소 검색"></label>
         <label><span>유동</span><select id="flow-filter"><option value="0">전체 등급</option><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></label>
         <label><span>추천 요일</span><select id="day-filter"><option value="전체">전체 요일</option><option>평일</option><option>주말</option><option>금·토</option><option>토·일</option><option>화–목</option></select></label>
-        <output id="result-count">70개 표시</output>
+        <output id="result-count">80개 표시</output>
       </section>
       <section id="spots" class="spots">
         <div class="section-head"><div><p class="eyebrow">JEJU SHADE SHORTLIST</p><h2 id="list-title">제주 필드 후보</h2></div><p>별점은 유동 우선순위입니다.</p></div>
@@ -41,6 +41,6 @@
   <button id="add-site" class="fab" type="button">＋ <b>사이트 추가</b></button>
   <dialog id="region-dialog"><form id="region-form"><div class="dialog-head"><h2>지역 카테고리 추가</h2><button type="button" data-close="region">×</button></div><label><span>지역 이름</span><input id="region-name" required maxlength="20" placeholder="예: 부산"></label><div class="actions"><button type="button" data-close="region">취소</button><button class="primary" type="submit">지역 저장</button></div><p id="region-message"></p></form></dialog>
   <dialog id="site-dialog"><form id="site-form"><div class="dialog-head"><h2>Trip 사이트 추가</h2><button type="button" data-close="site">×</button></div><div class="form-grid"><label><span>사이트명</span><input id="site-name" required maxlength="80"></label><label><span>상권·권역</span><input id="site-zone" required maxlength="40"></label><label class="wide"><span>주소 또는 위치 설명</span><input id="site-address" required maxlength="160"></label><label><span>유동 우선순위</span><select id="site-flow"><option value="5">5 · 최우선</option><option value="4">4 · 높음</option><option value="3">3 · 보통</option><option value="2">2 · 낮음</option><option value="1">1 · 최소</option></select></label><label><span>추천 요일</span><select id="site-day"><option>주말</option><option>평일</option><option>금·토</option><option>토·일</option><option>화–목</option></select></label><label class="wide"><span>카카오맵 링크</span><input id="site-map" type="url" placeholder="비우면 사이트명으로 검색 링크 생성"></label><label class="wide"><span>그늘·셋업 메모</span><textarea id="site-note" rows="3" maxlength="300"></textarea></label></div><div class="actions"><button type="button" data-close="site">취소</button><button class="primary" type="submit">공용 저장</button></div><p id="site-message"></p></form></dialog>
-  <script src="./trip.js?v=4"></script>
+  <script src="./trip.js?v=5"></script>
 </body>
 </html>
