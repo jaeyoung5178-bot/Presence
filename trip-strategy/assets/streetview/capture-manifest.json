@@ -1,0 +1,484 @@
+[
+  {
+    "id": "jeju-001",
+    "name": "다이소 제주한림점",
+    "i": 0,
+    "status": "not-exact",
+    "count": 0
+  },
+  {
+    "id": "jeju-002",
+    "name": "다이소 제주애월점",
+    "i": 1,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-003",
+    "name": "다이소 서귀포중문점",
+    "i": 2,
+    "status": "captured",
+    "file": "jeju-003-full.png"
+  },
+  {
+    "id": "jeju-004",
+    "name": "다이소 용담해안도로점",
+    "i": 3,
+    "status": "captured",
+    "file": "jeju-004-full.png"
+  },
+  {
+    "id": "jeju-005",
+    "name": "다이소 제주함덕점",
+    "i": 4,
+    "status": "error",
+    "error": "Error: Playwright selector deadline exceeded\nwaiting on click for selector #searchIframe >> internal"
+  },
+  {
+    "id": "jeju-006",
+    "name": "다이소 서귀포혁신도시점",
+    "i": 5,
+    "status": "captured",
+    "file": "jeju-006-full.png"
+  },
+  {
+    "id": "jeju-007",
+    "name": "다이소 제주시청점",
+    "i": 6,
+    "status": "captured",
+    "file": "jeju-007-full.png"
+  },
+  {
+    "id": "jeju-008",
+    "name": "다이소 제주세화점",
+    "i": 7,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-009",
+    "name": "다이소 서귀포점",
+    "i": 8,
+    "status": "captured",
+    "file": "jeju-009-full.png"
+  },
+  {
+    "id": "jeju-010",
+    "name": "스타벅스 제주서해안로DT점",
+    "i": 9,
+    "status": "captured",
+    "file": "jeju-010-full.png"
+  },
+  {
+    "id": "jeju-011",
+    "name": "스타벅스 제주협재점",
+    "i": 10,
+    "status": "captured",
+    "file": "jeju-011-full.png"
+  },
+  {
+    "id": "jeju-012",
+    "name": "스타벅스 더제주송당파크R점",
+    "i": 11,
+    "status": "captured",
+    "file": "jeju-012-full.png"
+  },
+  {
+    "id": "jeju-013",
+    "name": "스타벅스 제주중문점",
+    "i": 12,
+    "status": "captured",
+    "file": "jeju-013-full.png"
+  },
+  {
+    "id": "jeju-014",
+    "name": "스타벅스 성산일출봉점",
+    "i": 13,
+    "status": "captured",
+    "file": "jeju-014-full.png"
+  },
+  {
+    "id": "jeju-015",
+    "name": "스타벅스 제주세화DT점",
+    "i": 14,
+    "status": "captured",
+    "file": "jeju-015-full.png"
+  },
+  {
+    "id": "jeju-016",
+    "name": "스타벅스 제주공항DT점",
+    "i": 15,
+    "status": "captured",
+    "file": "jeju-016-full.png"
+  },
+  {
+    "id": "jeju-017",
+    "name": "스타벅스 제주한담해변DT점",
+    "i": 16,
+    "status": "captured",
+    "file": "jeju-017-full.png"
+  },
+  {
+    "id": "jeju-018",
+    "name": "스타벅스 서귀포DT점",
+    "i": 17,
+    "status": "captured",
+    "file": "jeju-018-full.png"
+  },
+  {
+    "id": "jeju-019",
+    "name": "올리브영 제주함덕점",
+    "i": 18,
+    "status": "captured",
+    "file": "jeju-019-full.png"
+  },
+  {
+    "id": "jeju-020",
+    "name": "올리브영 제주시청점",
+    "i": 19,
+    "status": "captured",
+    "file": "jeju-020-full.png"
+  },
+  {
+    "id": "jeju-021",
+    "name": "올리브영 제주중문점",
+    "i": 20,
+    "status": "error",
+    "error": "Error: Frame with the given id was not found.\nwaiting on click for selector #searchIframe >> interna"
+  },
+  {
+    "id": "jeju-022",
+    "name": "올리브영 제주협재점",
+    "i": 21,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-023",
+    "name": "올리브영 서귀포혁신도시점",
+    "i": 22,
+    "status": "captured",
+    "file": "jeju-023-full.png"
+  },
+  {
+    "id": "jeju-024",
+    "name": "올리브영 제주동문시장점",
+    "i": 23,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-025",
+    "name": "올리브영 제주연동점",
+    "i": 24,
+    "status": "captured",
+    "file": "jeju-025-full.png"
+  },
+  {
+    "id": "jeju-026",
+    "name": "올리브영 제주용담점",
+    "i": 25,
+    "status": "captured",
+    "file": "jeju-026-full.png"
+  },
+  {
+    "id": "jeju-027",
+    "name": "올리브영 제주서귀포점",
+    "i": 26,
+    "status": "not-exact",
+    "count": 0
+  },
+  {
+    "id": "jeju-028",
+    "name": "투썸플레이스 제주노형DT점",
+    "i": 27,
+    "status": "captured",
+    "file": "jeju-028-full.png"
+  },
+  {
+    "id": "jeju-029",
+    "name": "투썸플레이스 제주연동점",
+    "i": 28,
+    "status": "captured",
+    "file": "jeju-029-full.png"
+  },
+  {
+    "id": "jeju-030",
+    "name": "투썸플레이스 제주노형오거리점",
+    "i": 29,
+    "status": "captured",
+    "file": "jeju-030-full.png"
+  },
+  {
+    "id": "jeju-031",
+    "name": "투썸플레이스 제주남원농협하나로마트점",
+    "i": 30,
+    "status": "captured",
+    "file": "jeju-031-full.png"
+  },
+  {
+    "id": "jeju-032",
+    "name": "투썸플레이스 제주대병원점",
+    "i": 31,
+    "status": "captured",
+    "file": "jeju-032-full.png"
+  },
+  {
+    "id": "jeju-033",
+    "name": "투썸플레이스 제주오라점",
+    "i": 32,
+    "status": "captured",
+    "file": "jeju-033-full.png"
+  },
+  {
+    "id": "jeju-034",
+    "name": "투썸플레이스 제주엠제이벤처오름점",
+    "i": 33,
+    "status": "captured",
+    "file": "jeju-034-full.png"
+  },
+  {
+    "id": "jeju-035",
+    "name": "투썸플레이스 제주애월하귀점",
+    "i": 34,
+    "status": "captured",
+    "file": "jeju-035-full.png"
+  },
+  {
+    "id": "jeju-036",
+    "name": "투썸플레이스 곽지과물해변점",
+    "i": 35,
+    "status": "captured",
+    "file": "jeju-036-full.png"
+  },
+  {
+    "id": "jeju-037",
+    "name": "메가MGC커피 제주노형이편한세상점",
+    "i": 36,
+    "status": "error",
+    "error": "Error: Playwright selector deadline exceeded\nwaiting on click for selector #searchIframe >> internal"
+  },
+  {
+    "id": "jeju-038",
+    "name": "메가MGC커피 제주중문점",
+    "i": 37,
+    "status": "captured",
+    "file": "jeju-038-full.png"
+  },
+  {
+    "id": "jeju-039",
+    "name": "메가MGC커피 제주버스터미널점",
+    "i": 38,
+    "status": "not-exact",
+    "count": 0
+  },
+  {
+    "id": "jeju-040",
+    "name": "메가MGC커피 제주동문시장점",
+    "i": 39,
+    "status": "error",
+    "error": "Error: Playwright selector deadline exceeded\nwaiting on click for selector #searchIframe >> internal"
+  },
+  {
+    "id": "jeju-041",
+    "name": "메가MGC커피 제주표선점",
+    "i": 40,
+    "status": "error",
+    "error": "Error: Playwright selector deadline exceeded\nwaiting on click for selector #searchIframe >> internal"
+  },
+  {
+    "id": "jeju-042",
+    "name": "메가MGC커피 제주동홍중앙점",
+    "i": 41,
+    "status": "captured",
+    "file": "jeju-042-full.png"
+  },
+  {
+    "id": "jeju-043",
+    "name": "메가MGC커피 제주아라점",
+    "i": 42,
+    "status": "captured",
+    "file": "jeju-043-full.png"
+  },
+  {
+    "id": "jeju-044",
+    "name": "메가MGC커피 제주성산일출봉점",
+    "i": 43,
+    "status": "error",
+    "error": "Error: Playwright selector deadline exceeded\nwaiting on click for selector #searchIframe >> internal"
+  },
+  {
+    "id": "jeju-045",
+    "name": "메가MGC커피 협재해수욕장점",
+    "i": 44,
+    "status": "captured",
+    "file": "jeju-045-full.png"
+  },
+  {
+    "id": "jeju-046",
+    "name": "컴포즈커피 서귀포일호광장점",
+    "i": 45,
+    "status": "captured",
+    "file": "jeju-046-full.png"
+  },
+  {
+    "id": "jeju-047",
+    "name": "컴포즈커피 서귀포대정점",
+    "i": 46,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-048",
+    "name": "컴포즈커피 제주함덕점",
+    "i": 47,
+    "status": "captured",
+    "file": "jeju-048-full.png"
+  },
+  {
+    "id": "jeju-049",
+    "name": "컴포즈커피 제주이호테우점",
+    "i": 48,
+    "status": "captured",
+    "file": "jeju-049-full.png"
+  },
+  {
+    "id": "jeju-050",
+    "name": "컴포즈커피 제주동초점",
+    "i": 49,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-051",
+    "name": "컴포즈커피 제주서사라점",
+    "i": 50,
+    "status": "captured",
+    "file": "jeju-051-full.png"
+  },
+  {
+    "id": "jeju-052",
+    "name": "컴포즈커피 서귀포신시가지점",
+    "i": 51,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-053",
+    "name": "컴포즈커피 제주아라점",
+    "i": 52,
+    "status": "captured",
+    "file": "jeju-053-full.png"
+  },
+  {
+    "id": "jeju-054",
+    "name": "컴포즈커피 제주연동점",
+    "i": 53,
+    "status": "captured",
+    "file": "jeju-054-full.png"
+  },
+  {
+    "id": "jeju-055",
+    "name": "이디야커피 제주일도점",
+    "i": 54,
+    "status": "captured",
+    "file": "jeju-055-full.png"
+  },
+  {
+    "id": "jeju-056",
+    "name": "이디야커피제주중앙점",
+    "i": 55,
+    "status": "no-roadview"
+  },
+  {
+    "id": "jeju-057",
+    "name": "이디야커피 제주연동점",
+    "i": 56,
+    "status": "captured",
+    "file": "jeju-057-full.png"
+  },
+  {
+    "id": "jeju-058",
+    "name": "이디야커피 제주외도점",
+    "i": 57,
+    "status": "captured",
+    "file": "jeju-058-full.png"
+  },
+  {
+    "id": "jeju-059",
+    "name": "이디야커피 서귀포위미점",
+    "i": 58,
+    "status": "captured",
+    "file": "jeju-059-full.png"
+  },
+  {
+    "id": "jeju-060",
+    "name": "이디야커피 제주삼도점",
+    "i": 59,
+    "status": "captured",
+    "file": "jeju-060-full.png"
+  },
+  {
+    "id": "jeju-061",
+    "name": "이디야커피 제주연북로점",
+    "i": 60,
+    "status": "captured",
+    "file": "jeju-061-full.png"
+  },
+  {
+    "id": "jeju-062",
+    "name": "이디야커피 서귀포동홍점",
+    "i": 61,
+    "status": "captured",
+    "file": "jeju-062-full.png"
+  },
+  {
+    "id": "jeju-063",
+    "name": "맥도날드 제주노형DT점",
+    "i": 62,
+    "status": "captured",
+    "file": "jeju-063-full.png"
+  },
+  {
+    "id": "jeju-064",
+    "name": "맥도날드 서귀포DT점",
+    "i": 63,
+    "status": "captured",
+    "file": "jeju-064-full.png"
+  },
+  {
+    "id": "jeju-065",
+    "name": "맥도날드 제주 외도DT점",
+    "i": 64,
+    "status": "captured",
+    "file": "jeju-065-full.png"
+  },
+  {
+    "id": "jeju-066",
+    "name": "맥도날드 제주중문DT점",
+    "i": 65,
+    "status": "captured",
+    "file": "jeju-066-full.png"
+  },
+  {
+    "id": "jeju-067",
+    "name": "맥도날드 제주탑동점",
+    "i": 66,
+    "status": "captured",
+    "file": "jeju-067-full.png"
+  },
+  {
+    "id": "jeju-068",
+    "name": "맥도날드 제주일도DT점",
+    "i": 67,
+    "status": "captured",
+    "file": "jeju-068-full.png"
+  },
+  {
+    "id": "jeju-069",
+    "name": "맥도날드 제주시청DT점",
+    "i": 68,
+    "status": "captured",
+    "file": "jeju-069-full.png"
+  },
+  {
+    "id": "jeju-070",
+    "name": "맥도날드 제주공항DT점",
+    "i": 69,
+    "status": "captured",
+    "file": "jeju-070-full.png"
+  }
+]

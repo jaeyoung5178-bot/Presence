@@ -1,0 +1,104 @@
+[
+  {
+    "id": 1,
+    "name": "버거킹 제주함덕DT점",
+    "repIndex": 2,
+    "source": "rep-002-full.png"
+  },
+  {
+    "id": 2,
+    "name": "버거킹 서귀포시청점",
+    "repIndex": 4,
+    "source": "rep-004-full.png"
+  },
+  {
+    "id": 5,
+    "name": "버거킹 제주애월DT점",
+    "repIndex": 6,
+    "source": "rep-006-full.png"
+  },
+  {
+    "id": 8,
+    "name": "버거킹 제주민속오일장DT점",
+    "repIndex": 7,
+    "source": "rep-007-full.png"
+  },
+  {
+    "id": 21,
+    "name": "KFC 제주시청",
+    "repIndex": 8,
+    "source": "rep-008-full.png"
+  },
+  {
+    "id": 22,
+    "name": "KFC 제주노형",
+    "repIndex": 9,
+    "source": "rep-009-full.png"
+  },
+  {
+    "id": 24,
+    "name": "KFC 제주서귀포DI점",
+    "repIndex": 10,
+    "source": "rep-010-full.png"
+  },
+  {
+    "id": 27,
+    "name": "KFC 제주연동신라",
+    "repIndex": 11,
+    "source": "rep-011-full.png"
+  },
+  {
+    "id": 37,
+    "name": "KFC 제주아라",
+    "repIndex": 12,
+    "source": "rep-012-full.png"
+  },
+  {
+    "id": 39,
+    "name": "KFC 제주삼화",
+    "repIndex": 13,
+    "source": "rep-013-full.png"
+  },
+  {
+    "id": 40,
+    "name": "배스킨라빈스 제주함덕점",
+    "repIndex": 14,
+    "source": "rep-014-full.png"
+  },
+  {
+    "id": 41,
+    "name": "배스킨라빈스 제주서귀포",
+    "repIndex": 15,
+    "source": "rep-015-full.png"
+  },
+  {
+    "id": 44,
+    "name": "배스킨라빈스 제주하귀점",
+    "repIndex": 16,
+    "source": "rep-016-full.png"
+  },
+  {
+    "id": 47,
+    "name": "배스킨라빈스 제주삼화",
+    "repIndex": 17,
+    "source": "rep-017-full.png"
+  },
+  {
+    "id": 50,
+    "name": "배스킨라빈스 제주서사라점",
+    "repIndex": 18,
+    "source": "rep-018-full.png"
+  },
+  {
+    "id": 52,
+    "name": "배스킨라빈스 제주도청점",
+    "repIndex": 19,
+    "source": "rep-019-full.png"
+  },
+  {
+    "id": 56,
+    "name": "배스킨라빈스 신제주점",
+    "repIndex": 20,
+    "source": "rep-020-full.png"
+  }
+]

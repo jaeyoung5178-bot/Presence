@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>피스메이커 스코어방 결과 — Presence</title>
+  <meta name="description" content="인천 피스메이커 스코어방의 날짜별 사이트, 셋업 인원, 운영 결과 조회">
+  <link rel="stylesheet" href="./scores.css?v=1">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../site-operations.html"><span>P</span><b>Presence</b><small>PEACEMAKER SCORES</small></a>
+    <a class="back" href="../site-operations.html">← 사이트운영</a>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">INCHEON · FIELD ARCHIVE</p>
+      <h1>피스메이커<br>스코어방 결과</h1>
+      <p>사진 없이 날짜, 사이트, 함께 셋업한 인원과 결과값만 빠르게 조회합니다.</p>
+      <div class="metrics">
+        <div><strong id="record-count">—</strong><span>운영 기록</span></div>
+        <div><strong id="site-count">—</strong><span>확인 사이트</span></div>
+        <div><strong id="latest-date">—</strong><span>최근 기록일</span></div>
+      </div>
+    </section>
+    <section class="toolbar" aria-label="결과 검색">
+      <label class="search"><span>⌕</span><input id="query" type="search" placeholder="사이트·인원 검색 (예: 재영, 주안역)" autocomplete="off"></label>
+      <label><span>기간</span><select id="year"><option value="">전체 연도</option></select></label>
+      <label><span>사이트</span><select id="site"><option value="">전체 사이트</option></select></label>
+      <button id="reset" type="button">초기화</button>
+    </section>
+    <section class="results" aria-labelledby="result-title">
+      <div class="section-head"><div><p class="eyebrow">RESULT LOG</p><h2 id="result-title">조회 결과</h2></div><output id="shown-count">불러오는 중…</output></div>
+      <div id="result-list" class="result-list" aria-live="polite"></div>
+      <button id="more" type="button" hidden>결과 더 보기</button>
+      <div id="empty" class="empty" hidden>조건에 맞는 기록이 없습니다.</div>
+    </section>
+  </main>
+  <footer><span>카카오톡 인천 스코어방 내보내기 기준</span><span>후원자 상세 코멘트 비노출</span></footer>
+  <script src="./scores.js?v=1"></script>
+</body>
+</html>

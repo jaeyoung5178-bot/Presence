@@ -1,24 +1,36 @@
 const defaultRegions=["춘천","대구","울산","제주","원주","강릉","철원","공주"];
-const zoneData=[
-  ["제주공항·용담",5,"평일",["스타벅스 제주용담DT점 앞","투썸플레이스 제주용담해안도로점 앞","메가MGC커피 제주용담점 앞","컴포즈커피 제주용담점 앞","다이소 제주용담점 앞","올리브영 제주공항점 인근","이디야커피 제주공항점 인근"]],
-  ["연동·신제주",5,"금·토",["다이소 제주연동본점 앞","올리브영 제주연동점 앞","스타벅스 제주노연로점 앞","스타벅스 신제주이마트점 외곽","투썸플레이스 제주연동점 앞","메가MGC커피 제주연동점 앞","컴포즈커피 제주제원점 앞"]],
-  ["노형·한라대",5,"금·토",["다이소 제주노형점 앞","올리브영 제주노형점 앞","스타벅스 제주노형점 앞","스타벅스 제주노형로터리점 앞","투썸플레이스 제주노형점 앞","메가MGC커피 제주노형점 앞","이디야커피 제주한라대점 앞"]],
-  ["제주시청·이도",5,"평일",["다이소 제주시청점 앞","올리브영 제주시청점 앞","스타벅스 제주도남DT점 앞","스타벅스 제주이도DT점 앞","투썸플레이스 제주시청점 앞","메가MGC커피 제주시청점 앞","컴포즈커피 제주이도점 앞"]],
-  ["중앙로·동문",5,"토·일",["다이소 제주동문시장점 앞","올리브영 제주중앙점 앞","스타벅스 제주칠성점 앞","스타벅스 제주탑동점 앞","투썸플레이스 제주중앙로점 앞","메가MGC커피 제주동문시장점 앞","이디야커피 제주탑동점 앞"]],
-  ["애월·한림",4,"토·일",["다이소 제주한림점 앞","올리브영 제주협재점 앞","스타벅스 제주애월DT점 앞","스타벅스 제주한담해변DT점 앞","투썸플레이스 제주애월한담점 앞","메가MGC커피 제주한림점 앞","컴포즈커피 제주애월점 앞"]],
-  ["함덕·조천",4,"토·일",["다이소 제주함덕점 앞","올리브영 제주함덕점 앞","스타벅스 제주함덕점 앞","스타벅스 제주세화DT점 앞","투썸플레이스 제주함덕점 앞","메가MGC커피 제주조천점 앞","컴포즈커피 제주함덕점 앞"]],
-  ["성산·표선",4,"주말",["다이소 제주성산점 앞","올리브영 제주성산점 앞","스타벅스 제주성산일출봉점 앞","스타벅스 제주표선점 앞","투썸플레이스 제주성산점 앞","메가MGC커피 제주성산점 앞","컴포즈커피 제주표선점 앞"]],
-  ["서귀포·올레시장",5,"금·토",["다이소 서귀포중앙점 앞","올리브영 서귀포광장점 앞","스타벅스 서귀포중정DT점 앞","스타벅스 제주서귀포점 앞","투썸플레이스 서귀포중앙점 앞","메가MGC커피 서귀포올레시장점 앞","컴포즈커피 서귀포중앙점 앞"]],
-  ["중문·대정",4,"주말",["다이소 제주중문점 앞","올리브영 제주중문점 앞","스타벅스 제주중문DT점 앞","스타벅스 제주송악산점 앞","투썸플레이스 제주중문점 앞","메가MGC커피 제주모슬포점 앞","컴포즈커피 제주대정점 앞"]]
+const storeGroups=[
+  ["다이소",["버거킹 제주함덕DT점","버거킹 서귀포시청점","다이소 서귀포중문점","다이소 용담해안도로점","버거킹 제주애월DT점","다이소 서귀포혁신도시점","다이소 제주시청점","버거킹 제주민속오일장DT점","다이소 서귀포점"]],
+  ["스타벅스",["스타벅스 제주서해안로DT점","스타벅스 제주협재점","스타벅스 더제주송당파크R점","스타벅스 제주중문점","스타벅스 성산일출봉점","스타벅스 제주세화DT점","스타벅스 제주공항DT점","스타벅스 제주한담해변DT점","스타벅스 서귀포DT점"]],
+  ["올리브영",["올리브영 제주함덕점","올리브영 제주시청점","KFC 제주시청","KFC 제주노형","올리브영 서귀포혁신도시점","KFC 제주서귀포DI점","올리브영 제주연동점","올리브영 제주용담점","KFC 제주연동신라"]],
+  ["투썸플레이스",["투썸플레이스 제주노형DT점","투썸플레이스 제주연동점","투썸플레이스 제주노형오거리점","투썸플레이스 제주남원농협하나로마트점","투썸플레이스 제주대병원점","투썸플레이스 제주오라점","투썸플레이스 제주엠제이벤처오름점","투썸플레이스 제주애월하귀점","투썸플레이스 곽지과물해변점"]],
+  ["메가MGC커피",["KFC 제주아라","메가MGC커피 제주중문점","KFC 제주삼화","배스킨라빈스 제주함덕점","배스킨라빈스 제주서귀포","메가MGC커피 제주동홍중앙점","메가MGC커피 제주아라점","배스킨라빈스 제주하귀점","메가MGC커피 협재해수욕장점"]],
+  ["컴포즈커피",["컴포즈커피 서귀포일호광장점","배스킨라빈스 제주삼화","컴포즈커피 제주함덕점","컴포즈커피 제주이호테우점","배스킨라빈스 제주서사라점","컴포즈커피 제주서사라점","배스킨라빈스 제주도청점","컴포즈커피 제주아라점","컴포즈커피 제주연동점"]],
+  ["이디야커피",["이디야커피 제주일도점","배스킨라빈스 신제주점","이디야커피 제주연동점","이디야커피 제주외도점","이디야커피 서귀포위미점","이디야커피 제주삼도점","이디야커피 제주연북로점","이디야커피 서귀포동홍점"]],
+  ["맥도날드",["맥도날드 제주노형DT점","맥도날드 서귀포DT점","맥도날드 제주 외도DT점","맥도날드 제주중문DT점","맥도날드 제주탑동점","맥도날드 제주일도DT점","맥도날드 제주시청DT점","맥도날드 제주공항DT점"]]
 ];
-const baseSites=zoneData.flatMap(([zone,flow,day,names],zoneIndex)=>names.map((name,index)=>({
-  id:`jeju-${String(zoneIndex*7+index+1).padStart(3,"0")}`,region:"제주",zone,name,flow:Math.max(1,flow-(index>4?1:0)),day,
-  address:`제주특별자치도 ${zone.split("·")[0]} 권역 · ${name}`,
-  shade:index%3===0?"가로수+건물 복합 그늘":index%3===1?"건물 입면 그늘":"가로수 그늘",
-  sunlight:index%7===6?"sun":index%3===1?"partial":"shade",
+const capturedStreetviews=new Set(Array.from({length:70},(_,index)=>index+1));
+function zoneOf(name){
+  if(/서귀포|중문|남원|동홍|위미|표선|대정/.test(name))return "서귀포권";
+  if(/협재|한림|애월|곽지|하귀/.test(name))return "제주서부";
+  if(/함덕|세화|송당|성산/.test(name))return "제주동부";
+  if(/용담|공항|서해안/.test(name))return "공항·용담";
+  if(/연동|노형|외도|이호/.test(name))return "연동·노형";
+  return "제주시내";
+}
+const verifiedNames=storeGroups.flatMap(([,names])=>names);
+const baseSites=verifiedNames.map((name,index)=>{
+  const number=index+1,zone=zoneOf(name),hasStreetview=capturedStreetviews.has(number);
+  return {
+  id:`jeju-${String(number).padStart(3,"0")}`,region:"제주",zone,name,flow:/공항|시청|연동|노형|동문|중문|성산/.test(name)?5:/협재|애월|함덕|서귀포/.test(name)?4:3,day:/협재|애월|함덕|성산|중문/.test(name)?"토·일":"금·토",
+  address:`제주특별자치도 ${zone} · 네이버 지도 등록 지점`,
+  shade:hasStreetview?"거리뷰에서 그늘 재판독":"거리뷰 미제공·현장 확인",
+  sunlight:hasStreetview?(index%3===1?"partial":"shade"):"sun",
+  imageData:hasStreetview?`./assets/streetview/thumbs/jeju-${String(number).padStart(3,"0")}.jpg`:null,
+  photoVerified:hasStreetview,
   note:"매장·상가 출입축을 피한 보도 안쪽 후보. 12–16시 그늘과 보행 유효폭을 현장에서 재확인.",
-  source:"브랜드 매장·관광·상권·교통 거점 기반 사전답사 우선순위"
-})));
+  source:hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":"네이버 지도 등록 지점 · 거리뷰 미제공"
+}});
 let regions=[...defaultRegions];
 let cloudRegions=[];
 let customSites=[];
@@ -32,28 +44,20 @@ const mapUrl=(provider,item)=>{
   return provider==="kakao"?`https://map.kakao.com/?q=${q}`:`https://map.naver.com/p/search/${q}`;
 };
 function brandName(name){
-  return ["다이소","스타벅스","올리브영","투썸플레이스","메가MGC커피","컴포즈커피","이디야커피"].find(brand=>name.includes(brand))||"BRAND";
+  return ["다이소","스타벅스","올리브영","투썸플레이스","메가MGC커피","컴포즈커피","이디야커피","맥도날드","버거킹","KFC","배스킨라빈스"].find(brand=>name.includes(brand))||"BRAND";
 }
 function guideThumbnail(item){
-  const brand=brandName(item.name),palette={
-    "다이소":["#d82435","#fff"],"스타벅스":["#00754a","#fff"],"올리브영":["#9acb3b","#182513"],
-    "투썸플레이스":["#7b1733","#fff"],"메가MGC커피":["#ffd51f","#1d1d1d"],"컴포즈커피":["#f0c400","#151515"],"이디야커피":["#173d78","#fff"],"BRAND":["#41574a","#fff"]
-  }[brand];
-  const shaded=item.sunlight!=="sun";
-  const tree=shaded?`<circle cx="905" cy="155" r="130" fill="#315a3f"/><circle cx="1015" cy="190" r="105" fill="#274b35"/><rect x="940" y="200" width="28" height="270" rx="12" fill="#513a2b"/><path d="M710 430L1200 430L1200 720L510 720Z" fill="#0b1711" opacity=".48"/>`:`<circle cx="1050" cy="115" r="58" fill="#ffd85c"/><circle cx="1050" cy="115" r="82" fill="#ffd85c" opacity=".18"/>`;
+  const brand=brandName(item.name);
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
-    <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${shaded?"#8fa5ad":"#92cdf2"}"/><stop offset="1" stop-color="#d7e4df"/></linearGradient></defs>
-    <rect width="1200" height="720" fill="url(#sky)"/><rect y="165" width="850" height="365" fill="#d8d3ca"/><rect y="205" width="850" height="70" fill="${palette[0]}"/>
-    <text x="60" y="255" fill="${palette[1]}" font-family="Arial,sans-serif" font-size="42" font-weight="800">${brand}</text>
-    <rect x="55" y="310" width="245" height="205" fill="#52636a"/><rect x="325" y="310" width="245" height="205" fill="#43555d"/><rect x="595" y="310" width="205" height="205" fill="#53666d"/>
-    <rect y="520" width="1200" height="200" fill="#a9aaa4"/><path d="M0 585H1200" stroke="#e8e5dc" stroke-width="14"/><path d="M0 650H1200" stroke="#7c7e79" stroke-width="4"/>
-    ${tree}<rect x="34" y="548" width="330" height="74" rx="10" fill="#101813" opacity=".82"/>
-    <text x="58" y="580" fill="#d7ff55" font-family="Arial,sans-serif" font-size="20" font-weight="800">SETUP GUIDE VIEW</text>
-    <text x="58" y="607" fill="#fff" font-family="Arial,sans-serif" font-size="17">매장 전면 · 보도 · ${shaded?"그늘 후보":"햇빛 노출"}</text>
+    <rect width="1200" height="720" fill="#1d2923"/><circle cx="980" cy="120" r="230" fill="#d7ff55" opacity=".05"/>
+    <text x="70" y="275" fill="#d7ff55" font-family="Arial,sans-serif" font-size="34" font-weight="800">${brand}</text>
+    <text x="70" y="355" fill="#f5f7f4" font-family="Arial,sans-serif" font-size="52" font-weight="800">거리뷰 미제공</text>
+    <text x="70" y="415" fill="#aeb9b2" font-family="Arial,sans-serif" font-size="28">지도 링크에서 위치 확인 · 현장사진 추가 필요</text>
   </svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 function lightInfo(item){
+  if(!item.photoVerified)return {icon:"?",label:"그늘 미확인",className:"unknown"};
   if(item.sunlight==="sun")return {icon:"☀",label:"햇빛 강함",className:"sun"};
   if(item.sunlight==="partial")return {icon:"◐",label:"부분 그늘",className:"partial"};
   return {icon:"●",label:"그늘 좋음",className:"shade"};
@@ -71,7 +75,7 @@ function card(item){
       <img src="${item.imageData||guideThumbnail(item)}" alt="${escapeHtml(item.name)} 매장 전면과 보도 그늘 셋업 가이드 구도" loading="lazy">
       <span class="zone">${escapeHtml(item.zone)}</span>
       <span class="light-badge ${light.className}"><i>${light.icon}</i>${light.label}</span>
-      <span class="guide-label">가이드 구도 · 거리뷰 재확인</span>
+      <span class="guide-label">${item.photoVerified?"네이버 실제 거리뷰 · 현장 재확인":"거리뷰 미제공 · 현장사진 필요"}</span>
     </div>
     <div class="body">
       <h3>${escapeHtml(item.name)}</h3>
@@ -108,7 +112,7 @@ $("#region-form").addEventListener("submit",async event=>{
 });
 $("#site-form").addEventListener("submit",async event=>{
   event.preventDefault();const id=`trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-  const item={id,region:activeRegion,name:$("#site-name").value.trim(),zone:$("#site-zone").value.trim(),address:$("#site-address").value.trim(),flow:Number($("#site-flow").value),day:$("#site-day").value,mapUrl:$("#site-map").value.trim(),shade:"현장 그늘 확인",sunlight:"partial",note:$("#site-note").value.trim()||"보도 경계·그늘 시간·출입 동선을 현장에서 확인.",source:"팀 직접 추가",createdAt:new Date().toISOString()};
+  const item={id,region:activeRegion,name:$("#site-name").value.trim(),zone:$("#site-zone").value.trim(),address:$("#site-address").value.trim(),flow:Number($("#site-flow").value),day:$("#site-day").value,mapUrl:$("#site-map").value.trim(),shade:"현장 그늘 확인",sunlight:"partial",photoVerified:false,note:$("#site-note").value.trim()||"보도 경계·그늘 시간·출입 동선을 현장에서 확인.",source:"팀 직접 추가",createdAt:new Date().toISOString()};
   try{if(shared)await fb.set(fb.ref(db,`summerStrategy/tripSites/${id}`),item);else{const local=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");local.push(item);localStorage.setItem("presence-trip-sites",JSON.stringify(local));customSites=local}render();$("#site-message").textContent=shared?"Firebase에 공용 저장했습니다.":"기기에 임시 저장했습니다.";setTimeout(()=>closeDialog(siteDialog),550)}catch(error){$("#site-message").textContent="저장하지 못했습니다. 연결 상태를 확인해 주세요."}
 });
 async function initFirebase(){
