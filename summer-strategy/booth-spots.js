@@ -115,6 +115,7 @@ function card(item){
   const review=reviewFor(item);
   const reviewLabel=review?`${review.status||"후기"}${review.photos?.length?` · 셋업사진 ${review.photos.length}장`:""}`:"";
   const recentResult=review?.result?.trim();
+  const reviewPhotos=(review?.photos||[]).slice(0,3);
   return `<article class="spot-card">
     <div class="spot-photo">
       <img src="${imageSource}" alt="${safeName} 매장 정면과 보도 후보 사진" loading="lazy">
@@ -130,6 +131,7 @@ function card(item){
       <p class="risk-note">점포 대지·화단·주차면에는 설치하지 않음 · 관할 구청 확인 전 확정 금지</p>
       ${reviewLabel?`<span class="review-badge">${escapeHtml(reviewLabel)}</span>`:""}
       ${recentResult?`<span class="recent-result"><b>최근 결과</b> · ${escapeHtml(recentResult)}</span>`:""}
+      ${reviewPhotos.length?`<div class="card-setup-photos" aria-label="실제 셋업사진">${reviewPhotos.map((photo,index)=>`<img src="${photo}" alt="${safeName} 실제 셋업사진 ${index+1}" loading="lazy">`).join("")}</div>`:""}
       <div class="card-actions"><a href="${mapUrl("naver",item.name,item)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name,item)}" target="_blank" rel="noreferrer">카카오맵 확인</a><button type="button" class="review-open" data-review="${itemKey(item)}">${review?"후기·셋업사진 수정":"후기·셋업사진 추가"}</button></div>
     </div>
   </article>`;
@@ -187,12 +189,14 @@ const reviewPhoto=document.querySelector("#review-photo");
 const reviewPreview=document.querySelector("#review-preview");
 const reviewMessage=document.querySelector("#review-message");
 async function persistReviews(key){
+  try{localStorage.setItem("presence-site-reviews",JSON.stringify(reviews));}
+  catch(error){reviewMessage.textContent="기기 저장 공간이 부족합니다. 오래된 셋업사진을 일부 삭제해 주세요.";return false;}
   try{
-    localStorage.setItem("presence-site-reviews",JSON.stringify(reviews));
     if(sharedReady&&key)await firebaseApi.set(firebaseApi.ref(sharedDb,`summerStrategy/reviews/${key}`),reviews[key]||null);
-    return true;
   }
-  catch(error){reviewMessage.textContent="저장 공간이 부족합니다. 오래된 셋업사진을 일부 삭제해 주세요.";return false;}
+  catch(error){reviewMessage.textContent="기기에는 저장했습니다. Firebase 연결 후 다시 공용 동기화됩니다.";}
+  render();
+  return true;
 }
 function openReview(key){
   const item=spots.find(spot=>itemKey(spot)===key);
@@ -233,7 +237,7 @@ reviewPhoto.addEventListener("change",async()=>{
     const photo=await resizePhoto(file);
     const review=reviews[activeReviewId]||{status:reviewStatus.value,rating:reviewRating.value,result:reviewResult.value,text:reviewText.value,photos:[]};
     review.photos=[...(review.photos||[]),photo].slice(-3);review.updatedAt=new Date().toISOString();reviews[activeReviewId]=review;
-    if(await persistReviews(activeReviewId)){drawReviewPhotos(review.photos);reviewMessage.textContent=sharedReady?"셋업사진을 공용 저장했습니다. 다른 기기에도 반영됩니다.":"사진을 기기에 보관했습니다. 연결되면 공용 저장됩니다.";}
+    if(await persistReviews(activeReviewId)){drawReviewPhotos(review.photos);reviewMessage.textContent=sharedReady?"셋업사진을 저장했습니다. 카드에도 바로 표시됩니다.":"사진을 기기와 카드에 표시했습니다. 연결되면 공용 저장됩니다.";}
   }catch(error){reviewMessage.textContent="사진을 처리하지 못했습니다. 다른 사진을 선택해 주세요.";}
 });
 reviewPreview.addEventListener("click",async event=>{
@@ -244,7 +248,7 @@ reviewForm.addEventListener("submit",async event=>{
   event.preventDefault();if(!activeReviewId)return;
   const previous=reviews[activeReviewId]||{};
   reviews[activeReviewId]={status:reviewStatus.value,rating:reviewRating.value,result:reviewResult.value.trim(),text:reviewText.value.trim(),photos:previous.photos||[],updatedAt:new Date().toISOString()};
-  if(await persistReviews(activeReviewId)){render();reviewMessage.textContent=sharedReady?"후기·최근 결과·사진을 Firebase에 공용 저장했습니다.":"기기에 임시 저장했습니다. 연결되면 자동 동기화됩니다.";setTimeout(closeReview,650);}
+  if(await persistReviews(activeReviewId)){reviewMessage.textContent=sharedReady?"후기·최근 결과·사진을 저장해 카드에 반영했습니다.":"기기에 저장해 카드에 반영했습니다. 연결되면 자동 동기화됩니다.";setTimeout(closeReview,650);}
 });
 document.querySelector("#review-delete").addEventListener("click",async()=>{if(!activeReviewId)return;delete reviews[activeReviewId];await persistReviews(activeReviewId);render();closeReview();});
 document.querySelector("#review-close").addEventListener("click",closeReview);
@@ -296,7 +300,7 @@ siteForm.addEventListener("submit",async event=>{
     key,
     name,address,kakaoUrl,shade,region:autoRegion(address),city:autoCity(address),brand:brandOf(name),
     risk:"경계 재확인",setup:manualSetup||`${brandOf(name)} 앞 그늘 후보. 정확한 보도 경계와 출입 동선을 현장에서 확인한 뒤 평행 배치.`,
-    imageData:pendingSitePhoto||placeholderImage(name,address),createdAt:new Date().toISOString()
+    imageData:pendingSitePhoto||placeholderImage(name,address),photoStatus:pendingSitePhoto?"지도·현장사진 등록":"거리뷰 사진 미등록",createdAt:new Date().toISOString()
   };
   const stored=JSON.parse(localStorage.getItem("presence-custom-sites")||"[]");stored.unshift(custom);
   try{

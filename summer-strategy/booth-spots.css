@@ -37,3 +37,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .sync-status.is-live .sync-dot{background:#7ce38b;box-shadow:0 0 0 4px rgba(124,227,139,.12)}
 .sync-status.is-offline .sync-dot{background:#ff8b7b;box-shadow:0 0 0 4px rgba(255,139,123,.12)}
 @media(max-width:640px){.sync-status{align-items:flex-start;flex-wrap:wrap}.sync-status span:last-child{width:100%;padding-left:18px}}
+.card-setup-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:13px}
+.card-setup-photos img{width:100%;aspect-ratio:4/3;display:block;object-fit:cover;border:1px solid var(--line);border-radius:10px;background:#101511}

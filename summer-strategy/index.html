@@ -125,17 +125,17 @@
         <div><p class="eyebrow">ADD NEW SITE</p><h2 id="site-dialog-title">새 사이트 추가</h2></div>
         <button type="button" id="site-close" class="dialog-close" aria-label="사이트 추가 창 닫기">×</button>
       </div>
-      <p class="site-form-guide">사이트명과 정확한 주소, 카카오맵 링크를 넣으면 기존 카드 형식으로 자동 생성됩니다.</p>
+      <p class="site-form-guide"><b>주소만으로 지도 거리뷰 사진이 자동 복사되지는 않습니다.</b> 네이버 거리뷰 또는 카카오 로드뷰에서 매장 전면과 그늘이 보이는 장면을 캡처한 뒤 대표사진으로 함께 넣어주세요.</p>
       <div class="review-fields">
         <label class="review-wide"><span>사이트 이름</span><input id="site-name" type="text" maxlength="80" required placeholder="예: 다이소 인천운서동점"></label>
         <label class="review-wide"><span>정확한 주소</span><input id="site-address" type="text" maxlength="160" required placeholder="예: 인천 중구 영종대로 100"></label>
         <label class="review-wide"><span>카카오맵 주소</span><input id="site-kakao" type="url" required inputmode="url" placeholder="https://place.map.kakao.com/..."></label>
         <label><span>그늘 유형</span><select id="site-shade"><option>가로수 그늘</option><option>건물 입면 그늘</option><option>나무+건물 복합 그늘</option></select></label>
-        <label><span>현장 사진</span><input id="site-photo" type="file" accept="image/*" capture="environment"></label>
+        <label><span>거리뷰 캡처·대표사진</span><input id="site-photo" type="file" accept="image/*"><small>지도 거리뷰 캡처 또는 직접 촬영한 매장 전면 사진</small></label>
         <label class="review-wide"><span>자동 생성될 추천 장면</span><textarea id="site-setup" rows="3" maxlength="300" placeholder="비워두면 매장 앞 그늘과 보행 동선을 기준으로 자동 작성됩니다."></textarea></label>
       </div>
       <div id="site-photo-preview" class="single-photo-preview"></div>
-      <div class="dialog-actions"><button type="button" id="site-cancel" class="danger-action">취소</button><button type="submit" class="primary-action">사이트 자동 생성</button></div>
+      <div class="dialog-actions"><button type="button" id="site-cancel" class="danger-action">취소</button><button type="submit" class="primary-action">사이트 저장</button></div>
       <p id="site-message" class="review-message" aria-live="polite"></p>
     </form>
   </dialog>
@@ -158,6 +158,6 @@
       <p id="review-message" class="review-message" aria-live="polite"></p>
     </form>
   </dialog>
-  <script src="./booth-spots.js?v=5"></script>
+  <script src="./booth-spots.js?v=6"></script>
 </body>
 </html>
