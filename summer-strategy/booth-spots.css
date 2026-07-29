@@ -39,3 +39,4 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 @media(max-width:640px){.sync-status{align-items:flex-start;flex-wrap:wrap}.sync-status span:last-child{width:100%;padding-left:18px}}
 .card-setup-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:13px}
 .card-setup-photos img{width:100%;aspect-ratio:4/3;display:block;object-fit:cover;border:1px solid var(--line);border-radius:10px;background:#101511}
+.score-history{display:grid;gap:2px;margin-top:10px;padding:9px 11px;border:1px solid rgba(215,255,85,.3);border-radius:10px;background:rgba(215,255,85,.07);color:#efffc4;text-decoration:none;font-size:12px}.score-history span{color:#bac5be}.score-history.is-empty{border-color:#33423a;background:#101713;color:#b7c2bc}

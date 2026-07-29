@@ -49,6 +49,8 @@ let cloudRegions=[];
 let customSites=[];
 let activeRegion="제주";
 let fb=null,db=null,shared=false;
+let scoreMatcher=null;
+let tripStrategies=JSON.parse(localStorage.getItem("presence-trip-strategies")||"{}");
 const $=selector=>document.querySelector(selector);
 const escapeHtml=value=>String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const mapUrl=(provider,item)=>{
@@ -83,6 +85,8 @@ function renderRegions(){
 function card(item){
   const stars="★".repeat(item.flow)+"☆".repeat(5-item.flow);
   const light=lightInfo(item);
+  const scoreHistory=scoreMatcher?.find(item.name);
+  const strategy=tripStrategies[item.id]?.text;
   return `<article class="card">
     <div class="visual">
       <img src="${item.imageData||guideThumbnail(item)}" alt="${escapeHtml(item.name)} 매장 전면과 보도 그늘 셋업 가이드 구도" loading="lazy">
@@ -97,7 +101,9 @@ function card(item){
       <p class="address">${escapeHtml(item.address)}</p>
       <p class="note">${escapeHtml(item.note)}</p>
       <p class="source">${escapeHtml(item.source||"직접 추가")}</p>
-      <div class="links"><a href="${mapUrl("naver",item)}" target="_blank" rel="noreferrer">네이버 지도</a><a href="${mapUrl("kakao",item)}" target="_blank" rel="noreferrer">카카오맵</a></div>
+      ${scoreHistory?`<a class="score-history" href="../peacemaker-scores/index.html?q=${encodeURIComponent(item.name)}"><b>✓ 방문 이력 있음</b><span>${scoreHistory.days}회 · AVG ${scoreHistory.average.toFixed(1)} · 최근 ${escapeHtml(scoreHistory.recent.result)}</span></a>`:`<span class="score-history is-empty"><b>첫 운영 후보</b><span>스코어방 매칭 기록 없음 · 운영 전략 기록 가능</span></span>`}
+      ${strategy?`<p class="team-strategy"><b>팀 운영 전략</b>${escapeHtml(strategy)}</p>`:""}
+      <div class="links"><a href="${mapUrl("naver",item)}" target="_blank" rel="noreferrer">네이버 지도</a><a href="${mapUrl("kakao",item)}" target="_blank" rel="noreferrer">카카오맵</a><button type="button" data-strategy="${item.id}">${strategy?"전략 수정":"운영 전략 기록"}</button></div>
     </div>
   </article>`;
 }
@@ -111,6 +117,16 @@ function render(){
 }
 $("#region-tabs").addEventListener("click",event=>{const button=event.target.closest("[data-region]");if(!button)return;activeRegion=button.dataset.region;renderRegions();render()});
 ["#search","#flow-filter","#day-filter"].forEach(selector=>$(selector).addEventListener(selector==="#search"?"input":"change",render));
+$("#spot-grid").addEventListener("click",async event=>{
+  const button=event.target.closest("[data-strategy]");if(!button)return;
+  const item=[...baseSites,...customSites].find(site=>site.id===button.dataset.strategy);if(!item)return;
+  const text=prompt(`${item.name} 운영 전략`,tripStrategies[item.id]?.text||"");
+  if(text===null)return;
+  const value={text:text.trim(),updatedAt:new Date().toISOString()};
+  if(value.text)tripStrategies[item.id]=value;else delete tripStrategies[item.id];
+  localStorage.setItem("presence-trip-strategies",JSON.stringify(tripStrategies));render();
+  if(shared)await fb.set(fb.ref(db,`summerStrategy/tripStrategies/${item.id}`),value.text?value:null);
+});
 const regionDialog=$("#region-dialog"),siteDialog=$("#site-dialog");
 function openDialog(dialog){dialog.showModal();document.body.style.overflow="hidden"}
 function closeDialog(dialog){dialog.close();document.body.style.overflow=""}
@@ -138,7 +154,9 @@ async function initFirebase(){
     dbApi.onValue(dbApi.ref(db,".info/connected"),snap=>{const el=$("#sync-status");el.classList.toggle("live",!!snap.val());el.querySelector("b").textContent=snap.val()?"Firebase 공용 동기화 ON":"오프라인 임시 저장";el.querySelector("span").textContent=snap.val()?"지역과 직접 추가 사이트가 모든 기기에 반영됩니다.":"연결되면 다시 공용 데이터와 맞춥니다."});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripRegions"),snap=>{cloudRegions=Object.values(snap.val()||{}).map(item=>item.name);renderRegions()});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripSites"),snap=>{customSites=Object.values(snap.val()||{});render()});
+    dbApi.onValue(dbApi.ref(db,"summerStrategy/tripStrategies"),snap=>{tripStrategies={...tripStrategies,...(snap.val()||{})};localStorage.setItem("presence-trip-strategies",JSON.stringify(tripStrategies));render()});
   }catch(error){console.error("Trip Firebase unavailable",error);$("#sync-status").querySelector("b").textContent="오프라인 임시 저장"}
 }
 cloudRegions=JSON.parse(localStorage.getItem("presence-trip-regions")||"[]");customSites=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");
 renderRegions();render();initFirebase();
+window.PresenceScoreMatcher?.load("../peacemaker-scores/data/incheon-score-room.json").then(matcher=>{scoreMatcher=matcher;render()}).catch(()=>{});

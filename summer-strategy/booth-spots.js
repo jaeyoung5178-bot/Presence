@@ -98,6 +98,7 @@ let activeReviewId=null;
 let sharedDb=null;
 let firebaseApi=null;
 let sharedReady=false;
+let scoreMatcher=null;
 const itemKey=item=>item.key||String(item.id);
 const reviewFor=item=>reviews[itemKey(item)]||reviews[item.id];
 
@@ -116,6 +117,7 @@ function card(item){
   const reviewLabel=review?`${review.status||"후기"}${review.photos?.length?` · 셋업사진 ${review.photos.length}장`:""}`:"";
   const recentResult=review?.result?.trim();
   const reviewPhotos=(review?.photos||[]).slice(0,3);
+  const scoreHistory=scoreMatcher?.find(item.name);
   return `<article class="spot-card">
     <div class="spot-photo">
       <img src="${imageSource}" alt="${safeName} 매장 정면과 보도 후보 사진" loading="lazy">
@@ -131,6 +133,7 @@ function card(item){
       <p class="risk-note">점포 대지·화단·주차면에는 설치하지 않음 · 관할 구청 확인 전 확정 금지</p>
       ${reviewLabel?`<span class="review-badge">${escapeHtml(reviewLabel)}</span>`:""}
       ${recentResult?`<span class="recent-result"><b>최근 결과</b> · ${escapeHtml(recentResult)}</span>`:""}
+      ${scoreHistory?`<a class="score-history" href="../peacemaker-scores/index.html?q=${encodeURIComponent(item.name)}"><b>✓ 방문 이력 있음</b><span>${scoreHistory.days}회 · AVG ${scoreHistory.average.toFixed(1)} · 최근 ${escapeHtml(scoreHistory.recent.result)}</span></a>`:`<span class="score-history is-empty"><b>첫 운영 후보</b><span>스코어방 매칭 기록 없음 · 운영 후 후기 기록</span></span>`}
       ${reviewPhotos.length?`<div class="card-setup-photos" aria-label="실제 셋업사진">${reviewPhotos.map((photo,index)=>`<img src="${photo}" alt="${safeName} 실제 셋업사진 ${index+1}" loading="lazy">`).join("")}</div>`:""}
       <div class="card-actions"><a href="${mapUrl("naver",item.name,item)}" target="_blank" rel="noreferrer">네이버 거리뷰</a><a href="${mapUrl("kakao",item.name,item)}" target="_blank" rel="noreferrer">카카오맵 확인</a><button type="button" class="review-open" data-review="${itemKey(item)}">${review?"후기·셋업사진 수정":"후기·셋업사진 추가"}</button></div>
     </div>
@@ -376,4 +379,5 @@ async function initSharedData(){
 }
 updateTotals();
 render();
+window.PresenceScoreMatcher?.load("../peacemaker-scores/data/incheon-score-room.json").then(matcher=>{scoreMatcher=matcher;render()}).catch(()=>{});
 initSharedData();

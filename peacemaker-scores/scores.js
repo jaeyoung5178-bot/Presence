@@ -135,7 +135,7 @@ function render(){
   $("#empty").hidden=state.filtered.length!==0;
   $("#more").hidden=visible.length>=state.filtered.length;
 }
-fetch("./data/incheon-score-room.json").then(response=>{if(!response.ok)throw new Error("데이터를 불러오지 못했습니다.");return response.json();}).then(data=>{state.records=data.records||[];populate();render();}).catch(error=>{$("#shown-count").textContent=error.message;$("#empty").hidden=false;});
+fetch("./data/incheon-score-room.json").then(response=>{if(!response.ok)throw new Error("데이터를 불러오지 못했습니다.");return response.json();}).then(data=>{state.records=data.records||[];populate();const requested=new URLSearchParams(location.search).get("q");if(requested)$("#query").value=requested;render();}).catch(error=>{$("#shown-count").textContent=error.message;$("#empty").hidden=false;});
 ["query","year","site"].forEach(id=>$("#"+id).addEventListener(id==="query"?"input":"change",()=>{state.limit=100;render();}));
 $("#reset").addEventListener("click",()=>{$("#query").value="";$("#year").value="";$("#site").value="";state.limit=100;render();});
 $("#more").addEventListener("click",()=>{state.limit+=100;render();});
