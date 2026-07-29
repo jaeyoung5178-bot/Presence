@@ -11,9 +11,13 @@ const files=(await readdir(source)).filter(name=>name.endsWith(".txt")).sort((a,
 });
 const records=[];
 const clean=value=>value.replace(/^(?:\d+\s*[.)]?\s*)+/,"").replace(/^[^A-Za-z가-힣]+/u,"").replace(/\s+/g," ").trim();
-const looksLikeSite=line=>/(점|역|출구|마트|커피|스타벅스|다이소|ABC마트|홈플러스|롯데리아|버거킹|빽다방|공원|마이랜드|UNICEF)/i.test(line);
+const looksLikeSite=line=>{
+  const store=/(?:다이소|스타벅스|ABC\s*마트|홈플러스|롯데마트|이마트|롯데리아|버거킹|빽다방|컴포즈커피|메가MGC커피|올리브영|공차|노브랜드|세븐일레븐|CU|에덴마트|하나은행|신한은행|마이랜드|UNICEF)[가-힣A-Za-z0-9\s]*(?:점|지점|시장|공원|$)/i;
+  const station=/[가-힣A-Za-z0-9]{2,}역(?:\s*(?:[1-9]\d*\s*번?\s*출구|[1-9]\d*\s*출)|\s|\/|$)/;
+  return store.test(line)||station.test(line);
+};
 const looksLikeResult=value=>/[가-힣]{2,}\s*(?:\d+(?:\.\d+)?|ic|벨|공|혼)/i.test(value);
-const looksLikeConversation=line=>/(3만|2만|5만|후원|아버|어머|감사|합니다|했|하는|인데|이에요|입니다|ㅋㅋ|ㅎㅎ|카드|계좌|출금율|지점장|커피내기)/.test(line);
+const looksLikeConversation=line=>/(3만|2만|5만|후원|아버|어머|감사|합니다|했|하는|인데|이에요|입니다|ㅋㅋ|ㅎㅎ|카드|계좌|출금율|지점장|커피내기|역시|최고|화이팅|가보자|축하|옵니다|알았|리더님)/.test(line);
 
 for(const file of files){
   const text=(await readFile(path.join(source,file),"utf8")).replace(/^\uFEFF/,"").replace(/\r/g,"");
