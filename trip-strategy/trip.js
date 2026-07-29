@@ -15,6 +15,7 @@ const baseSites=zoneData.flatMap(([zone,flow,day,names],zoneIndex)=>names.map((n
   id:`jeju-${String(zoneIndex*7+index+1).padStart(3,"0")}`,region:"제주",zone,name,flow:Math.max(1,flow-(index>4?1:0)),day,
   address:`제주특별자치도 ${zone.split("·")[0]} 권역 · ${name}`,
   shade:index%3===0?"가로수+건물 복합 그늘":index%3===1?"건물 입면 그늘":"가로수 그늘",
+  sunlight:index%7===6?"sun":index%3===1?"partial":"shade",
   note:"매장·상가 출입축을 피한 보도 안쪽 후보. 12–16시 그늘과 보행 유효폭을 현장에서 재확인.",
   source:"브랜드 매장·관광·상권·교통 거점 기반 사전답사 우선순위"
 })));
@@ -30,6 +31,33 @@ const mapUrl=(provider,item)=>{
   const q=encodeURIComponent(`${item.name} 제주`);
   return provider==="kakao"?`https://map.kakao.com/?q=${q}`:`https://map.naver.com/p/search/${q}`;
 };
+function brandName(name){
+  return ["다이소","스타벅스","올리브영","투썸플레이스","메가MGC커피","컴포즈커피","이디야커피"].find(brand=>name.includes(brand))||"BRAND";
+}
+function guideThumbnail(item){
+  const brand=brandName(item.name),palette={
+    "다이소":["#d82435","#fff"],"스타벅스":["#00754a","#fff"],"올리브영":["#9acb3b","#182513"],
+    "투썸플레이스":["#7b1733","#fff"],"메가MGC커피":["#ffd51f","#1d1d1d"],"컴포즈커피":["#f0c400","#151515"],"이디야커피":["#173d78","#fff"],"BRAND":["#41574a","#fff"]
+  }[brand];
+  const shaded=item.sunlight!=="sun";
+  const tree=shaded?`<circle cx="905" cy="155" r="130" fill="#315a3f"/><circle cx="1015" cy="190" r="105" fill="#274b35"/><rect x="940" y="200" width="28" height="270" rx="12" fill="#513a2b"/><path d="M710 430L1200 430L1200 720L510 720Z" fill="#0b1711" opacity=".48"/>`:`<circle cx="1050" cy="115" r="58" fill="#ffd85c"/><circle cx="1050" cy="115" r="82" fill="#ffd85c" opacity=".18"/>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+    <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${shaded?"#8fa5ad":"#92cdf2"}"/><stop offset="1" stop-color="#d7e4df"/></linearGradient></defs>
+    <rect width="1200" height="720" fill="url(#sky)"/><rect y="165" width="850" height="365" fill="#d8d3ca"/><rect y="205" width="850" height="70" fill="${palette[0]}"/>
+    <text x="60" y="255" fill="${palette[1]}" font-family="Arial,sans-serif" font-size="42" font-weight="800">${brand}</text>
+    <rect x="55" y="310" width="245" height="205" fill="#52636a"/><rect x="325" y="310" width="245" height="205" fill="#43555d"/><rect x="595" y="310" width="205" height="205" fill="#53666d"/>
+    <rect y="520" width="1200" height="200" fill="#a9aaa4"/><path d="M0 585H1200" stroke="#e8e5dc" stroke-width="14"/><path d="M0 650H1200" stroke="#7c7e79" stroke-width="4"/>
+    ${tree}<rect x="34" y="548" width="330" height="74" rx="10" fill="#101813" opacity=".82"/>
+    <text x="58" y="580" fill="#d7ff55" font-family="Arial,sans-serif" font-size="20" font-weight="800">SETUP GUIDE VIEW</text>
+    <text x="58" y="607" fill="#fff" font-family="Arial,sans-serif" font-size="17">매장 전면 · 보도 · ${shaded?"그늘 후보":"햇빛 노출"}</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+function lightInfo(item){
+  if(item.sunlight==="sun")return {icon:"☀",label:"햇빛 강함",className:"sun"};
+  if(item.sunlight==="partial")return {icon:"◐",label:"부분 그늘",className:"partial"};
+  return {icon:"●",label:"그늘 좋음",className:"shade"};
+}
 function allSites(){return [...baseSites,...customSites].filter(item=>item.region===activeRegion)}
 function renderRegions(){
   regions=[...new Set([...defaultRegions,...cloudRegions])];
@@ -37,9 +65,16 @@ function renderRegions(){
 }
 function card(item){
   const stars="★".repeat(item.flow)+"☆".repeat(5-item.flow);
+  const light=lightInfo(item);
   return `<article class="card">
-    <div class="visual"><span class="zone">${escapeHtml(item.zone)}</span><strong>${escapeHtml(item.name)}</strong></div>
+    <div class="visual">
+      <img src="${item.imageData||guideThumbnail(item)}" alt="${escapeHtml(item.name)} 매장 전면과 보도 그늘 셋업 가이드 구도" loading="lazy">
+      <span class="zone">${escapeHtml(item.zone)}</span>
+      <span class="light-badge ${light.className}"><i>${light.icon}</i>${light.label}</span>
+      <span class="guide-label">가이드 구도 · 거리뷰 재확인</span>
+    </div>
     <div class="body">
+      <h3>${escapeHtml(item.name)}</h3>
       <div class="meta"><span>${escapeHtml(item.shade)}</span><span>추천 ${escapeHtml(item.day)}</span></div>
       <p class="flow">${stars} <b>유동 ${item.flow}</b></p>
       <p class="address">${escapeHtml(item.address)}</p>
@@ -73,7 +108,7 @@ $("#region-form").addEventListener("submit",async event=>{
 });
 $("#site-form").addEventListener("submit",async event=>{
   event.preventDefault();const id=`trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-  const item={id,region:activeRegion,name:$("#site-name").value.trim(),zone:$("#site-zone").value.trim(),address:$("#site-address").value.trim(),flow:Number($("#site-flow").value),day:$("#site-day").value,mapUrl:$("#site-map").value.trim(),shade:"현장 그늘 확인",note:$("#site-note").value.trim()||"보도 경계·그늘 시간·출입 동선을 현장에서 확인.",source:"팀 직접 추가",createdAt:new Date().toISOString()};
+  const item={id,region:activeRegion,name:$("#site-name").value.trim(),zone:$("#site-zone").value.trim(),address:$("#site-address").value.trim(),flow:Number($("#site-flow").value),day:$("#site-day").value,mapUrl:$("#site-map").value.trim(),shade:"현장 그늘 확인",sunlight:"partial",note:$("#site-note").value.trim()||"보도 경계·그늘 시간·출입 동선을 현장에서 확인.",source:"팀 직접 추가",createdAt:new Date().toISOString()};
   try{if(shared)await fb.set(fb.ref(db,`summerStrategy/tripSites/${id}`),item);else{const local=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");local.push(item);localStorage.setItem("presence-trip-sites",JSON.stringify(local));customSites=local}render();$("#site-message").textContent=shared?"Firebase에 공용 저장했습니다.":"기기에 임시 저장했습니다.";setTimeout(()=>closeDialog(siteDialog),550)}catch(error){$("#site-message").textContent="저장하지 못했습니다. 연결 상태를 확인해 주세요."}
 });
 async function initFirebase(){
