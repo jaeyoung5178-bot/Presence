@@ -10,7 +10,12 @@ const storeGroups=[
   ["맥도날드",["맥도날드 제주노형DT점","맥도날드 서귀포DT점","맥도날드 제주 외도DT점","맥도날드 제주중문DT점","맥도날드 제주탑동점","맥도날드 제주일도DT점","맥도날드 제주시청DT점","맥도날드 제주공항DT점"]],
   ["다이소 추가",["다이소 제주연동점","다이소 롯데마트제주점","다이소 제주노형점","다이소 제주도남점","다이소 제주동문시장점","다이소 제주본점","다이소 제주봉개점","다이소 제주삼양점","다이소 제주세화점","다이소 제주애월점"]]
 ];
-const capturedStreetviews=new Set(Array.from({length:70},(_,index)=>index+1));
+const capturedStreetviews=new Set([...Array.from({length:70},(_,index)=>index+1),73,79,80]);
+const verifiedStorePhotos={
+  73:{label:"실제 매장 외관 · 현장 재확인",source:"다이소 제주노형점 실제 외관 · 네이버 블로그 현장사진"},
+  79:{label:"실제 매장 외관 · 현장 재확인",source:"다이소 제주세화점 실제 외관 · 네이버 블로그 현장사진"},
+  80:{label:"실제 매장 외관 · 현장 재확인",source:"다이소 제주애월점 실제 외관 · 트리플 등록사진"}
+};
 const officialDaisoInfo={
   "다이소 제주연동점":"제주특별자치도 제주시 신대로 105 (연동)",
   "다이소 롯데마트제주점":"제주특별자치도 제주시 연북로 1 (노형동) 2층",
@@ -42,7 +47,8 @@ const baseSites=verifiedNames.map((name,index)=>{
   imageData:hasStreetview?`./assets/streetview/thumbs/jeju-${String(number).padStart(3,"0")}.jpg`:null,
   photoVerified:hasStreetview,
   note:name==="다이소 제주연동점"?"팀 현장 성과 우수 지점 · 실제 후원자 접점이 좋았던 연동권 최우선 재답사 후보. 출입축과 12–16시 건물 그늘을 재확인.":"매장·상가 출입축을 피한 보도 안쪽 후보. 12–16시 그늘과 보행 유효폭을 현장에서 재확인.",
-  source:hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":officialDaisoInfo[name]?"다이소 공식 매장검색 확인 · 거리뷰 추가 수집 대상":"네이버 지도 등록 지점 · 거리뷰 미제공"
+  photoLabel:verifiedStorePhotos[number]?.label,
+  source:verifiedStorePhotos[number]?.source||(hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":officialDaisoInfo[name]?"다이소 공식 매장검색 확인 · 거리뷰 추가 수집 대상":"네이버 지도 등록 지점 · 거리뷰 미제공")
 }});
 let regions=[...defaultRegions];
 let cloudRegions=[];
@@ -92,7 +98,7 @@ function card(item){
       <img src="${item.imageData||guideThumbnail(item)}" alt="${escapeHtml(item.name)} 매장 전면과 보도 그늘 셋업 가이드 구도" loading="lazy">
       <span class="zone">${escapeHtml(item.zone)}</span>
       <span class="light-badge ${light.className}"><i>${light.icon}</i>${light.label}</span>
-      <span class="guide-label">${item.photoVerified?"네이버 실제 거리뷰 · 현장 재확인":"거리뷰 미제공 · 현장사진 필요"}</span>
+      <span class="guide-label">${escapeHtml(item.photoLabel||(item.photoVerified?"네이버 실제 거리뷰 · 현장 재확인":"거리뷰 미제공 · 현장사진 필요"))}</span>
     </div>
     <div class="body">
       <h3>${escapeHtml(item.name)}</h3>
