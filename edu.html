@@ -236,6 +236,33 @@
     return true;
   }
 
+  // My Story 발표는 에듀케이션의 고정 탭으로 모든 기기에서 항상 노출합니다.
+  function ensureMyStoryGuide(d){
+    if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
+    var changed=false;
+    if(d.folders.indexOf("마이스토리")<0){
+      d.folders.unshift("마이스토리");
+      changed=true;
+    }
+    var item=d.items.find(function(it){ return it.id==="presence-my-story" || it.href==="my-story.html"; });
+    if(!item){
+      d.items.unshift({
+        id:"presence-my-story",
+        tag:"MY STORY",
+        title:"My Story · 임재영 AOP",
+        sub:"세 번의 위기에서 발견한 리더십과 대면 마케터의 미래",
+        href:"my-story.html",
+        target:"",
+        folder:"마이스토리"
+      });
+      changed=true;
+    }else{
+      if(item.folder!=="마이스토리"){ item.folder="마이스토리"; changed=true; }
+      if(item.href!=="my-story.html"){ item.href="my-story.html"; changed=true; }
+    }
+    return changed;
+  }
+
   function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
   function titleStorageKey(it){
     // href는 새로고침 뒤에도 바뀌지 않으므로 랜덤 생성 id보다 우선합니다.
@@ -297,6 +324,7 @@
       data=local;
       var localChanged=ensureNeedsObjectionGuide(data);
       localChanged=ensureFieldRookieGuide(data)||localChanged;
+      localChanged=ensureMyStoryGuide(data) || localChanged;
       if(localChanged) writeLocalData();
       render();
     }
@@ -308,18 +336,19 @@
         data=restoreLocalTitles(ensureCallbackGuide(j));
         var remoteChanged=ensureNeedsObjectionGuide(data);
         remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
+        remoteChanged=ensureMyStoryGuide(data) || remoteChanged;
         if(remoteChanged) save(true);
         else writeLocalData();
         render();
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); ensureMyStoryGuide(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureFieldRookieGuide(data); ensureMyStoryGuide(data); save(true); render();
     });
   }
   function save(silent){
