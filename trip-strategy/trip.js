@@ -78,6 +78,9 @@ const mapUrl=(provider,item)=>{
   const q=encodeURIComponent(`${item.name} ${item.address||item.region}`);
   return provider==="kakao"?`https://map.kakao.com/?q=${q}`:`https://map.naver.com/p/search/${q}`;
 };
+const metroPattern=/서울|인천|경기|수원|성남|고양|용인|부천|안산|안양|남양주|화성|평택|의정부|시흥|파주|광명|김포|군포|광주|이천|양주|오산|구리|안성|포천|의왕|하남|여주|동두천|과천/;
+const territoryType=item=>metroPattern.test(`${item.region} ${item.zone} ${item.address}`)?"C":"R";
+const terryCode=item=>`${item.name}/S/${territoryType(item)}/DISC`;
 function brandName(name){
   return ["다이소","스타벅스","올리브영","투썸플레이스","메가MGC커피","컴포즈커피","이디야커피","맥도날드","버거킹","KFC","배스킨라빈스"].find(brand=>name.includes(brand))||"BRAND";
 }
@@ -118,6 +121,7 @@ function card(item){
     </div>
     <div class="body">
       <h3>${escapeHtml(item.name)}</h3>
+      <div class="terry-code"><span>${escapeHtml(terryCode(item))}</span><button type="button" data-copy-code="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)} 테리코드 복사">복사</button></div>
       <div class="meta"><span>${escapeHtml(item.shade)}</span><span>추천 ${escapeHtml(item.day)}</span></div>
       <p class="flow">${stars} <b>유동 ${item.flow}</b></p>
       <p class="address">${escapeHtml(item.address)}</p>
@@ -130,18 +134,31 @@ function card(item){
     </div>
   </article>`;
 }
-function render(){
+function filteredSites(){
   const q=$("#search").value.trim().toLowerCase(),flow=Number($("#flow-filter").value),day=$("#day-filter").value,source=$("#source-filter").value;
-  const items=allSites().filter(item=>(!flow||item.flow===flow)&&(day==="전체"||item.day===day)&&(source==="전체"||(source==="CTM"?!!item.ctm:!item.ctm))&&`${item.name} ${item.zone} ${item.address}`.toLowerCase().includes(q));
+  return allSites().filter(item=>(!flow||item.flow===flow)&&(day==="전체"||item.day===day)&&(source==="전체"||(source==="CTM"?!!item.ctm:!item.ctm))&&`${item.name} ${item.zone} ${item.address}`.toLowerCase().includes(q));
+}
+function render(){
+  const items=filteredSites();
   $("#spot-grid").innerHTML=items.map(card).join("");
   $("#empty").hidden=items.length>0;$("#result-count").textContent=`${items.length}개 표시`;
   $("#list-title").textContent=`${activeRegion} 필드 후보`;
   $("#total-count").textContent=allSites().length;
   $("#total-label").textContent=`${activeRegion} 사전답사 후보`;
 }
+async function copyText(text,message){
+  try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);
+    else{const area=document.createElement("textarea");area.value=text;area.style.position="fixed";area.style.opacity="0";document.body.append(area);area.select();document.execCommand("copy");area.remove()}
+    const toast=$("#copy-toast");toast.textContent=message;toast.classList.add("show");clearTimeout(copyText.timer);copyText.timer=setTimeout(()=>toast.classList.remove("show"),1800);
+  }catch(error){$("#copy-toast").textContent="복사하지 못했습니다. 다시 눌러 주세요.";$("#copy-toast").classList.add("show")}
+}
+$("#copy-visible").addEventListener("click",()=>{const items=filteredSites();if(!items.length)return;copyText(items.map(terryCode).join("\n"),`${items.length}개 테리코드를 복사했습니다.`)});
 $("#region-tabs").addEventListener("click",event=>{const button=event.target.closest("[data-region]");if(!button)return;activeRegion=button.dataset.region;renderRegions();render()});
 ["#search","#flow-filter","#day-filter","#source-filter"].forEach(selector=>$(selector).addEventListener(selector==="#search"?"input":"change",render));
 $("#spot-grid").addEventListener("click",async event=>{
+  const copyButton=event.target.closest("[data-copy-code]");
+  if(copyButton){const item=[...baseSites,...customSites].find(site=>site.id===copyButton.dataset.copyCode);if(item)await copyText(terryCode(item),`${item.name} 코드를 복사했습니다.`);return}
   const button=event.target.closest("[data-strategy]");if(!button)return;
   const item=[...baseSites,...customSites].find(site=>site.id===button.dataset.strategy);if(!item)return;
   const text=prompt(`${item.name} 운영 전략`,tripStrategies[item.id]?.text||"");
