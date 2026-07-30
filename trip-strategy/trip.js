@@ -1,4 +1,4 @@
-const defaultRegions=["춘천","대구","울산","제주","원주","강릉","철원","공주"];
+const defaultRegions=["강릉·동해","제주","춘천","대구","울산","원주","철원","공주"];
 const storeGroups=[
   ["다이소",["버거킹 제주함덕DT점","버거킹 서귀포시청점","다이소 서귀포중문점","다이소 용담해안도로점","버거킹 제주애월DT점","다이소 서귀포혁신도시점","다이소 제주시청점","버거킹 제주민속오일장DT점","다이소 서귀포점"]],
   ["스타벅스",["스타벅스 제주서해안로DT점","스타벅스 제주협재점","스타벅스 더제주송당파크R점","스타벅스 제주중문점","스타벅스 성산일출봉점","스타벅스 제주세화DT점","스타벅스 제주공항DT점","스타벅스 제주한담해변DT점","스타벅스 서귀포DT점"]],
@@ -37,7 +37,7 @@ function zoneOf(name){
   return "제주시내";
 }
 const verifiedNames=storeGroups.flatMap(([,names])=>names);
-const baseSites=verifiedNames.map((name,index)=>{
+const jejuSites=verifiedNames.map((name,index)=>{
   const number=index+1,zone=zoneOf(name),hasStreetview=capturedStreetviews.has(number);
   return {
   id:`jeju-${String(number).padStart(3,"0")}`,region:"제주",zone,name,flow:/공항|시청|연동|노형|동문|중문|성산/.test(name)?5:/협재|애월|함덕|서귀포/.test(name)?4:3,day:/협재|애월|함덕|성산|중문/.test(name)?"토·일":"금·토",
@@ -50,10 +50,11 @@ const baseSites=verifiedNames.map((name,index)=>{
   photoLabel:verifiedStorePhotos[number]?.label,
   source:verifiedStorePhotos[number]?.source||(hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":officialDaisoInfo[name]?"다이소 공식 매장검색 확인 · 거리뷰 추가 수집 대상":"네이버 지도 등록 지점 · 거리뷰 미제공")
 }});
+const baseSites=[...jejuSites,...gangneungDonghaeSites];
 let regions=[...defaultRegions];
 let cloudRegions=[];
 let customSites=[];
-let activeRegion="제주";
+let activeRegion="강릉·동해";
 let fb=null,db=null,shared=false;
 let scoreMatcher=null;
 let tripStrategies=JSON.parse(localStorage.getItem("presence-trip-strategies")||"{}");
@@ -61,7 +62,7 @@ const $=selector=>document.querySelector(selector);
 const escapeHtml=value=>String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const mapUrl=(provider,item)=>{
   if(item.mapUrl&&provider==="kakao")return item.mapUrl;
-  const q=encodeURIComponent(`${item.name} 제주`);
+  const q=encodeURIComponent(`${item.name} ${item.address||item.region}`);
   return provider==="kakao"?`https://map.kakao.com/?q=${q}`:`https://map.naver.com/p/search/${q}`;
 };
 function brandName(name){
@@ -86,16 +87,17 @@ function lightInfo(item){
 function allSites(){return [...baseSites,...customSites].filter(item=>item.region===activeRegion)}
 function renderRegions(){
   regions=[...new Set([...defaultRegions,...cloudRegions])];
-  $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${verifiedNames.length}`:""}</button>`).join("");
+  $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${jejuSites.length}`:region==="강릉·동해"?` · ${gangneungDonghaeSites.length}`:""}</button>`).join("");
 }
 function card(item){
   const stars="★".repeat(item.flow)+"☆".repeat(5-item.flow);
   const light=lightInfo(item);
   const scoreHistory=scoreMatcher?.find(item.name);
   const strategy=tripStrategies[item.id]?.text;
-  return `<article class="card">
+  return `<article class="card${item.main?" is-main":""}">
     <div class="visual">
       <img src="${item.imageData||guideThumbnail(item)}" alt="${escapeHtml(item.name)} 매장 전면과 보도 그늘 셋업 가이드 구도" loading="lazy">
+      ${item.main?`<span class="main-badge">MAIN</span>`:""}
       <span class="zone">${escapeHtml(item.zone)}</span>
       <span class="light-badge ${light.className}"><i>${light.icon}</i>${light.label}</span>
       <span class="guide-label">${escapeHtml(item.photoLabel||(item.photoVerified?"네이버 실제 거리뷰 · 현장 재확인":"거리뷰 미제공 · 현장사진 필요"))}</span>
@@ -120,6 +122,7 @@ function render(){
   $("#empty").hidden=items.length>0;$("#result-count").textContent=`${items.length}개 표시`;
   $("#list-title").textContent=`${activeRegion} 필드 후보`;
   $("#total-count").textContent=allSites().length;
+  $("#total-label").textContent=`${activeRegion} 사전답사 후보`;
 }
 $("#region-tabs").addEventListener("click",event=>{const button=event.target.closest("[data-region]");if(!button)return;activeRegion=button.dataset.region;renderRegions();render()});
 ["#search","#flow-filter","#day-filter"].forEach(selector=>$(selector).addEventListener(selector==="#search"?"input":"change",render));
