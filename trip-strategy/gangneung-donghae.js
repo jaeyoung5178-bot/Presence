@@ -58,13 +58,13 @@ const gangneungDonghaeSites=gangneungDonghaeRaw.map((row,index)=>{
   const photoVerified=!gangneungDonghaeImagePending.has(index+1);
   return {
     id:`gd-${String(index+1).padStart(3,"0")}`,
-    region:"강릉·동해",
+    region:"강릉·동해·삼척",
     name,zone,address,flow,day,main:Boolean(main),sunlight,
     shade:sunlight==="shade"?"건물·가로수 그늘 우선":sunlight==="partial"?"시간대별 부분 그늘":"직사광 강함",
     imageData:photoVerified?`./assets/streetview/gangwon/gd-${String(index+1).padStart(3,"0")}.jpg`:"",
     photoVerified,
     photoLabel:photoVerified?"네이버 지도 현장 이미지 · 방향 재확인":"거리뷰 미제공 · 현장사진 필요",
     note,
-    source:"다이소 공식 매장검색·네이버 지도 입지 판독 · 유동 등급은 현장 우선순위"
+    source:"카카오맵 등록 장소명 기준 · 다이소 공식 매장검색·지도 입지 판독"
   };
 });

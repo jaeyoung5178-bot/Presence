@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="dark">
   <title>Trip 운영 전략 — Presence</title>
-  <meta name="description" content="Presence 제주 및 강릉·동해 Trip 사이트 운영 전략">
-  <link rel="stylesheet" href="./trip.css?v=5">
+  <meta name="description" content="Presence 제주 및 강릉·동해·삼척 Trip 사이트 운영 전략">
+  <link rel="stylesheet" href="./trip.css?v=6">
 </head>
 <body>
   <div class="shell">
@@ -16,7 +16,7 @@
     </header>
     <main>
       <section class="hero">
-        <div><p class="eyebrow">PRESENCE · TRIP OPERATIONS 2026</p><h1>지역별로 찾는,<br><em>좋은 그늘과 흐름.</em></h1><p class="lead">제주와 강릉·동해 트립 후보를 한곳에서 관리합니다. 강릉·동해는 다이소·역·시장·대형 상권을 중심으로 51곳을 확보하고, 최우선 운영지 10곳을 MAIN으로 분류했습니다.</p></div>
+        <div><p class="eyebrow">PRESENCE · TRIP OPERATIONS 2026</p><h1>지역별로 찾는,<br><em>좋은 그늘과 흐름.</em></h1><p class="lead">강릉·동해·삼척을 하나의 트립 권역으로 운영합니다. 다이소·역·시장 중심의 현장 후보에 CTM 실적 자료를 결합해 배치 우선순위를 한눈에 비교할 수 있습니다.</p></div>
         <div class="hero-stat"><strong id="total-count">80</strong><span id="total-label">사전답사 후보</span><small>유동 5 = 최우선 답사</small></div>
       </section>
       <section class="notice"><b>운영 전 확인</b><span>유동 등급은 공식 실측 인원수가 아닌 관광·상권·교통 입지 기반 우선순위입니다. 설치 전 공공보도 경계, 점자블록, 출입구, 관할기관·점포 승인을 확인하세요.</span></section>
@@ -29,6 +29,7 @@
         <label class="search"><span>⌕</span><input id="search" type="search" placeholder="사이트·상권·주소 검색"></label>
         <label><span>유동</span><select id="flow-filter"><option value="0">전체 등급</option><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></label>
         <label><span>추천 요일</span><select id="day-filter"><option value="전체">전체 요일</option><option>평일</option><option>주말</option><option>금·토</option><option>토·일</option><option>화–목</option><option>화–금</option><option>3·8일 장날</option></select></label>
+        <label><span>자료</span><select id="source-filter"><option value="전체">전체 자료</option><option value="CTM">CTM 분석자료</option><option value="답사">답사 후보</option></select></label>
         <output id="result-count">80개 표시</output>
       </section>
       <section id="spots" class="spots">
@@ -43,6 +44,7 @@
   <dialog id="site-dialog"><form id="site-form"><div class="dialog-head"><h2>Trip 사이트 추가</h2><button type="button" data-close="site">×</button></div><div class="form-grid"><label><span>사이트명</span><input id="site-name" required maxlength="80"></label><label><span>상권·권역</span><input id="site-zone" required maxlength="40"></label><label class="wide"><span>주소 또는 위치 설명</span><input id="site-address" required maxlength="160"></label><label><span>유동 우선순위</span><select id="site-flow"><option value="5">5 · 최우선</option><option value="4">4 · 높음</option><option value="3">3 · 보통</option><option value="2">2 · 낮음</option><option value="1">1 · 최소</option></select></label><label><span>추천 요일</span><select id="site-day"><option>주말</option><option>평일</option><option>금·토</option><option>토·일</option><option>화–목</option></select></label><label class="wide"><span>카카오맵 링크</span><input id="site-map" type="url" placeholder="비우면 사이트명으로 검색 링크 생성"></label><label class="wide"><span>그늘·셋업 메모</span><textarea id="site-note" rows="3" maxlength="300"></textarea></label></div><div class="actions"><button type="button" data-close="site">취소</button><button class="primary" type="submit">공용 저장</button></div><p id="site-message"></p></form></dialog>
   <script src="../shared-score-match.js?v=1"></script>
   <script src="./gangneung-donghae.js?v=1"></script>
-  <script src="./trip.js?v=7"></script>
+  <script src="./ctm-analysis.js?v=1"></script>
+  <script src="./trip.js?v=8"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const defaultRegions=["강릉·동해","제주","춘천","대구","울산","원주","철원","공주"];
+const defaultRegions=["강릉·동해·삼척","제주","춘천","대구","울산","원주","철원","공주"];
 const storeGroups=[
   ["다이소",["버거킹 제주함덕DT점","버거킹 서귀포시청점","다이소 서귀포중문점","다이소 용담해안도로점","버거킹 제주애월DT점","다이소 서귀포혁신도시점","다이소 제주시청점","버거킹 제주민속오일장DT점","다이소 서귀포점"]],
   ["스타벅스",["스타벅스 제주서해안로DT점","스타벅스 제주협재점","스타벅스 더제주송당파크R점","스타벅스 제주중문점","스타벅스 성산일출봉점","스타벅스 제주세화DT점","스타벅스 제주공항DT점","스타벅스 제주한담해변DT점","스타벅스 서귀포DT점"]],
@@ -50,11 +50,24 @@ const jejuSites=verifiedNames.map((name,index)=>{
   photoLabel:verifiedStorePhotos[number]?.label,
   source:verifiedStorePhotos[number]?.source||(hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":officialDaisoInfo[name]?"다이소 공식 매장검색 확인 · 거리뷰 추가 수집 대상":"네이버 지도 등록 지점 · 거리뷰 미제공")
 }});
-const baseSites=[...jejuSites,...gangneungDonghaeSites];
+const ctmAddedSites=[];
+ctmRecords.forEach((record,index)=>{
+  const existing=gangneungDonghaeSites.find(site=>ctmCanonical(site.name)===record.canonical);
+  if(existing){existing.ctm=record;return}
+  const highPriority=record.pAvg>=2||record.sales>=30;
+  ctmAddedSites.push({
+    id:`ctm-${String(index+1).padStart(3,"0")}`,region:"강릉·동해·삼척",zone:`${record.city} CTM`,name:record.name,
+    flow:record.pAvg>=2.5?5:record.pAvg>=1.3?4:record.pAvg>=.8?3:2,
+    day:"화–금",address:`강원특별자치도 ${record.city} · CTM 원자료 등록 지점`,shade:"그늘·보도폭 현장 확인",sunlight:"partial",
+    photoVerified:false,note:`CTM 실적 기반 ${highPriority?"우선 답사":"운영 후보"}. 동일 장소의 표기 차이는 통합했으며 정확한 셋업 면은 지도와 현장에서 확인.`,
+    source:"카카오맵 장소명 기준 · CTM 제공 이미지 원자료",ctm:record,main:false
+  });
+});
+const baseSites=[...jejuSites,...gangneungDonghaeSites,...ctmAddedSites];
 let regions=[...defaultRegions];
 let cloudRegions=[];
 let customSites=[];
-let activeRegion="강릉·동해";
+let activeRegion="강릉·동해·삼척";
 let fb=null,db=null,shared=false;
 let scoreMatcher=null;
 let tripStrategies=JSON.parse(localStorage.getItem("presence-trip-strategies")||"{}");
@@ -87,7 +100,7 @@ function lightInfo(item){
 function allSites(){return [...baseSites,...customSites].filter(item=>item.region===activeRegion)}
 function renderRegions(){
   regions=[...new Set([...defaultRegions,...cloudRegions])];
-  $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${jejuSites.length}`:region==="강릉·동해"?` · ${gangneungDonghaeSites.length}`:""}</button>`).join("");
+  $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${jejuSites.length}`:region==="강릉·동해·삼척"?` · ${gangneungDonghaeSites.length+ctmAddedSites.length}`:""}</button>`).join("");
 }
 function card(item){
   const stars="★".repeat(item.flow)+"☆".repeat(5-item.flow);
@@ -98,6 +111,7 @@ function card(item){
     <div class="visual">
       <img src="${item.imageData||guideThumbnail(item)}" alt="${escapeHtml(item.name)} 매장 전면과 보도 그늘 셋업 가이드 구도" loading="lazy">
       ${item.main?`<span class="main-badge">MAIN</span>`:""}
+      ${item.ctm?`<span class="ctm-badge">CTM 분석자료</span>`:""}
       <span class="zone">${escapeHtml(item.zone)}</span>
       <span class="light-badge ${light.className}"><i>${light.icon}</i>${light.label}</span>
       <span class="guide-label">${escapeHtml(item.photoLabel||(item.photoVerified?"네이버 실제 거리뷰 · 현장 재확인":"거리뷰 미제공 · 현장사진 필요"))}</span>
@@ -109,6 +123,7 @@ function card(item){
       <p class="address">${escapeHtml(item.address)}</p>
       <p class="note">${escapeHtml(item.note)}</p>
       <p class="source">${escapeHtml(item.source||"직접 추가")}</p>
+      ${item.ctm?`<dl class="ctm-stats"><div><dt>Sales</dt><dd>${item.ctm.sales.toLocaleString()}</dd></div><div><dt>HC</dt><dd>${item.ctm.hc.toLocaleString()}</dd></div><div><dt>P.Avg</dt><dd>${item.ctm.pAvg.toFixed(1)}</dd></div><div><dt>Scoring</dt><dd>${item.ctm.scoring.toLocaleString()}</dd></div><div><dt>성공률</dt><dd>${Math.round(item.ctm.scoringRate)}%</dd></div><div><dt>후원금</dt><dd>${item.ctm.donate.toLocaleString()}원</dd></div></dl>${item.ctm.rawNames.length>1?`<p class="ctm-merged">표기 ${item.ctm.rawNames.length}건 통합 · ${escapeHtml(item.ctm.rawNames.join(" / "))}</p>`:""}`:""}
       ${scoreHistory?`<a class="score-history" href="../peacemaker-scores/index.html?q=${encodeURIComponent(item.name)}"><b>✓ 방문 이력 있음</b><span>${scoreHistory.days}회 · AVG ${scoreHistory.average.toFixed(1)} · 최근 ${escapeHtml(scoreHistory.recent.result)}</span></a>`:`<span class="score-history is-empty"><b>첫 운영 후보</b><span>스코어방 매칭 기록 없음 · 운영 전략 기록 가능</span></span>`}
       ${strategy?`<p class="team-strategy"><b>팀 운영 전략</b>${escapeHtml(strategy)}</p>`:""}
       <div class="links"><a href="${mapUrl("naver",item)}" target="_blank" rel="noreferrer">네이버 지도</a><a href="${mapUrl("kakao",item)}" target="_blank" rel="noreferrer">카카오맵</a><button type="button" data-strategy="${item.id}">${strategy?"전략 수정":"운영 전략 기록"}</button></div>
@@ -116,8 +131,8 @@ function card(item){
   </article>`;
 }
 function render(){
-  const q=$("#search").value.trim().toLowerCase(),flow=Number($("#flow-filter").value),day=$("#day-filter").value;
-  const items=allSites().filter(item=>(!flow||item.flow===flow)&&(day==="전체"||item.day===day)&&`${item.name} ${item.zone} ${item.address}`.toLowerCase().includes(q));
+  const q=$("#search").value.trim().toLowerCase(),flow=Number($("#flow-filter").value),day=$("#day-filter").value,source=$("#source-filter").value;
+  const items=allSites().filter(item=>(!flow||item.flow===flow)&&(day==="전체"||item.day===day)&&(source==="전체"||(source==="CTM"?!!item.ctm:!item.ctm))&&`${item.name} ${item.zone} ${item.address}`.toLowerCase().includes(q));
   $("#spot-grid").innerHTML=items.map(card).join("");
   $("#empty").hidden=items.length>0;$("#result-count").textContent=`${items.length}개 표시`;
   $("#list-title").textContent=`${activeRegion} 필드 후보`;
@@ -125,7 +140,7 @@ function render(){
   $("#total-label").textContent=`${activeRegion} 사전답사 후보`;
 }
 $("#region-tabs").addEventListener("click",event=>{const button=event.target.closest("[data-region]");if(!button)return;activeRegion=button.dataset.region;renderRegions();render()});
-["#search","#flow-filter","#day-filter"].forEach(selector=>$(selector).addEventListener(selector==="#search"?"input":"change",render));
+["#search","#flow-filter","#day-filter","#source-filter"].forEach(selector=>$(selector).addEventListener(selector==="#search"?"input":"change",render));
 $("#spot-grid").addEventListener("click",async event=>{
   const button=event.target.closest("[data-strategy]");if(!button)return;
   const item=[...baseSites,...customSites].find(site=>site.id===button.dataset.strategy);if(!item)return;
