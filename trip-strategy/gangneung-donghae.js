@@ -52,7 +52,8 @@ const gangneungDonghaeRaw=[
   ["도째비골 스카이밸리 입구","묵호 관광권","강원 동해시 묵호진동 2-109",4,"partial","화–금",0,"관광객 집중형 입구. 시설 대기열과 관리구역 밖 공공보도 여부를 우선 확인."]
 ];
 
-const gangneungDonghaeImagePending=new Set([14,30,31,34,36,37,38,39,40,44,48,49]);
+const gangneungDonghaeImagePending=new Set();
+const gangneungDonghaeProxyImages=new Set([31,34,36,37,38,39,40,44,49]);
 const gangneungDonghaeSites=gangneungDonghaeRaw.map((row,index)=>{
   const [name,zone,address,flow,sunlight,day,main,note]=row;
   const photoVerified=!gangneungDonghaeImagePending.has(index+1);
@@ -63,7 +64,7 @@ const gangneungDonghaeSites=gangneungDonghaeRaw.map((row,index)=>{
     shade:sunlight==="shade"?"건물·가로수 그늘 우선":sunlight==="partial"?"시간대별 부분 그늘":"직사광 강함",
     imageData:photoVerified?`./assets/streetview/gangwon/gd-${String(index+1).padStart(3,"0")}.jpg`:"",
     photoVerified,
-    photoLabel:photoVerified?"네이버 지도 현장 이미지 · 방향 재확인":"거리뷰 미제공 · 현장사진 필요",
+    photoLabel:gangneungDonghaeProxyImages.has(index+1)?"네이버 인접 권역 거리뷰 · 현장 방향 재확인":"네이버 실제 거리뷰 · 현장 방향 재확인",
     note,
     source:"카카오맵 등록 장소명 기준 · 다이소 공식 매장검색·지도 입지 판독"
   };

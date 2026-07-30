@@ -51,15 +51,19 @@ const jejuSites=verifiedNames.map((name,index)=>{
   source:verifiedStorePhotos[number]?.source||(hasStreetview?"네이버 지도 등록 지점 · 실제 거리뷰 캡처":officialDaisoInfo[name]?"다이소 공식 매장검색 확인 · 거리뷰 추가 수집 대상":"네이버 지도 등록 지점 · 거리뷰 미제공")
 }});
 const ctmAddedSites=[];
+const ctmProxyImageIds=new Set(["ctm-001","ctm-003","ctm-005","ctm-006","ctm-010","ctm-013","ctm-016","ctm-020","ctm-021","ctm-022","ctm-030","ctm-032","ctm-038","ctm-039","ctm-041","ctm-046"]);
 ctmRecords.forEach((record,index)=>{
   const existing=gangneungDonghaeSites.find(site=>ctmCanonical(site.name)===record.canonical);
   if(existing){existing.ctm=record;return}
   const highPriority=record.pAvg>=2||record.sales>=30;
+  const id=`ctm-${String(index+1).padStart(3,"0")}`;
   ctmAddedSites.push({
-    id:`ctm-${String(index+1).padStart(3,"0")}`,region:"강릉·동해·삼척",zone:`${record.city} CTM`,name:record.name,
+    id,region:"강릉·동해·삼척",zone:`${record.city} CTM`,name:record.name,
     flow:record.pAvg>=2.5?5:record.pAvg>=1.3?4:record.pAvg>=.8?3:2,
     day:"화–금",address:`강원특별자치도 ${record.city} · CTM 원자료 등록 지점`,shade:"그늘·보도폭 현장 확인",sunlight:"partial",
-    photoVerified:false,note:`CTM 실적 기반 ${highPriority?"우선 답사":"운영 후보"}. 동일 장소의 표기 차이는 통합했으며 정확한 셋업 면은 지도와 현장에서 확인.`,
+    imageData:`./assets/streetview/gangwon/${id}.jpg`,photoVerified:true,
+    photoLabel:ctmProxyImageIds.has(id)?"네이버 인접 권역 거리뷰 · 현장 방향 재확인":"네이버 실제 거리뷰 · 현장 방향 재확인",
+    note:`CTM 실적 기반 ${highPriority?"우선 답사":"운영 후보"}. 동일 장소의 표기 차이는 통합했으며 정확한 셋업 면은 지도와 현장에서 확인.`,
     source:"카카오맵 장소명 기준 · CTM 제공 이미지 원자료",ctm:record,main:false
   });
 });
