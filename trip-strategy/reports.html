@@ -7,7 +7,7 @@
   <title>Trip Daily Report — Presence</title>
   <meta name="description" content="Presence 트립 목표와 일자별·사이트별·개인별 결과 리포트">
   <link rel="stylesheet" href="./trip.css?v=8">
-  <link rel="stylesheet" href="./reports.css?v=1">
+  <link rel="stylesheet" href="./reports.css?v=2">
 </head>
 <body>
   <div class="shell report-shell">
@@ -31,6 +31,13 @@
         <div class="progress-track" role="progressbar" aria-label="트립 목표 달성률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="progress-bar"></i></div>
         <div class="metric-grid"><article><span>총 결과</span><strong id="total-result">0</strong></article><article><span>목표</span><strong id="goal-result">미설정</strong></article><article><span>활동자</span><strong id="member-count">0명</strong></article><article><span>전체 AVG</span><strong id="overall-avg">0.0</strong></article><article><span>운영 사이트</span><strong id="site-count">0곳</strong></article><article><span>기록</span><strong id="record-count">0건</strong></article></div>
       </section>
+      <section id="field-planner" class="planner-panel" aria-labelledby="planner-title">
+        <div class="planner-head"><div><p class="eyebrow">FIELD DEPLOYMENT BOARD</p><h2 id="planner-title">날짜별 사이트 배치 계획</h2><p>전날 배치를 복사한 뒤 사람이나 사이트만 바꾸면 다음 날 계획이 빠르게 완성됩니다.</p></div><div class="planner-actions"><button id="copy-previous" type="button">전날 배치 복사</button><button id="add-assignment" class="primary" type="button">＋ 인원 배치</button></div></div>
+        <div id="planner-alert" class="planner-alert" role="status" aria-live="polite"></div>
+        <div id="planner-days" class="planner-days" role="tablist" aria-label="배치 날짜"></div>
+        <div class="planner-summary"><span id="planned-members">배치 0명</span><span id="planned-sites">사이트 0곳</span><span id="planned-goal">일일 목표 0</span><span id="planner-conflicts">중복 없음</span></div>
+        <div id="planner-board" class="planner-board"></div>
+      </section>
       <section class="analysis-grid">
         <article class="analysis-panel"><div class="panel-head"><div><p class="eyebrow">BY DATE</p><h2>일자별 결과</h2></div></div><div id="daily-list" class="rank-list"></div></article>
         <article class="analysis-panel"><div class="panel-head"><div><p class="eyebrow">BY MEMBER</p><h2>개인별 결과</h2></div></div><div id="member-list" class="rank-list"></div></article>
@@ -40,6 +47,9 @@
     </main>
   </div>
   <dialog id="plan-dialog"><form id="plan-form"><div class="dialog-head"><div><p class="eyebrow">TRIP PLAN</p><h2>새 트립 일정과 목표</h2></div><button type="button" data-close="plan">×</button></div><div class="form-grid"><label class="wide"><span>트립 이름</span><input id="plan-name" required maxlength="60" placeholder="예: 강릉·동해·삼척 여름 트립"></label><label><span>시작일</span><input id="plan-start" type="date" required></label><label><span>종료일</span><input id="plan-end" type="date" required></label><label><span>지역</span><input id="plan-region" required maxlength="30" placeholder="강릉·동해·삼척"></label><label><span>참여 인원</span><input id="plan-members" type="number" min="1" max="100" value="10" required></label><label><span>트립 총 목표</span><input id="plan-goal" type="number" min="1" step="1" required placeholder="예: 120"></label><label><span>개인 일일 목표</span><input id="plan-daily-goal" type="number" min="0" step="0.1" value="3"></label><label class="wide"><span>운영 메모</span><textarea id="plan-note" rows="3" maxlength="400" placeholder="숙소, 이동조, 메인 사이트 등"></textarea></label></div><div class="actions"><button type="button" data-close="plan">취소</button><button class="primary" type="submit">트립 일정 저장</button></div><p id="plan-message"></p></form></dialog>
-  <script src="./reports.js?v=1"></script>
+  <dialog id="assignment-dialog"><form id="assignment-form"><input id="assignment-id" type="hidden"><div class="dialog-head"><div><p class="eyebrow">QUICK ASSIGN</p><h2 id="assignment-title">인원 배치</h2></div><button type="button" data-close="assignment">×</button></div><div class="form-grid"><label><span>날짜</span><input id="assignment-date" type="date" required></label><label><span>활동자</span><input id="assignment-member" required maxlength="30" placeholder="예: 재영"></label><label class="wide"><span>사이트</span><input id="assignment-site" list="site-options" required maxlength="100" placeholder="사이트명을 검색하거나 입력"><datalist id="site-options"></datalist></label><label><span>배치 역할</span><select id="assignment-role"><option value="main">메인</option><option value="support">서포트</option><option value="backup">예비</option></select></label><label><span>개인 목표</span><input id="assignment-goal" type="number" min="0" step="0.5" value="3"></label><label class="wide"><span>배치 메모</span><textarea id="assignment-note" rows="3" maxlength="240" placeholder="시간대, 만나는 위치, 교대 계획 등"></textarea></label></div><div class="assignment-form-actions"><button id="delete-assignment" class="danger" type="button" hidden>배치 삭제</button><div class="actions"><button type="button" data-close="assignment">취소</button><button class="primary" type="submit">배치 저장</button></div></div><p id="assignment-message"></p></form></dialog>
+  <script src="./gangneung-donghae.js?v=2"></script>
+  <script src="./ctm-analysis.js?v=1"></script>
+  <script src="./reports.js?v=2"></script>
 </body>
 </html>
