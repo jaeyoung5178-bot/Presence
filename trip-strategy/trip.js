@@ -73,8 +73,11 @@ let cloudRegions=[];
 let customSites=[];
 let activeRegion="강릉·동해·삼척";
 let fb=null,db=null,shared=false;
+let storageApi=null,storage=null;
 let scoreMatcher=null;
 let tripStrategies=JSON.parse(localStorage.getItem("presence-trip-strategies")||"{}");
+let tripRecords=[];
+let siteMedia={};
 const $=selector=>document.querySelector(selector);
 const escapeHtml=value=>String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const mapUrl=(provider,item)=>{
@@ -104,7 +107,9 @@ function lightInfo(item){
   if(item.sunlight==="partial")return {icon:"◐",label:"부분 그늘",className:"partial"};
   return {icon:"●",label:"그늘 좋음",className:"shade"};
 }
-function allSites(){return [...baseSites,...customSites].filter(item=>item.region===activeRegion)}
+function mergedSite(item){const media=siteMedia[item.id]||{};return {...item,...(media.guidePhotoUrl?{imageData:media.guidePhotoUrl,photoVerified:true,photoLabel:"팀 현장 셋업 위치 캡처 · 최신"}:{})}}
+function allSites(){return [...baseSites,...customSites].filter(item=>item.region===activeRegion).map(mergedSite)}
+function recordsFor(siteId){return tripRecords.filter(record=>record.siteId===siteId).sort((a,b)=>String(b.createdAt||b.date).localeCompare(String(a.createdAt||a.date)))}
 function renderRegions(){
   regions=[...new Set([...defaultRegions,...cloudRegions])];
   $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${jejuSites.length}`:region==="강릉·동해·삼척"?` · ${gangneungDonghaeSites.length+ctmAddedSites.length}`:""}</button>`).join("");
@@ -114,6 +119,7 @@ function card(item){
   const light=lightInfo(item);
   const scoreHistory=scoreMatcher?.find(item.name);
   const strategy=tripStrategies[item.id]?.text;
+  const records=recordsFor(item.id),recentRecords=records.slice(0,3);
   return `<article class="card${item.main?" is-main":""}">
     <div class="visual">
       <img src="${item.imageData||guideThumbnail(item)}" alt="${escapeHtml(item.name)} 매장 전면과 보도 그늘 셋업 가이드 구도" loading="lazy">
@@ -134,7 +140,8 @@ function card(item){
       ${item.ctm?`<dl class="ctm-stats"><div><dt>Sales</dt><dd>${item.ctm.sales.toLocaleString()}</dd></div><div><dt>HC</dt><dd>${item.ctm.hc.toLocaleString()}</dd></div><div><dt>P.Avg</dt><dd>${item.ctm.pAvg.toFixed(1)}</dd></div><div><dt>Scoring</dt><dd>${item.ctm.scoring.toLocaleString()}</dd></div><div><dt>성공률</dt><dd>${Math.round(item.ctm.scoringRate)}%</dd></div><div><dt>후원금</dt><dd>${item.ctm.donate.toLocaleString()}원</dd></div></dl>${item.ctm.rawNames.length>1?`<p class="ctm-merged">표기 ${item.ctm.rawNames.length}건 통합 · ${escapeHtml(item.ctm.rawNames.join(" / "))}</p>`:""}`:""}
       ${scoreHistory?`<a class="score-history" href="../peacemaker-scores/index.html?q=${encodeURIComponent(item.name)}"><b>✓ 방문 이력 있음</b><span>${scoreHistory.days}회 · AVG ${scoreHistory.average.toFixed(1)} · 최근 ${escapeHtml(scoreHistory.recent.result)}</span></a>`:`<span class="score-history is-empty"><b>첫 운영 후보</b><span>스코어방 매칭 기록 없음 · 운영 전략 기록 가능</span></span>`}
       ${strategy?`<p class="team-strategy"><b>팀 운영 전략</b>${escapeHtml(strategy)}</p>`:""}
-      <div class="links"><a href="${mapUrl("naver",item)}" target="_blank" rel="noreferrer">네이버 지도</a><a href="${mapUrl("kakao",item)}" target="_blank" rel="noreferrer">카카오맵</a><button type="button" data-strategy="${item.id}">${strategy?"전략 수정":"운영 전략 기록"}</button></div>
+      ${recentRecords.length?`<div class="field-history"><div><b>현장 기록 ${records.length}건</b><a href="./reports.html?site=${encodeURIComponent(item.id)}">전체 보기</a></div>${recentRecords.map(record=>`<article><span>${escapeHtml(record.date)} · ${escapeHtml(record.member)}</span><strong>결과 ${Number(record.result||0)}</strong><p>${escapeHtml(record.feedback)}</p>${record.photoUrls?.length?`<div class="record-thumbs">${record.photoUrls.slice(0,3).map(url=>`<img src="${escapeHtml(url)}" alt="${escapeHtml(item.name)} 실제 셋업사진" loading="lazy">`).join("")}</div>`:""}</article>`).join("")}</div>`:""}
+      <div class="links"><a href="${mapUrl("naver",item)}" target="_blank" rel="noreferrer">네이버 지도</a><a href="${mapUrl("kakao",item)}" target="_blank" rel="noreferrer">카카오맵</a><button type="button" data-strategy="${item.id}">${strategy?"전략 수정":"운영 전략"}</button><button class="record-button" type="button" data-record="${item.id}">결과·피드백</button></div>
     </div>
   </article>`;
 }
@@ -163,6 +170,8 @@ $("#region-tabs").addEventListener("click",event=>{const button=event.target.clo
 $("#spot-grid").addEventListener("click",async event=>{
   const copyButton=event.target.closest("[data-copy-code]");
   if(copyButton){const item=[...baseSites,...customSites].find(site=>site.id===copyButton.dataset.copyCode);if(item)await copyText(terryCode(item),`${item.name} 코드를 복사했습니다.`);return}
+  const recordButton=event.target.closest("[data-record]");
+  if(recordButton){openRecord(recordButton.dataset.record);return}
   const button=event.target.closest("[data-strategy]");if(!button)return;
   const item=[...baseSites,...customSites].find(site=>site.id===button.dataset.strategy);if(!item)return;
   const text=prompt(`${item.name} 운영 전략`,tripStrategies[item.id]?.text||"");
@@ -172,12 +181,32 @@ $("#spot-grid").addEventListener("click",async event=>{
   localStorage.setItem("presence-trip-strategies",JSON.stringify(tripStrategies));render();
   if(shared)await fb.set(fb.ref(db,`summerStrategy/tripStrategies/${item.id}`),value.text?value:null);
 });
-const regionDialog=$("#region-dialog"),siteDialog=$("#site-dialog");
+const regionDialog=$("#region-dialog"),siteDialog=$("#site-dialog"),recordDialog=$("#record-dialog");
 function openDialog(dialog){dialog.showModal();document.body.style.overflow="hidden"}
 function closeDialog(dialog){dialog.close();document.body.style.overflow=""}
 $("#add-region").addEventListener("click",()=>{$("#region-form").reset();openDialog(regionDialog)});
-$("#add-site").addEventListener("click",()=>{$("#site-form").reset();openDialog(siteDialog)});
-document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>closeDialog(button.dataset.close==="region"?regionDialog:siteDialog)));
+$("#add-site").addEventListener("click",()=>{$("#site-form").reset();$("#site-guide-preview").hidden=true;openDialog(siteDialog)});
+document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>closeDialog(button.dataset.close==="region"?regionDialog:button.dataset.close==="record"?recordDialog:siteDialog)));
+function openRecord(siteId){
+  const item=[...baseSites,...customSites].find(site=>site.id===siteId);if(!item)return;
+  $("#record-form").reset();$("#record-site-id").value=siteId;$("#record-date").value=new Date().toLocaleDateString("en-CA");$("#record-hours").value="3";$("#record-title").textContent=`${item.name} 현장 기록`;$("#record-photo-preview").innerHTML="";$("#record-guide-preview").hidden=true;$("#record-message").textContent="";openDialog(recordDialog);
+}
+function previewFile(input,image){const file=input.files?.[0];if(!file){image.hidden=true;return}image.src=URL.createObjectURL(file);image.hidden=false}
+$("#site-guide-photo").addEventListener("change",()=>previewFile($("#site-guide-photo"),$("#site-guide-preview")));
+$("#record-guide-photo").addEventListener("change",()=>previewFile($("#record-guide-photo"),$("#record-guide-preview")));
+$("#record-photos").addEventListener("change",()=>{$("#record-photo-preview").innerHTML=[...$("#record-photos").files].slice(0,6).map(file=>`<img src="${URL.createObjectURL(file)}" alt="업로드할 셋업사진 미리보기">`).join("")});
+async function compressImage(file){
+  if(!file?.type?.startsWith("image/"))throw new Error("이미지 파일만 올릴 수 있습니다.");
+  const bitmap=await createImageBitmap(file),max=1280,scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height));
+  const canvas=document.createElement("canvas");canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+  return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("사진 변환 실패")),"image/jpeg",.76));
+}
+async function uploadImage(file,path){
+  const blob=await compressImage(file);
+  if(!shared||!db)throw new Error("공용 데이터 연결이 필요합니다.");
+  if(storageApi&&storage){try{const target=storageApi.ref(storage,`${path}.jpg`);await storageApi.uploadBytes(target,blob,{contentType:"image/jpeg"});return await storageApi.getDownloadURL(target)}catch(error){console.warn("Firebase Storage unavailable; saving optimized image with the shared record.",error.code)}}
+  return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("사진을 읽지 못했습니다."));reader.readAsDataURL(blob)});
+}
 $("#region-form").addEventListener("submit",async event=>{
   event.preventDefault();const name=$("#region-name").value.trim();if(!name)return;
   if(shared)await fb.set(fb.ref(db,`summerStrategy/tripRegions/${encodeURIComponent(name)}`),{name,createdAt:new Date().toISOString()});
@@ -187,21 +216,28 @@ $("#region-form").addEventListener("submit",async event=>{
 $("#site-form").addEventListener("submit",async event=>{
   event.preventDefault();const id=`trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
   const item={id,region:activeRegion,name:$("#site-name").value.trim(),zone:$("#site-zone").value.trim(),address:$("#site-address").value.trim(),flow:Number($("#site-flow").value),day:$("#site-day").value,mapUrl:$("#site-map").value.trim(),shade:"현장 그늘 확인",sunlight:"partial",photoVerified:false,note:$("#site-note").value.trim()||"보도 경계·그늘 시간·출입 동선을 현장에서 확인.",source:"팀 직접 추가",createdAt:new Date().toISOString()};
-  try{if(shared)await fb.set(fb.ref(db,`summerStrategy/tripSites/${id}`),item);else{const local=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");local.push(item);localStorage.setItem("presence-trip-sites",JSON.stringify(local));customSites=local}render();$("#site-message").textContent=shared?"Firebase에 공용 저장했습니다.":"기기에 임시 저장했습니다.";setTimeout(()=>closeDialog(siteDialog),550)}catch(error){$("#site-message").textContent="저장하지 못했습니다. 연결 상태를 확인해 주세요."}
+  try{$("#site-message").textContent="사진을 정리해 공용 저장 중…";const photo=$("#site-guide-photo").files?.[0];if(photo){item.imageData=await uploadImage(photo,`trip/site-guides/${id}`);item.photoVerified=true;item.photoLabel="팀 등록 셋업 위치 캡처"}if(shared)await fb.set(fb.ref(db,`summerStrategy/tripSites/${id}`),item);else{const local=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");local.push(item);localStorage.setItem("presence-trip-sites",JSON.stringify(local));customSites=local}render();$("#site-message").textContent=shared?"사진과 사이트를 공용 저장했습니다.":"기기에 임시 저장했습니다.";setTimeout(()=>closeDialog(siteDialog),700)}catch(error){console.error(error);$("#site-message").textContent=error.message||"저장하지 못했습니다. 연결 상태를 확인해 주세요."}
+});
+$("#record-form").addEventListener("submit",async event=>{
+  event.preventDefault();const id=`record-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,siteId=$("#record-site-id").value,item=[...baseSites,...customSites].find(site=>site.id===siteId);if(!item)return;
+  const record={id,siteId,siteName:item.name,region:item.region,date:$("#record-date").value,member:$("#record-member").value.trim(),result:Number($("#record-result").value),hours:Number($("#record-hours").value||0),feedback:$("#record-feedback").value.trim(),createdAt:new Date().toISOString(),photoUrls:[]};
+  try{$("#record-message").textContent="현장 사진과 결과를 공용 저장 중…";for(const [index,file] of [...$("#record-photos").files].slice(0,6).entries())record.photoUrls.push(await uploadImage(file,`trip/field-records/${id}/${index+1}`));const guideFile=$("#record-guide-photo").files?.[0];if(guideFile){const guidePhotoUrl=await uploadImage(guideFile,`trip/site-guides/${siteId}-${Date.now()}`);await fb.set(fb.ref(db,`summerStrategy/tripSiteMedia/${siteId}`),{guidePhotoUrl,updatedAt:new Date().toISOString(),updatedBy:record.member})}if(shared)await fb.set(fb.ref(db,`summerStrategy/tripRecords/${id}`),record);else{tripRecords.push(record);localStorage.setItem("presence-trip-records",JSON.stringify(tripRecords));render()}$("#record-message").textContent="현장 기록을 저장했습니다.";setTimeout(()=>closeDialog(recordDialog),700)}catch(error){console.error(error);$("#record-message").textContent=error.message||"기록을 저장하지 못했습니다."}
 });
 async function initFirebase(){
   const config={apiKey:"AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0",authDomain:"presence-team.firebaseapp.com",databaseURL:"https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"presence-team",storageBucket:"presence-team.firebasestorage.app",messagingSenderId:"1056684483470",appId:"1:1056684483470:web:1f50113d410b53458d3adf"};
   try{
-    const [appApi,authApi,dbApi]=await Promise.all([import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js")]);
+    const [appApi,authApi,dbApi,storeApi]=await Promise.all([import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js")]);
     let app;try{app=appApi.getApp("presence-trip-strategy")}catch(error){app=appApi.initializeApp(config,"presence-trip-strategy")}
     const auth=authApi.getAuth(app);if(typeof auth.authStateReady==="function")await auth.authStateReady();if(!auth.currentUser)await authApi.signInAnonymously(auth);
-    db=dbApi.getDatabase(app);fb=dbApi;shared=true;
+    db=dbApi.getDatabase(app);fb=dbApi;storageApi=storeApi;storage=storeApi.getStorage(app);shared=true;
     dbApi.onValue(dbApi.ref(db,".info/connected"),snap=>{const el=$("#sync-status");el.classList.toggle("live",!!snap.val());el.querySelector("b").textContent=snap.val()?"Firebase 공용 동기화 ON":"오프라인 임시 저장";el.querySelector("span").textContent=snap.val()?"지역과 직접 추가 사이트가 모든 기기에 반영됩니다.":"연결되면 다시 공용 데이터와 맞춥니다."});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripRegions"),snap=>{cloudRegions=Object.values(snap.val()||{}).map(item=>item.name);renderRegions()});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripSites"),snap=>{customSites=Object.values(snap.val()||{});render()});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripStrategies"),snap=>{tripStrategies={...tripStrategies,...(snap.val()||{})};localStorage.setItem("presence-trip-strategies",JSON.stringify(tripStrategies));render()});
+    dbApi.onValue(dbApi.ref(db,"summerStrategy/tripRecords"),snap=>{tripRecords=Object.values(snap.val()||{});render()});
+    dbApi.onValue(dbApi.ref(db,"summerStrategy/tripSiteMedia"),snap=>{siteMedia=snap.val()||{};render()});
   }catch(error){console.error("Trip Firebase unavailable",error);$("#sync-status").querySelector("b").textContent="오프라인 임시 저장"}
 }
-cloudRegions=JSON.parse(localStorage.getItem("presence-trip-regions")||"[]");customSites=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");
+cloudRegions=JSON.parse(localStorage.getItem("presence-trip-regions")||"[]");customSites=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");tripRecords=JSON.parse(localStorage.getItem("presence-trip-records")||"[]");
 renderRegions();render();initFirebase();
 window.PresenceScoreMatcher?.load("../peacemaker-scores/data/incheon-score-room.json").then(matcher=>{scoreMatcher=matcher;render()}).catch(()=>{});

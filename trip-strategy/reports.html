@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Trip Daily Report — Presence</title>
+  <meta name="description" content="Presence 트립 목표와 일자별·사이트별·개인별 결과 리포트">
+  <link rel="stylesheet" href="./trip.css?v=8">
+  <link rel="stylesheet" href="./reports.css?v=1">
+</head>
+<body>
+  <div class="shell report-shell">
+    <header>
+      <a class="brand" href="./index.html"><span class="mark">P</span><span><b>Trip Daily Report</b><small>Presence Field Operations</small></span></a>
+      <nav><a href="../site-operations.html">Sites</a><a href="../summer-strategy/index.html">Summer</a><a href="./index.html">Trip</a><a class="active" href="./reports.html">Report</a></nav>
+    </header>
+    <main>
+      <section class="report-hero">
+        <div><p class="eyebrow">DAILY & FINAL ANALYSIS</p><h1>하루의 기록이,<br><em>다음 운영의 기준으로.</em></h1><p class="lead">트립 일정과 목표를 정하면 현장 기록이 자동으로 합산됩니다. 일자·사이트·개인별 결과와 AVG를 비교하고 최종 결과까지 한 화면에서 확인하세요.</p></div>
+        <button id="add-plan" class="plan-cta" type="button">＋ 새 트립 일정</button>
+      </section>
+      <section class="report-toolbar" aria-label="트립 리포트 선택">
+        <div id="sync-status" class="sync-status"><i></i><b>공용 데이터 연결 중</b><span>트립 기록을 불러옵니다.</span></div>
+        <label><span>트립 일정</span><select id="plan-select"><option value="">전체 기록</option></select></label>
+        <label><span>지역</span><select id="region-filter"><option value="">전체 지역</option></select></label>
+        <label><span>기록 검색</span><input id="report-search" type="search" placeholder="사이트·활동자 검색"></label>
+      </section>
+      <section id="overview" class="overview" aria-labelledby="overview-title">
+        <div class="overview-head"><div><p class="eyebrow">TRIP PROGRESS</p><h2 id="overview-title">전체 트립 결과</h2><p id="plan-period">저장된 현장 기록 전체</p></div><strong id="progress-percent">0%</strong></div>
+        <div class="progress-track" role="progressbar" aria-label="트립 목표 달성률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="progress-bar"></i></div>
+        <div class="metric-grid"><article><span>총 결과</span><strong id="total-result">0</strong></article><article><span>목표</span><strong id="goal-result">미설정</strong></article><article><span>활동자</span><strong id="member-count">0명</strong></article><article><span>전체 AVG</span><strong id="overall-avg">0.0</strong></article><article><span>운영 사이트</span><strong id="site-count">0곳</strong></article><article><span>기록</span><strong id="record-count">0건</strong></article></div>
+      </section>
+      <section class="analysis-grid">
+        <article class="analysis-panel"><div class="panel-head"><div><p class="eyebrow">BY DATE</p><h2>일자별 결과</h2></div></div><div id="daily-list" class="rank-list"></div></article>
+        <article class="analysis-panel"><div class="panel-head"><div><p class="eyebrow">BY MEMBER</p><h2>개인별 결과</h2></div></div><div id="member-list" class="rank-list"></div></article>
+      </section>
+      <section class="analysis-panel site-analysis"><div class="panel-head"><div><p class="eyebrow">BY SITE</p><h2>사이트별 AVG 분석</h2></div><a href="./index.html">사이트 운영 화면 →</a></div><div id="site-list" class="site-report-list"></div></section>
+      <section class="analysis-panel"><div class="panel-head"><div><p class="eyebrow">FIELD LOG</p><h2>최근 현장 피드백</h2></div><output id="filtered-count">0건</output></div><div id="record-list" class="report-records"></div></section>
+    </main>
+  </div>
+  <dialog id="plan-dialog"><form id="plan-form"><div class="dialog-head"><div><p class="eyebrow">TRIP PLAN</p><h2>새 트립 일정과 목표</h2></div><button type="button" data-close="plan">×</button></div><div class="form-grid"><label class="wide"><span>트립 이름</span><input id="plan-name" required maxlength="60" placeholder="예: 강릉·동해·삼척 여름 트립"></label><label><span>시작일</span><input id="plan-start" type="date" required></label><label><span>종료일</span><input id="plan-end" type="date" required></label><label><span>지역</span><input id="plan-region" required maxlength="30" placeholder="강릉·동해·삼척"></label><label><span>참여 인원</span><input id="plan-members" type="number" min="1" max="100" value="10" required></label><label><span>트립 총 목표</span><input id="plan-goal" type="number" min="1" step="1" required placeholder="예: 120"></label><label><span>개인 일일 목표</span><input id="plan-daily-goal" type="number" min="0" step="0.1" value="3"></label><label class="wide"><span>운영 메모</span><textarea id="plan-note" rows="3" maxlength="400" placeholder="숙소, 이동조, 메인 사이트 등"></textarea></label></div><div class="actions"><button type="button" data-close="plan">취소</button><button class="primary" type="submit">트립 일정 저장</button></div><p id="plan-message"></p></form></dialog>
+  <script src="./reports.js?v=1"></script>
+</body>
+</html>
