@@ -6,13 +6,13 @@
   <meta name="color-scheme" content="dark">
   <title>Trip 운영 전략 — Presence</title>
   <meta name="description" content="Presence 제주 및 강릉·동해·삼척 Trip 사이트 운영 전략">
-  <link rel="stylesheet" href="./trip.css?v=8">
+  <link rel="stylesheet" href="./trip.css?v=9">
 </head>
 <body>
   <div class="shell">
     <header>
       <a class="brand" href="../site-operations.html"><span class="mark">P</span><span><b>Trip Strategy</b><small>Presence Field Operations</small></span></a>
-      <nav><a href="../site-operations.html">Sites</a><a href="../summer-strategy/index.html">Summer</a><a class="active" href="#spots">Trip</a><a href="./reports.html">Report</a></nav>
+      <nav><a href="../site-operations.html">Sites</a><a href="../summer-strategy/index.html">Summer</a><a class="active" href="#spots">Trip</a><a href="#action-plan">My Goal</a><a href="./reports.html">Report</a></nav>
     </header>
     <main>
       <section class="hero">
@@ -20,6 +20,40 @@
         <div class="hero-stat"><strong id="total-count">80</strong><span id="total-label">사전답사 후보</span><small>유동 5 = 최우선 답사</small></div>
       </section>
       <section class="notice"><b>운영 전 확인</b><span>유동 등급은 공식 실측 인원수가 아닌 관광·상권·교통 입지 기반 우선순위입니다. 설치 전 공공보도 경계, 점자블록, 출입구, 관할기관·점포 승인을 확인하세요.</span><a href="./reports.html">일자별 결과 리포트 →</a></section>
+      <section id="action-plan" class="action-plan" aria-labelledby="action-plan-title">
+        <div class="planner-intro">
+          <div><p class="eyebrow">PERSONAL ACTION PLAN</p><h2 id="action-plan-title">이번 트립의 기준을<br><em>내가 먼저 정합니다.</em></h2></div>
+          <p>강릉·동해·삼척에서 만들고 싶은 결과와 지키고 싶은 태도를 기록하세요. 입력한 내용은 이 기기에 자동 보관되고, 공용 연결 시 내 플래너로 동기화됩니다.</p>
+          <div class="planner-save-state" id="planner-save-state" role="status" aria-live="polite"><i></i><span>작성 준비 완료</span></div>
+        </div>
+        <form id="action-plan-form" class="planner-form" autocomplete="off">
+          <div class="planner-card identity-card">
+            <span class="planner-number">01</span><label><span>Name</span><input id="goal-name" maxlength="30" placeholder="이름을 입력하세요"></label>
+            <label class="wide"><span>My Trip Goal</span><input id="goal-theme" maxlength="80" placeholder="한 문장으로 이번 트립의 핵심 목표를 적어보세요"></label>
+          </div>
+          <div class="planner-card score-card">
+            <div class="planner-card-head"><div><span class="planner-number">02</span><p class="eyebrow">SCORE GOAL</p><h3>A / B / C 목표</h3></div><label class="kpi-field"><span>MY KPI</span><input id="goal-kpi" type="number" min="0" step="0.1" inputmode="decimal" placeholder="7"></label></div>
+            <p class="planner-hint">KPI를 입력하면 필요한 Closing이 자동으로 계산됩니다.</p>
+            <div class="score-goals">
+              <label class="goal-tier tier-a"><b>A <small>BEST</small></b><span>최고의 결과</span><input id="goal-score-a" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Score"><output id="goal-closing-a">— Closing</output></label>
+              <label class="goal-tier tier-b"><b>B <small>GOOD</small></b><span>충분히 만족스러운 목표</span><input id="goal-score-b" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Score"><output id="goal-closing-b">— Closing</output></label>
+              <label class="goal-tier tier-c"><b>C <small>MINIMUM</small></b><span>반드시 달성할 최소 목표</span><input id="goal-score-c" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Score"><output id="goal-closing-c">— Closing</output></label>
+            </div>
+            <div class="closing-summary" aria-label="Closing KPI 계산표">
+              <div class="summary-head"><span>구분</span><span>목표 Score</span><span>KPI</span><span>필요 Closing</span></div>
+              <div><b>A</b><span id="summary-score-a">—</span><span data-summary-kpi>—</span><strong id="summary-closing-a">—</strong></div>
+              <div><b>B</b><span id="summary-score-b">—</span><span data-summary-kpi>—</span><strong id="summary-closing-b">—</strong></div>
+              <div><b>C</b><span id="summary-score-c">—</span><span data-summary-kpi>—</span><strong id="summary-closing-c">—</strong></div>
+            </div>
+          </div>
+          <div class="planner-two-column">
+            <div class="planner-card"><span class="planner-number">03</span><p class="eyebrow">REWARD</p><h3>달성한 나에게</h3><label><span>A Reward</span><input id="goal-reward-a" maxlength="80" placeholder="최고 목표를 달성했을 때"></label><label><span>B Reward</span><input id="goal-reward-b" maxlength="80" placeholder="Good 목표를 달성했을 때"></label><label><span>C Reward</span><input id="goal-reward-c" maxlength="80" placeholder="Minimum 목표를 달성했을 때"></label></div>
+            <div class="planner-card"><span class="planner-number">04</span><p class="eyebrow">LEARNING</p><h3>배우고 싶은 것</h3><div id="learning-options" class="choice-grid"></div><label class="custom-line"><span>직접 작성</span><input id="goal-learning-other" maxlength="100" placeholder="나만의 학습 목표"></label></div>
+          </div>
+          <div class="planner-card promise-card"><span class="planner-number">05</span><p class="eyebrow">MY PROMISE</p><h3>이것만큼은 반드시 지키기</h3><div id="promise-options" class="promise-grid"></div><div class="custom-promises"><label><span>나만의 약속 1</span><input id="goal-promise-1" maxlength="100"></label><label><span>나만의 약속 2</span><input id="goal-promise-2" maxlength="100"></label></div></div>
+          <div class="planner-card pledge-card"><span class="planner-number">06</span><p class="eyebrow">ONE SENTENCE</p><h3>나의 다짐</h3><textarea id="goal-pledge" rows="3" maxlength="180" placeholder="트립을 시작하기 전, 스스로에게 건네는 한 문장"></textarea><div class="planner-actions"><button id="reset-action-plan" type="button">새로 작성</button><button class="primary" type="submit">내 Action Plan 저장</button></div></div>
+        </form>
+      </section>
       <section class="region-panel" aria-labelledby="region-title">
         <div class="section-head"><div><p class="eyebrow">TRIP REGIONS</p><h2 id="region-title">지역 카테고리</h2></div><button id="add-region" type="button">＋ 지역 추가</button></div>
         <div id="region-tabs" class="region-tabs" role="tablist" aria-label="트립 지역"></div>
@@ -48,6 +82,6 @@
   <script src="../shared-score-match.js?v=1"></script>
   <script src="./gangneung-donghae.js?v=2"></script>
   <script src="./ctm-analysis.js?v=1"></script>
-  <script src="./trip.js?v=11"></script>
+  <script src="./trip.js?v=12"></script>
 </body>
 </html>

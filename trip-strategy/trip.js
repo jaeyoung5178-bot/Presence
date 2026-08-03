@@ -78,6 +78,10 @@ let scoreMatcher=null;
 let tripStrategies=JSON.parse(localStorage.getItem("presence-trip-strategies")||"{}");
 let tripRecords=[];
 let siteMedia={};
+let tripGoalUserId="local";
+let goalSaveTimer=null;
+const tripRegion="강릉·동해·삼척";
+const isTripAdmin=(()=>{try{return localStorage.getItem("presence_hub_admin")==="1"}catch(error){return false}})();
 const $=selector=>document.querySelector(selector);
 const escapeHtml=value=>String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const mapUrl=(provider,item)=>{
@@ -112,7 +116,9 @@ function allSites(){return [...baseSites,...customSites].filter(item=>item.regio
 function recordsFor(siteId){return tripRecords.filter(record=>record.siteId===siteId).sort((a,b)=>String(b.createdAt||b.date).localeCompare(String(a.createdAt||a.date)))}
 function renderRegions(){
   regions=[...new Set([...defaultRegions,...cloudRegions])];
-  $("#region-tabs").innerHTML=regions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${jejuSites.length}`:region==="강릉·동해·삼척"?` · ${gangneungDonghaeSites.length+ctmAddedSites.length}`:""}</button>`).join("");
+  if(!isTripAdmin)activeRegion=tripRegion;
+  const visibleRegions=isTripAdmin?regions:[tripRegion];
+  $("#region-tabs").innerHTML=visibleRegions.map(region=>`<button type="button" role="tab" aria-selected="${region===activeRegion}" class="${region===activeRegion?"active":""}" data-region="${escapeHtml(region)}">${escapeHtml(region)}${region==="제주"?` · ${jejuSites.length}`:region===tripRegion?` · ${gangneungDonghaeSites.length+ctmAddedSites.length}`:""}</button>`).join("");
 }
 function card(item){
   const stars="★".repeat(item.flow)+"☆".repeat(5-item.flow);
@@ -165,7 +171,7 @@ async function copyText(text,message){
   }catch(error){$("#copy-toast").textContent="복사하지 못했습니다. 다시 눌러 주세요.";$("#copy-toast").classList.add("show")}
 }
 $("#copy-visible").addEventListener("click",()=>{const items=filteredSites();if(!items.length)return;copyText(items.map(terryCode).join("\n"),`${items.length}개 테리코드를 복사했습니다.`)});
-$("#region-tabs").addEventListener("click",event=>{const button=event.target.closest("[data-region]");if(!button)return;activeRegion=button.dataset.region;renderRegions();render()});
+$("#region-tabs").addEventListener("click",event=>{const button=event.target.closest("[data-region]");if(!button||(!isTripAdmin&&button.dataset.region!==tripRegion))return;if(button.dataset.region===tripRegion){location.href="./gangwon-playbook.html";return}activeRegion=button.dataset.region;renderRegions();render()});
 ["#search","#flow-filter","#day-filter","#source-filter"].forEach(selector=>$(selector).addEventListener(selector==="#search"?"input":"change",render));
 $("#spot-grid").addEventListener("click",async event=>{
   const copyButton=event.target.closest("[data-copy-code]");
@@ -184,7 +190,7 @@ $("#spot-grid").addEventListener("click",async event=>{
 const regionDialog=$("#region-dialog"),siteDialog=$("#site-dialog"),recordDialog=$("#record-dialog");
 function openDialog(dialog){dialog.showModal();document.body.style.overflow="hidden"}
 function closeDialog(dialog){dialog.close();document.body.style.overflow=""}
-$("#add-region").addEventListener("click",()=>{$("#region-form").reset();openDialog(regionDialog)});
+$("#add-region").addEventListener("click",()=>{if(!isTripAdmin)return;$("#region-form").reset();openDialog(regionDialog)});
 $("#add-site").addEventListener("click",()=>{$("#site-form").reset();$("#site-guide-preview").hidden=true;openDialog(siteDialog)});
 document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>closeDialog(button.dataset.close==="region"?regionDialog:button.dataset.close==="record"?recordDialog:siteDialog)));
 function openRecord(siteId){
@@ -223,12 +229,49 @@ $("#record-form").addEventListener("submit",async event=>{
   const record={id,siteId,siteName:item.name,region:item.region,date:$("#record-date").value,member:$("#record-member").value.trim(),result:Number($("#record-result").value),hours:Number($("#record-hours").value||0),feedback:$("#record-feedback").value.trim(),createdAt:new Date().toISOString(),photoUrls:[]};
   try{$("#record-message").textContent="현장 사진과 결과를 공용 저장 중…";for(const [index,file] of [...$("#record-photos").files].slice(0,6).entries())record.photoUrls.push(await uploadImage(file,`trip/field-records/${id}/${index+1}`));const guideFile=$("#record-guide-photo").files?.[0];if(guideFile){const guidePhotoUrl=await uploadImage(guideFile,`trip/site-guides/${siteId}-${Date.now()}`);await fb.set(fb.ref(db,`summerStrategy/tripSiteMedia/${siteId}`),{guidePhotoUrl,updatedAt:new Date().toISOString(),updatedBy:record.member})}if(shared)await fb.set(fb.ref(db,`summerStrategy/tripRecords/${id}`),record);else{tripRecords.push(record);localStorage.setItem("presence-trip-records",JSON.stringify(tripRecords));render()}$("#record-message").textContent="현장 기록을 저장했습니다.";setTimeout(()=>closeDialog(recordDialog),700)}catch(error){console.error(error);$("#record-message").textContent=error.message||"기록을 저장하지 못했습니다."}
 });
+
+const learningChoices=["상가 B2B 공략","공공기관 방문 방법","시간대별 Territory 운영","트립 운영 능력","돌발상황 대처","Closing Skill","Territory 분석","리더십","팀 운영","세일즈 퍼포먼스"];
+const promiseChoices=["하루 30 Closing 이상","실제 Field 10시간 이상","감사하는 마음으로 Field 뛰기","하루 한 명 이상 칭찬하기","늦게 자지 않기","컨디션 관리하기","끝까지 긍정적인 태도 유지하기"];
+function plannerChoice(value,type){return `<label class="${type==="learning"?"choice":"promise-choice"}"><input type="checkbox" name="goal-${type}" value="${escapeHtml(value)}"><i></i><span>${escapeHtml(value)}</span></label>`}
+$("#learning-options").innerHTML=learningChoices.map(value=>plannerChoice(value,"learning")).join("");
+$("#promise-options").innerHTML=promiseChoices.map(value=>plannerChoice(value,"promise")).join("");
+const plannerIds=["goal-name","goal-theme","goal-kpi","goal-score-a","goal-score-b","goal-score-c","goal-reward-a","goal-reward-b","goal-reward-c","goal-learning-other","goal-promise-1","goal-promise-2","goal-pledge"];
+function numberText(value){const number=Number(value);return Number.isFinite(number)&&String(value).trim()!==""?number.toLocaleString("ko-KR",{maximumFractionDigits:1}):"—"}
+function updateClosingGoals(){
+  const kpi=Number($("#goal-kpi").value),hasKpi=Number.isFinite(kpi)&&$("#goal-kpi").value!=="";
+  document.querySelectorAll("[data-summary-kpi]").forEach(element=>element.textContent=hasKpi?numberText(kpi):"—");
+  ["a","b","c"].forEach(tier=>{const scoreInput=$(`#goal-score-${tier}`),score=Number(scoreInput.value),hasScore=Number.isFinite(score)&&scoreInput.value!=="",closing=hasKpi&&hasScore?Math.round(kpi*score):null;$("#goal-closing-"+tier).textContent=closing===null?"— Closing":`${closing.toLocaleString()} Closing`;$("#summary-score-"+tier).textContent=hasScore?numberText(score):"—";$("#summary-closing-"+tier).textContent=closing===null?"—":closing.toLocaleString()})
+}
+function readActionPlan(){
+  const values=Object.fromEntries(plannerIds.map(id=>[id.replace(/^goal-/,"").replaceAll("-","_"),$("#"+id).value.trim()]));
+  return {...values,learning:[...document.querySelectorAll('[name="goal-learning"]:checked')].map(input=>input.value),promises:[...document.querySelectorAll('[name="goal-promise"]:checked')].map(input=>input.value),region:tripRegion,updatedAt:new Date().toISOString()}
+}
+function writeActionPlan(plan={}){
+  plannerIds.forEach(id=>{const key=id.replace(/^goal-/,"").replaceAll("-","_");$("#"+id).value=plan[key]??""});
+  document.querySelectorAll('[name="goal-learning"],[name="goal-promise"]').forEach(input=>{const selected=input.name==="goal-learning"?(plan.learning||[]):(plan.promises||[]);input.checked=selected.includes(input.value)});
+  updateClosingGoals()
+}
+function setPlannerState(message,saved=false){const state=$("#planner-save-state");state.querySelector("span").textContent=message;state.classList.toggle("saved",saved)}
+async function persistActionPlan(plan,{cloud=true}={}){
+  localStorage.setItem("presence-trip-action-plan",JSON.stringify(plan));setPlannerState("이 기기에 자동 저장됨",true);
+  if(cloud&&shared&&fb&&db){await fb.set(fb.ref(db,`summerStrategy/tripActionPlans/${tripGoalUserId}`),plan);setPlannerState("내 Action Plan 동기화 완료",true)}
+}
+function scheduleActionPlanSave(){
+  updateClosingGoals();clearTimeout(goalSaveTimer);setPlannerState("작성 내용을 저장하는 중…");goalSaveTimer=setTimeout(()=>persistActionPlan(readActionPlan()).catch(()=>setPlannerState("기기에 저장됨 · 공용 연결 대기",true)),700)
+}
+$("#action-plan-form").addEventListener("input",scheduleActionPlanSave);
+$("#action-plan-form").addEventListener("change",scheduleActionPlanSave);
+$("#action-plan-form").addEventListener("submit",async event=>{event.preventDefault();clearTimeout(goalSaveTimer);try{await persistActionPlan(readActionPlan());setPlannerState("내 Action Plan을 저장했습니다.",true)}catch(error){setPlannerState("기기에 저장됨 · 공용 연결 대기",true)}});
+$("#reset-action-plan").addEventListener("click",()=>{if(!confirm("현재 작성한 Action Plan을 비우고 새로 작성할까요?"))return;writeActionPlan();persistActionPlan(readActionPlan()).catch(()=>{});$("#goal-name").focus()});
+try{writeActionPlan(JSON.parse(localStorage.getItem("presence-trip-action-plan")||"{}"))}catch(error){writeActionPlan()}
+document.body.classList.toggle("member-scope",!isTripAdmin);
+
 async function initFirebase(){
   const config={apiKey:"AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0",authDomain:"presence-team.firebaseapp.com",databaseURL:"https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"presence-team",storageBucket:"presence-team.firebasestorage.app",messagingSenderId:"1056684483470",appId:"1:1056684483470:web:1f50113d410b53458d3adf"};
   try{
     const [appApi,authApi,dbApi,storeApi]=await Promise.all([import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"),import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js")]);
     let app;try{app=appApi.getApp("presence-trip-strategy")}catch(error){app=appApi.initializeApp(config,"presence-trip-strategy")}
-    const auth=authApi.getAuth(app);if(typeof auth.authStateReady==="function")await auth.authStateReady();if(!auth.currentUser)await authApi.signInAnonymously(auth);
+    const auth=authApi.getAuth(app);if(typeof auth.authStateReady==="function")await auth.authStateReady();if(!auth.currentUser)await authApi.signInAnonymously(auth);tripGoalUserId=auth.currentUser.uid;
     db=dbApi.getDatabase(app);fb=dbApi;storageApi=storeApi;storage=storeApi.getStorage(app);shared=true;
     dbApi.onValue(dbApi.ref(db,".info/connected"),snap=>{const el=$("#sync-status");el.classList.toggle("live",!!snap.val());el.querySelector("b").textContent=snap.val()?"Firebase 공용 동기화 ON":"오프라인 임시 저장";el.querySelector("span").textContent=snap.val()?"지역과 직접 추가 사이트가 모든 기기에 반영됩니다.":"연결되면 다시 공용 데이터와 맞춥니다."});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripRegions"),snap=>{cloudRegions=Object.values(snap.val()||{}).map(item=>item.name);renderRegions()});
@@ -236,6 +279,7 @@ async function initFirebase(){
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripStrategies"),snap=>{tripStrategies={...tripStrategies,...(snap.val()||{})};localStorage.setItem("presence-trip-strategies",JSON.stringify(tripStrategies));render()});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripRecords"),snap=>{tripRecords=Object.values(snap.val()||{});render()});
     dbApi.onValue(dbApi.ref(db,"summerStrategy/tripSiteMedia"),snap=>{siteMedia=snap.val()||{};render()});
+    dbApi.onValue(dbApi.ref(db,`summerStrategy/tripActionPlans/${tripGoalUserId}`),snap=>{const cloudPlan=snap.val();if(!cloudPlan)return;const localPlan=JSON.parse(localStorage.getItem("presence-trip-action-plan")||"{}");if(!localPlan.updatedAt||String(cloudPlan.updatedAt||"")>String(localPlan.updatedAt)){writeActionPlan(cloudPlan);localStorage.setItem("presence-trip-action-plan",JSON.stringify(cloudPlan))}setPlannerState("내 Action Plan 동기화 완료",true)});
   }catch(error){console.error("Trip Firebase unavailable",error);$("#sync-status").querySelector("b").textContent="오프라인 임시 저장"}
 }
 cloudRegions=JSON.parse(localStorage.getItem("presence-trip-regions")||"[]");customSites=JSON.parse(localStorage.getItem("presence-trip-sites")||"[]");tripRecords=JSON.parse(localStorage.getItem("presence-trip-records")||"[]");
