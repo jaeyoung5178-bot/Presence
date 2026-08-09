@@ -142,6 +142,19 @@ body.biz nav{background:rgba(246,246,244,.92)}
 .notegroups button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .notegroups button small{opacity:.55;font-weight:400}
 .nlist{display:flex;flex-direction:column;gap:10px;max-width:820px}
+.fom-folders{display:flex;flex-direction:column;gap:12px;max-width:860px}
+.fom-folder{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.fom-folder-h{width:100%;min-height:58px;border:0;background:transparent;color:var(--ink);padding:13px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;font-family:inherit;text-align:left}
+.fom-folder-h:hover{background:color-mix(in srgb,var(--paper) 80%,var(--gold) 20%)}
+.fom-folder-h:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.fom-folder-ic{font-size:1.2rem;line-height:1}
+.fom-folder-title{font-family:'Noto Serif KR',serif;font-size:1.03rem;font-weight:700}
+.fom-folder-meta{margin-left:auto;color:var(--ink2);font-size:.78rem;white-space:nowrap}
+.fom-folder-arrow{color:var(--gold);font-size:.78rem;transition:transform .2s}
+.fom-folder.open .fom-folder-arrow{transform:rotate(90deg)}
+.fom-folder-b{display:none;padding:0 12px 12px}
+.fom-folder.open .fom-folder-b{display:flex;flex-direction:column;gap:8px}
+.fom-folder .nrow{box-shadow:none;background:var(--bg)}
 .nrow{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--ink);border-radius:10px;padding:14px 20px;cursor:pointer;box-shadow:var(--shadow);transition:.15s}
 .nrow:hover{transform:translateX(4px);border-color:var(--gold)}
 .nrow h4{font-family:'Noto Serif KR',serif;font-size:1.02rem}
@@ -241,6 +254,20 @@ body.night footer{color:#6f6553}
 
 footer{text-align:center;color:#b3a68f;font-size:.78rem;padding:30px 0 50px}
 @media(max-width:640px){ .sgrid{grid-template-columns:1fr} }
+@media(max-width:1024px){
+  .hublink{min-height:44px;display:flex;align-items:center}
+  nav button,.bkbar button{min-height:44px}
+  .nv-bar button,.tb-ed .btns button{min-height:44px}
+  .thbtn{width:44px;height:44px}
+  .modeswitch{min-height:44px;padding:7px 0}
+}
+@media(max-width:640px){
+  .fom-folder-h{min-height:60px;padding:12px 14px}
+  .fom-folder-title{font-size:1rem}
+  .fom-folder-meta{font-size:.72rem}
+  .fom-folder-b{padding:0 8px 8px}
+  .fom-folder .nrow{padding:14px 15px;min-height:64px}
+}
 </style>
 </head>
 <body>
@@ -566,6 +593,123 @@ document.getElementById('modeswitch').onclick = () => {
 
 /* ---------- business notes (분류 단추 + 읽기 페이지) ---------- */
 const NGROUPS = ['FOM','오피스 미팅','클라이언트 미팅','팀미팅'];
+const FOM_260808 = [
+  {id:'fom-2026-08-08-lee-yesung',g:'FOM',d:'2026.08.08',t:'이예승 — 동아리에서 회사로',c:`발표 배경
+• 인천지점을 8년간 단독 운영하며 겪은 실수와 교훈. 초기 팀빌딩 리더가 같은 시행착오를 줄이기 위한 "피와 눈물로 쓰인 매뉴얼"이다.
+
+1. 말과 태도
+• 권위의식이 생기면 팀원을 부하로 보고 감정이 섞인 잔소리를 하게 된다. 리더의 말투는 팀 전체로 전파된다.
+• 연차가 쌓일수록 더 친절하고 존중하는 말을 쓰고, 언성을 높이거나 감정적으로 싸우지 않는다.
+• 친해졌다는 이유로 존댓말과 호칭을 놓으면 상호 존중이 무너지기 시작한다. 선을 넘었다면 당일 저녁 바로 사과한다.
+
+2. 즐기는 팀과 결과를 만드는 팀
+• 동아리 팀은 결과가 없어도 "오늘 재밌었다"로 위로하지만, 회사 팀은 결과가 없을 때 과정을 돌아보고 리캡한다.
+• 팀의 목적은 수익 창출과 개인 목표 달성이다. 즐거움은 수단이지 목적이 아니다.
+• 팀 안에서 각자의 개인 목표를 공유하고 서로 알고 있어야 한다.
+
+3. 개인 사정과 프로 의식
+• 초보 오너 시절 팀원의 핑계마다 쉬게 해준 것이 큰 실수였다. 힘든 상황에서도 필드를 포기하지 않는 방향을 함께 논의해야 한다.
+• 리더가 아프고 힘든 티를 내면 팀 전체에 퍼진다. 기준은 "정규직이었다면 이 이유로 결근할 수 있었을까?"이다.
+• 필드를 포기하는 습관을 허용하는 순간 팀은 동아리로 전락한다.
+
+4. 팀 내 이성교제와 경계
+• 반복되는 만남과 이별은 팀 분위기와 개인 평판을 훼손한다. 만났다면 가볍게 만나지 말고 결혼까지 갈 책임감을 가져야 한다.
+• 남녀 단둘이 술자리를 만들지 않는 원칙은 8년의 경험에서 나온 매뉴얼이다. 리더부터 같은 경계를 지킨다.
+• 연애 분쟁에 휘말리면 리더의 집중력과 비즈니스가 무너진다.
+
+5. 헤드카운트보다 코어
+• 코로나 시기 문제 있는 팀원까지 붙잡다가 코어 리더들이 지쳐 이탈했다. 있어서는 안 될 한 사람을 잡으려다 새로 들어올 좋은 인재 열 명을 잃을 수 있다.
+• 프로모션과 헤드카운트에 집착할수록 돌봐야 할 코어를 놓친다. 코어를 지키기 위한 퀄리티 컨트롤과 커트가 필요하다.
+
+마무리
+• 착한 리더는 미움받지 않으려 팀원의 눈치를 본다. 좋은 리더는 단기적으로 마음을 상하게 하더라도 장기적으로 그 사람을 위한 결정을 내린다.`},
+  {id:'fom-2026-08-08-kang-youngmin',g:'FOM',d:'2026.08.08',t:'강영민 — 사업가에서 기업가로',c:`핵심 질문
+• 리스크를 관리하는 것과 리스크를 감수하는 것 사이에서 나는 어떤 선택을 하는가?
+
+사업가와 기업가
+• 당장의 리스크를 통제하고 지출을 줄이는 데 집중하는 시선은 사업가의 시선이다.
+• 기업가는 영리 추구를 넘어 사회에 어떤 영향을 끼칠지를 함께 바라본다.
+• 건축가 정신과 개척가 정신을 비교하며, 이미 있는 것을 안정적으로 세우는 것과 새로운 길을 여는 것의 차이를 생각한다.
+
+필드를 보여주는 순서
+• 옵저베이션 → 식사하며 인터뷰 → 필드 → 오피스의 흐름으로 현실의 비즈니스를 보여준다.
+
+적용점
+• 신상품을 개발한다.
+• 비선호 클라이언트 또는 새로운 채널에 도전한다.
+• 다른 지점과 교류하며 영향력을 넓힌다.
+
+스스로에게 묻기
+• 당신은 어떤 곳을 바라보고 있는가?
+• 당신은 어떤 사람으로 기억되고 싶은가?`},
+  {id:'fom-2026-08-08-seol-jaeyoung',g:'FOM',d:'2026.08.08',t:'설재영 — 팀을 운영하며 겪은 성장통',c:`발표 개요
+• 팀이 커지며 직접 겪은 실수와 성장통을 나눈 실제 빌딩 스토리. 팀이 커질수록 정답은 바뀌므로 현재의 정답에 갇히지 말아야 한다.
+• 개인 소득에서 팀 전체 법인 매출로 시야가 확장되며 리더의 관점도 달라졌다.
+
+착각 1. 내가 보는 것이 전부다
+• 특정 하이롤러의 CS 문제에 대한 반복 피드백을 무시한 결과, 팀이 20명에서 일주일 만에 3명으로 줄었다.
+• 같은 피드백이 세 번 이상 들어오면 반드시 직접 확인한다. 보이는 것만 믿지 말고 보이지 않는 것을 들을 수 있어야 한다.
+
+착각 2. 문제를 해결하면 좋은 리더다
+• 모든 문제를 직접 해결하자 팀원들이 문제를 일찍 말하지 않게 되었고, 터진 뒤에야 보고하는 구조가 됐다.
+• 좋은 리더는 문제를 가장 잘 해결하는 사람이 아니라 가장 빨리 들을 수 있는 사람이다. 팀원이 다가와 말하기 편한 리더가 된다.
+
+착각 3. 말을 잘하는 사람에게 기회를 줘야 한다
+• 열정적으로 어필하지만 책임지지 않는 사람에게 기회를 주고, 묵묵히 행동하는 사람을 놓쳤다.
+• 기회는 간절한 사람이 아니라 준비된 사람에게 준다. 보이지 않는 곳에서의 행동, 작은 약속, 주변 영향력을 본다.
+
+착각 4. 내가 잘하면 팀도 잘 된다
+• 20~30명까지는 리더 혼자의 역량으로 가능했지만 50명 규모에서는 한계가 왔다. 높은 리스펙이 높은 의존도로 변하면 리더가 없을 때 팀이 멈춘다.
+• 리더의 진짜 실력은 내가 없어도 팀이 잘 돌아가는 것이다. 대신해주지 않고 기다리며, 성장 과정의 손해를 감수한다.
+
+착각 5. 결과가 사람을 말해준다
+• 프로모션 숫자에 매몰되며 사람의 성장을 놓쳤다. 한 명 한 명의 성장에 집중하자 오히려 팀이 가장 빨리 성장했다.
+• 결과는 오늘을 말하고 과정은 미래를 말한다.
+• 투자 기준: 꾸준한 시도, 보이지 않는 곳에서의 행동, 피드백 수용, 회복 탄력성, 작은 약속, 주변 영향력.
+
+착각 6. 내가 혼자 팀을 만든다
+• 기준은 리더가 있을 때 작동하지만 문화는 리더가 없어도 유지된다.
+• 문화는 말이 아니라 주말 필드와 오피스에서 먼저 행동하는 모습으로 만든다.
+• 좋은 팀은 좋은 리더 한 명이 아니라 함께하고 싶은 사람들이 함께 만든다.
+
+Q&A와 재영의 질문
+• 팀원이 잘못된 방향으로 갈 때 정답을 강요하기보다 스스로 시도하고 실패하게 두되, 이후를 커버하는 것이 리더의 역할이다.
+• 솔직한 보고를 만들려면 듣고 있다는 신호를 주고, 실수는 즉시 인정하며 의도를 충분히 설명한다.
+• 임재영 리더 질문: "좋은 리더는 누군가에게 좋은 팔로워였다. 팀원에게 보여주고 싶었던 좋은 팔로워십은 무엇인가?"
+• 답변의 중심은 팀이 커질수록 생기는 고독 속에서도 자기만의 색을 잃지 않고, 힘들 때 상위 리더를 다시 찾는 태도였다.`},
+  {id:'fom-2026-08-08-kang-jeongmin',g:'FOM',d:'2026.08.08',t:'강정민 — Get with Right People',c:`개요
+• 심리학과 신경과학을 바탕으로, 원하는 삶에 가까워지려면 어떤 사람과 함께해야 하는지를 설명한다.
+• 모든 내용을 받아 적기보다 가장 기억에 남고 바로 행동할 한 가지를 남긴다.
+
+행복은 이상과 현실의 간격
+• 행복은 단순히 기분이 좋은 상태가 아니라 이상과 현실의 간격이 작은 상태다.
+• 이상을 낮추기는 어렵기에 현실을 높여야 하고, 현실은 지식이 아니라 행동으로만 바뀐다.
+
+입력 → 생각 → 행동 → 결과
+• 감정과 생각은 뇌가 통제한다. 뇌는 오감으로 들어온 정보를 바탕으로 생각을 출력하고, 생각이 행동과 결과를 만든다.
+• 잘못된 입력은 잘못된 출력을 만들고 올바른 입력은 올바른 출력을 만든다.
+• 시각과 청각은 입력량이 많아 한 번의 경험으로는 잘 새겨지지 않는다. 지속적이고 반복적인 노출이 필요하다.
+
+환경이 만드는 익숙함
+• 어린 시절 보고 들은 패턴은 옳고 그름을 떠나 편안한 것으로 느껴진다.
+• 발표자는 폭력적인 훈육을 받은 뒤 자신에게서 같은 모습을 발견하고, 생각의 패턴을 바꾸기 위해 치열하게 노력한 경험을 나눴다.
+• 익숙한 패턴은 관계와 선택에도 영향을 주며, 바꾸려면 새로운 입력을 의도적으로 반복해야 한다.
+
+비즈니스 적용
+• 오너가 되려면 오너의 생각·판단·행동 패턴을 입력해야 한다. 드라마 속 이미지가 아니라 실제 오너의 희생과 일상을 가까이에서 본다.
+• 아는 것과 하는 것은 다르다. 배움 뒤에 행동이 바뀌지 않는 이유는 기존 입력이 더 강하기 때문이다.
+• 창조는 모방에서 시작한다. 먼저 잘된 사람의 방식을 충분히 따라 해본다.
+
+Get with Right People
+• FOM이나 네트워킹 한 번으로 변화하길 기대하지 않는다. 리더·오너와 식사, 이동, 필드, 일상을 함께하는 시간을 장기적으로 쌓는다.
+• 힘들 때 비슷한 처지의 사람이 편하게 느껴져도, 내가 원하는 이상에 가까운 행동을 하는 사람을 의도적으로 선택한다.
+• 뇌를 바꾸지 않으면 1~2년 뒤에도 같은 자리에서 같은 내용을 듣게 된다.
+
+액션 아이템
+• 원하는 이상에 가까운 리더와 일상적인 시간을 지속적으로 늘린다.
+• 반복적·장기적 노출 계획을 세운다.
+• 배운 내용을 아는 데서 멈추지 않고 즉시 행동으로 연결한다.`}
+];
 let ngFilter = 'FOM', nvIdx = null, nvNew = false;
 const $id = x => document.getElementById(x);
 function saveNotes(n){ localStorage.setItem('biz_notes_v2', JSON.stringify(n)); }
@@ -578,9 +722,41 @@ function loadNotes(){
   }
   let dirty = !localStorage.getItem('biz_notes_v2');
   n.forEach(x=>{ if(!x.g){ x.g = (x.t||'').startsWith('FOM') ? 'FOM' : '오피스 미팅'; dirty = true; } });
+  FOM_260808.forEach(seed=>{
+    if(!n.some(x=>x.id===seed.id)){
+      n.unshift({...seed});
+      dirty = true;
+    }
+  });
   if(dirty) saveNotes(n);
   return n;
 }
+function noteRow(x){
+  return `<div class="nrow" role="button" tabindex="0" onclick="openNote(${x._i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNote(${x._i})}">
+    <h4>${esc(x.t||'(제목 없음)')}</h4>
+    <div class="nd">${x.d||''}</div>
+    <p>${esc((x.c||'').split('\n').find(line=>line.trim()&&!/^\d+[.]\s/.test(line.trim()))?.replace(/^[•\-–—]\s*/,'')||'')}</p>
+  </div>`;
+}
+function renderFomFolders(items){
+  const byDate = items.reduce((acc,x)=>{ (acc[x.d||'날짜 미정'] ||= []).push(x); return acc; },{});
+  return `<div class="fom-folders">${Object.entries(byDate)
+    .sort((a,b)=>b[0].localeCompare(a[0]))
+    .map(([date,notes],folderIndex)=>`<div class="fom-folder ${folderIndex===0?'open':''}">
+      <button class="fom-folder-h" type="button" aria-expanded="${folderIndex===0?'true':'false'}" onclick="toggleFomFolder(this)">
+        <span class="fom-folder-ic" aria-hidden="true">📁</span>
+        <span class="fom-folder-title">${esc(/^\d{4}\.\d{2}\.\d{2}$/.test(date) ? date.replace(/^(\d{4})\.(\d{2})\.(\d{2})$/,'$1년 $2월 $3일') : date)}</span>
+        <span class="fom-folder-meta">${notes.length}개 토픽</span>
+        <span class="fom-folder-arrow" aria-hidden="true">▶</span>
+      </button>
+      <div class="fom-folder-b">${notes.map(noteRow).join('')}</div>
+    </div>`).join('')}</div>`;
+}
+window.toggleFomFolder = btn => {
+  const folder = btn.closest('.fom-folder'), open = folder.classList.toggle('open');
+  btn.setAttribute('aria-expanded', String(open));
+  btn.querySelector('.fom-folder-ic').textContent = open ? '📂' : '📁';
+};
 function renderNotes(){
   const n = loadNotes();
   $id('ngroups').innerHTML = NGROUPS.map(g=>{
@@ -588,12 +764,7 @@ function renderNotes(){
     return `<button class="${g===ngFilter?'on':''}" onclick="setNG('${g}')">${g} <small>${c}</small></button>`;
   }).join('');
   const items = n.map((x,i)=>({...x,_i:i})).filter(x=>x.g===ngFilter);
-  $id('nlist').innerHTML = items.length ? items.map(x=>`
-    <div class="nrow" onclick="openNote(${x._i})">
-      <h4>${esc(x.t||'(제목 없음)')}</h4>
-      <div class="nd">${x.d||''}</div>
-      <p>${esc((x.c||'').split('\n')[0].replace(/^[•\-–—]\s*/,''))}</p>
-    </div>`).join('')
+  $id('nlist').innerHTML = items.length ? (ngFilter==='FOM' ? renderFomFolders(items) : items.map(noteRow).join(''))
     : '<div class="empty">이 분류에는 아직 노트가 없습니다. ＋ 새 노트로 첫 기록을 남겨보세요!</div>';
 }
 window.setNG = g => { ngFilter = g; renderNotes(); };
