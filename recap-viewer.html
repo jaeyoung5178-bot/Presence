@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>월별 팀 리캡 · PRESENCE</title>
+<link rel="icon" href="icon-32.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--panel:#151922;--ink:#f5f7fb;--sub:#969ead;--line:#2a3140;--accent:#8fd14f;--gold:#e8c877}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:Pretendard,"Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased}button,a{font:inherit}.app{min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(900px 520px at 50% -8%,#202737 0%,var(--bg) 64%)}
+.bar{position:relative;z-index:5;display:flex;align-items:center;gap:12px;min-height:72px;padding:14px max(20px,env(safe-area-inset-right)) 14px max(20px,env(safe-area-inset-left));border-bottom:1px solid var(--line);background:rgba(11,13,18,.9);backdrop-filter:blur(16px)}.back,.download,.full{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--sub);text-decoration:none;cursor:pointer}.back{padding:10px 16px}.download{padding:10px 16px;color:var(--accent);border-color:rgba(143,209,79,.38)}.full{width:44px;font-size:18px}.title{min-width:0}.title b{display:block;overflow:hidden;font-size:18px;text-overflow:ellipsis;white-space:nowrap}.title span{display:block;margin-top:3px;color:var(--sub);font-size:12px}.sp{flex:1}
+.stage{position:relative;flex:1;display:grid;place-items:center;min-height:0;padding:24px 92px 92px}.slide{display:block;width:min(100%,calc((100vh - 188px) * 16 / 9));max-height:calc(100vh - 188px);aspect-ratio:16/9;object-fit:contain;background:#fff;border-radius:4px;box-shadow:0 32px 80px rgba(0,0,0,.55)}.nav{position:absolute;top:50%;translate:0 -50%;display:grid;place-items:center;width:52px;height:72px;border:1px solid var(--line);border-radius:16px;background:rgba(21,25,34,.9);color:#fff;font-size:34px;cursor:pointer}.nav:disabled{opacity:.25;cursor:default}.prev{left:22px}.next{right:22px}
+.controls{position:absolute;left:50%;bottom:22px;translate:-50% 0;display:flex;align-items:center;gap:12px;width:min(620px,calc(100% - 32px));padding:11px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(21,25,34,.93);box-shadow:0 16px 42px rgba(0,0,0,.38);backdrop-filter:blur(16px)}.play{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:0;border-radius:50%;background:var(--accent);color:#0b0d12;font-size:16px;font-weight:900;cursor:pointer}.progress{position:relative;flex:1;height:5px;border-radius:999px;background:#303747;overflow:hidden}.progress i{position:absolute;inset:0 auto 0 0;width:0;background:var(--accent);transition:width .24s}.count{flex:0 0 74px;color:#fff;font-size:13px;font-weight:800;text-align:center}.empty{max-width:560px;padding:44px;border:1px dashed var(--line);border-radius:22px;color:var(--sub);font-size:16px;line-height:1.7;text-align:center}.empty b{display:block;margin-bottom:8px;color:#fff;font-size:24px}
+body.fullscreen .bar{display:none}body.fullscreen .stage{padding:0;background:#000}body.fullscreen .slide{width:min(100vw,calc(100vh * 16 / 9));max-height:100vh;border-radius:0}body.fullscreen .controls{bottom:18px;opacity:.18;transition:.2s}body.fullscreen .controls:hover{opacity:1}body.fullscreen .nav{opacity:.16}body.fullscreen .nav:hover{opacity:1}
+@media(max-width:1024px){.bar{min-height:68px}.stage{padding:20px 72px 88px}.nav{width:46px;height:64px}.prev{left:14px}.next{right:14px}.slide{width:min(100%,calc((100vh - 176px) * 16 / 9));max-height:calc(100vh - 176px)}}
+@media(max-width:640px){.bar{gap:8px;min-height:64px;padding:10px 12px}.back{width:44px;padding:0;font-size:0}.back:before{content:"←";font-size:18px}.title b{font-size:15px}.title span{font-size:11px}.download{width:44px;padding:0;font-size:0}.download:before{content:"↓";font-size:20px}.stage{display:flex;align-items:center;justify-content:center;padding:16px 12px 92px}.slide{width:100%;max-height:none}.nav{top:auto;bottom:21px;z-index:2;width:44px;height:44px;border-radius:50%;translate:0;font-size:26px}.prev{left:12px}.next{right:12px}.controls{bottom:16px;width:calc(100% - 120px);padding:7px 9px}.play{width:38px;height:38px;flex-basis:38px}.count{flex-basis:62px;font-size:12px}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="bar">
+    <a class="back" href="recaps.html">← 월별 리캡</a>
+    <div class="title"><b id="title">Presence Monthly Recap</b><span id="meta"></span></div>
+    <span class="sp"></span>
+    <a class="download" id="download" href="#" download>PowerPoint ↓</a>
+    <button class="full" id="full" aria-label="전체화면">⛶</button>
+  </header>
+  <section class="stage" id="stage">
+    <button class="nav prev" id="prev" aria-label="이전 슬라이드">‹</button>
+    <img class="slide" id="slide" alt="월별 리캡 슬라이드">
+    <button class="nav next" id="next" aria-label="다음 슬라이드">›</button>
+    <div class="controls">
+      <button class="play" id="play" aria-label="자동 재생">▶</button>
+      <div class="progress" aria-hidden="true"><i id="progress"></i></div>
+      <span class="count" id="count">01 / 01</span>
+    </div>
+  </section>
+</main>
+<script>
+const RECAPS={
+  '2026-04':{slides:15,file:'리캡/2026-04/Presence_2026_04_Monthly_Recap.pptx'},
+  '2026-05':{slides:18,file:'리캡/2026-05/Presence_2026_05_Monthly_Recap.pptx'},
+  '2026-07':{slides:15,file:'리캡/2026-07/Presence_2026_07_Monthly_Recap.pptx'}
+};
+const params=new URLSearchParams(location.search),month=params.get('month')||'2026-07',data=RECAPS[month];
+const $=id=>document.getElementById(id);let index=Math.max(0,Math.min((+location.hash.replace('#slide-','')||1)-1,(data?.slides||1)-1)),timer=null;
+function path(i){return`리캡/${month}/slides/slide-${i+1}.png`}
+function stop(){if(timer)clearInterval(timer);timer=null;$('play').textContent='▶';$('play').ariaLabel='자동 재생'}
+function go(i){if(!data)return;index=Math.max(0,Math.min(i,data.slides-1));$('slide').src=path(index);$('slide').alt=`${Number(month.slice(5))}월 리캡 ${index+1}번째 슬라이드`;$('count').textContent=`${String(index+1).padStart(2,'0')} / ${String(data.slides).padStart(2,'0')}`;$('progress').style.width=`${(index+1)/data.slides*100}%`;$('prev').disabled=index===0;$('next').disabled=index===data.slides-1;history.replaceState(null,'',`${location.pathname}?month=${month}#slide-${index+1}`)}
+function togglePlay(){if(timer)return stop();$('play').textContent='Ⅱ';$('play').ariaLabel='일시 정지';timer=setInterval(()=>{if(index>=data.slides-1){stop();return}go(index+1)},6500)}
+if(!data){$('stage').innerHTML='<div class="empty"><b>등록된 리캡이 없습니다.</b>월별 리캡 아카이브로 돌아가 다른 달을 선택해 주세요.</div>';$('title').textContent='리캡 없음';$('download').hidden=true;$('full').hidden=true}else{const [year,mm]=month.split('-');document.title=`${year}년 ${Number(mm)}월 팀 리캡 · PRESENCE`;$('title').textContent=`${year}년 ${Number(mm)}월 Team Recap`;$('meta').textContent=`PRESENCE · ${data.slides} SLIDES`;$('download').href=data.file;go(index);$('prev').onclick=()=>go(index-1);$('next').onclick=()=>go(index+1);$('play').onclick=togglePlay;document.onkeydown=e=>{if(['ArrowLeft','PageUp'].includes(e.key))go(index-1);if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(index+1)}if(e.key==='Home')go(0);if(e.key==='End')go(data.slides-1);if(e.key==='Escape')stop()};let touchX=null;$('slide').addEventListener('touchstart',e=>touchX=e.changedTouches[0].clientX,{passive:true});$('slide').addEventListener('touchend',e=>{if(touchX==null)return;const d=e.changedTouches[0].clientX-touchX;if(Math.abs(d)>45)go(index+(d<0?1:-1));touchX=null},{passive:true})}
+$('full').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){document.body.classList.toggle('fullscreen')}};document.addEventListener('fullscreenchange',()=>document.body.classList.toggle('fullscreen',!!document.fullscreenElement));
+</script>
+</body>
+</html>

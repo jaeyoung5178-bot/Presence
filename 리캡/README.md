@@ -1,5 +1,7 @@
 # 팀 리캡 보관함
 
-이 폴더에 리캡 PDF(권장) 또는 PPT/PPTX를 올리면 recaps.html 아카이브에 자동으로 나타납니다.
+월별 리캡 원본 PowerPoint와 웹 발표용 슬라이드 이미지를 보관합니다.
 
-파일명 예시: 2026-05 오월의 팀.pdf
+폴더 구조: `YYYY-MM/Presence_YYYY_MM_Monthly_Recap.pptx`와 `YYYY-MM/slides/slide-N.png`
+
+현재 등록: 2026년 4월, 5월, 7월. 6월은 자료 없음 상태로 유지합니다.
