@@ -1,9 +1,9 @@
 const pb$=selector=>document.querySelector(selector);
 const pbEscape=value=>String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const pbCity=item=>item.city;
-const site=(id,city,name,ctm,extra={})=>({id,city,name,zone:`${city} CTM`,address:`경상남도 ${city}시 · 카카오맵에서 위치 재확인`,flow:ctm.pAvg>=2.4?5:ctm.pAvg>=1.5?4:ctm.pAvg>=.8?3:2,day:"8/16–8/21",shade:"셋업 면·통행 동선 현장 확인",sunlight:"partial",note:"CTM 실적 기반 운영 후보입니다. 현장에서 점포 승인, 보도 경계, 그늘 시간을 다시 확인하세요.",source:"제공된 CTM 실적표 · 카카오맵 장소명 기준",ctm,...extra});
+const site=(id,city,name,ctm,extra={})=>({id,city,name,zone:`${city} CTM`,address:`경상남도 ${city}시 · 카카오맵에서 위치 재확인`,flow:ctm.pAvg>=2.4?5:ctm.pAvg>=1.5?4:ctm.pAvg>=.8?3:2,day:"8/16–8/21",shade:"셋업 면·통행 동선 현장 확인",sunlight:"partial",imageData:`./assets/geoje/roadview-${id}.png`,photoLabel:"네이버지도 실제 거리뷰 · 운영 전 방향 재확인",note:"CTM 실적 기반 운영 후보입니다. 현장에서 점포 승인, 보도 경계, 그늘 시간을 다시 확인하세요.",source:"제공된 CTM 실적표 · 네이버 거리뷰 · 카카오맵 장소명 기준",ctm,...extra});
 const pbSites=[
-  site("geoje-terminal","거제","고현버스터미널",{sales:31,hc:13,pAvg:2.4,scoring:13,scoringRate:100,donate:900000},{main:true,zone:"거제 · 고현",address:"경상남도 거제시 고현동 · 기존 셋업 공간(실외)",flow:5,imageData:"./assets/geoje/gohyeon-setup-photo.png",photoLabel:"제공된 실제 셋업 위치 사진",note:"이벤트 코드 19291. 8월 17일 필수 셋업, 운영 허가 8월 17–22일 11:00–20:00. 트립은 8월 21일까지 운영합니다."}),
+  site("geoje-terminal","거제","고현버스터미널",{sales:31,hc:13,pAvg:2.4,scoring:13,scoringRate:100,donate:900000},{main:true,zone:"거제 · 고현",address:"경상남도 거제시 고현동 · 기존 셋업 공간(실외)",flow:5,note:"이벤트 코드 19291. 8월 17일 필수 셋업, 운영 허가 8월 17–22일 11:00–20:00. 트립은 8월 21일까지 운영합니다."}),
   site("geoje-daiso-gohyeon","거제","다이소 거제고현2호점",{sales:70,hc:55,pAvg:1.3,scoring:32,scoringRate:58,donate:2050000}),
   site("geoje-coop","거제","거제축협 농수산물종합유통센터",{sales:9,hc:4,pAvg:2.3,scoring:3,scoringRate:75,donate:280000},{note:"원자료의 유사 명칭 3건을 하나의 실제 장소 후보로 합쳐 표시했습니다."}),
   site("geoje-bank","거제","BNK경남은행 거제고현지점",{sales:7,hc:3,pAvg:2.3,scoring:3,scoringRate:100,donate:220000}),
