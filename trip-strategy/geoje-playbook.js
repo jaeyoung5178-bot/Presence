@@ -1,5 +1,13 @@
 const pb$=selector=>document.querySelector(selector);
 const pbEscape=value=>String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+function openLockedTripStrategy(event){
+  event.preventDefault();
+  const password=window.prompt("관리자 비밀번호를 입력하세요.");
+  if(password==="0001")location.href="./index.html";
+  else if(password!==null)window.alert("비밀번호가 맞지 않습니다.");
+}
+pb$("#locked-trip-home").addEventListener("click",openLockedTripStrategy);
+pb$("#locked-trip-back").addEventListener("click",openLockedTripStrategy);
 const pbCity=item=>item.city;
 const site=(id,city,name,ctm,extra={})=>({id,city,name,zone:`${city} CTM`,address:`경상남도 ${city}시 · 카카오맵에서 위치 재확인`,flow:ctm.pAvg>=2.4?5:ctm.pAvg>=1.5?4:ctm.pAvg>=.8?3:2,day:"8/16–8/21",shade:"셋업 면·통행 동선 현장 확인",sunlight:"partial",imageData:`./assets/geoje/roadview-${id}.png`,photoLabel:"네이버지도 실제 거리뷰 · 운영 전 방향 재확인",note:"CTM 실적 기반 운영 후보입니다. 현장에서 점포 승인, 보도 경계, 그늘 시간을 다시 확인하세요.",source:"제공된 CTM 실적표 · 네이버 거리뷰 · 카카오맵 장소명 기준",ctm,...extra});
 const pbSites=[
