@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>통영 Trip TOP 20 — Presence</title>
+  <meta name="description" content="CTM 실적과 실제 카카오 로드뷰를 결합한 통영 캠페인 사이트 TOP 20 플레이북">
+  <meta name="theme-color" content="#071b20">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23cfff42'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='34' font-weight='900' fill='%23072831'%3EP%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./regional-playbook.css?v=2">
+  <link rel="stylesheet" href="./tongyeong-playbook.css?v=1">
+</head>
+<body>
+  <div class="region-shell tongyeong-shell">
+    <header class="region-header">
+      <a id="locked-brand" class="region-brand" href="#"><i>P</i><span><b>Tongyeong Trip</b><small>PRESENCE FIELD PLAYBOOK</small></span></a>
+      <button id="locked-home" class="locked-home" type="button">🔒 Trip Strategy</button>
+    </header>
+    <main>
+      <section class="region-hero tongyeong-hero">
+        <div><p class="eyebrow">CTM BENCHMARK · KAKAO ROADVIEW</p><h1>통영<em>CAMPAIGN TOP 20</em></h1><p>실제 성과가 검증된 사이트를 기준점으로 삼고, 생활 유동과 관광 유동이 겹치는 신규 후보까지 운영 우선순위로 정리했습니다.</p></div>
+        <div class="trip-date"><span>FIELD WINDOW</span><b id="trip-range">화 — 금</b><small>실시간 날씨 자동 갱신</small></div>
+      </section>
+      <nav class="region-tabs tongyeong-tabs" aria-label="통영 트립 메뉴">
+        <button class="active" type="button" data-tab="sites">사이트 TOP 20</button>
+        <button type="button" data-tab="analysis">분석 기준</button>
+        <button type="button" data-tab="goals">목표세팅</button>
+      </nav>
+      <section class="region-panel active" data-panel="sites">
+        <div class="panel-head"><div><p class="eyebrow">01 · RANKED SITES</p><h2>통영 캠페인 후보</h2></div><p>순위는 운영 우선지수이며 설치 확정 여부가 아닙니다.</p></div>
+        <div class="tongyeong-dashboard">
+          <article class="benchmark-card"><span>CTM STRONGEST SIGNAL</span><h3>다이소 통영죽림점</h3><div><b>82</b><small>Sales</small><b>92%</b><small>성공률</small><b>2.1</b><small>P.Avg</small></div><p>기존 데이터에서 볼륨과 참여율이 함께 확인된 가장 강한 기준점입니다.</p></article>
+          <article class="weather-card"><header><div><span>LIVE WEATHER</span><h3>통영 화–금 날씨</h3></div><small id="weather-status" class="weather-status">실시간 예보 연결 중…</small></header><div id="weather-grid" class="weather-grid"></div><a class="weather-source" href="https://open-meteo.com/" target="_blank" rel="noreferrer">Weather data by Open-Meteo</a></article>
+        </div>
+        <div class="rank-toolbar" aria-label="사이트 필터">
+          <label><span>권역</span><select id="zone-filter"><option value="all">전체 권역</option><option value="죽림">죽림</option><option value="무전·북신">무전·북신</option><option value="원도심·항남">원도심·항남</option><option value="미륵·도남">미륵·도남</option></select></label>
+          <label><span>근거</span><select id="evidence-filter"><option value="all">전체 후보</option><option value="ctm">CTM 검증</option><option value="expand">확장 후보</option></select></label>
+          <button id="copy-top20" type="button">TOP 20 카톡용 복사</button><output id="site-count">20곳 표시</output>
+        </div>
+        <div id="site-grid" class="site-grid tongyeong-grid"></div>
+      </section>
+      <section class="region-panel" data-panel="analysis">
+        <div class="panel-head"><div><p class="eyebrow">02 · SCORING MODEL</p><h2>왜 이 순서인가</h2></div><p>실측 전 의사결정을 돕는 우선순위 모델입니다.</p></div>
+        <div class="model-grid"><article><b>40%</b><h3>CTM 성과</h3><p>Sales·HC·P.Avg·Scoring·성공률·후원금을 최우선 반영합니다.</p></article><article><b>25%</b><h3>유동 밀도</h3><p>상시 생활 유동과 교통·관광 집결을 구분해 평가합니다.</p></article><article><b>20%</b><h3>대화 체류</h3><p>대기·쇼핑·산책처럼 멈춰 대화할 수 있는 시간을 봅니다.</p></article><article><b>15%</b><h3>셋업 가능성</h3><p>보도폭·출입구·민원 위험·승인 난도를 함께 봅니다.</p></article></div>
+        <div class="ctm-table-wrap" role="region" aria-label="CTM 실적 비교표" tabindex="0"><table><caption>기존 통영 CTM 실적 기준</caption><thead><tr><th>사이트</th><th>Sales</th><th>HC</th><th>P.Avg</th><th>Scoring</th><th>성공률</th><th>후원금</th></tr></thead><tbody id="ctm-table-body"></tbody></table></div>
+        <div class="strategy-grid"><article><span>PRIMARY</span><h3>죽림 생활권</h3><p>죽림점·터미널·이마트를 한 축으로 묶어 평일 생활 유동을 우선 공략합니다.</p></article><article><span>SECONDARY</span><h3>무전·북신 생활권</h3><p>무전점·롯데마트·북신시장을 묶어 퇴근 전후와 장보기 유동을 운영합니다.</p></article><article><span>TEST</span><h3>원도심 관광권</h3><p>중앙시장·여객선터미널·강구안은 체류는 좋지만 관광객 비중과 승인 난도를 반드시 기록합니다.</p></article></div>
+        <p class="analysis-caution">※ 운영 우선지수는 기존 CTM과 입지 특성을 결합한 내부 의사결정 지표입니다. 실제 후원 참여율을 보장하지 않으며, 모든 장소는 점포·시설·관할기관 승인 후 운영해야 합니다.</p>
+      </section>
+      <section class="region-panel" data-panel="goals">
+        <div class="panel-head"><div><p class="eyebrow">03 · PERSONAL ACTION PLAN</p><h2>나의 통영 목표</h2></div><p>KPI × Score = 필요한 Closing</p></div>
+        <form id="goal-form" class="goal-sheet"><div class="goal-grid"><label><span>NAME</span><input id="name" placeholder="예: 임재영"></label><label><span>MY TRIP GOAL</span><input id="theme" placeholder="예: 통영에서 PB 달성하기"></label><label><span>MY KPI</span><input id="kpi" type="number" min="0" step="0.1" inputmode="decimal" placeholder="예: 7"></label></div><div class="goal-tiers"><label class="goal-tier"><b>A · BEST</b><input id="score-a" type="number" min="0" step="0.1" placeholder="Score"><output id="close-a">— Closing</output></label><label class="goal-tier"><b>B · GOOD</b><input id="score-b" type="number" min="0" step="0.1" placeholder="Score"><output id="close-b">— Closing</output></label><label class="goal-tier"><b>C · MINIMUM</b><input id="score-c" type="number" min="0" step="0.1" placeholder="Score"><output id="close-c">— Closing</output></label></div><label class="wide"><span>나의 다짐</span><textarea id="pledge" rows="4" placeholder="이번 트립에서 반드시 지킬 한 문장"></textarea></label><div class="goal-actions"><span id="save-state" class="save-state">이 기기에 자동 저장됩니다.</span><button type="submit">Action Plan 저장</button></div></form>
+      </section>
+    </main>
+  </div>
+  <div id="copy-toast" class="copy-toast" role="status" aria-live="polite"></div>
+  <script src="./tongyeong-playbook.js?v=1"></script>
+</body>
+</html>
