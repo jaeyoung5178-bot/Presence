@@ -160,8 +160,8 @@ function render(){
   $("#spot-grid").innerHTML=items.map(card).join("");
   $("#empty").hidden=items.length>0;$("#result-count").textContent=`${items.length}개 표시`;
   $("#list-title").textContent=`${activeRegion} 필드 후보`;
-  $("#total-count").textContent=allSites().length;
-  $("#total-label").textContent=`${activeRegion} 사전답사 후보`;
+  if($("#total-count"))$("#total-count").textContent=allSites().length;
+  if($("#total-label"))$("#total-label").textContent=`${activeRegion} 사전답사 후보`;
 }
 async function copyText(text,message){
   try{
