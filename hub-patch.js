@@ -498,6 +498,7 @@
     {t:'액션플랜 보드',u:'memo.html#plan',e:'✅',g:'PAGE',k:'액션 플랜 계획 할일 투두'},
     {t:'개인 세일즈 기록 (필드 레코드)',u:'presence-record.html',e:'📊',g:'PAGE',k:'레코드 기록 세일즈 노제로 후원자 리젝'},
     {t:'팀 리캡 아카이브',u:'recaps.html',e:'🎞️',g:'PAGE',k:'리캡 아카이브 발표 월간'},
+    {t:'B2B 상가방문 · 구월동 활동 지도',u:'b2b/index.html',e:'🗺️',g:'SITES',k:'b2b 비투비 상가 방문 구월동 로데오 병원 학원 식당 지도 거리뷰'},
     {t:'재영의 서재',u:'library.html',e:'📚',g:'PAGE',k:'서재 책 라이브러리 독서'},
     {t:'PRESENCE 워크북',u:'https://presence.co.kr',e:'🌳',g:'LINK',k:'워크북 팀 먹이 컴페티션'},
     {t:'맛도사 · MATDOSA',u:'https://jaeyoung5178-bot.github.io/matdosa.github.io/',e:'🍜',g:'LINK',k:'맛도사 맛집'},

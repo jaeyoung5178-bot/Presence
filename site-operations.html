@@ -20,12 +20,15 @@
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:56px}
     .card{position:relative;display:grid;min-height:320px;padding:30px;overflow:hidden;background:linear-gradient(145deg,rgba(29,28,23,.96),rgba(18,18,16,.96));border:1px solid var(--line);border-radius:20px;text-decoration:none;box-shadow:0 24px 70px rgba(0,0,0,.24);transition:.25s}
     .card:after{content:"";position:absolute;width:210px;height:210px;right:-60px;bottom:-70px;border-radius:50%;background:rgba(56,163,122,.12)}.card:hover{transform:translateY(-4px);border-color:rgba(232,180,102,.55)}
+    .card.featured{grid-column:1/-1;min-height:350px;background:radial-gradient(circle at 86% 18%,rgba(89,132,255,.24),transparent 30%),linear-gradient(145deg,rgba(24,39,43,.98),rgba(18,18,16,.98));border-color:rgba(72,185,141,.5)}
+    .card.featured:after{width:300px;height:300px;background:rgba(72,185,141,.14)}
+    .card.featured .tag{background:#48b98d;color:#07130e}.card.featured .go{color:#8ee2c1}
     .tag{align-self:start;justify-self:start;padding:7px 10px;border-radius:6px;background:rgba(56,163,122,.16);color:#87dbba;font:800 11px var(--sans);letter-spacing:.12em}
     .card-copy{align-self:end;position:relative;z-index:1}.card h2{margin:0 0 12px;font-size:clamp(30px,4vw,42px);font-weight:800;line-height:1.16;letter-spacing:-.04em}.card p{max-width:540px;margin:0;color:#c1baac;font-size:16px;line-height:1.7}.go{display:inline-block;margin-top:24px;color:#f4c984;font:800 12px var(--sans);letter-spacing:.1em}
     .soon{opacity:.58;pointer-events:none}.soon:after{background:rgba(232,180,102,.08)}
     footer{display:flex;justify-content:space-between;gap:16px;margin-top:70px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font:700 11px var(--sans);letter-spacing:.1em}
     a:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
-    @media(max-width:760px){.shell{padding-inline:18px;padding-bottom:48px}header{min-height:68px}.brand small{display:none}main{padding-top:54px}.kicker{font-size:11px;letter-spacing:.14em}h1{font-size:42px;line-height:1.08;margin-top:16px}.intro{font-size:16px;line-height:1.75}.grid{grid-template-columns:1fr;margin-top:38px}.card{min-height:290px;padding:24px}.card h2{font-size:31px}.card p{font-size:15px}footer{flex-direction:column}}
+    @media(max-width:760px){.shell{padding-inline:18px;padding-bottom:48px}header{min-height:68px}.brand small{display:none}main{padding-top:54px}.kicker{font-size:11px;letter-spacing:.14em}h1{font-size:42px;line-height:1.08;margin-top:16px}.intro{font-size:16px;line-height:1.75}.grid{grid-template-columns:1fr;margin-top:38px}.card,.card.featured{grid-column:auto;min-height:290px;padding:24px}.card h2{font-size:31px}.card p{font-size:16px}footer{flex-direction:column}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
   </style>
 </head>
@@ -40,6 +43,10 @@
       <h1>현장을 더 잘 고르고,<br><em>더 안전하게 운영하기.</em></h1>
       <p class="intro">현장 후보 탐색부터 그늘·보행 동선·사전답사 기준까지, 사이트 운영에 필요한 전략 자료를 한곳에 모읍니다.</p>
       <section class="grid" aria-label="사이트운영 도구">
+        <a class="card featured" href="b2b/index.html">
+          <span class="tag">NEW · B2B GUWOL MAP</span>
+          <span class="card-copy"><h2>B2B 상가방문<br>구월동 활동 지도</h2><p>병원·학원·식당의 방문 적정시간에 맞춰 구월동 로데오 상권을 순서대로 돕니다. 건물 단위 지도, 거리뷰, 네이버지도, 방문 결과 기록을 한 화면에서 사용하세요.</p><span class="go">내일 구월동 루트 열기 →</span></span>
+        </a>
         <a class="card" href="summer-strategy/index.html">
           <span class="tag">LIVE · 100 SPOTS</span>
           <span class="card-copy"><h2>Presence<br>여름전략 사이트</h2><p>인천 50곳과 인근 수도권 50곳. 매장 전면·인도·나무 또는 건물 그늘이 보이는 부스 후보 아카이브입니다.</p><span class="go">OPEN STRATEGY →</span></span>
