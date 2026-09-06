@@ -1682,6 +1682,7 @@ const Hub = {
     localStorage.removeItem(localKey);
     localStorage.removeItem(HUB_SYNCED_KEY);
     localStorage.removeItem("fcos_locked");
+    try { if (window.FcosPersonalInstall && window.FcosPersonalInstall.clear) window.FcosPersonalInstall.clear(); } catch (e) {}
     this.badge();
     this.toast((who && who.name ? who.name + "님은 " : "") + "활성 팀원 명단에서 제외되어 콜백 연결을 종료했습니다");
   },
@@ -1729,11 +1730,15 @@ const Hub = {
     const list = Object.values(profiles).filter((u) => u && u.name && u.uid && u.status === "active" && u.accessKey);
     const old = document.getElementById("hub-picker"); if (old) old.remove();
     const ov = document.createElement("div"); ov.id = "hub-picker";
-    ov.style.cssText = "position:fixed;inset:0;background:rgba(15,18,24,.55);z-index:99;display:flex;align-items:center;justify-content:center;padding:20px";
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-label", "다른 사람 콜백싯 보기");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(15,18,24,.55);z-index:99;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain";
     const box = document.createElement("div");
-    box.style.cssText = "background:#fff;border-radius:18px;padding:20px;max-width:420px;width:100%;max-height:70vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3)";
-    box.innerHTML = "<div style='font-weight:800;font-size:16px;margin-bottom:4px'>허브 계정 연결</div>" +
-      "<div style='font-size:13px;color:#6b7482;margin-bottom:14px'>후원자 정보가 이 계정의 리젝노트로 들어갑니다</div>";
+    box.style.cssText = "background:#fff;border-radius:20px;padding:20px;max-width:420px;width:100%;max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3)";
+    box.innerHTML = "<div style='font-weight:850;font-size:18px;margin-bottom:4px'>다른 사람 콜백싯 보기</div>" +
+      "<div style='font-size:13px;color:#6b7482;margin-bottom:14px'>확인할 팀원을 선택하면 해당 콜백싯으로 안전하게 전환됩니다.</div>";
+    const current = this.identity();
     /* 임재영(AOP)을 항상 맨 위에 고정, 나머지는 이름순 */
     list.sort((a, b) => {
       const aa = isAdminU(a), bb = isAdminU(b);
@@ -1743,15 +1748,20 @@ const Hub = {
       const b = document.createElement("button");
       const admin = isAdminU(u);
       const role = u.role || (admin ? "AOP" : "");
-      b.textContent = (admin ? "👑 " : "") + u.name + (role ? " · " + role : "");
-      b.style.cssText = "display:block;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border:1.5px solid #e5e9f0;border-radius:12px;background:#f8fafc;font-weight:700;font-size:14px;cursor:pointer";
+      const selected = !!(current && current.uid === u.uid);
+      b.textContent = (admin ? "👑 " : "") + u.name + (role ? " · " + role : "") + (selected ? "   · 현재 보는 중" : "");
+      b.style.cssText = "display:block;width:100%;min-height:48px;text-align:left;padding:12px 14px;margin:6px 0;border:1.5px solid "+(selected?"#86efac":"#e5e9f0")+";border-radius:12px;background:"+(selected?"#f0fdf4":"#f8fafc")+";color:"+(selected?"#166534":"#18181b")+";font-weight:750;font-size:14px;cursor:pointer";
+      b.setAttribute("aria-current", selected ? "true" : "false");
       b.onclick = () => { this.setIdentity({ uid: u.uid, name: u.name }, u.accessKey); ov.remove(); this.toast(u.name + "님으로 연결 ✓"); };
       box.appendChild(b);
     });
     const x = document.createElement("button"); x.textContent = "닫기";
-    x.style.cssText = "margin-top:10px;padding:10px 14px;border:0;border-radius:10px;background:#eef1f6;font-weight:700;cursor:pointer;width:100%";
+    x.style.cssText = "margin-top:10px;min-height:48px;padding:10px 14px;border:0;border-radius:12px;background:#eef1f6;font-weight:750;cursor:pointer;width:100%";
     x.onclick = () => ov.remove(); box.appendChild(x);
+    ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
     ov.appendChild(box); document.body.appendChild(ov);
+    const hb = document.getElementById("hub-badge"); if (hb) hb.setAttribute("aria-expanded", "true");
+    ov.addEventListener("click", () => { if (!document.body.contains(ov) && hb) hb.setAttribute("aria-expanded", "false"); });
   },
 
   toast(msg) {
@@ -1790,7 +1800,11 @@ const Hub = {
       };
     }
     const who = this.identity();
-    b.textContent = who ? "✓ " + shortName(who.name) : "허브 연결";
+    const admin = !!(who && (who.uid === "admin" || who.name === "임재영"));
+    b.textContent = who ? "✓ " + shortName(who.name) + (admin ? " ▾" : "") : "허브 연결";
+    b.setAttribute("aria-haspopup", admin ? "dialog" : "false");
+    b.setAttribute("aria-expanded", "false");
+    b.setAttribute("aria-label", admin ? who.name + " 관리자 · 다른 사람 콜백싯 보기" : (who ? who.name + " 개인 콜백싯" : "콜백싯 연결"));
     b.title = who ? (who.uid === "admin" || who.name === "임재영" ? "허브 계정: " + who.name + " (탭하면 계정 변경)" : who.name + "님 개인 콜백싯 · 탭하면 동기화") : "개인 링크로 허브 연결";
     b.style.background = who ? "#DCFCE7" : "#FEE2E2";
     b.style.color = who ? "#166534" : "#991B1B";
@@ -2083,7 +2097,9 @@ const Cloud = {
     if (this.started) return;
     if (!this.uid()) { this.setStatus("off"); return; }
     const who = Hub.identity();
-    if (!(await Hub.activeIdentity(who))) { Hub.revokeIdentity(who); this.setStatus("off"); return; }
+    const alive = await Hub.activeIdentity(who);
+    if (alive === false) { Hub.revokeIdentity(who); this.setStatus("off"); return; }
+    if (alive !== true) { this.setStatus("off"); return; } // 일시적 네트워크·인증 지연에는 개인 연결 유지
     this.started = true;
     this.pullAll().then(() => this.stream());
   },
@@ -2348,7 +2364,10 @@ const Team = {
          (비밀번호 0001 · Firebase settings/cbAdminPw 로 변경 가능) */
     const orig = Hub.openPicker.bind(Hub);
     Hub.openPicker = async () => {
-      { /* 2026-07-20: 계정 전환은 관리자 포함 항상 비밀번호 확인 */
+      /* 현재 개인 링크와 Firebase 세션으로 관리자임이 이미 검증된 경우에는
+         상단 이름 배지에서 즉시 선택창을 연다. 비관리자 기기는 기존 보호 유지. */
+      if (this.isAdmin()) return orig();
+      {
         const pw = prompt("다른 계정으로 전환하려면 비밀번호가 필요해요 🔒\n비밀번호를 입력하세요.\n(팀원은 관리자가 카톡으로 보내준 개인 링크로 접속하면 자동 연결됩니다)");
         if (pw === null || pw === "") return;
         let real = "0001";
