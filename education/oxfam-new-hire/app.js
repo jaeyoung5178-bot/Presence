@@ -74,11 +74,11 @@
       var shell=document.createElement("div");shell.className="audio-player";
       var orb=document.createElement("div");orb.className="audio-orb";orb.textContent="♫";
       var label=document.createElement("p");label.textContent="OXFAM 교육 오디오 재생 중";
-      var audio=document.createElement("audio");audio.src=spec.src;audio.preload="auto";
+      var audio=document.createElement("audio");audio.src=spec.src+"?v=20260908d";audio.preload="auto";
       shell.append(orb,label,audio);frame.appendChild(shell);audio.play().catch(function(){});return audio;
     }
     var video=document.createElement("video");
-    video.src=spec.src;video.preload="auto";video.playsInline=true;video.controls=true;
+    video.src=spec.src+"?v=20260908d";video.preload="auto";video.playsInline=true;video.controls=true;
     frame.appendChild(video);video.play().catch(function(){});return video;
   }
   function playMedia(){
