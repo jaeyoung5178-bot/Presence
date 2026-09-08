@@ -10,6 +10,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <script>
+    if(location.protocol==="file:"){
+      location.replace("https://hub.presence.co.kr/education/oxfam-new-hire/"+location.hash);
+    }
+  </script>
   <main class="presenter" id="presenter" aria-live="polite">
     <section class="ready" id="ready">
       <div class="ready-mark" aria-hidden="true"></div>
@@ -38,6 +43,6 @@
       <button class="exit" id="exitButton" type="button" aria-label="발표 종료">ESC</button>
     </section>
   </main>
-  <script src="app.js?v=20260908b"></script>
+  <script src="app.js?v=20260908c"></script>
 </body>
 </html>

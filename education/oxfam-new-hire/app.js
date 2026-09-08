@@ -64,9 +64,10 @@
     frame.replaceChildren();
     if(spec.type==="youtube"){
       var iframe=document.createElement("iframe");
-      iframe.src="https://www.youtube-nocookie.com/embed/"+spec.id+"?autoplay=1&controls=1&rel=0&playsinline=1&enablejsapi=1";
+      iframe.src="https://www.youtube-nocookie.com/embed/"+spec.id+"?autoplay=1&controls=1&rel=0&playsinline=1&enablejsapi=1&origin="+encodeURIComponent(location.origin);
       iframe.title="OXFAM 교육 영상";
       iframe.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";
+      iframe.referrerPolicy="strict-origin-when-cross-origin";
       iframe.allowFullscreen=true;frame.appendChild(iframe);return iframe;
     }
     if(spec.type==="audio"){
@@ -107,14 +108,18 @@
   function onKey(e){
     if(["ArrowRight","PageDown"," ","Enter","MediaTrackNext"].indexOf(e.key)>=0){e.preventDefault();next();return;}
     if(["ArrowLeft","PageUp","Backspace","MediaTrackPrevious"].indexOf(e.key)>=0){e.preventDefault();prev();return;}
-    if(e.key==="Escape"&&!document.fullscreenElement){end();}
+    if(e.key==="Escape"&&mediaPhase===1){stopMedia(false);mediaPhase=2;hint.hidden=false;}
   }
   document.addEventListener("keydown",onKey,{passive:false});
   ready.addEventListener("click",start);
   document.getElementById("nextButton").addEventListener("click",next);
   document.getElementById("prevButton").addEventListener("click",prev);
-  document.getElementById("exitButton").addEventListener("click",end);
+  document.getElementById("exitButton").addEventListener("click",function(){stopMedia(true);location.href="../../edu.html";});
   layer.addEventListener("dblclick",function(){stopMedia(true);mediaPhase=2;hint.hidden=false;});
   image.addEventListener("error",function(){image.alt="슬라이드를 불러오지 못했습니다.";});
-  var initial=parseInt(location.hash.slice(1),10);if(initial>=1&&initial<=TOTAL)page=initial;
+  var initial=parseInt(location.hash.slice(1),10);
+  if(initial>=1&&initial<=TOTAL){
+    page=initial;
+    if(initial>1){start();}
+  }
 })();
