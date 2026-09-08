@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>OXFAM 신입교육 | PRESENCE</title>
+  <meta name="description" content="OXFAM 신입교육 교육자용 프레젠테이션">
+  <link rel="icon" href="../../icon-32.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="presenter" id="presenter" aria-live="polite">
+    <section class="ready" id="ready">
+      <div class="ready-mark" aria-hidden="true"></div>
+      <p class="ready-kicker">OXFAM NEW HIRE EDUCATION</p>
+      <h1>전체화면 준비모드</h1>
+      <p class="ready-status"><span></span>준비 중</p>
+      <p class="ready-help">키보드 다음 버튼 또는 리모컨을 누르면 시작합니다</p>
+    </section>
+
+    <section class="stage" id="stage" hidden>
+      <img id="slideImage" class="slide-image" alt="">
+      <div class="media-hint" id="mediaHint" hidden>
+        <span class="media-hint-icon">▶</span>
+        <span>다음 버튼으로 미디어 재생</span>
+      </div>
+      <div class="media-layer" id="mediaLayer" hidden>
+        <div class="media-frame" id="mediaFrame"></div>
+        <div class="media-caption">다음 버튼을 누르면 정지하고 슬라이드로 돌아갑니다</div>
+      </div>
+      <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+      <div class="counter" id="counter"></div>
+      <nav class="controls" aria-label="발표 조작">
+        <button id="prevButton" type="button" aria-label="이전 슬라이드">‹</button>
+        <button id="nextButton" type="button" aria-label="다음">›</button>
+      </nav>
+      <button class="exit" id="exitButton" type="button" aria-label="발표 종료">ESC</button>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
