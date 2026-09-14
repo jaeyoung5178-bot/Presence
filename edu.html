@@ -267,6 +267,17 @@
     return true;
   }
 
+  function ensureTripOperationGuide(d){
+    if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
+    var changed=false;
+    if(d.folders.indexOf("섹터리더")<0){ d.folders.push("섹터리더"); changed=true; }
+    if(!d.items.some(function(it){return it.id==="presence-trip-operation-guide" || it.href==="education/sector-leader/trip-guide/index.html";})){
+      d.items.unshift({id:"presence-trip-operation-guide",tag:"TRIP",title:"트립 운영 가이드",sub:"지역 선정부터 Profit · Progress · People 계획과 군산 트립 사례까지",href:"education/sector-leader/trip-guide/index.html",target:"_blank",folder:"섹터리더"});
+      changed=true;
+    }
+    return changed;
+  }
+
   function ensureFieldRookieGuide(d){
     if(!d || !d.items || d.items.some(function(it){ return it.id==="presence-field-rookie" || it.href==="education/sector-leader/field-rookie/index.html"; })) return false;
     d.items.unshift({id:"presence-field-rookie",tag:"FIELD",title:"신입과 필드 뛰는 법",sub:"신입의 자립을 만드는 필드 리더십 · 임재영 AOP",href:"education/sector-leader/field-rookie/index.html",target:"_blank",folder:"섹터리더"});
@@ -394,6 +405,7 @@
       localChanged=ensureOxfamNewHireGuide(data)||localChanged;
       localChanged=ensureWarHistoryTodayGuide(data)||localChanged;
       localChanged=ensureFieldRookieGuide(data)||localChanged;
+      localChanged=ensureTripOperationGuide(data)||localChanged;
       localChanged=ensureMyStoryGuide(data) || localChanged;
       localChanged=ensureOxfamEarthquakePitch(data) || localChanged;
       if(localChanged) writeLocalData();
@@ -409,6 +421,7 @@
         remoteChanged=ensureOxfamNewHireGuide(data)||remoteChanged;
         remoteChanged=ensureWarHistoryTodayGuide(data)||remoteChanged;
         remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
+        remoteChanged=ensureTripOperationGuide(data)||remoteChanged;
         remoteChanged=ensureMyStoryGuide(data) || remoteChanged;
         remoteChanged=ensureOxfamEarthquakePitch(data) || remoteChanged;
         if(remoteChanged) save(true);
@@ -417,12 +430,12 @@
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
     });
   }
   function save(silent){
