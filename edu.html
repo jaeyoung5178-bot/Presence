@@ -168,6 +168,7 @@
     v:1,
     folders:["신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
     items:[
+      {id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"신입 체리티교육 · 89장 프레젠테이션과 현장 영상",href:"education/charity-training/index.html",target:"_blank",folder:"신입"},
       {id:uid(),tag:"CLASS",title:"Onboarding I·II",sub:"인천 신입교육 — 피스메이커 루키 클래스",href:"토픽/topic-onboarding.html",target:"",folder:"신입"},
       {id:"presence-oxfam-new-hire",tag:"NEW",title:"신입교육",sub:"OXFAM 신입교육 · 교육자용 전체화면 프레젠테이션",href:"education/oxfam-new-hire/index.html",target:"_blank",folder:"신입"},
       {id:"presence-war-history-today",tag:"PHOTO",title:"전쟁의 과거와 오늘",sub:"한국전쟁과 가자지구를 실제 기록 사진으로 보는 교육 아카이브",href:"education/war-history-today/index.html",target:"_blank",folder:"신입"},
@@ -214,6 +215,19 @@
       });
     }
     return d;
+  }
+
+  // 체리티교육은 기존 로컬·원격 목록을 사용하는 기기에도 표시합니다.
+  function ensureCharityTraining(d){
+    if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
+    var changed=false;
+    if(d.folders.indexOf("신입")<0){d.folders.unshift("신입");changed=true;}
+    var item=d.items.find(function(it){return it.id==="presence-charity-training" || it.href==="education/charity-training/index.html";});
+    if(!item){d.items.unshift({id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"신입 체리티교육 · 89장 프레젠테이션과 현장 영상",href:"education/charity-training/index.html",target:"_blank",folder:"신입"});return true;}
+    if(item.title!=="체리티교육"){item.title="체리티교육";changed=true;}
+    if(item.folder!=="신입"){item.folder="신입";changed=true;}
+    if(item.href!=="education/charity-training/index.html"){item.href="education/charity-training/index.html";changed=true;}
+    return changed;
   }
 
   // OXFAM 신입교육은 원격 목록을 불러온 기기에서도 항상 노출합니다.
@@ -391,7 +405,9 @@
         return fb.auth.currentUser ? fb.auth.currentUser : fb.authApi.signInAnonymously(fb.auth).then(function(c){return c.user;});
       }).then(function(user){
         return fb.dbApi.set(fb.dbApi.ref(fb.db,"eduAdminProofs/"+user.uid),ADMIN_PROOF).then(function(){
-          return fb.dbApi.set(fb.dbApi.ref(fb.db,"edu_lib"),payload);
+          var libraryPayload=Object.assign({},payload);
+          delete libraryPayload.lessonSettings;
+          return fb.dbApi.update(fb.dbApi.ref(fb.db,"edu_lib"),libraryPayload);
         });
       });
     });
@@ -402,6 +418,7 @@
     if(local){
       data=local;
       var localChanged=ensureNeedsObjectionGuide(data);
+      localChanged=ensureCharityTraining(data)||localChanged;
       localChanged=ensureOxfamNewHireGuide(data)||localChanged;
       localChanged=ensureWarHistoryTodayGuide(data)||localChanged;
       localChanged=ensureFieldRookieGuide(data)||localChanged;
@@ -418,6 +435,7 @@
       if(validData(j) && (!local || Number(j.updatedAt||0)>Number(local.updatedAt||0))){
         data=restoreLocalTitles(ensureCallbackGuide(j));
         var remoteChanged=ensureNeedsObjectionGuide(data);
+        remoteChanged=ensureCharityTraining(data)||remoteChanged;
         remoteChanged=ensureOxfamNewHireGuide(data)||remoteChanged;
         remoteChanged=ensureWarHistoryTodayGuide(data)||remoteChanged;
         remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
@@ -430,12 +448,12 @@
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
     });
   }
   function save(silent){
