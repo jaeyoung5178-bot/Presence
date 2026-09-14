@@ -35,3 +35,32 @@ body,button,a,textarea{font-family:Trip,'Apple SD Gothic Neo',sans-serif}body{--
  .purpose-poster .purpose-menu p{font-size:16px}
  .purpose-poster .purpose-visual{height:auto;flex:1}
 }
+
+.plan-example-slide{padding:2.4cqw 4cqw 2.5cqw;gap:1.5cqw}
+.plan-example-slide .section-label{font-size:1.2cqw;margin-bottom:.8cqw!important}
+.plan-example-slide h2{font-size:3.9cqw}
+.plan-example-slide .slide-body{display:flex;flex-direction:column;gap:14px}
+.plan-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex:none}
+.plan-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.plan-tabs button{min-width:44px;min-height:44px;font-size:15px;padding:8px;color:#b4b4bd;border-color:#45454d}
+.plan-tabs button[aria-pressed=true]{background:var(--mint)!important;color:#101114;border-color:var(--mint);font-weight:700}
+.plan-toolbar>p{font-size:13px;color:#a4a4ac}
+.plan-document{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-color:#62626a #18181c;background:#080808}
+.plan-document .photo{height:auto;max-width:1040px;margin:0 auto;overflow:visible}
+.plan-document .photo img{width:100%;height:auto;object-fit:contain}
+.plan-document:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.image-viewer.reading-image .viewer-image{display:block;overflow:auto;overscroll-behavior:contain}
+.image-viewer.reading-image .viewer-image img{width:max(100%,900px);max-width:none;height:auto;max-height:none;object-fit:contain;margin:auto}
+.viewer-top #readImage{margin-left:auto;flex:none}
+@media(max-width:600px) and (orientation:portrait){
+ .plan-example-slide{padding:24px 14px;gap:18px}
+ .presenting .plan-example-slide{padding-top:60px}
+ .plan-example-slide .section-label{font-size:12px;margin-bottom:12px!important}
+ .plan-example-slide h2{font-size:29px}
+ .plan-toolbar{flex-direction:column;align-items:stretch;gap:10px}
+ .plan-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+ .plan-tabs button{width:100%}
+ .plan-toolbar>p{font-size:12px;text-align:center}
+ .viewer-top:has(#readImage:not([hidden])){flex-wrap:wrap}
+ .viewer-top:has(#readImage:not([hidden])) p{width:100%;margin-bottom:0}
+}
