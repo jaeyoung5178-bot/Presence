@@ -16,3 +16,22 @@ body,button,a,textarea{font-family:Trip,'Apple SD Gothic Neo',sans-serif}body{--
 /* Keep Korean headings strong without the tight, heavy appearance of Black. */
 .slide-canvas h2,.slide-canvas h3,.slide-canvas strong,.slide-canvas b,.agenda-slide li,.purpose-menu p{font-weight:700}.slide-heading h2,.cover-copy h2,.agenda-slide h2,.agenda-slide li,.purpose-menu p,.learning-list strong,.plan-list strong,.site-list strong,.personal-plan h3,.week h3{letter-spacing:-.035em}.cover-copy h1{font-weight:900;letter-spacing:-.05em}.presenting .nav button:hover:not(:disabled){background:#252630;color:#fff}.overview-album{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);aspect-ratio:16/9;gap:4px;background:#0B0B0E;padding:5px}.thumb .overview-album img{height:100%;aspect-ratio:auto;object-fit:cover;border:0;outline:0}
 .album-grid:has(.photo:last-child:nth-child(5)) .photo:last-child{grid-column:span 2}
+
+/* Give the learning poster the full slide height while keeping the purpose context. */
+.purpose-poster{display:grid;grid-template-columns:36% minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:3cqw;padding:2.6cqw 3cqw 2.6cqw 5.6cqw}
+.purpose-poster .slide-heading{grid-column:1;grid-row:1;padding-top:1.5cqw}
+.purpose-poster .slide-heading h2{font-size:4.6cqw}
+.purpose-poster .slide-body{display:contents}
+.purpose-poster .purpose-menu{grid-column:1;grid-row:2;width:100%;justify-content:center;gap:3cqw;padding:0}
+.purpose-poster .purpose-menu p{font-size:3.2cqw}
+.purpose-poster .purpose-visual{grid-column:2;grid-row:1 / span 2;height:100%;min-height:0}
+@media(max-width:600px) and (orientation:portrait){
+ .purpose-poster{display:flex;padding:24px 12px;gap:18px}
+ .purpose-poster .slide-heading{padding:0 6px}
+ .purpose-poster .slide-heading h2{font-size:29px}
+ .purpose-poster .section-label{margin-bottom:12px!important}
+ .purpose-poster .slide-body{display:flex;flex-direction:column;gap:18px}
+ .purpose-poster .purpose-menu{flex:none;justify-content:space-between;gap:10px;padding:0 6px}
+ .purpose-poster .purpose-menu p{font-size:16px}
+ .purpose-poster .purpose-visual{height:auto;flex:1}
+}
