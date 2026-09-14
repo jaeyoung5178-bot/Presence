@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111914"><title>트립 장면들 · PRESENCE</title><meta name="description" content="함께 일하고, 함께 쉬고, 함께 기억한 51개의 트립 장면."><link rel="stylesheet" href="scenes.css?v=1"></head>
+<body>
+<header class="topbar"><a class="back" href="../index.html">← 트립 운영 가이드</a><a class="wordmark" href="../../../../edu.html">PRESENCE</a><button id="fullButton" class="quiet">전체화면</button></header>
+<main>
+ <section class="intro"><div><p class="eyebrow">OUR DAYS, TOGETHER</p><h1>트립 장면들<span>.</span></h1><p class="description">함께 일하고, 함께 쉬고, 함께 기억한 순간들</p></div><div class="intro-right"><p class="count"><strong>51</strong> SCENES</p><p class="scope">철원, 강릉, 거제·통영, 원주 등<br>여러 지역에서 남긴 트립 기록</p></div></section>
+ <div class="viewbar"><p id="hint">장면을 누르면 크게 볼 수 있어요</p><div class="controls"><button id="pauseButton" aria-pressed="false">일시정지</button><button id="viewButton" aria-pressed="false">전체 51개 보기</button></div></div>
+ <section id="reels" class="reels" aria-label="세 줄로 흐르는 트립 장면"><p class="loading" role="status">장면을 불러오고 있어요.</p></section>
+ <section id="grid" class="scene-grid" aria-label="트립 장면 전체 목록" hidden></section>
+ <p id="loadError" class="error" hidden>장면을 불러오지 못했어요. <button id="retryButton">다시 불러오기</button></p>
+ <footer><span>사진 49장과 영상 2개</span><span>함께한 시간이 우리의 기록이 됩니다.</span><span>PRESENCE</span></footer>
+</main>
+<dialog id="lightbox" aria-labelledby="sceneTitle"><div class="lightbox-top"><p id="sceneCount"></p><button id="closeButton" aria-label="장면 닫기">닫기 ✕</button></div><div id="mediaStage" class="media-stage"></div><div class="lightbox-bottom"><button id="previousButton" aria-label="이전 장면">←</button><div><h2 id="sceneTitle"></h2><p>여러 지역의 트립 기록</p></div><button id="nextButton" aria-label="다음 장면">→</button></div></dialog>
+<script src="scenes.js?v=1" defer></script>
+</body></html>
