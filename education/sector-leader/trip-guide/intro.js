@@ -5,6 +5,7 @@ function sync(){intro.classList.toggle('is-paused',paused||document.hidden||intr
 function showIntro(){deck.hidden=true;intro.hidden=false;document.body.classList.add('intro-active');document.body.classList.remove('presenting');history.replaceState(null,'','#intro');sync();$('startTrip').focus({preventScroll:true});}
 function start(){intro.hidden=true;deck.hidden=false;document.body.classList.remove('intro-active');document.body.classList.add('presenting');window.dispatchEvent(new Event('trip-start'));window.scrollTo({top:0,behavior:'instant'});sync();$('next').focus({preventScroll:true});}
 $('startTrip').onclick=start;$('replayIntro').onclick=showIntro;
+window.addEventListener('hashchange',()=>{if(location.hash==='#intro')showIntro();else sync();});
 $('pauseIntro').onclick=()=>{paused=!paused;sync();};
 $('introFullscreen').hidden=!document.fullscreenEnabled;
 $('introFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{}};
