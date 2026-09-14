@@ -24,13 +24,13 @@ function firebaseRuntime(){if(firebasePromise)return firebasePromise;firebasePro
 async function saveSettings(){
  if(!admin||!draft)return;if(!draft.agenda.length||draft.agenda.some(a=>!a.title.trim())){$('manageStatus').textContent='아젠다 제목을 입력해 주세요. 항목은 최소 1개가 필요합니다.';return}
  if(draft.hidden.length>=slides.length){$('manageStatus').textContent='교육 페이지는 최소 1장을 표시해야 합니다.';return}
- $('saveManage').disabled=true;$('manageStatus').textContent='전체 기기에 저장 중…';
+ const savingDraft=structuredClone(draft);$('manageEditor').inert=true;$('saveManage').disabled=true;$('manageStatus').textContent='전체 기기에 저장 중…';
  try{const fb=await firebaseRuntime();await fb.auth.authStateReady();const user=fb.auth.currentUser||(await fb.authApi.signInAnonymously(fb.auth)).user;await fb.dbApi.set(fb.dbApi.ref(fb.db,'eduAdminProofs/'+user.uid),HUB_ADMIN_PROOF);
-  const value={agenda:draft.agenda.map(a=>({title:a.title.trim(),sub:a.sub.trim()})),hidden:draft.hidden,updatedAt:Date.now()};
-  const result=await fb.dbApi.runTransaction(fb.dbApi.ref(fb.db,'edu_lib/lessonSettings/charityTraining'),current=>{if(current&&(current.updatedAt||0)!==draft.updatedAt)return;return value;},{applyLocally:false});
+  const value={agenda:savingDraft.agenda.map(a=>({title:a.title.trim(),sub:a.sub.trim()})),hidden:savingDraft.hidden,updatedAt:Date.now()};
+  const result=await fb.dbApi.runTransaction(fb.dbApi.ref(fb.db,'edu_lib/lessonSettings/charityTraining'),current=>{if(current&&(current.updatedAt||0)!==savingDraft.updatedAt)return;return value;},{applyLocally:false});
   if(!result.committed)throw Error('다른 기기에서 먼저 변경했습니다. 관리를 닫고 다시 열어 최신 내용을 불러와 주세요.');
   lessonSettings=value;draft=structuredClone(value);applySettings();$('manageStatus').textContent='전체 기기에 저장되었습니다.';
- }catch(e){$('manageStatus').textContent=e.message||'저장하지 못했습니다. 연결을 확인해 주세요.'}finally{$('saveManage').disabled=false}
+ }catch(e){$('manageStatus').textContent=e.message||'저장하지 못했습니다. 연결을 확인해 주세요.'}finally{$('saveManage').disabled=false;$('manageEditor').inert=false}
 }
 function managementForm(){
  $('manageLogin').hidden=admin;$('manageEditor').hidden=!admin;$('manageSaveBar').hidden=!admin;if(!admin)return;draft=structuredClone(lessonSettings);renderAgendaEditor();renderPageEditor();$('manageStatus').textContent='변경 후 저장하면 모든 기기에 반영됩니다.';
