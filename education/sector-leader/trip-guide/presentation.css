@@ -36,31 +36,52 @@ body,button,a,textarea{font-family:Trip,'Apple SD Gothic Neo',sans-serif}body{--
  .purpose-poster .purpose-visual{height:auto;flex:1}
 }
 
-.plan-example-slide{padding:2.4cqw 4cqw 2.5cqw;gap:1.5cqw}
-.plan-example-slide .section-label{font-size:1.2cqw;margin-bottom:.8cqw!important}
-.plan-example-slide h2{font-size:3.9cqw}
-.plan-example-slide .slide-body{display:flex;flex-direction:column;gap:14px}
+/* Four examples per reveal: readable goals with the full redacted source on demand. */
+.plan-example-slide{padding:2.2cqw 3.5cqw;gap:1.2cqw}
+.plan-example-slide .section-label{font-size:1.2cqw;margin-bottom:.6cqw!important}
+.plan-example-slide h2{font-size:3.7cqw}
+.plan-example-slide .slide-body{display:flex;flex-direction:column;gap:12px}
 .plan-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex:none}
-.plan-tabs{display:flex;gap:8px;flex-wrap:wrap}
-.plan-tabs button{min-width:44px;min-height:44px;font-size:15px;padding:8px;color:#b4b4bd;border-color:#45454d}
+.plan-tabs{display:flex;gap:8px}
+.plan-tabs button{min-width:84px;min-height:44px;font-size:15px;padding:8px 16px;color:#b4b4bd;border-color:#45454d}
 .plan-tabs button[aria-pressed=true]{background:var(--mint)!important;color:#101114;border-color:var(--mint);font-weight:700}
 .plan-toolbar>p{font-size:13px;color:#a4a4ac}
-.plan-document{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-color:#62626a #18181c;background:#080808}
-.plan-document .photo{height:auto;max-width:1040px;margin:0 auto;overflow:visible}
-.plan-document .photo img{width:100%;height:auto;object-fit:contain}
-.plan-document:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.plan-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:1.2cqw;overflow:auto;overscroll-behavior:contain;scrollbar-color:#62626a #18181c}
+.plan-card{display:grid;grid-template-columns:27% minmax(0,1fr);min-width:0;min-height:0;gap:1.25cqw;padding:1.1cqw;background:#17171c;border:1px solid #303038;border-radius:6px}
+.plan-preview{position:relative;display:block;min-width:0;min-height:44px;padding:0;overflow:hidden;background:#080808!important;border:1px solid #34343c;border-radius:3px;cursor:zoom-in}
+.plan-preview img{width:100%;height:100%;object-fit:contain;object-position:top center}
+.plan-preview span{position:absolute;bottom:0;left:0;right:0;padding:14px 2px 5px;background:linear-gradient(transparent,#0b0b0ef0 50%);color:#ddd;font-size:12px;line-height:1.45;text-align:center}
+.plan-card-copy{display:flex;flex-direction:column;min-width:0;gap:.6cqw;justify-content:center}
+.plan-card-number{font-size:12px;color:var(--mint);letter-spacing:.06em}
+.plan-highlights{display:flex;flex-direction:column;gap:.7cqw}
+.plan-highlight+ .plan-highlight{border-top:1px solid #393941;padding-top:.7cqw}
+.plan-highlight h3{font-size:clamp(16px,1.5cqw,23px);line-height:1.35;letter-spacing:-.035em;font-weight:700}
+.plan-highlight dl{display:grid;grid-template-columns:1fr 1.2fr;gap:8px;margin:.5cqw 0 0}
+.plan-highlight dt{font-size:12px;line-height:1.45;color:#a4a4ac}
+.plan-highlight dd{margin:2px 0 0;font-size:clamp(14px,1.35cqw,21px);line-height:1.45;font-variant-numeric:tabular-nums;white-space:nowrap}
+.plan-grid:focus-visible,.plan-preview:focus-visible{outline:2px solid var(--mint);outline-offset:-2px}
 .image-viewer.reading-image .viewer-image{display:block;overflow:auto;overscroll-behavior:contain}
 .image-viewer.reading-image .viewer-image img{width:max(100%,900px);max-width:none;height:auto;max-height:none;object-fit:contain;margin:auto}
 .viewer-top #readImage{margin-left:auto;flex:none}
+@media(max-width:1100px) and (min-width:601px){
+ .plan-card{grid-template-columns:22% minmax(0,1fr);gap:10px;padding:9px}
+ .plan-card-copy{gap:4px}.plan-highlights{gap:6px}.plan-highlight+ .plan-highlight{padding-top:6px}
+ .plan-highlight h3{font-size:16px}.plan-highlight dl{margin-top:3px}.plan-highlight dt{font-size:12px}.plan-highlight dd{font-size:14px;margin-top:0}
+}
 @media(max-width:600px) and (orientation:portrait){
- .plan-example-slide{padding:24px 14px;gap:18px}
+ .plan-example-slide{padding:24px 14px;gap:16px}
  .presenting .plan-example-slide{padding-top:60px}
- .plan-example-slide .section-label{font-size:12px;margin-bottom:12px!important}
+ .plan-example-slide .section-label{font-size:12px;margin-bottom:10px!important}
  .plan-example-slide h2{font-size:29px}
- .plan-toolbar{flex-direction:column;align-items:stretch;gap:10px}
- .plan-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
- .plan-tabs button{width:100%}
+ .plan-toolbar{flex-direction:column;align-items:stretch;gap:8px}
+ .plan-tabs button{flex:1}
  .plan-toolbar>p{font-size:12px;text-align:center}
+ .plan-grid{grid-template-columns:1fr;grid-template-rows:none;grid-auto-rows:max-content;align-content:start;gap:12px;padding-bottom:4px}
+ .plan-card{grid-template-columns:22% minmax(0,1fr);gap:12px;padding:12px;min-height:155px}
+ .plan-card-copy{gap:8px}.plan-highlights{gap:10px}.plan-highlight+ .plan-highlight{padding-top:10px}
+ .plan-highlight h3{font-size:17px}.plan-highlight dl{margin-top:7px;gap:10px}.plan-highlight dd{font-size:16px;margin-top:2px;letter-spacing:-.02em}
+ .plan-card:has(.plan-highlight+ .plan-highlight){min-height:240px}
+ .plan-preview span{font-size:12px}
  .viewer-top:has(#readImage:not([hidden])){flex-wrap:wrap}
  .viewer-top:has(#readImage:not([hidden])) p{width:100%;margin-bottom:0}
 }
