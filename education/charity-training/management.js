@@ -14,7 +14,7 @@ function drawAgenda(){
  const heading=document.createElement('h1');heading.textContent='오늘의 교육 순서';
  const grid=document.createElement('div');grid.className='agendaGrid';grid.style.setProperty('--rows',Math.ceil(lessonSettings.agenda.length/4));grid.classList.toggle('dense',lessonSettings.agenda.length>8);
  lessonSettings.agenda.forEach((a,i)=>{const cell=document.createElement('div');cell.className='agendaCell';for(const [tag,cl,tx] of [['span','num',String(i+1).padStart(2,'0')],['h2','topic',a.title],['p','sub',a.sub]]){const el=document.createElement(tag);el.className=cl;el.textContent=tx;cell.append(el)}grid.append(cell)});
- const footer=document.createElement('small');footer.textContent='PEACEMAKER';view.append(kicker,heading,grid,footer);
+ const footer=document.createElement('small');footer.textContent='PEACEMAKER';view.append(kicker,heading,grid,footer);if($('readBody')){$('readBody').replaceChildren();lessonSettings.agenda.forEach((a,i)=>{const p=document.createElement('p');p.textContent=(i+1)+'. '+a.title+(a.sub?'\n'+a.sub:'');$('readBody').append(p)})}
 }
 function updateNavigation(){const v=visibleIndices(),pos=v.indexOf(cur);$('prev').disabled=pos<=0;$('next').disabled=pos===v.length-1&&!slides[cur].video;$('counter').textContent=`${String(pos+1).padStart(2,'0')} / ${v.length}`}
 function targetPage(step){const v=visibleIndices(),p=v.indexOf(cur);return v[p+step]}
