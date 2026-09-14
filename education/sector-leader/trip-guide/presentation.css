@@ -85,3 +85,27 @@ body,button,a,textarea{font-family:Trip,'Apple SD Gothic Neo',sans-serif}body{--
  .viewer-top:has(#readImage:not([hidden])){flex-wrap:wrap}
  .viewer-top:has(#readImage:not([hidden])) p{width:100%;margin-bottom:0}
 }
+
+/* Keep the score chat on the left and the existing status report against the right edge. */
+.status-slide{display:grid;grid-template-columns:44% minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:2cqw 3cqw;padding:3cqw 2.5cqw 2.5cqw 4.5cqw}
+.status-slide .slide-heading{grid-column:1;grid-row:1;padding-top:.5cqw}
+.status-slide .section-label{font-size:1.2cqw;margin-bottom:1cqw!important}
+.status-slide h2{font-size:4.4cqw}
+.status-slide .slide-body,.status-pair{display:contents}
+.status-chat{grid-column:1;grid-row:2;min-width:0;min-height:0;height:100%}
+.status-report{grid-column:2;grid-row:1 / span 2;min-width:0;min-height:0;height:100%}
+.status-report .photo img{object-position:right center}
+.status-chat .photo img{object-position:center center;mix-blend-mode:multiply}
+@media(max-width:600px) and (orientation:portrait){
+ .status-slide{display:flex;padding:24px 14px;gap:20px}
+ .presenting .status-slide{padding-top:60px}
+ .status-slide .slide-heading{padding:0 4px}
+ .status-slide .section-label{font-size:12px;margin-bottom:12px!important}
+ .status-slide h2{font-size:30px}
+ .status-slide .slide-body{display:flex;min-height:0}
+ .status-pair{display:flex;flex-direction:column;gap:20px;min-height:0;width:100%;overflow:auto;overscroll-behavior:contain}
+ .status-chat,.status-report{height:auto;width:100%;flex:none}
+ .status-chat .photo,.status-report .photo{height:auto}
+ .status-chat .photo img,.status-report .photo img{height:auto;width:100%}
+ .status-report .photo img{object-position:right center}
+}
