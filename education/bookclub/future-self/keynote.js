@@ -36,7 +36,8 @@
     const option = document.createElement('option');
     option.value = String(index);
     option.textContent = String(index + 1).padStart(2, '0');
-    option.label = `${String(index + 1).padStart(2, '0')} · ${slide.dataset.title}`;
+    option.title = slide.dataset.title;
+    option.setAttribute('aria-label', `${String(index + 1).padStart(2, '0')} · ${slide.dataset.title}`);
     $('#slideSelect').append(option);
   });
 
