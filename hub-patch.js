@@ -90,12 +90,22 @@
       after&&after(b.role);
     }).catch(function(){ askPass(after); });
   }
-  function askPass(after){
-    var p = prompt('비밀번호를 입력하세요');
-    if(p===null) return;
-    if(p===PASS){ setAdmin(true); syncDLState(); offerBio('admin'); after&&after('admin'); }
-    else if(p===TPASS){ setTeam(true); syncDLState(); offerBio('team'); after&&after('team'); }
-    else alert('비밀번호가 올바르지 않습니다');
+  function askPass(after,adminOnly){
+    var existing=document.getElementById('hubAccessDialog');
+    if(existing){existing.querySelector('input').focus();return;}
+    var d=document.createElement('dialog'),previous=document.activeElement,oldOverflow=document.body.style.overflow;
+    d.id='hubAccessDialog';d.className='hub-access';d.setAttribute('aria-labelledby','hubAccessTitle');
+    d.innerHTML='<form><div class="hub-access-head"><span class="hub-charm" aria-hidden="true" style="--charm-col:1;--charm-row:3"></span><button type="button" class="hub-dialog-close" aria-label="비밀번호 입력창 닫기">×</button></div><h2 id="hubAccessTitle">우리의 공간으로</h2><p class="hub-access-note">'+(adminOnly?'관리자 비밀번호를 입력해 주세요.':'팀원 또는 관리자 비밀번호를 입력해 주세요.')+'</p><label for="hubAccessPassword">비밀번호</label><input id="hubAccessPassword" type="password" autocomplete="current-password" required autofocus><p class="hub-access-error" role="alert" aria-live="polite"></p><button class="hub-access-submit" type="submit">들어가기 <span aria-hidden="true">→</span></button></form>';
+    document.body.appendChild(d);document.body.style.overflow='hidden';
+    d.addEventListener('close',function(){document.body.style.overflow=oldOverflow;d.remove();if(previous&&previous.isConnected)previous.focus();});
+    d.querySelector('.hub-dialog-close').onclick=function(){d.close();};
+    d.querySelector('form').onsubmit=function(e){
+      e.preventDefault();var input=d.querySelector('input'),p=input.value,role=p===PASS?'admin':p===TPASS?'team':null;
+      if(!role||(adminOnly&&role!=='admin')){d.querySelector('.hub-access-error').textContent=role?'관리자 비밀번호로 열 수 있는 공간이에요.':'비밀번호를 다시 확인해 주세요.';input.setAttribute('aria-invalid','true');input.select();return;}
+      if(role==='admin')setAdmin(true);else setTeam(true);
+      syncDLState();d.close();offerBio(role);after&&after(role);
+    };
+    d.showModal();d.querySelector('input').focus();
   }
 
   /* ---------- 1) ⋯ 버튼 잠금 — 관리자는 메뉴, 팀원은 팀 공간 ---------- */
@@ -132,11 +142,7 @@
       };
       var bb=bioGet();
       if(bb&&bb.role==='admin'&&bioSup()){ bioUnlock(bb, go); return; }   /* Face ID 우선 */
-      var p=prompt('바로가기는 관리자 전용이에요 · 비밀번호를 입력하세요');
-      if(p===null)return;
-      if(p===PASS){setAdmin(true);try{syncDLState();}catch(_){} offerBio('admin'); go('admin');}
-      else if(p===TPASS){ alert('이 바로가기는 관리자 전용이에요 · 팀원은 사진 공간만 이용할 수 있어요'); }
-      else alert('비밀번호가 올바르지 않습니다');
+      askPass(go,true);
     },true);
   }
   function addMenuItem(tag, label, fn){
@@ -150,7 +156,7 @@
   addMenuItem('TEAM','👥 팀원 사진 공간', openTeam);
   addMenuItem('LOCK','🔒 관리자 잠금', function(){
     setAdmin(false); setTeam(false); syncDLState();
-    alert('잠금 완료 — 다음에 ⋯ 누르면 '+(bioGet()?'Face ID로':'비밀번호를')+' 다시 확인해요');
+    var notice=document.createElement('div');notice.className='hub-notice';notice.setAttribute('role','status');notice.textContent='잠금 완료 · 다음에 다시 인증해 주세요.';document.body.appendChild(notice);setTimeout(function(){notice.remove();},3500);
   });
 
   /* ---------- 3) 패널 공통 스타일 ---------- */
