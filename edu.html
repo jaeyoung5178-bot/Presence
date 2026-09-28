@@ -168,6 +168,7 @@
     v:1,
     folders:["신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
     items:[
+      {id:"presence-oxfam-test",tag:"OXFAM",title:"OXFAM 테스트링크",sub:"신입을 위한 옥스팜 후원 연습판과 테스트 참여 기록",href:"oxfam-test.html",target:"",folder:"신입"},
       {id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"신입 체리티교육 · 89장 프레젠테이션과 현장 영상",href:"education/charity-training/index.html",target:"_blank",folder:"신입"},
       {id:uid(),tag:"CLASS",title:"Onboarding I·II",sub:"인천 신입교육 — 피스메이커 루키 클래스",href:"토픽/topic-onboarding.html",target:"",folder:"신입"},
       {id:"presence-oxfam-new-hire",tag:"NEW",title:"신입교육",sub:"OXFAM 신입교육 · 교육자용 전체화면 프레젠테이션",href:"education/oxfam-new-hire/index.html",target:"_blank",folder:"신입"},
@@ -198,6 +199,21 @@
   var editingItemId = null;
   var firebaseRuntimePromise = null;
   var $ = function(s){ return document.querySelector(s); };
+
+  // 기존 로컬·원격 목록에도 옥스팜 테스트링크를 신입 카테고리로 배치합니다.
+  function ensureOxfamTestLink(d){
+    if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
+    var changed=false;
+    if(d.folders.indexOf("신입")<0){d.folders.unshift("신입");changed=true;}
+    var item=d.items.find(function(it){return it.id==="presence-oxfam-test" || it.href==="oxfam-test.html";});
+    if(!item){
+      d.items.unshift({id:"presence-oxfam-test",tag:"OXFAM",title:"OXFAM 테스트링크",sub:"신입을 위한 옥스팜 후원 연습판과 테스트 참여 기록",href:"oxfam-test.html",target:"",folder:"신입"});
+      return true;
+    }
+    if(item.folder!=="신입"){item.folder="신입";changed=true;}
+    if(item.href!=="oxfam-test.html"){item.href="oxfam-test.html";changed=true;}
+    return changed;
+  }
 
   // PRESENCE 기본 교육 자료: 원격 목록 상태와 관계없이 항상 노출합니다.
   function ensureCallbackGuide(d){
@@ -418,6 +434,7 @@
     if(local){
       data=local;
       var localChanged=ensureNeedsObjectionGuide(data);
+      localChanged=ensureOxfamTestLink(data)||localChanged;
       localChanged=ensureCharityTraining(data)||localChanged;
       localChanged=ensureOxfamNewHireGuide(data)||localChanged;
       localChanged=ensureWarHistoryTodayGuide(data)||localChanged;
@@ -434,6 +451,7 @@
     }).then(function(j){
       if(validData(j) && (!local || Number(j.updatedAt||0)>Number(local.updatedAt||0))){
         data=restoreLocalTitles(ensureCallbackGuide(j));
+        ensureOxfamTestLink(data);
         var remoteChanged=ensureNeedsObjectionGuide(data);
         remoteChanged=ensureCharityTraining(data)||remoteChanged;
         remoteChanged=ensureOxfamNewHireGuide(data)||remoteChanged;
