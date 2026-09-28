@@ -1,0 +1,22 @@
+/* This book's scene accents and speaker signature. Shared scene geometry stays reusable. */
+.cinematic-quote.choice.future-guides-present {
+  --scene-accent: #d9dfdc;
+}
+.horizon-closing .closing-attribution {
+  margin-top: 18px;
+  color: #dddcd5;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: .3px;
+  white-space: nowrap;
+}
+@media (max-width:650px) {
+  .cinematic-quote.future-guides-present .scene-art {
+    object-position: 84% center;
+  }
+  .horizon-closing .closing-attribution {
+    font-size: 14px;
+    letter-spacing: .2px;
+  }
+}

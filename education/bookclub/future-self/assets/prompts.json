@@ -24,13 +24,30 @@
       "file": "choice.jpg",
       "slide": 5,
       "theme": "선택",
-      "prompt": "Use case: stylized-concept. Asset type: full-bleed keynote quote background about choosing who your future self will be. Widescreen 16:9 cinematic architectural photograph. A dark minimalist room made of textured charcoal plaster. On far RIGHT third, a single tall open rectangular doorway reveals a luminous, beautifully mature green olive tree in a serene sunlit courtyard; the tree is real, not framed artwork or a screen. A precise quiet rectangle of muted warm sunlight extends a little onto the rough stone floor. LEFT 60% intentionally remains spacious shadow, very dark near-black teal wall with subtle physical texture for overlaid large typography. Mood of personal agency, openness, potential, no human figure, no futuristic portal, no space scenery, no circles, no mountains or bridges. Sophisticated natural film photography, restrained emerald green and honey sunlight, fine grain. No text, letters, numerals, logos, watermark."
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed keynote quote background about choosing who your future self will be. Widescreen 16:9 cinematic architectural photograph. A dark minimalist room made of textured charcoal plaster. On far RIGHT third, a single tall open rectangular doorway reveals a luminous, beautifully mature green olive tree in a serene sunlit courtyard; the tree is real, not framed artwork or a screen. A precise quiet rectangle of muted warm sunlight extends a little onto the rough stone floor. LEFT 60% intentionally remains spacious shadow, very dark near-black teal wall with subtle physical texture for overlaid large typography. Mood of personal agency, openness, potential, no human figure, no futuristic portal, no space scenery, no circles, no mountains or bridges. Sophisticated natural film photography, restrained emerald green and honey sunlight, fine grain. No text, letters, numerals, logos, watermark.",
+      "status": "superseded",
+      "supersededBy": "future-guides-present.jpg"
     },
     {
       "file": "closing.jpg",
       "slide": 9,
       "theme": "마무리",
       "prompt": "Use case: stylized-concept. Asset type: closing keynote slide background about living the future in the present. Widescreen 16:9 minimal cinematic editorial photograph. An immense calm ocean before sunrise, far distant ultrathin warm golden horizon in lower third, one dark elegant coastal road enters bottom right and gently disappears toward the distant horizon on the right. Deep ink-navy sky occupies upper 65% as quiet negative space for centered overlaid typography. Landscape feels expansive, resolved, certain, sophisticated. Restrained silver blue and champagne light, very subtle fine grain, no stars or glowing circles, no copied bridge or mountain scene, no people, no text, logos, watermark."
+    },
+    {
+      "file": "future-guides-present.jpg",
+      "slide": 5,
+      "theme": "미래가 현재의 나를 이끈다",
+      "status": "active",
+      "method": "built-in image_gen",
+      "generatedOn": "2026-09-28",
+      "originalFile": "/Users/jaeyoung5178/.codex/generated_images/01a0e7f6-421c-77e3-8fcf-e439cbc28df6/exec-a6768eb8-837f-4561-8ba4-eefab608be5c.png",
+      "outputDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "delivery": "JPEG quality 84 converted using sips; no creative content editing",
+      "prompt": "Use case: stylized-concept. Asset type: a new cinematic full-bleed keynote background illustrating a desired future self shaping who we are in the present. Widescreen 16:9, photoreal fine-art conceptual photography. A quiet, spacious architectural interior in deep midnight blue. On the FAR RIGHT third, one small adult figure seen from behind stands in cool shadow, facing a tall freestanding polished mirror. In the mirror, the same figure is reflected standing calmly and confidently in warm early-morning light, suggesting their future self. Warm natural light from the mirror's reflected scene reaches backward across the present floor toward the real figure's feet: the future is illuminating and giving direction to the present. Keep the metaphor subtle and physically elegant, clear readable silhouette, believable proportions, no recognizable face. LEFT 60 percent is uninterrupted dark negative space with soft blue atmospheric depth for overlaid Korean quotation text. Restrained champagne highlights, charcoal stone floor, subtle film grain, museum-quality editorial photography. Mirror and both figure/reflection must remain entirely within rightmost 35 percent for portrait cropping. No olive tree, no bridge, no mountain ridge, no glowing portal rings, no fantasy machinery, no diagrams, no arrows, no text, no typography, no letters, no logos, no watermark."
     }
   ]
 }
