@@ -168,7 +168,8 @@ html,body{margin:0}body{background:var(--bg);font-family:var(--font)}.adminbtn{m
   .library-first .upcoming-folders .tab-name{font-size:12px;line-height:1.5}
   .upcoming-folders .library-description{font-size:12px}
   .library-first.editing .upcoming-folders{flex-direction:column}
-  .library-first.editing .upcoming-folders .category.library-card{min-height:68px}
+  .library-first.editing .upcoming-folders .category-entry{flex:none;min-height:68px}
+  .library-first.editing .upcoming-folders .category.library-card{min-height:68px;height:auto}
   .library-first .site-footer{margin-top:22px;padding:17px 0 calc(22px + env(safe-area-inset-bottom))}
   .library-first .site-footer p{font-size:12px}
   .library-breadcrumb{margin:-7px 0 12px;gap:10px}
