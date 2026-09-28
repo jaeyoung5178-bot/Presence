@@ -7,8 +7,12 @@
   <meta name="description" content="『퓨처 셀프』 독서발표회. 미래의 내가, 오늘을 살게 하라. 책의 핵심과 세 구절, 그리고 나의 실천.">
   <title>미래의 내가, 오늘을 살게 하라 · PRESENCE 독서발표회</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-  <link rel="stylesheet" href="keynote.css?v=20260928-1">
-  <script defer src="keynote.js?v=20260928-1"></script>
+  <link rel="stylesheet" href="../shared/keynote.css?v=20260928-3">
+  <link rel="stylesheet" href="../shared/thought-field.css?v=20260928-3">
+  <link rel="stylesheet" href="../shared/scenes.css?v=20260928-3">
+  <script defer src="book.js?v=20260928-3"></script>
+  <script defer src="../shared/keynote.js?v=20260928-3"></script>
+  <script defer src="../shared/thought-field.js?v=20260928-3"></script>
 </head>
 <body data-scene="0">
   <a class="skip" href="#slides">발표 내용으로 이동</a>
@@ -33,7 +37,7 @@
       <section class="slide cover active" data-title="미래의 내가, 오늘을 살게 하라" aria-label="1 / 9 표지" aria-roledescription="슬라이드">
         <div class="cover-copy">
           <p class="eyebrow">A LETTER FROM MY FUTURE SELF</p>
-          <h1>미래의 내가,<br><em>오늘을</em><br class="mobile-break"> 살게 하라.</h1>
+          <h1>미래의 내가,<br> <em>오늘을</em><br class="mobile-break"> 살게 하라.</h1>
           <p class="cover-sub">내가 바라는 미래에서 시작하는, 오늘의 선택.</p>
           <div class="book-credit"><span class="book-spine" aria-hidden="true"></span><div><strong>퓨처 셀프 <span>FUTURE SELF</span></strong><p>벤저민 하디 지음 · 최은아 옮김 · 상상스퀘어</p></div></div>
           <button class="primary start" data-go="1">미래의 나를 만나러 가기 <span aria-hidden="true">↗</span></button>
@@ -42,66 +46,98 @@
         <span class="edition">READING SESSION / 01</span>
       </section>
 
-      <section class="slide essence" data-title="한 권을 관통하는 생각" aria-label="2 / 9 책의 핵심" aria-roledescription="슬라이드" hidden>
-        <p class="eyebrow">01 / THE ESSENCE</p>
-        <div class="section-heading"><h2>미래가 선명해질수록,<br><em>오늘의 선택이 달라진다.</em></h2><button class="text-button" id="introButton">3분 도입 원고 <span aria-hidden="true">↗</span></button></div>
-        <div class="window-labels" aria-hidden="true"><span>상상하는 나</span><span>선택하는 나</span><span>행동하는 나</span></div>
-        <div class="river-space" aria-label="핵심 키워드: 미래의 나, 정체성, 연결, 목적, 우선순위, 용기, 오늘의 선택, 전념, 의도적인 연습, 환경, 행동, 성장, 명확한 비전, 지금 시작, 시간의 주도권"><i></i><i></i><i></i></div>
-        <div class="summary">
-          <p><b>미래의 나</b>와 연결하면, 지금 지키고 싶은 <b>목적</b>과 <b>우선순위</b>가 선명해진다.</p>
-          <p>그 <b>정체성</b>으로 오늘을 선택하고, 중요한 일에 <b>전념</b>할 <b>환경</b>을 만든다.</p>
-          <p><b>용기</b>를 내어 시작한 <b>행동</b>과 <b>의도적인 연습</b>이, 원하는 미래를 현실에 가까워지게 한다.</p>
+      <section class="slide essence" data-kind="thought" data-title="한 권을 관통하는 생각" aria-label="2 / 9 책의 핵심" aria-roledescription="슬라이드" hidden>
+        <div class="essence-topline"><p class="eyebrow">01 / A MIND IN MOTION</p><button class="text-button" id="introButton">3분 도입 원고 <span aria-hidden="true">↗</span></button></div>
+        <h2 class="sr-only">미래의 나로 지금 살아가는 법</h2>
+        <div class="thought-universe" id="thoughtUniverse" role="img" aria-label="미래의 나, 정체성, 전념, 용기, 미래에 대한 투자, 오늘의 선택 등 책의 핵심 생각이 각기 다른 궤도로 떠다니는 공간">
+          <div class="thought-nebula" aria-hidden="true"></div>
+          <div class="thought-grain" aria-hidden="true"></div>
+          <canvas id="thoughtCanvas" aria-hidden="true"></canvas>
+          <div class="thought-fragments" id="thoughtFragments" aria-hidden="true"></div>
+          <span class="thought-coordinate" aria-hidden="true">POSSIBLE SELVES / ∞</span>
+          <span class="thought-whisper" aria-hidden="true">아직 오지 않은 내가,<br> 지금의 나를 움직인다.</span>
+        </div>
+        <div class="essence-reading">
+          <div class="essence-reading-top"><span>BE YOUR FUTURE SELF. NOW.</span><button id="sourceButton" aria-haspopup="dialog">세 문장의 근거 <span aria-hidden="true">↗</span></button></div>
+          <div class="summary essence-summary">
+            <p>우리는 과거에 고정된 존재가 아니며, <b>진심으로 전념하는 미래</b>가 오늘의 선택과 정체성을 이끈다.</p>
+            <p><b>미래의 나와 가까워질수록</b>, 오늘의 행동이 그에게 남길 빚인지 그를 위한 투자인지 보이기 시작한다.</p>
+            <p><b>이미 그 사람이 된 관점</b>에서 덜 중요한 목표를 버리고, 그의 우선순위에 맞게 오늘의 시간과 행동을 바꾼다.</p>
+          </div>
         </div>
       </section>
 
-      <section class="slide quote" data-title="첫 번째 구절 · 연결" aria-label="3 / 9 첫 번째 구절" aria-roledescription="슬라이드" hidden>
-        <p class="eyebrow">02 / THREE SENTENCES <span>01</span></p>
-        <div class="quote-layout"><div><p class="quote-theme">연결</p><blockquote>미래와 연결되지 않는다면<br><em>현재는 아무 의미가 없다.</em></blockquote><p class="reflection">내가 반복하는 오늘은, 어떤 미래와 연결되어 있을까?</p></div><div class="page-number"><span>PAGE</span><strong>77</strong></div></div>
-        <p class="quote-foot">『퓨처 셀프』 · 내가 표시해 둔 구절</p>
+      <section class="slide quote cinematic-quote connection" data-kind="cinematic" data-title="첫 번째 구절 · 연결" aria-label="3 / 9 첫 번째 구절" aria-roledescription="슬라이드" hidden>
+        <img class="scene-art" src="assets/connection.jpg" alt="" width="1672" height="941" decoding="async">
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="scene-copy">
+          <p class="eyebrow">02 / THREE SENTENCES <span>01</span></p>
+          <p class="quote-theme">연결</p>
+          <blockquote>미래와 연결되지 않는다면<br> <em>현재는 아무 의미가 없다.</em></blockquote>
+          <div class="page-number"><span>PAGE</span><strong>77</strong></div>
+          <p class="reflection">내가 반복하는 오늘은, 어떤 미래와 연결되어 있을까?</p>
+          <p class="quote-foot">『퓨처 셀프』 · 내가 표시해 둔 구절</p>
+        </div>
       </section>
 
-      <section class="slide quote courage" data-title="두 번째 구절 · 용기" aria-label="4 / 9 두 번째 구절" aria-roledescription="슬라이드" hidden>
-        <p class="eyebrow">02 / THREE SENTENCES <span>02</span></p>
-        <div class="quote-layout"><div><p class="quote-theme">용기</p><blockquote>“용기”란 숭고하고 가치 있는 목표를<br>적극적으로 추구하기 위해<br><em>위험을 감수하는 태도</em>를 말한다.</blockquote><p class="reflection">거절의 불편함을 감수하면서도, 가치 있는 다음 전화를 거는 것.</p></div><div class="page-number"><span>PAGE</span><strong>122</strong></div></div>
-        <p class="quote-foot">『퓨처 셀프』 · 내가 표시해 둔 구절</p>
+      <section class="slide quote cinematic-quote courage" data-kind="cinematic" data-title="두 번째 구절 · 용기" aria-label="4 / 9 두 번째 구절" aria-roledescription="슬라이드" hidden>
+        <img class="scene-art" src="assets/courage.jpg" alt="" width="1672" height="941" decoding="async">
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="scene-copy">
+          <p class="eyebrow">02 / THREE SENTENCES <span>02</span></p>
+          <p class="quote-theme">용기</p>
+          <blockquote>“용기”란 숭고하고 가치 있는 목표를<br> 적극적으로 추구하기 위해<br> <em>위험을 감수하는 태도</em>를 말한다.</blockquote>
+          <div class="page-number"><span>PAGE</span><strong>122</strong></div>
+          <p class="quote-foot">『퓨처 셀프』 · 내가 표시해 둔 구절</p>
+        </div>
       </section>
 
-      <section class="slide quote" data-title="세 번째 구절 · 오늘의 수준" aria-label="5 / 9 세 번째 구절" aria-roledescription="슬라이드" hidden>
-        <p class="eyebrow">02 / THREE SENTENCES <span>03</span></p>
-        <div class="quote-layout"><div><p class="quote-theme">오늘의 수준</p><blockquote>미래의 나와 <em>연결되는 수준</em>이<br>현재의 삶과 행동의 수준을<br>결정한다.</blockquote><p class="reflection">미래의 나를 더 구체적으로 그릴수록, 오늘 할 일이 분명해진다.</p></div><div class="page-number range"><span>PAGES</span><strong>27–28</strong></div></div>
-        <p class="quote-foot">『퓨처 셀프』 2023년판 프롤로그 · <a href="https://www.yes24.com/Product/Goods/122090360" target="_blank" rel="noopener noreferrer">발췌 출처 ↗</a></p>
+      <section class="slide quote cinematic-quote choice" data-kind="cinematic" data-title="세 번째 구절 · 내가 될 사람을 선택하다" aria-label="5 / 9 세 번째 구절" aria-roledescription="슬라이드" hidden>
+        <img class="scene-art" src="assets/choice.jpg" alt="" width="1672" height="941" decoding="async">
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="scene-copy">
+          <p class="eyebrow">02 / THREE SENTENCES <span>03</span></p>
+          <p class="quote-theme">내가 될 사람을 선택하다</p>
+          <blockquote>퓨처 셀프가 어떤 모습인지<br> 찾아내야 하는 게 아니라<br> <em>어떤 모습이 될지 선택하는 겁니다.</em></blockquote>
+          <div class="page-number range"><span>PAGES</span><strong>304<span class="page-range-mark">–</span>305</strong></div>
+          <p class="quote-foot">『퓨처 셀프』 30만 부 기념 스페셜 에디션(2024)<br> 저자 Q&amp;A · <a href="https://www.yes24.com/product/goods/133809700" target="_blank" rel="noopener noreferrer">304–305쪽 공개 발췌 ↗</a></p>
+        </div>
       </section>
 
       <section class="slide practice" data-title="실천 1 · 미래의 부탁을 미루지 않기" aria-label="6 / 9 실천 첫 번째" aria-roledescription="슬라이드" hidden>
         <p class="eyebrow">03 / MY PRACTICE <span>01</span></p>
-        <h2>미래의 내가 부탁한 일을,<br><em>오늘 미루지 않기로 했다.</em></h2>
+        <h2>미래의 내가 부탁한 일을,<br> <em>오늘 미루지 않기로 했다.</em></h2>
         <p class="section-sub">이미 목표를 이룬 내가, 오늘의 나에게 꼭 해 달라고 요청하는 것들.</p>
         <div class="commitments">
-          <article><span class="card-index">01 / FAMILY</span><h3>가족과 소통하기</h3><div class="metric"><strong>1</strong><span>회 / 매주</span></div><p>부모님께 꼭<br>안부전화 드리기.</p><div class="card-bottom">연락할 수 있는 오늘을 소중히.</div></article>
-          <article><span class="card-index">02 / RECRUITING</span><h3>리쿠르팅에 투자하기</h3><div class="metric"><strong>3</strong><span>시간 / 매주</span></div><p>콜링 누적 3시간 투자.<br><b>주간 최소 10부킹 이상.</b></p><div class="card-bottom">일정에 먼저 콜링 시간을 확보하기.</div></article>
-          <article><span class="card-index">03 / HEALTH</span><h3>건강을 지키기</h3><div class="metric"><strong>30</strong><span>분 / 매일</span></div><p>지독하게 귀찮아도<br>자기 전 30분 운동하기.</p><div class="card-bottom">미래의 내가 보내는 절실한 부탁 듣기.</div></article>
+          <article><span class="card-index">01 / FAMILY</span><h3>가족과 소통하기</h3><div class="metric"><strong>1</strong><span>회 / 매주</span></div><p>부모님께 꼭<br> 안부전화 드리기.</p><div class="card-bottom">연락할 수 있는 오늘을 소중히.</div></article>
+          <article><span class="card-index">02 / RECRUITING</span><h3>리쿠르팅에 투자하기</h3><div class="metric"><strong>3</strong><span>시간 / 매주</span></div><p>콜링 누적 3시간 투자.<br> <b>주간 최소 10부킹 이상.</b></p><div class="card-bottom">일정에 먼저 콜링 시간을 확보하기.</div></article>
+          <article><span class="card-index">03 / HEALTH</span><h3>건강을 지키기</h3><div class="metric"><strong>30</strong><span>분 / 매일</span></div><p>지독하게 귀찮아도<br> 자기 전 30분 운동하기.</p><div class="card-bottom">미래의 내가 보내는 절실한 부탁 듣기.</div></article>
         </div>
         <p class="personal-line">“살려 달라”는 미래의 내 목소리에, 오늘의 내가 응답한다.</p>
       </section>
 
       <section class="slide vision" data-title="실천 2 · 미래를 눈앞에 놓기" aria-label="7 / 9 실천 두 번째" aria-roledescription="슬라이드" hidden>
         <p class="eyebrow">03 / MY PRACTICE <span>02</span></p>
-        <div class="vision-layout"><div><h2>구체적으로 꿈꾸고,<br><em>눈앞에 놓아두기.</em></h2><p class="section-sub">이번 주말까지,<br>나의 비전보드를 만든다.</p><p class="vision-copy">직접 그림으로 그리거나,<br>이미 그 삶을 사는 사람의 모습을 스크랩한다.<br>내가 원하는 하루가 보일 만큼 구체적으로.</p><div class="deadline">이번 주말까지 <b>MY VISION BOARD</b></div></div><div class="vision-board" aria-label="나의 비전보드에 담을 세 가지 모습"><div class="board-title">THIS IS MY FUTURE.<span>상상에서, 일상으로.</span></div><div class="vision-note note-one"><span>01 / FAMILY</span><strong>함께 웃는<br>가족의 일상</strong><p>그 곁에 자주 있는 나</p></div><div class="vision-note note-two"><span>02 / HEALTH</span><strong>가볍고 건강한<br>나의 몸</strong><p>매일 움직이는 나</p></div><div class="vision-note note-three"><span>03 / BUSINESS</span><strong>함께 성장하는 지점</strong><p>사람을 키우고, 신뢰를 쌓는 나</p></div></div></div>
+        <div class="vision-layout"><div><h2>구체적으로 꿈꾸고,<br> <em>눈앞에 놓아두기.</em></h2><p class="section-sub">이번 주말까지,<br> 나의 비전보드를 만든다.</p><p class="vision-copy">직접 그림으로 그리거나,<br> 이미 그 삶을 사는 사람의 모습을 스크랩한다.<br> 내가 원하는 하루가 보일 만큼 구체적으로.</p><div class="deadline">이번 주말까지 <b>MY VISION BOARD</b></div></div><div class="vision-board" aria-label="나의 비전보드에 담을 세 가지 모습"><div class="board-title">THIS IS MY FUTURE.<span>상상에서, 일상으로.</span></div><div class="vision-note note-one"><span>01 / FAMILY</span><strong>함께 웃는<br> 가족의 일상</strong><p>그 곁에 자주 있는 나</p></div><div class="vision-note note-two"><span>02 / HEALTH</span><strong>가볍고 건강한<br> 나의 몸</strong><p>매일 움직이는 나</p></div><div class="vision-note note-three"><span>03 / BUSINESS</span><strong>함께 성장하는 지점</strong><p>사람을 키우고, 신뢰를 쌓는 나</p></div></div></div>
       </section>
 
       <section class="slide mindset" data-title="실천 3 · 이미 이룬 사람의 선택" aria-label="8 / 9 실천 세 번째" aria-roledescription="슬라이드" hidden>
         <p class="eyebrow">03 / MY PRACTICE <span>03</span></p>
-        <h2>이미 이룬 사람의 기준으로,<br><em>오늘을 선택하기.</em></h2>
-        <div class="mindset-grid"><article><span class="card-index">MY HEALTHY SELF</span><h3>이미 건강관리에<br>성공한 사람처럼.</h3><p>건강을 해치는 행동과 음식은<br>내가 원하는 삶에 어울리지 않는 선택으로 여긴다.</p><div class="decision">지금의 선택이 내 몸을 돌보는가?</div></article><article><span class="card-index">MY LEADER SELF</span><h3>이미 지점을<br>운영하는 사람처럼.</h3><p>불필요한 네거티브는 흘려보내고,<br>해야 할 일과 서로에게 이로운 윈윈을 선택한다.</p><div class="decision">이 선택이 나와 상대를 함께 성장시키는가?</div></article></div>
+        <h2>이미 이룬 사람의 기준으로,<br> <em>오늘을 선택하기.</em></h2>
+        <div class="mindset-grid"><article><span class="card-index">MY HEALTHY SELF</span><h3>이미 건강관리에<br> 성공한 사람처럼.</h3><p>건강을 해치는 행동과 음식은<br> 내가 원하는 삶에 어울리지 않는 선택으로 여긴다.</p><div class="decision">지금의 선택이 내 몸을 돌보는가?</div></article><article><span class="card-index">MY LEADER SELF</span><h3>이미 지점을<br> 운영하는 사람처럼.</h3><p>불필요한 네거티브는 흘려보내고,<br> 해야 할 일과 서로에게 이로운 윈윈을 선택한다.</p><div class="decision">이 선택이 나와 상대를 함께 성장시키는가?</div></article></div>
         <p class="personal-line">내가 바라는 사람이 할 법한 행동을, 오늘 한 번 더.</p>
       </section>
 
-      <section class="slide closing" data-title="오늘, 미래의 나에게 답하다" aria-label="9 / 9 마무리" aria-roledescription="슬라이드" hidden>
-        <p class="eyebrow">THE FUTURE STARTS WITH THIS CHOICE.</p>
-        <h2>미래의 내가<br>고마워할 <em>오늘.</em></h2>
-        <p class="closing-copy">전화 한 통. 콜링 시간. 자기 전 30분.<br>내가 바라는 미래는, 오늘의 선택에서 시작된다.</p>
-        <div class="closing-sign">퓨처 셀프 <span>읽고, 내 삶에 적용하다.</span></div>
-        <button class="text-button" data-go="5">나의 실천 다시 보기 <span aria-hidden="true">↗</span></button>
+      <section class="slide closing horizon-closing" data-kind="cinematic" data-title="나는 미래를 살 것이다" aria-label="9 / 9 마무리" aria-roledescription="슬라이드" hidden>
+        <img class="scene-art" src="assets/closing.jpg" alt="" width="1672" height="941" decoding="async">
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="closing-composition">
+          <p class="eyebrow">THE FUTURE, NOW.</p>
+          <h2>미래를 바꾸는 힘은<br> 현재에서 미래를 살아낼 때<br> <em>비로소 가능해진다.</em></h2>
+          <div class="closing-divider" aria-hidden="true"></div>
+          <p class="closing-declaration">나는 지금 오늘과 내일을 넘어<br> <strong>미래를 살 것이다.</strong></p>
+          <button class="text-button" data-go="5">나의 실천 다시 보기 <span aria-hidden="true">↗</span></button>
+        </div>
       </section>
     </main>
 

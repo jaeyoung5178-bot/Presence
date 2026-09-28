@@ -1,0 +1,36 @@
+{
+  "method": "built-in image_gen",
+  "generatedOn": "2026-09-28",
+  "originalDirectory": "/Users/jaeyoung5178/.codex/generated_images/01a0e7f6-421c-77e3-8fcf-e439cbc28df6",
+  "outputDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "delivery": "JPEG quality 84 converted using sips; no creative content editing",
+  "assets": [
+    {
+      "file": "connection.jpg",
+      "slide": 3,
+      "theme": "연결",
+      "prompt": "Use case: stylized-concept. Asset type: cinematic full-bleed background for a Korean book keynote quote about the present having meaning through connection to one's future self. Create a refined, photoreal conceptual landscape, widescreen 16:9. A single very thin luminous silver footbridge curves from the lower right foreground across still midnight blue water toward one distant warm light in a foggy horizon on the far right. Water reflects the bridge and light. The LEFT 60% must be spacious, dark deep blue negative space with only soft haze for large overlaid typography. Focus detail on right third. Exquisite film grain, restrained light, poetic editorial photography, tangible textures, no fantasy planets, no stock business imagery. No text, no letters, no numerals, no logos, no watermark."
+    },
+    {
+      "file": "courage.jpg",
+      "slide": 4,
+      "theme": "용기",
+      "prompt": "Use case: stylized-concept. Asset type: cinematic full-bleed keynote background about courage: accepting risk in pursuit of a noble and worthwhile goal. Wide 16:9 fine-art cinematic landscape photograph. Far RIGHT third: one tiny solitary hiker seen from behind on a sweeping dark volcanic ridgeline, confidently moving along the ridge toward a warm narrow break of amber sunlight in towering clouds. Show a safe walkable path and monumental scale, not a jump. Vast rich charcoal shadow and barely visible atmospheric layers across LEFT 60%, intentionally quiet and dark for overlaid quote text. Copper and muted terracotta light, basalt texture, realistic atmospheric depth, subtle analog grain, contemplative determined mood. No text, letters, numerals, logos, watermark."
+    },
+    {
+      "file": "choice.jpg",
+      "slide": 5,
+      "theme": "선택",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed keynote quote background about choosing who your future self will be. Widescreen 16:9 cinematic architectural photograph. A dark minimalist room made of textured charcoal plaster. On far RIGHT third, a single tall open rectangular doorway reveals a luminous, beautifully mature green olive tree in a serene sunlit courtyard; the tree is real, not framed artwork or a screen. A precise quiet rectangle of muted warm sunlight extends a little onto the rough stone floor. LEFT 60% intentionally remains spacious shadow, very dark near-black teal wall with subtle physical texture for overlaid large typography. Mood of personal agency, openness, potential, no human figure, no futuristic portal, no space scenery, no circles, no mountains or bridges. Sophisticated natural film photography, restrained emerald green and honey sunlight, fine grain. No text, letters, numerals, logos, watermark."
+    },
+    {
+      "file": "closing.jpg",
+      "slide": 9,
+      "theme": "마무리",
+      "prompt": "Use case: stylized-concept. Asset type: closing keynote slide background about living the future in the present. Widescreen 16:9 minimal cinematic editorial photograph. An immense calm ocean before sunrise, far distant ultrathin warm golden horizon in lower third, one dark elegant coastal road enters bottom right and gently disappears toward the distant horizon on the right. Deep ink-navy sky occupies upper 65% as quiet negative space for centered overlaid typography. Landscape feels expansive, resolved, certain, sophisticated. Restrained silver blue and champagne light, very subtle fine grain, no stars or glowing circles, no copied bridge or mountain scene, no people, no text, logos, watermark."
+    }
+  ]
+}

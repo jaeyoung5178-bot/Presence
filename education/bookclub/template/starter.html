@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101411">
+  <meta name="description" content="{{TITLE}} 독서발표회 · {{AUTHOR}}">
+  <title>{{TITLE}} · PRESENCE 독서발표회</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/keynote.css?v=20260928-3">
+  <link rel="stylesheet" href="../shared/thought-field.css?v=20260928-3">
+  <link rel="stylesheet" href="../shared/scenes.css?v=20260928-3">
+  <script defer src="book.js?v=20260928-3"></script>
+  <script defer src="../shared/keynote.js?v=20260928-3"></script>
+  <script defer src="../shared/thought-field.js?v=20260928-3"></script>
+</head>
+<body data-scene="0">
+  <a class="skip" href="#slides">발표 내용으로 이동</a>
+  <div class="keynote" id="keynote">
+    <header class="topbar">
+      <a class="brand" href="../../../edu.html?tab=bookclub" aria-label="에듀케이션 독서발표회로 돌아가기">PRESENCE<span>독서발표회</span></a>
+      <div class="tools">
+        <button id="motion" aria-pressed="false" title="애니메이션 멈추기">모션 <span>ON</span></button>
+        <button id="notesButton" aria-haspopup="dialog" title="발표 원고 (N)">발표 원고</button>
+        <button id="fullscreen" title="전체화면 (F)">전체화면 <span aria-hidden="true">⛶</span></button>
+      </div>
+    </header>
+
+    <main id="slides" tabindex="-1" aria-roledescription="슬라이드 발표">
+      <div class="atmosphere" aria-hidden="true"><div class="halo"></div><div class="beam"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div><div class="future-star"></div></div>
+
+      <section class="slide cover active" data-title="표지" aria-roledescription="슬라이드">
+        <div class="cover-copy">
+          <p class="eyebrow">PRESENCE / READING SESSION</p>
+          <h1>{{TITLE}}</h1>
+          <p class="cover-sub">이 책이 바꾼 나의 생각과 선택.</p>
+          <div class="book-credit"><span class="book-spine" aria-hidden="true"></span><div><strong>{{TITLE}}</strong><p>{{AUTHOR}} 지음</p></div></div>
+          <button class="primary start" data-go="1">발표 시작하기 <span aria-hidden="true">↗</span></button>
+        </div>
+      </section>
+      <section class="slide essence" data-kind="thought" data-title="한 권을 관통하는 생각" aria-roledescription="슬라이드" hidden>
+        <div class="essence-topline"><p class="eyebrow">01 / A MIND IN MOTION</p><button class="text-button" id="introButton">3분 도입 원고 ↗</button></div>
+        <h2 class="sr-only">책의 핵심 생각</h2>
+        <div class="thought-universe" id="thoughtUniverse" role="img" aria-label="책에서 만난 핵심 생각이 떠다니는 공간">
+          <div class="thought-nebula" aria-hidden="true"></div><div class="thought-grain" aria-hidden="true"></div>
+          <canvas id="thoughtCanvas" aria-hidden="true"></canvas><div class="thought-fragments" id="thoughtFragments" aria-hidden="true"></div>
+          <span class="thought-coordinate" aria-hidden="true">IDEAS / IN MOTION</span>
+        </div>
+        <div class="essence-reading"><div class="essence-reading-top"><span>ONE BOOK. A NEW PERSPECTIVE.</span></div>
+          <div class="summary essence-summary"><p><b>첫 번째 핵심:</b> 책의 중심 질문과 답을 정리하세요.</p><p><b>두 번째 핵심:</b> 기존 생각을 바꾼 관점을 정리하세요.</p><p><b>세 번째 핵심:</b> 오늘의 행동으로 이어지는 결론을 정리하세요.</p></div>
+        </div>
+      </section>
+      <section class="slide quote cinematic-quote" data-kind="cinematic" data-title="마음에 남은 구절" aria-roledescription="슬라이드" hidden>
+        <!-- Add one context-specific asset after verifying the quote:
+        <img class="scene-art" src="assets/quote-01.jpg" alt="" width="1672" height="941" decoding="async">
+        -->
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="scene-copy"><p class="eyebrow">02 / A SENTENCE TO KEEP</p><p class="quote-theme">마음에 남은 생각</p><blockquote>이곳에 원문을 확인한<br> <em>책의 구절을 넣으세요.</em></blockquote><div class="page-number"><span>PAGE</span><strong>—</strong></div><p class="quote-foot">판본 · 쪽수 · 원문 출처 확인 후 입력</p></div>
+      </section>
+      <section class="slide closing horizon-closing" data-kind="cinematic" data-title="나의 실천" aria-roledescription="슬라이드" hidden>
+        <!-- Add assets/closing.jpg with .scene-art after creating a distinct closing image. -->
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="closing-composition"><p class="eyebrow">FROM READING TO LIVING</p><h2>책을 덮은 뒤,<br> <em>내가 바꿀 한 가지.</em></h2><div class="closing-divider" aria-hidden="true"></div><p class="closing-declaration">나의 구체적인 실천과 기한을 적으세요.</p><button class="text-button" data-go="0">처음으로 ↗</button></div>
+      </section>
+    </main>
+
+    <footer class="controls">
+      <div class="chapter" id="chapter">INTRODUCTION</div>
+      <div class="pagination"><button id="prev" aria-label="이전 슬라이드">←</button><label class="slide-select"><span class="sr-only">슬라이드 선택</span><select id="slideSelect" aria-label="슬라이드 선택"></select></label><span class="total">/ 04</span><button id="next" aria-label="다음 슬라이드">→</button></div>
+      <span class="keyboard-hint">← → 이동 <span>·</span> F 전체화면</span>
+      <div class="progress" aria-hidden="true"><div id="progressFill"></div></div>
+    </footer>
+  </div>
+
+  <dialog id="notes" aria-labelledby="notesTitle">
+    <div class="notes-header"><div><p class="eyebrow">PRESENTER NOTES</p><h2 id="notesTitle">발표 원고</h2></div><button id="closeNotes" aria-label="발표 원고 닫기">닫기 ×</button></div>
+    <div class="notes-body" id="notesBody"></div>
+    <div class="timer-tools" id="timerTools"><output id="timer" aria-label="도입 남은 시간">03:00</output><button id="timerToggle">3분 시작</button><button id="timerReset">초기화</button><span id="timerStatus" role="status"></span></div>
+  </dialog>
+  <div class="toast" id="status" role="status"></div>
+  <div class="sr-only" id="slideAnnouncement" aria-live="polite" aria-atomic="true"></div>
+  <noscript><p class="noscript">슬라이드 이동과 애니메이션에는 자바스크립트가 필요합니다. <a href="발표원고.md">발표 원고 읽기</a></p></noscript>
+</body>
+</html>

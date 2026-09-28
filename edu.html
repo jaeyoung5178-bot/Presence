@@ -111,18 +111,6 @@
   @media(max-width:560px){ .item .title-edit,.fld input,.fld select{font-size:16px;min-height:44px;} }
   @media(max-width:400px){ .grid{grid-template-columns:1fr;} }
 
-  /* 독서발표회는 읽기 전용 기본 자료입니다. 기존 교육 자료 저장값을 바꾸지 않습니다. */
-  .bookclub-tab{font-family:inherit;min-height:44px;color:#d9ef8c;border-color:#d9ef8c55;}
-  .bookclub-tab.on{background:#d9ef8c;color:#101411;}
-  .bookclub-feature{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;position:relative;overflow:hidden;padding:34px;border:1px solid #d9ef8c40;border-radius:18px;background:radial-gradient(ellipse at 100% 30%,#8d9e4933,transparent 60%),#151d17;color:#f0f0e4;text-decoration:none;min-height:220px;transition:border-color .2s;}
-  .bookclub-feature:hover{border-color:#d9ef8c;}
-  .bookclub-feature:focus-visible,.bookclub-tab:focus-visible{outline:2px solid #d9ef8c;outline-offset:5px;}
-  .bookclub-kicker{color:#b4c3a2;font-size:11px;letter-spacing:2px;}
-  .bookclub-feature h2{font-size:30px;line-height:1.35;letter-spacing:-1px;margin:16px 0 12px;font-weight:600;word-break:keep-all;}
-  .bookclub-feature h2 em{font-style:normal;color:#d9ef8c;}
-  .bookclub-feature p{font-size:14px;color:#a6b3a9;line-height:1.6;margin:0;word-break:keep-all;}
-  .bookclub-open{border:1px solid #d9ef8c55;color:#d9ef8c;padding:14px 18px;border-radius:9px;font-size:13px;white-space:nowrap;}
-  @media(max-width:600px){.bookclub-feature{grid-template-columns:1fr;gap:23px;padding:25px;}.bookclub-feature h2{font-size:27px;}.bookclub-feature p{font-size:16px;}.bookclub-open{justify-self:start;min-height:44px;}.bookclub-kicker{font-size:12px;}.bookclub-tab .cnt{font-size:12px;}}
 </style>
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="assets/education/presence-logo.png">
@@ -130,6 +118,7 @@
 <link rel="preload" as="image" href="assets/education/learning-props-v1.webp">
 <link rel="stylesheet" href="assets/education/academy-v1.css?v=20260928a">
 <script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem('presence.edu.theme.v1'))||'dark';}catch(e){document.documentElement.dataset.theme='dark';}</script>
+<link rel="stylesheet" href="education/bookclub/gallery.css?v=20260928-2">
 </head>
 <body>
   <div class="app-shell">
@@ -208,6 +197,8 @@
 <div class="save-toast" id="toast" role="status">저장됨 ✓</div>
 
 <script src="assets/education/academy-v1.js?v=20260928a"></script>
+<script src="education/bookclub/catalog.js?v=20260928-2"></script>
+<script src="education/bookclub/gallery.js?v=20260928-2"></script>
 <script>
 (function(){
   var DB = "https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app";
@@ -552,11 +543,11 @@
   }
 
   function bookClubCard(){
-    return '<a class="bookclub-feature" href="education/bookclub/future-self/" aria-label="퓨처 셀프 독서발표회 발표 열기">'
-      + '<div><span class="bookclub-kicker">BOOK CLUB / FUTURE SELF</span><h2>미래의 내가,<br><em>오늘을 살게 하라.</em></h2>'
-      + '<p>『퓨처 셀프』 독서발표회 · 세 구절과 나의 실천<br>9장 키노트 · 3분 도입 원고</p></div>'
-      + '<span class="bookclub-open">발표 열기 ↗</span></a>';
+    if(window.PresenceBookGallery) return window.PresenceBookGallery.render({compact:active!==BOOKCLUB_VIEW});
+    return '<section class="reading-room reading-room-error"><p class="reading-room-eyebrow">PRESENCE READING ROOM</p><h2>독서발표회</h2><p>서가를 불러오지 못했지만 발표는 바로 시작할 수 있어요.</p><a class="bookclub-feature reading-recovery" href="education/bookclub/future-self/index.html#slide-1">퓨처 셀프 · 벤저민 하디 · 발표 시작 ↗</a></section>';
   }
+
+  function bookClubCount(){ return window.PresenceBookGallery ? window.PresenceBookGallery.count() : 1; }
 
   function countIn(f){ return data.items.filter(function(it){return it.folder===f;}).length; }
 
@@ -564,6 +555,7 @@
     if(!data) return;
     if(active!=="__ALL__" && active!==WEPAIR_VIEW && active!==BOOKCLUB_VIEW && data.folders.indexOf(active)<0) active="__ALL__";
     academy.render(data,active,isAdmin,bookClubCard());
+    if(window.PresenceBookGallery) window.PresenceBookGallery.setContext(active,data.items.length);
   }
 
   function selectCategory(folder){

@@ -1,0 +1,206 @@
+/* Page 02: unbounded thoughts, independent trajectories, an editorial reading edge. */
+body[data-scene-kind="thought"] #slides {
+  background: #0c1017;
+}
+body[data-scene-kind="thought"] .atmosphere,
+body[data-scene-kind="thought"] .word-river {
+  display: none;
+}
+.slide.essence {
+  justify-content: center;
+  padding: 20px 5.6% 34px;
+  background: radial-gradient(ellipse at 48% 30%, #19212e66, transparent 62%);
+}
+.essence-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.essence-topline .eyebrow {
+  margin: 0;
+  color: #9faebc;
+  font-size: 12px;
+  letter-spacing: 2.6px;
+}
+.essence-topline .text-button {
+  align-self: auto;
+  font-size: 12px;
+  color: #bfcdc9;
+  border-color: #95b4c62b;
+}
+.thought-universe {
+  position: relative;
+  height: clamp(340px, 46vh, 465px);
+  margin: 3px -6.4% 18px;
+  overflow: hidden;
+  isolation: isolate;
+  contain: layout paint;
+  mask-image: linear-gradient(0deg, transparent, #000 9%, #000 91%, transparent);
+}
+.thought-universe > * {
+  pointer-events: none;
+}
+.thought-nebula {
+  position: absolute;
+  inset: -20%;
+  z-index: -2;
+  opacity: .84;
+  background:
+    radial-gradient(ellipse at 60% 44%, #6d65a826, transparent 22%),
+    radial-gradient(ellipse at 40% 52%, #709c7525, transparent 20%),
+    radial-gradient(ellipse at 56% 53%, #c4d68b12, transparent 13%),
+    radial-gradient(ellipse at 72% 25%, #4d7f8916, transparent 16%);
+  filter: blur(28px);
+  transform: rotate(-12deg);
+}
+.thought-grain {
+  position: absolute;
+  inset: 0;
+  opacity: .18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.94' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23noise)' opacity='.22' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+  z-index: -1;
+}
+#thoughtCanvas,
+.thought-fragments {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.thought-fragment {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1.2;
+  color: #c1d2cb;
+  font-weight: 400;
+  letter-spacing: -.035em;
+  transform-origin: center;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  user-select: none;
+}
+.thought-fragment.near {
+  font-weight: 550;
+  color: #eef3d3;
+  text-shadow: 0 0 30px #d4e8ab17;
+}
+.thought-fragment.lime { color: #d9ed9e; }
+.thought-fragment.ice { color: #9ebbcf; }
+.thought-fragment.lilac { color: #b6a9d6; }
+.thought-fragment.faint { color: #7c899c; }
+.thought-fragment.english {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: .035em;
+}
+.thought-fragment.split { letter-spacing: .23em; }
+.thought-coordinate {
+  position: absolute;
+  left: 6%;
+  bottom: 13%;
+  color: #91a6ad;
+  font-family: Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  opacity: .55;
+}
+.thought-whisper {
+  position: absolute;
+  right: 7%;
+  bottom: 12%;
+  color: #aebbc2;
+  font-size: 12px;
+  line-height: 1.8;
+  letter-spacing: .5px;
+  opacity: .6;
+}
+.essence-reading {
+  position: relative;
+  z-index: 3;
+  border-top: 1px solid #99abc333;
+}
+.essence-reading-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 48px;
+}
+.essence-reading-top > span {
+  color: #94a8ae;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.essence-reading-top button {
+  padding: 8px 0 8px 12px;
+  border: 0;
+  border-radius: 0;
+  color: #9dacb6;
+  font-size: 12px;
+  min-height: 44px;
+}
+.essence-reading-top button span { margin-left: 12px; }
+.summary.essence-summary {
+  border: 0;
+  margin: 4px 0 0;
+  padding: 0;
+  gap: 10px;
+  color: #abb6bf;
+  font-size: clamp(16px, 1.25vw, 19px);
+  line-height: 1.65;
+  letter-spacing: -.25px;
+}
+.essence-summary p {
+  padding-left: 18px;
+  position: relative;
+}
+.essence-summary p::before {
+  content: '';
+  position: absolute;
+  top: .73em;
+  left: 0;
+  width: 3px;
+  height: 3px;
+  background: #8a9d7c;
+}
+.essence-summary b { color: #e2e9d1; font-weight: 550; }
+.source-explanation { border-left: 2px solid #a4b58b; padding-left: 18px; }
+@media (min-width: 1500px) and (min-height: 900px) {
+  .thought-universe { height: min(51vh, 580px); }
+}
+@media (max-width: 1100px) {
+  .slide.essence { padding: 22px 5% 28px; }
+  .thought-universe { height: 320px; margin: 0 -5.56% 16px; }
+  .summary.essence-summary { font-size: 16px; gap: 9px; }
+  .thought-coordinate { font-size: 12px; letter-spacing: 1px; }
+}
+@media (max-width: 650px) {
+  .slide.essence { padding: 16px 24px 32px; }
+  .essence-topline { gap: 8px; align-items: center; }
+  .essence-topline .eyebrow { font-size: 12px; letter-spacing: .4px; max-width: 135px; }
+  .essence-topline .text-button { font-size: 12px; margin: 0; }
+  .essence-topline .text-button span { margin-left: 8px; }
+  .thought-universe { height: 425px; margin: -2px -24px 8px; }
+  .thought-nebula { filter: blur(18px); opacity: .9; }
+  .thought-coordinate { left: 7%; bottom: 7%; font-size: 12px; letter-spacing: .4px; }
+  .thought-whisper { right: 7%; bottom: 7%; font-size: 12px; letter-spacing: 0; }
+  .essence-reading-top { gap: 8px; padding-top: 5px; }
+  .essence-reading-top > span { font-size: 12px; letter-spacing: .5px; max-width: 155px; line-height: 1.6; }
+  .essence-reading-top button { white-space: nowrap; padding-left: 0; }
+  .essence-reading-top button span { margin-left: 3px; }
+  .summary.essence-summary { font-size: 16px; gap: 18px; line-height: 1.8; margin-top: 11px; }
+  .essence-summary p { padding-left: 13px; }
+  .essence-summary b { color: #e2e9d1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thought-fragment { will-change: auto; }
+}
+@media print {
+  .thought-universe { height: 320px; }
+  .essence-topline, .essence-reading-top { display: none; }
+}

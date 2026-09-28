@@ -1,0 +1,89 @@
+/* Reusable visual scene contract: .scene-art + .scene-shade + .scene-copy.
+   Book content supplies imagery; scenes choose composition and accent. */
+body[data-scene-kind="cinematic"] main { background: #0c1117; }
+body[data-scene-kind="cinematic"] .atmosphere,
+body[data-scene-kind="cinematic"] .word-river { display: none; }
+.cinematic-quote,
+.horizon-closing { overflow: hidden; isolation: isolate; max-width: none; }
+.scene-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; z-index: -3; animation: scene-arrive 1.3s ease-out both, scene-breath 24s ease-in-out 1.3s infinite alternate; }
+.scene-shade { position: absolute; inset: 0; z-index: -2; pointer-events: none; }
+.cinematic-quote { --scene-accent: #bddae8; padding: 45px 6% 42px; justify-content: center; }
+.cinematic-quote .scene-shade { background: linear-gradient(90deg,rgba(7,14,22,.92) 0%,rgba(7,14,22,.78) 32%,rgba(7,14,22,.38) 61%,rgba(7,14,22,.06) 100%),linear-gradient(0deg,rgba(4,9,16,.5),transparent 45%); }
+.cinematic-quote .scene-copy { width: 69%; max-width: 950px; }
+.cinematic-quote .eyebrow { color: #b7c5cd; margin-bottom: clamp(26px,4.4vh,48px); font-size: 12px; letter-spacing: 2.2px; }
+.cinematic-quote .eyebrow > span { float: none; display: inline-block; margin-left: 20px; font-family: inherit; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--scene-accent); }
+.cinematic-quote .quote-theme { color: var(--scene-accent); margin-bottom: 23px; font-size: 15px; }
+.cinematic-quote .quote-theme::before { background: var(--scene-accent); }
+.cinematic-quote blockquote { font-size: clamp(30px,3.05vw,48px); font-weight: 520; line-height: 1.58; letter-spacing: -.9px; color: #f4f4ed; text-shadow: 0 2px 30px #0005; }
+.cinematic-quote blockquote em { color: var(--scene-accent); }
+.cinematic-quote .page-number { border: 0; padding: 0; margin-top: 28px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 17px; min-width: 0; text-align: left; }
+.cinematic-quote .page-number > span { font-family: inherit; font-size: 11px; letter-spacing: 2.5px; color: #b6c2c9; }
+.cinematic-quote .page-number strong,
+.cinematic-quote .page-number.range strong { display: inline-flex; align-items: baseline; gap: 10px; font-family: Pretendard,"Apple SD Gothic Neo",sans-serif; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum"; font-size: 34px; font-weight: 400; letter-spacing: 1px; line-height: 1.3; color: var(--scene-accent); }
+.cinematic-quote .page-number .page-range-mark { font: inherit; font-size: .75em; letter-spacing: 0; opacity: .55; }
+.cinematic-quote .reflection { margin-top: 26px; color: #b8c6cf; font-size: 16px; line-height: 1.7; }
+.cinematic-quote .quote-foot { margin-top: 30px; font-size: 12px; line-height: 1.75; color: #bac5cb; }
+.cinematic-quote .quote-foot a { color: #d5e0e3; }
+.cinematic-quote.courage { --scene-accent: #e6c19b; }
+.cinematic-quote.courage .scene-shade { background: linear-gradient(90deg,rgba(19,16,15,.93),rgba(19,16,15,.7) 41%,rgba(19,16,15,.12) 75%),linear-gradient(0deg,rgba(17,14,11,.6),transparent 55%); }
+.cinematic-quote.courage blockquote { font-size: clamp(28px,2.75vw,43px); }
+.cinematic-quote.choice { --scene-accent: #d4e0b9; }
+.cinematic-quote.choice .scene-shade { background: linear-gradient(90deg,rgba(8,16,17,.93),rgba(8,16,17,.78) 39%,rgba(8,16,17,.12) 77%),linear-gradient(0deg,rgba(8,16,17,.4),transparent); }
+.cinematic-quote.choice blockquote { font-size: clamp(29px,2.8vw,44px); }
+.horizon-closing { display: flex; align-items: center; justify-content: center; padding: 64px 6%; text-align: center; }
+.horizon-closing .scene-art { object-position: center; }
+.horizon-closing .scene-shade { background: linear-gradient(180deg,rgba(7,13,24,.22),rgba(7,13,24,.42) 55%,rgba(7,13,24,.45)); }
+.closing-composition { width: min(100%,1000px); }
+.horizon-closing .eyebrow { color: #a9bbcc; letter-spacing: 4px; font-size: 11px; margin-bottom: 30px; }
+.slide.horizon-closing h2 { font-size: clamp(35px,3.55vw,58px); line-height: 1.45; letter-spacing: -1.5px; font-weight: 500; color: #edf1f3; text-shadow: 0 2px 20px #0004; }
+.horizon-closing h2 em { color: #e6d5b8; }
+.closing-divider { width: 35px; height: 1px; background: #d7ccaa99; margin: 30px auto; }
+.closing-declaration { font-size: clamp(18px,1.7vw,27px); line-height: 1.7; font-weight: 400; letter-spacing: -.35px; color: #bacbd6; word-break: keep-all; }
+.closing-declaration strong { font-weight: 550; color: #f1eee7; }
+.horizon-closing .text-button { display: inline-block; align-self: auto; color: #b7c7d3; border-color: #b7c7d344; margin-top: 30px; font-size: 12px; }
+.notes-body .source-links a { display: inline-flex; align-items: center; min-height: 44px; line-height: 1.6; }
+@keyframes scene-arrive { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scene-breath { from { transform: scale(1); } to { transform: scale(1.035); } }
+@media (min-width:651px) and (max-width:1100px) {
+  .cinematic-quote { padding: 36px 5%; }
+  .cinematic-quote .scene-copy { width: 76%; }
+  .cinematic-quote blockquote { font-size: 34px; }
+  .cinematic-quote.courage blockquote,.cinematic-quote.choice blockquote { font-size: 31px; }
+  .cinematic-quote .eyebrow { margin-bottom: 30px; }
+  .cinematic-quote .quote-foot { margin-top: 24px; }
+  .slide.horizon-closing h2 { font-size: 43px; }
+}
+@media (max-width:650px) {
+  .cinematic-quote { min-height: 680px; padding: 31px 24px 35px; }
+  .cinematic-quote .scene-art { height: 100%; object-position: 74% center; }
+  .cinematic-quote .scene-shade,
+  .cinematic-quote.courage .scene-shade,
+  .cinematic-quote.choice .scene-shade { background: linear-gradient(180deg,rgba(7,13,19,.08),rgba(7,13,19,.36) 20%,rgba(7,13,19,.89) 44%,rgba(7,13,19,.96) 73%); }
+  .cinematic-quote.courage .scene-art { object-position: 90% center; }
+  .cinematic-quote .scene-copy { width: 100%; max-width: none; }
+  .cinematic-quote .eyebrow { margin-bottom: 125px; color: #d3dbe0; font-size: 12px; letter-spacing: .7px; }
+  .cinematic-quote .eyebrow > span { font-size: 12px; margin-left: 14px; }
+  .cinematic-quote .quote-theme { font-size: 14px; margin-bottom: 18px; }
+  .cinematic-quote blockquote,
+  .cinematic-quote.courage blockquote,
+  .cinematic-quote.choice blockquote { font-size: 28px; line-height: 1.6; letter-spacing: -.6px; word-break: keep-all; }
+  .cinematic-quote blockquote br { display: none; }
+  .cinematic-quote .page-number { margin-top: 23px; gap: 17px; }
+  .cinematic-quote .page-number > span { font-size: 12px; letter-spacing: 1.4px; }
+  .cinematic-quote .page-number strong,
+  .cinematic-quote .page-number.range strong { font-size: 29px; letter-spacing: 1px; gap: 8px; }
+  .cinematic-quote .reflection { font-size: 15px; margin-top: 24px; }
+  .cinematic-quote .quote-foot { font-size: 12px; margin-top: 22px; }
+  .horizon-closing { padding: 48px 24px; min-height: 665px; justify-content: center; }
+  .horizon-closing .scene-art { object-position: 72% center; }
+  .horizon-closing .scene-shade { background: linear-gradient(180deg,rgba(6,12,22,.18),rgba(6,12,22,.42) 55%,rgba(6,12,22,.6)); }
+  .horizon-closing .eyebrow { font-size: 12px; letter-spacing: 2.1px; margin-bottom: 28px; }
+  .slide.horizon-closing h2 { font-size: clamp(27px,7.5vw,35px); line-height: 1.6; letter-spacing: -.8px; word-break: keep-all; }
+  .horizon-closing h2 br { display: none; }
+  .closing-divider { margin: 28px auto; }
+  .closing-declaration { font-size: 19px; line-height: 1.8; letter-spacing: -.3px; }
+  .closing-declaration br { display: block; }
+  .horizon-closing .text-button { font-size: 12px; margin-top: 28px; }
+}
+@media (prefers-reduced-motion:reduce) { .scene-art { animation: none; } }
+@media print { .scene-art,.scene-shade { display: block!important; } }
