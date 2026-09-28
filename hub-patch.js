@@ -90,6 +90,9 @@
       after&&after(b.role);
     }).catch(function(){ askPass(after); });
   }
+  function showHubNotice(message){
+    var notice=document.createElement('div');notice.className='hub-notice';notice.setAttribute('role','status');notice.textContent=message;document.body.appendChild(notice);setTimeout(function(){notice.remove();},3500);
+  }
   function askPass(after,adminOnly){
     var existing=document.getElementById('hubAccessDialog');
     if(existing){existing.querySelector('input').focus();return;}
@@ -156,7 +159,7 @@
   addMenuItem('TEAM','👥 팀원 사진 공간', openTeam);
   addMenuItem('LOCK','🔒 관리자 잠금', function(){
     setAdmin(false); setTeam(false); syncDLState();
-    var notice=document.createElement('div');notice.className='hub-notice';notice.setAttribute('role','status');notice.textContent='잠금 완료 · 다음에 다시 인증해 주세요.';document.body.appendChild(notice);setTimeout(function(){notice.remove();},3500);
+    showHubNotice('잠금 완료 · 다음에 다시 인증해 주세요.');
   });
 
   /* ---------- 3) 패널 공통 스타일 ---------- */
@@ -319,7 +322,7 @@
   }
   $('tpClose').onclick=function(){ tpanel.classList.remove('open'); };
   $('tpLock').onclick=function(){ setTeam(false); tpanel.classList.remove('open'); syncDLState();
-    alert('잠금 완료 — 다음에 ⋯ 누르면 비밀번호를 다시 묻습니다'); };
+    showHubNotice('잠금 완료 · 다음에 다시 인증해 주세요.'); };
   $('tpZip').onclick=function(){ zipAll($('tpMsg')); };
   $('tpDrop').onclick=function(){ $('tpFile').click(); };
   $('tpFile').onchange=function(){
