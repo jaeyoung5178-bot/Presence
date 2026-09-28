@@ -110,6 +110,19 @@
   @media(max-width:560px){ .grid{grid-template-columns:1fr 1fr;} .item .ti{font-size:15px;} h1{font-size:22px;} .wepair-head{align-items:flex-start; padding:14px;} .wepair-title span{white-space:normal;} .wepair-open{padding:8px 10px;} .wepair-frame-wrap{height:72vh; min-height:520px;} }
   @media(max-width:560px){ .item .title-edit,.fld input,.fld select{font-size:16px;min-height:44px;} }
   @media(max-width:400px){ .grid{grid-template-columns:1fr;} }
+
+  /* 독서발표회는 읽기 전용 기본 자료입니다. 기존 교육 자료 저장값을 바꾸지 않습니다. */
+  .bookclub-tab{font-family:inherit;min-height:44px;color:#d9ef8c;border-color:#d9ef8c55;}
+  .bookclub-tab.on{background:#d9ef8c;color:#101411;}
+  .bookclub-feature{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;position:relative;overflow:hidden;padding:34px;border:1px solid #d9ef8c40;border-radius:18px;background:radial-gradient(ellipse at 100% 30%,#8d9e4933,transparent 60%),#151d17;color:#f0f0e4;text-decoration:none;min-height:220px;transition:border-color .2s;}
+  .bookclub-feature:hover{border-color:#d9ef8c;}
+  .bookclub-feature:focus-visible,.bookclub-tab:focus-visible{outline:2px solid #d9ef8c;outline-offset:5px;}
+  .bookclub-kicker{color:#b4c3a2;font-size:11px;letter-spacing:2px;}
+  .bookclub-feature h2{font-size:30px;line-height:1.35;letter-spacing:-1px;margin:16px 0 12px;font-weight:600;word-break:keep-all;}
+  .bookclub-feature h2 em{font-style:normal;color:#d9ef8c;}
+  .bookclub-feature p{font-size:14px;color:#a6b3a9;line-height:1.6;margin:0;word-break:keep-all;}
+  .bookclub-open{border:1px solid #d9ef8c55;color:#d9ef8c;padding:14px 18px;border-radius:9px;font-size:13px;white-space:nowrap;}
+  @media(max-width:600px){.bookclub-feature{grid-template-columns:1fr;gap:23px;padding:25px;}.bookclub-feature h2{font-size:27px;}.bookclub-feature p{font-size:16px;}.bookclub-open{justify-self:start;min-height:44px;}.bookclub-kicker{font-size:12px;}.bookclub-tab .cnt{font-size:12px;}}
 </style>
 </head>
 <body>
@@ -194,7 +207,9 @@
   var LOCAL_KEY = "presence.edu.library.v2";
   var WEPAIR_VIEW = "__WEPAIR__";
   var WEPAIR_URL = "https://jaeyoung5178-bot.github.io/wepair-presentation/";
-  var active = new URLSearchParams(location.search).get("tab") === "wepair" ? WEPAIR_VIEW : "__ALL__";  // current folder filter
+  var BOOKCLUB_VIEW = "__BOOKCLUB__";
+  var requestedTab = new URLSearchParams(location.search).get("tab");
+  var active = requestedTab === "wepair" ? WEPAIR_VIEW : requestedTab === "bookclub" ? BOOKCLUB_VIEW : "__ALL__";
   var isAdmin = false;
   var editingItemId = null;
   var firebaseRuntimePromise = null;
@@ -487,14 +502,22 @@
     });
   }
 
+  function bookClubCard(){
+    return '<a class="bookclub-feature" href="education/bookclub/future-self/" aria-label="퓨처 셀프 독서발표회 발표 열기">'
+      + '<div><span class="bookclub-kicker">BOOK CLUB / FUTURE SELF</span><h2>미래의 내가,<br><em>오늘을 살게 하라.</em></h2>'
+      + '<p>『퓨처 셀프』 독서발표회 · 세 구절과 나의 실천<br>9장 키노트 · 3분 도입 원고</p></div>'
+      + '<span class="bookclub-open">발표 열기 ↗</span></a>';
+  }
+
   function countIn(f){ return data.items.filter(function(it){return it.folder===f;}).length; }
 
   function render(){
     if(!data) return;
     document.body.classList.toggle("editing", isAdmin);
     // folders
-    var fh = '<div class="chip '+(active==="__ALL__"?"on":"")+'" data-f="__ALL__">전체 <span class="cnt">'+data.items.length+'</span></div>';
+    var fh = '<div class="chip '+(active==="__ALL__"?"on":"")+'" data-f="__ALL__">전체 <span class="cnt">'+(data.items.length+1)+'</span></div>';
     fh += '<div class="chip wepair-tab '+(active===WEPAIR_VIEW?"on":"")+'" data-f="'+WEPAIR_VIEW+'">✦ 위페어</div>';
+    fh += '<button type="button" id="bookclubTab" class="chip bookclub-tab '+(active===BOOKCLUB_VIEW?"on":"")+'" data-f="'+BOOKCLUB_VIEW+'" aria-pressed="'+(active===BOOKCLUB_VIEW)+'">독서발표회 <span class="cnt">1</span></button>';
     data.folders.forEach(function(f){
       fh += '<div class="chip '+(active===f?"on":"")+'" data-f="'+esc(f)+'">'+esc(f)+' <span class="cnt">'+countIn(f)+'</span><span class="fx" data-del="'+esc(f)+'">×</span></div>';
     });
@@ -502,6 +525,7 @@
     $("#folders").innerHTML = fh;
 
     // items
+    if(active===BOOKCLUB_VIEW){ $("#grid").innerHTML=bookClubCard(); return; }
     if(active===WEPAIR_VIEW){
       $("#grid").innerHTML = '<section class="wepair-panel" aria-label="위페어 프레젠테이션">'
         + '<div class="wepair-head">'
@@ -514,8 +538,8 @@
     }
 
     var list = data.items.filter(function(it){ return active==="__ALL__" || it.folder===active; });
-    var gh = "";
-    if(list.length===0){ gh = '<div class="empty">아직 자료가 없어요.'+(isAdmin?' 아래 ＋로 추가하세요.':'')+'</div>'; }
+    var gh = active==="__ALL__" ? bookClubCard() : "";
+    if(list.length===0 && active!=="__ALL__"){ gh = '<div class="empty">아직 자료가 없어요.'+(isAdmin?' 아래 ＋로 추가하세요.':'')+'</div>'; }
     list.forEach(function(it){
       var opts = data.folders.map(function(f){ return '<option value="'+esc(f)+'" '+(f===it.folder?"selected":"")+'>'+esc(f)+'</option>'; }).join("");
       gh += '<div class="item" data-href="'+esc(it.href||"#")+'" data-target="'+esc(it.target||"")+'" data-id="'+it.id+'">'
@@ -556,9 +580,10 @@
     var chip=e.target.closest(".chip[data-f]");
     if(chip){
       active=chip.getAttribute("data-f");
-      var nextUrl = active===WEPAIR_VIEW ? "edu.html?tab=wepair" : "edu.html";
+      var nextUrl = active===WEPAIR_VIEW ? "edu.html?tab=wepair" : active===BOOKCLUB_VIEW ? "edu.html?tab=bookclub" : "edu.html";
       history.replaceState(null,"",nextUrl);
       render();
+      if(active===BOOKCLUB_VIEW) $("#bookclubTab").focus({preventScroll:true});
     }
   });
 
