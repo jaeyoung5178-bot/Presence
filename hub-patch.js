@@ -625,20 +625,7 @@
   window.addEventListener('load', function () { setTimeout(galleryBtn, 800); });
   setTimeout(galleryBtn, 2000);
 
-  /* ---------- 상단 영문 팀 명단 — Workbook/Presence 비서와 자동 연동 ---------- */
-  var ROSTER_URL='https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/memberDirectory.json';
-  function rosterEsc(v){return String(v==null?'':v).replace(/[&<>\"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})}
-  function rosterJoin(rows){return rows.map(function(m){return rosterEsc(m.englishName||m.enName||m.name||'')}).filter(Boolean).join('<span class="sep">·</span>')}
-  function renderRoster(data){
-    var rows=Object.keys(data||{}).map(function(k){return data[k]||{}}).filter(function(m){return m.status==='active'&&m.role!=='AOP'&&m.role!=='OP'&&m.role!=='O'&&!m.test});
-    var order=function(a,b){return (Number(a.hubOrder)||9999)-(Number(b.hubOrder)||9999)||(Number(a.createdAt)||0)-(Number(b.createdAt)||0)||String(a.englishName||a.name||'').localeCompare(String(b.englishName||b.name||''),'en')};
-    var first=rows.filter(function(m){return m.hubTier==='FIRST'}).sort(order);
-    var second=rows.filter(function(m){return m.hubTier==='SECOND'}).sort(order);
-    var ic=rows.filter(function(m){return m.hubTier==='IC'}).sort(order);
-    [['first-lr-names',first],['second-lr-names',second],['ic-names',ic]].forEach(function(pair){var el=document.getElementById(pair[0]),html=rosterJoin(pair[1]);if(el&&html)el.innerHTML=html});
-  }
-  function loadRoster(){fetch(ROSTER_URL+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(data){if(data)renderRoster(data)}).catch(function(){})}
-  window.addEventListener('load',function(){setTimeout(loadRoster,600)});setTimeout(loadRoster,1800);setInterval(loadRoster,60000);
+  /* Live Korean display roster is owned by assets/hub/hub-roster-v1.js. */
 
 })();
 

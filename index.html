@@ -256,6 +256,7 @@
     .beam,.grain,.dot,.sweep,.lead-emblem{animation:none;}
   }
 </style>
+<link rel="stylesheet" href="assets/hub/hub-soft-v1.css?v=20260928-soft1">
 </head>
 <body>
   <div class="beam"></div>
@@ -494,7 +495,7 @@
     <div class="cast">
       <div class="lead">
         <span class="role">AOP</span>
-        <span class="lead-row"><a class="lead-link" href="presence-record.html" title="개인 필드 기록 — FIELD RECORD"><span class="lead-name">LIM JAE YOUNG</span></a><a class="mat-logo" href="https://jaeyoung5178-bot.github.io/matdosa.github.io/" target="_blank" rel="noopener" title="맛도사 — MATDOSA Studio"><svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" aria-label="MATDOSA">
+        <span class="lead-row"><a class="lead-link" href="presence-record.html" title="개인 필드 기록"><span class="lead-name">명단을 불러오는 중</span></a><a class="mat-logo" href="https://jaeyoung5178-bot.github.io/matdosa.github.io/" target="_blank" rel="noopener" title="맛도사 — MATDOSA Studio"><svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" aria-label="MATDOSA">
   <path d="M50 4 C77 4 96 24 96 52 C96 82 74 106 50 136 C26 106 4 82 4 52 C4 24 23 4 50 4 Z" fill="#d8b98c"/>
   <ellipse cx="50" cy="58" rx="24" ry="33" fill="#17120d"/>
   <path d="M50 27 C41 42 41 74 50 89" fill="none" stroke="#d8b98c" stroke-width="5.5" stroke-linecap="round"/>
@@ -502,12 +503,12 @@
         <a class="fstats mono" id="fstats" href="presence-record.html" title="개인 필드 기록 페이지 열기"></a>
       </div>
       <div class="rows">
-        <span class="role">FIRST LR</span>
-        <span class="names" id="first-lr-names">Ko Yun Kyung<span class="sep">·</span>Park In Sun<span class="sep">·</span>Yoon Chae Young<span class="sep">·</span>Gan Seung Hak</span>
-        <span class="role">SECOND LR</span>
-        <span class="names" id="second-lr-names">Son Ye Jin<span class="sep">·</span>Kwon Young Woong<span class="sep">·</span>Choi Yi Su<span class="sep">·</span>Kim Ha Jin</span>
+        <span class="role">퍼스트 리더</span>
+        <span class="names" id="first-lr-names">명단을 불러오는 중</span>
+        <span class="role">세컨드 리더</span>
+        <span class="names" id="second-lr-names">명단을 불러오는 중</span>
         <span class="role">IC</span>
-        <span class="names" id="ic-names">Lee Yoon Sung<span class="sep">·</span>Kim Su Min<span class="sep">·</span>Min Byoung Jun</span>
+        <span class="names" id="ic-names">명단을 불러오는 중</span>
       </div>
     </div>
     <div class="orgline"><span class="org"><b>PRESENCE</b> FIELD TEAM · OXFAM × WEPAIR · INCHEON, KR</span></div>
@@ -858,7 +859,9 @@ function ap(t){h.classList.toggle("pth-light",t==="light");b.textContent=t==="li
 var t="night";try{t=localStorage.getItem(K)||"night"}catch(e){}ap(t);
 b.addEventListener("click",function(){t=(t==="light")?"night":"light";try{localStorage.setItem(K,t)}catch(e){}ap(t);});})();
 </script>
-<script src="hub-patch.js?v=20260714b"></script>
+<script src="hub-patch.js?v=20260928-soft1"></script>
+<script src="assets/hub/hub-soft-v1.js?v=20260928-soft1"></script>
+<script src="assets/hub/hub-roster-v1.js?v=20260928-ko1"></script>
 
 <script>document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("#topicsBtn");if(a){e.preventDefault();e.stopImmediatePropagation();location.href="edu.html";}},true);</script></body>
 </html>
