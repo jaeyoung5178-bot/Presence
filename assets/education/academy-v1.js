@@ -5,7 +5,11 @@
   const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const savedKey='presence.edu.bookmarks.v1',themeKey='presence.edu.theme.v1';
   const stored=storage.get(savedKey,[]);
-  const state={data:null,active:'__ALL__',isAdmin:false,query:'',savedOnly:false,selected:null,saved:new Set(Array.isArray(stored)?stored:[])};
+  const params=new URLSearchParams(location.search);
+  const initialFolder=params.get('tab')==='bookclub'?'__BOOKCLUB__':params.get('tab')==='wepair'?'__WEPAIR__':params.get('category')||'__ALL__';
+  const state={data:null,active:initialFolder,view:initialFolder!=='__ALL__'||params.get('view')==='all'?'materials':'shelves',fromShelf:false,lastFolder:null,isAdmin:false,query:'',savedOnly:false,selected:null,saved:new Set(Array.isArray(stored)?stored:[])};
+  const remembered=history.state?.presenceLibrary;
+  if(remembered?.folder===state.active&&remembered.view===state.view)Object.assign(state,{fromShelf:!!remembered.fromShelf,lastFolder:remembered.lastFolder||null,query:remembered.query||'',savedOnly:!!remembered.savedOnly});
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   let hooks=null,bookClubMarkup='';
   const svg=body=>`<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">${body}</svg>`;
@@ -28,6 +32,55 @@
   const categories={
     '__ALL__':{label:'전체',icon:'grid'},'신입':{icon:'book'},'피치카드':{icon:'mic'},'세일즈':{icon:'chart'},'섹터리더':{icon:'flag'},'멘탈리티':{icon:'spark'},'마이스토리':{icon:'camera'},'리캡':{icon:'ticket'},'위페어':{icon:'globe'},'클라이언트 미팅':{icon:'people'},'BOM':{icon:'compass'},'FOM':{icon:'flag'}
   };
+  const libraryInfo={
+    '신입':{art:'book',description:'프레젠스에서 시작하는 첫걸음'},
+    '__BOOKCLUB__':{art:'book',description:'책에서 발견하는 다음 가능성'},
+    '피치카드':{art:'mic',description:'마음을 움직이는 한마디'},
+    '세일즈':{art:'map',description:'현장에서 쌓아가는 나의 실력'},
+    '섹터리더':{art:'compass',description:'함께 성장하는 팀의 방향'},
+    '멘탈리티':{art:'plane',description:'나를 믿고 나아가는 힘'},
+    '마이스토리':{art:'camera',description:'나의 경험이 우리의 이야기로'},
+    '리캡':{art:'ticket',description:'함께 돌아보는 배움과 기록'},
+    '위페어':{art:'globe',description:'더 넓은 세상을 만나는 배움'},
+    '__WEPAIR__':{art:'globe',description:'함께 펼쳐보는 위페어 이야기'},
+    '클라이언트 미팅':{art:'map',description:'좋은 협업을 만드는 대화'},
+    'BOM':{art:'compass',description:'다음 성장을 준비하는 시간'},
+    'FOM':{art:'ticket',description:'현장과 함께 만드는 다음 장'},
+    '__ALL__':{art:'book',description:'모든 라이브러리의 교육 자료를 한곳에서'}
+  };
+  const libraryLabel=folder=>folder==='__BOOKCLUB__'?'독서발표회':folder==='__WEPAIR__'?'위페어 발표':folder==='__ALL__'?'전체 자료':folder;
+  const infoFor=folder=>libraryInfo[folder]||{art:'book',description:'함께 쌓아가는 배움의 기록'};
+  function pageUrl(){return state.view==='shelves'?'edu.html':state.active==='__BOOKCLUB__'?'edu.html?tab=bookclub':state.active==='__WEPAIR__'?'edu.html?tab=wepair':state.active==='__ALL__'?'edu.html?view=all':'edu.html?category='+encodeURIComponent(state.active);}
+  function rememberPage(){
+    history.replaceState({...history.state,presenceLibrary:{view:state.view,folder:state.active,fromShelf:state.fromShelf,lastFolder:state.lastFolder,query:state.query,savedOnly:state.savedOnly,scroll:scrollY}},'',pageUrl());
+  }
+  function focusPage(scroll=0,restoreFolder=false){
+    requestAnimationFrame(()=>{
+      const target=state.view==='shelves'?(restoreFolder&&[...document.querySelectorAll('[data-f]')].find(e=>e.dataset.f===state.lastFolder)||$('#libraryTitle')):$('#chapterTitle');
+      target?.focus({preventScroll:true});window.scrollTo({top:scroll,behavior:'instant'});
+    });
+  }
+  function navigate(folder,view='materials',replace=false){
+    const fromShelf=state.view==='shelves'&&view==='materials';
+    if(fromShelf)state.lastFolder=folder;
+    rememberPage();
+    if(!replace)history.pushState(null,'',location.href);
+    Object.assign(state,{view,fromShelf});clearFilters();hooks.selectCategory(folder);focusPage(0,view==='shelves');
+  }
+  function renderPageFrame(){
+    const shelves=state.view==='shelves',special=['__WEPAIR__','__BOOKCLUB__'].includes(state.active);
+    document.body.dataset.libraryView=state.view;
+    $('#libraryIntro').hidden=!shelves;$('.category-panel').hidden=!shelves;
+    $('#libraryDetailHeading').hidden=shelves;$('#libraryBreadcrumb').hidden=shelves;
+    $('#materialToolbar').hidden=shelves;$('.search-and-save').hidden=special;
+    $('#grid').hidden=shelves;
+    $('#chapterTitle').textContent=libraryLabel(state.active);
+    $('#currentLibrary').textContent=libraryLabel(state.active);
+    $('#chapterDescription').textContent=infoFor(state.active).description;
+    $('#chapterProp').className='prop prop-'+infoFor(state.active).art;
+    document.title=shelves?'라이브러리 · Presence':libraryLabel(state.active)+' · Presence 라이브러리';
+    rememberPage();
+  }
   const assetDefs=[
     ['book','아직 쓰이지 않은 노트','배움의 시작 · 신입'],['compass','나만의 방향을 찾는 나침반','리더십 · 성장'],['mic','세상에 전하는 나의 목소리','피치 · 소통'],['camera','우리의 한 장면','마이스토리 · 기록'],['globe','조금 더 넓어지는 세계','체리티 · 새로운 관점'],['map','한 걸음씩 만드는 길','필드 · 실천'],['plane','가능성을 향한 첫 비행','도전 · 새로운 시작'],['ticket','다음 챕터로 가는 티켓','온보딩 · 새로운 기회']
   ];
@@ -55,16 +108,22 @@
   }
   function setTheme(theme){document.documentElement.dataset.theme=theme;storage.set(themeKey,theme);$('#themeButton').innerHTML=icons[theme==='dark'?'sun':'moon'];$('#themeButton').setAttribute('aria-label',theme==='dark'?'밝은 화면으로 전환':'어두운 화면으로 전환');}
   function savedLabels(){
-    $('#savedCount').textContent=state.saved.size;
+    $('#savedCount').textContent=state.data?state.data.items.filter(item=>(state.active==='__ALL__'||item.folder===state.active)&&state.saved.has(item.href)).length:state.saved.size;
     document.querySelectorAll('.bookmark').forEach(button=>{const yes=state.saved.has(button.dataset.href);button.setAttribute('aria-pressed',String(yes));button.setAttribute('aria-label',`${button.dataset.title} ${yes?'보관함에서 빼기':'보관함에 담기'}`);});
     if(state.selected)$('#dialogSave').textContent=state.saved.has(state.selected.href)?'보관함에서 빼기':'보관함에 담기';
   }
   function toggleSaved(href){const remove=state.saved.has(href);remove?state.saved.delete(href):state.saved.add(href);storage.set(savedKey,[...state.saved]);hooks.toast(remove?'보관함에서 뺐어요.':'나의 보관함에 담았어요.');if(state.savedOnly)hooks.render();else savedLabels();}
   function renderFolders(){
-    const data=state.data,order=['__ALL__',...Object.keys(categories).filter(f=>f!=='__ALL__'&&data.folders.includes(f)),...data.folders.filter(f=>!categories[f])];
-    const entries=order.map(folder=>({folder,label:categories[folder]?.label||folder,icon:categories[folder]?.icon||'book',count:folder==='__ALL__'?data.items.length+1:data.items.filter(i=>i.folder===folder).length,editable:folder!=='__ALL__'}));
-    entries.splice(2,0,{folder:'__BOOKCLUB__',label:'독서발표회',icon:'book',count:1},{folder:'__WEPAIR__',label:'위페어 발표',icon:'globe',count:''});
-    $('#folders').innerHTML=entries.map(f=>`<div class="category-entry"><button type="button" ${f.folder==='__BOOKCLUB__'?'id="bookclubTab"':''} class="category chip ${state.active===f.folder?'on':''}" data-f="${escape(f.folder)}" aria-pressed="${state.active===f.folder}"><span class="tab-glyph">${icons[f.icon]}</span><span class="tab-name">${escape(f.label)}</span><span class="count">${f.count}</span></button>${state.isAdmin&&f.editable?`<button class="folder-delete" data-del="${escape(f.folder)}" aria-label="${escape(f.folder)} 폴더 삭제">×</button>`:''}</div>`).join('')+(state.isAdmin?'<button type="button" class="category chip addf" id="addFolder">＋ 폴더 추가</button>':'');
+    const data=state.data,order=[...Object.keys(categories).filter(f=>f!=='__ALL__'&&data.folders.includes(f)),...data.folders.filter(f=>!categories[f])];
+    const entries=order.map(folder=>({folder,label:folder,count:data.items.filter(i=>i.folder===folder).length,editable:true}));
+    entries.splice(1,0,{folder:'__BOOKCLUB__',label:'독서발표회',count:window.PresenceBookGallery?.count()??1});
+    const wepairIndex=entries.findIndex(f=>f.folder==='위페어');
+    entries.splice(wepairIndex<0?entries.length:wepairIndex+1,0,{folder:'__WEPAIR__',label:'위페어 발표',count:1});
+    $('#libraryTotal').textContent=entries.length+'개의 라이브러리';
+    $('#folders').innerHTML=entries.map(f=>{
+      const info=infoFor(f.folder),tone=tones[info.art];
+      return `<div class="category-entry${f.count===0?' library-empty':''}"><button type="button" ${f.folder==='__BOOKCLUB__'?'id="bookclubTab"':''} class="category chip library-card" data-f="${escape(f.folder)}" style="--tint:${tone[0]};--detail:${tone[1]}"><span class="library-card-copy"><span class="tab-name">${escape(f.label)}</span><span class="library-description">${escape(info.description)}</span><span class="library-card-meta"><span class="count">${f.count}</span><span>${f.count===0?'개의 자료 · 준비 중':f.folder==='__BOOKCLUB__'||f.folder==='__WEPAIR__'?'개의 발표':'개의 자료'}</span></span></span><span class="library-card-art" aria-hidden="true"><span class="prop prop-${info.art}"></span></span><span class="library-card-arrow" aria-hidden="true">↗</span></button>${state.isAdmin&&f.editable?`<button class="folder-delete" data-del="${escape(f.folder)}" aria-label="${escape(f.folder)} 폴더 삭제">×</button>`:''}</div>`;
+    }).join('')+(state.isAdmin?'<button type="button" class="category chip addf" id="addFolder">＋ 라이브러리 추가</button>':'');
   }
   function card(item,index){
     const art=artFor(item),tone=tones[art];
@@ -77,13 +136,14 @@
   }
   function render(data,active,isAdmin,bookClubCard){
     Object.assign(state,{data,active,isAdmin});bookClubMarkup=bookClubCard;
-    document.body.classList.toggle('editing',isAdmin);renderFolders();
+    document.body.classList.toggle('editing',isAdmin);renderFolders();renderPageFrame();
     $('#adminBtn').setAttribute('aria-pressed',String(isAdmin));
     $('#adminBtn').textContent=isAdmin?'편집 완료':'자료 관리';
     $('#savedButton').hidden=isAdmin;
     const special=active==='__WEPAIR__'||active==='__BOOKCLUB__';$('#searchInput').disabled=special;
     $('#emptyState').hidden=true;$('#grid').removeAttribute('aria-busy');
-    $('#selectedTitle').textContent=active==='__WEPAIR__'?'위페어 발표':active==='__BOOKCLUB__'?'독서발표회':state.savedOnly?'나의 보관함':active==='__ALL__'?'전체 챕터':active+' 챕터';
+    if(state.view==='shelves'){$('#grid').innerHTML='';savedLabels();return;}
+    $('#selectedTitle').textContent=state.savedOnly?'보관한 자료':'교육 자료';
     $('#resultsNote').textContent=isAdmin?'제목·폴더·링크를 편집할 수 있어요.':'지금 마음이 가는 배움부터 펼쳐보세요.';
     if(active==='__WEPAIR__'){
       $('#resultCount').textContent='프레젠테이션';
@@ -96,7 +156,7 @@
     const showBookClub=active==='__ALL__'&&!state.savedOnly&&(!query||'퓨처 셀프 future self 독서발표회 미래의 내가 오늘을 살게 하라'.includes(query));
     $('#resultCount').textContent=`${list.length+(showBookClub?1:0)}개의 배움`;
     $('#grid').innerHTML=(showBookClub?bookClubMarkup:'')+list.map(card).join('')+(isAdmin?'<button type="button" class="additem" id="addItem">＋ 자료 추가</button>':'');
-    if(!list.length&&!showBookClub){$('#emptyState').hidden=false;$('#emptyTitle').textContent=query?'찾는 배움이 아직 보이지 않네요.':state.savedOnly?'마음에 드는 배움을 담아보세요.':'아직 펼쳐지지 않은 챕터예요.';$('#emptyText').textContent=query?'다른 단어로 검색하거나 전체 자료를 둘러보세요.':state.savedOnly?'카드의 책갈피를 누르면 이 기기의 보관함에 저장돼요.':isAdmin?'자료 추가 버튼으로 새 교육 자료를 등록하세요.':'다른 챕터에서 새로운 배움을 찾아보세요.';}
+    if(!list.length&&!showBookClub){$('#emptyState').hidden=false;$('#emptyTitle').textContent=query?'검색 결과가 없어요.':state.savedOnly?'보관한 자료가 없어요.':'새로운 자료를 준비하고 있어요.';$('#emptyText').textContent=query?'다른 검색어로 다시 찾아보세요.':state.savedOnly?'자료의 책갈피를 누르면 이 기기에 저장돼요.':isAdmin?'자료 추가 버튼으로 새 교육 자료를 등록하세요.':'라이브러리 목록에서 다른 배움을 만나보세요.';$('#resetButton').hidden=!query&&!state.savedOnly;}
     savedLabels();
   }
   function openDetail(element){
@@ -108,13 +168,37 @@
   }
   function clearFilters(){state.query='';state.savedOnly=false;$('#searchInput').value='';$('#savedButton').setAttribute('aria-pressed','false');}
   function configure(callbacks){
-    hooks=callbacks;setTheme(storage.get(themeKey,'dark'));
+    hooks=callbacks;setTheme(storage.get(themeKey,'dark'));document.body.classList.add('library-first');
+    $('.hero').hidden=true;
+    const search=$('.search-and-save'),heading=$('.library-heading');
+    heading.id='libraryIntro';
+    heading.innerHTML='<div><p class="section-kicker">PRESENCE EDUCATION</p><h1 id="libraryTitle" tabindex="-1">라이브러리<span class="library-title-dot">.</span></h1><p class="library-intro-copy">지금 필요한 배움, 하나의 라이브러리에서 시작하세요.</p></div><div class="library-intro-actions"><span id="libraryTotal">라이브러리를 불러오는 중</span><button type="button" id="allMaterials">전체 자료 보기 <span aria-hidden="true">↗</span></button></div>';
+    $('.category-label').hidden=true;
+    $('#folders').setAttribute('aria-label','교육 라이브러리 선택');
+    $('#library').insertAdjacentHTML('afterbegin','<nav id="libraryBreadcrumb" class="library-breadcrumb" aria-label="현재 위치" hidden><button type="button" id="backToLibraries"><span aria-hidden="true">←</span> 라이브러리</button><span aria-hidden="true">/</span><span id="currentLibrary" aria-current="page"></span></nav>');
+    $('.category-panel').insertAdjacentHTML('afterend','<header id="libraryDetailHeading" class="library-detail-heading" hidden><div><p class="section-kicker">PRESENCE LIBRARY</p><h1 id="chapterTitle" tabindex="-1"></h1><p id="chapterDescription"></p></div><span id="chapterProp" class="prop" aria-hidden="true"></span></header><div id="materialToolbar" class="material-toolbar" hidden></div>');
+    $('#materialToolbar').append($('.results-heading'),search);
+    $('#resetButton').textContent='필터 초기화';$('#savedButton').innerHTML=icons.bookmark+'<span>보관한 자료</span><b id="savedCount">0</b>';
+    $('#searchInput').placeholder='자료 검색';$('#searchInput').setAttribute('aria-label','현재 라이브러리의 교육 자료 검색');
+    $('#searchInput').value=state.query;$('#savedButton').setAttribute('aria-pressed',String(state.savedOnly));
+    $('#savedButton').setAttribute('aria-label','현재 라이브러리에서 보관한 자료만 보기');
+    $('#allMaterials').addEventListener('click',()=>navigate('__ALL__'));
+    $('#backToLibraries').addEventListener('click',()=>{if(state.fromShelf)history.back();else navigate('__ALL__','shelves',true);});
+    window.addEventListener('popstate',event=>{
+      const saved=event.state?.presenceLibrary,url=new URLSearchParams(location.search);
+      const folder=saved?.folder||(url.get('tab')==='bookclub'?'__BOOKCLUB__':url.get('tab')==='wepair'?'__WEPAIR__':url.get('category')||'__ALL__');
+      Object.assign(state,{view:saved?.view||(folder!=='__ALL__'||url.get('view')==='all'?'materials':'shelves'),fromShelf:saved?.fromShelf||false,lastFolder:saved?.lastFolder||state.lastFolder,query:saved?.query||'',savedOnly:saved?.savedOnly||false});
+      $('#searchInput').value=state.query;$('#savedButton').setAttribute('aria-pressed',String(state.savedOnly));
+      hooks.selectCategory(folder);focusPage(saved?.scroll||0,true);
+    });
+    window.addEventListener('pagehide',rememberPage);
+    $('#folders').innerHTML=Array.from({length:6},()=>'<div class="category-skeleton" aria-hidden="true"></div>').join('');
+    $('#libraryTotal').setAttribute('aria-live','polite');renderPageFrame();
     $('#themeButton').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
     $('#searchInput').addEventListener('input',event=>{state.query=event.target.value.trim();hooks.render();});
-    $('#savedButton').addEventListener('click',()=>{state.savedOnly=!state.savedOnly;$('#savedButton').setAttribute('aria-pressed',String(state.savedOnly));hooks.selectCategory('__ALL__');});
-    $('#resetButton').addEventListener('click',()=>{clearFilters();hooks.selectCategory('__ALL__');});
-    $('#startButton').addEventListener('click',event=>{sparkle(event,event.currentTarget);clearFilters();hooks.selectCategory('신입');$('#library').scrollIntoView({behavior:reduced.matches?'instant':'smooth'});});
-    $('#folders').addEventListener('click',event=>{const button=event.target.closest('.chip[data-f]');if(button){state.savedOnly=false;$('#savedButton').setAttribute('aria-pressed','false');sparkle(event,button);}},true);
+    $('#savedButton').addEventListener('click',()=>{state.savedOnly=!state.savedOnly;$('#savedButton').setAttribute('aria-pressed',String(state.savedOnly));hooks.render();});
+    $('#resetButton').addEventListener('click',()=>{clearFilters();hooks.render();});
+    $('#folders').addEventListener('click',event=>{const button=event.target.closest('.chip[data-f]');if(button){event.preventDefault();event.stopImmediatePropagation();navigate(button.dataset.f);}},true);
     $('#grid').addEventListener('click',event=>{const bookmark=event.target.closest('.bookmark');if(bookmark){event.preventDefault();event.stopImmediatePropagation();sparkle(event,bookmark);toggleSaved(bookmark.dataset.href);}else{const card=event.target.closest('.card-open');if(card)sparkle(event,card);}},true);
     $('#dialogSave').addEventListener('click',event=>{if(state.selected){sparkle(event,event.currentTarget);toggleSaved(state.selected.href);}});
     $('#dialogClose').addEventListener('click',()=>$('#lessonDialog').close());
@@ -130,7 +214,7 @@
         }
         return;
       }
-      if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!$('#lessonDialog').open&&!event.target.matches('input,textarea,[contenteditable]')){event.preventDefault();if($('#searchInput').disabled)hooks.selectCategory('__ALL__');$('#searchInput').focus();}
+      if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!$('#lessonDialog').open&&!event.target.matches('input,textarea,[contenteditable]')){event.preventDefault();if(state.view==='shelves'||$('#searchInput').disabled)navigate('__ALL__');requestAnimationFrame(()=>$('#searchInput').focus());}
     });
   }
   window.PresenceEducation={configure,render,openDetail};
