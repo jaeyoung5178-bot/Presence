@@ -11,6 +11,8 @@
   let timerRunning = false;
   let timerDeadline = 0;
   let timerInterval = null;
+  let initialized = false;
+  let pageTurn = null;
 
   const book = window.PresenceBook || {};
   const introduction = book.introduction || [];
@@ -32,7 +34,56 @@
     const match = location.hash.match(/^#slide-(\d+)$/);
     return match ? Math.max(0, Math.min(slides.length - 1, Number(match[1]) - 1)) : 0;
   }
+  function finishPageTurn() {
+    if (!pageTurn) return;
+    const turn = pageTurn;
+    pageTurn = null;
+    turn.animations.forEach(animation => animation.cancel());
+    turn.overlay.remove();
+  }
   function showSlide(index, updateHistory = true) {
+    const next = Math.max(0, Math.min(slides.length - 1, Number(index) || 0));
+    // Repeated input for the same destination must not restart the opening.
+    if (pageTurn && next === current) return;
+    finishPageTurn();
+    const outgoing = slides[current];
+    const leaf = outgoing.querySelector('[data-page-turn-leaf]');
+    const canTurn = initialized && next === current + 1 && outgoing.hasAttribute('data-page-turn')
+      && leaf && typeof leaf.animate === 'function' && !motionPaused && !reducedMotion.matches && !document.hidden;
+    let overlay = null;
+    if (canTurn) {
+      overlay = outgoing.cloneNode(true);
+      overlay.removeAttribute('hidden');
+      overlay.removeAttribute('data-page-turn');
+      overlay.removeAttribute('aria-label');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.inert = true;
+      overlay.classList.remove('active');
+      overlay.classList.add('page-turn-snapshot');
+      overlay.style.height = `${outgoing.getBoundingClientRect().height}px`;
+      overlay.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+      overlay.removeAttribute('id');
+    }
+    renderSlide(next, updateHistory);
+    if (!overlay) return;
+    $('#slides').append(overlay);
+    const turn = {overlay, animations: []};
+    pageTurn = turn;
+    try {
+      const options = {duration: 1100, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'forwards'};
+      turn.animations.push(overlay.querySelector('[data-page-turn-leaf]').animate([
+        {transform:'rotateY(0deg)'}, {transform:'rotateY(-158deg)'}
+      ], options));
+      const copy = overlay.querySelector('.cover-copy');
+      if (copy) turn.animations.push(copy.animate([{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(-22px)'}], {duration:550,fill:'forwards',easing:'ease-out'}));
+      const fade = overlay.animate([{opacity:1,offset:0},{opacity:1,offset:.4},{opacity:0,offset:1}], {duration:1100,fill:'forwards',easing:'linear'});
+      turn.animations.push(fade);
+      fade.finished.then(() => { if (pageTurn === turn) finishPageTurn(); }).catch(() => {});
+    } catch (_) {
+      finishPageTurn();
+    }
+  }
+  function renderSlide(index, updateHistory = true) {
     current = Math.max(0, Math.min(slides.length - 1, Number(index) || 0));
     slides.forEach((slide, i) => {
       slide.hidden = i !== current;
@@ -51,8 +102,10 @@
     if (updateHistory) history.replaceState(null, '', `#slide-${current + 1}`);
     window.scrollTo({top:0, behavior:'instant'});
     $('#keynote').scrollTop = 0;
+    initialized = true;
   }
   function syncMotion() {
+    if (motionPaused) finishPageTurn();
     document.body.classList.toggle('paused', motionPaused);
     $('#motion').setAttribute('aria-pressed', String(motionPaused));
     $('#motion').title = motionPaused ? '애니메이션 재생' : '애니메이션 멈추기';
@@ -68,6 +121,7 @@
     return String(text ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
   function openNotes(intro = current === (book.introSlide ?? 1) && introduction.length > 0) {
+    finishPageTurn();
     lastFocus = document.activeElement;
     $('#notesTitle').textContent = intro ? '책을 읽고 느낀 점 · 약 3분' : slides[current].dataset.title;
     $('#notesBody').innerHTML = intro
@@ -84,6 +138,7 @@
     return '<p class="note-caption source-links">' + links.filter(link => /^https:\/\//.test(link.url || '')).map(link => `<a href="${escapeHTML(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(link.label)} ↗</a>`).join('<br>') + '</p>';
   }
   function openSources() {
+    finishPageTurn();
     const sources = book.sources;
     if (!sources) return;
     lastFocus = document.activeElement;
@@ -188,7 +243,7 @@
   $('#slides').addEventListener('touchcancel', () => { touch = null; }, {passive:true});
   addEventListener('hashchange', () => showSlide(routeIndex(), false));
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) document.body.classList.add('paused');
+    if (document.hidden) { finishPageTurn(); document.body.classList.add('paused'); }
     else syncMotion();
   });
   syncMotion();

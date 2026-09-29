@@ -54,7 +54,15 @@ node education/bookclub/template/create-book.cjs next-book "다음 책 제목" "
 - 동작 줄이기와 모션 OFF를 존중합니다. 다른 장이나 원고 창에서는 텍스트 필드의 프레임 계산을 멈춥니다.
 - 이미지 출처/제작 도구/프롬프트와 파일명을 `assets/prompts.json`에 기록합니다. 원본을 보존하고 배포본을 별도로 만듭니다.
 
-## 콘텐츠 설정
+## 책 표지로 시작하기
+
+표지 슬라이드에 `data-page-turn`, 실제로 열릴 표지 요소에 `data-page-turn-leaf`를 붙이면 바로 다음 슬라이드로 갈 때 공통 엔진이 1.1초 동안 표지를 왼쪽으로 엽니다. `future-self/index.html`의 `.cover-book-stage` 구조가 현재 예제입니다. 책마다 실제 표지와 적절한 크기를 지정하고, 이미지 출처는 자산 기록에 남깁니다.
+
+`data-page-turn-leaf`는 왼쪽을 회전축으로 삼고 앞면·뒷면에 `backface-visibility: hidden`을 적용합니다. `transform-style: preserve-3d`와 부모 `perspective`로 종이의 앞뒤를 표현합니다. 빛 효과는 표지보다 높은 레이어에, 발표 제목은 빛보다 높은 레이어에 둡니다.
+
+별도의 탐색 코드를 추가하지 않고 기존 시작 버튼·화살표·키보드·슬라이드 선택·스와이프 모두에 같은 전환을 적용합니다. 목적지 상태와 주소는 바로 갱신하고, 접근성 트리에서 제외한 `inert` 표지 복제본만 잠시 애니메이션합니다. 빠른 추가 이동·원고 열기·모션 OFF·화면 비활성화 시 즉시 정리합니다. 동작 줄이기와 모션 OFF에서는 전환을 생략합니다. 다른 슬라이드나 책에는 속성을 붙이지 않으면 기존 탐색이 유지됩니다.
+
+## 콘텐츠 설정 값
 
 `window.PresenceBook`의 `introduction`은 `[구간명, 본문]` 배열, `slideNotes`와 `chapters`는 슬라이드 순서의 배열입니다. `introSlide`는 0부터 시작합니다. `slideSources`는 슬라이드 인덱스별 `{label,url}` 배열입니다. `sources`는 핵심 요약의 근거 팝업으로 `{title,intro,sections:[{heading,text,links}]}` 형태입니다. 외부 출처 링크는 HTTPS만 표시합니다.
 

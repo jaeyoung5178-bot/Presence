@@ -12,9 +12,10 @@ body[data-scene="0"] .word-river { display: none; }
 .cover-light {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 2;
   overflow: hidden;
   pointer-events: none;
+  mix-blend-mode: screen;
   background: radial-gradient(ellipse at 100% 42%,#273a431a,transparent 65%);
 }
 .cover-light-wave {
@@ -70,8 +71,71 @@ body[data-scene="0"] .word-river { display: none; }
   inset: 0;
   background: linear-gradient(90deg,#0b1419c7 0%,#0b141999 36%,#0b141912 73%,transparent),linear-gradient(0deg,#0b141982,transparent 32%);
 }
-.future-light-cover .cover-copy { text-shadow: 0 2px 22px #06101680; }
+.future-light-cover .cover-copy { z-index: 3; max-width: 59%; text-shadow: 0 2px 22px #06101680; }
+.future-light-cover h1 { font-size: clamp(54px,5.3vw,86px); }
+.cover-book-stage {
+  position: absolute;
+  z-index: 1;
+  right: 7%;
+  top: 50%;
+  width: clamp(260px,26vw,375px);
+  aspect-ratio: 838 / 1200;
+  margin: 0;
+  transform: translateY(-50%);
+  perspective: 1800px;
+}
+.cover-book {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform: rotateY(-12deg) rotateZ(1.5deg);
+  transform-style: preserve-3d;
+}
+.cover-book-pages {
+  position: absolute;
+  inset: 3px -12px 3px 0;
+  border-radius: 2px 5px 5px 2px;
+  background: repeating-linear-gradient(90deg,#d1cdbf 0 1px,#efecdf 1px 3px);
+  border: 1px solid #9c998c;
+  transform: translateZ(-8px);
+  box-shadow: 18px 28px 50px #0008,0 0 80px #9cc3d80d;
+}
+.cover-book-pages::after {
+  content: "";
+  position: absolute;
+  inset: 0 9px 0 0;
+  background: linear-gradient(90deg,#a39d8999,#f0eddf 14%,#f6f2e7 92%,#cbc5b5);
+}
+.cover-book-leaf {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+}
+.cover-book-front,.cover-book-back {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 2px 4px 4px 2px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.cover-book-front { background: #080808; transform: translateZ(1px); box-shadow: 0 0 0 1px #d5e5ef33; }
+.cover-book-front img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.cover-book-front::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,#0008,transparent 3%,#ffffff16 4%,transparent 7%,transparent 96%,#0004);
+  pointer-events: none;
+}
+.cover-book-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(90deg,#e1dcca,#f7f3e7 22%,#ece5d6 88%,#bcb6a8);
+  box-shadow: inset -8px 0 20px #6b64551a;
+}
 .future-light-cover .time-caption { color: #bfc9c8; }
+.future-light-cover .time-caption { bottom: 30px; width: 26%; }
 .future-light-cover .time-caption i { background: linear-gradient(90deg,#9bafa42e,#ead6b4); }
 @keyframes future-light-passage {
   0% { transform: translate3d(76%,-9%,0) scale(.9); opacity: 0; }
@@ -82,10 +146,20 @@ body[data-scene="0"] .word-river { display: none; }
   66.667%,100% { transform: translate3d(-27%,16%,0) scale(1.28); opacity: 0; }
 }
 @media (max-width:650px) {
+  .future-light-cover .cover-copy { max-width: none; }
+  .future-light-cover h1 { max-width: calc(100% - 150px); font-size: clamp(27px,8.5vw,36px); letter-spacing: -1.6px; line-height: 1.28; }
+  .future-light-cover .cover-sub { margin-top: 97px; max-width: none; }
+  .future-light-cover .book-credit { margin-top: 26px; }
+  .future-light-cover .cover-book-stage { top: 102px; right: 24px; width: clamp(115px,35vw,150px); transform: none; }
+  .future-light-cover .cover-book-pages { right: -7px; }
   .cover-light-wave { top: -6%; height: 100%; }
   .cover-light-core { width: 10px; height: 10px; }
   .cover-light-rays { height: 13%; transform: translateY(-50%) rotate(-21deg); }
   .cover-light-veil { background: linear-gradient(90deg,#0b1419a6,#0b14196b 55%,#0b141914),linear-gradient(0deg,#0b1419e6,transparent 75%); }
+}
+@media (min-width:651px) and (max-width:1100px) {
+  .future-light-cover h1 { font-size: clamp(44px,5.5vw,60px); letter-spacing: -2.5px; }
+  .cover-book-stage { width: 27vw; right: 5%; }
 }
 @media (prefers-reduced-motion:reduce) {
   .cover-light-wave { animation: none; transform: translate3d(71%,0,0); opacity: .55; will-change: auto; }

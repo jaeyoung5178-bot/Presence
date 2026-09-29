@@ -9,6 +9,18 @@
   "delivery": "JPEG quality 84 converted using sips; no creative content editing",
   "assets": [
     {
+      "file": "future-self-cover.jpg",
+      "slide": 1,
+      "status": "active",
+      "method": "Original book cover, not AI-generated",
+      "source": "https://www.yes24.com/Product/Goods/133809700",
+      "sourceImage": "https://image.yes24.com/goods/133809700/XL",
+      "retrievedOn": "2026-09-29",
+      "edition": "퓨처 셀프 · 30만 부 기념 스페셜 에디션",
+      "outputDimensions": {"width": 838, "height": 1200},
+      "delivery": "Original JPEG bytes retained; book depth, light and opening are rendered in CSS."
+    },
+    {
       "file": "connection.jpg",
       "slide": 3,
       "theme": "연결",
