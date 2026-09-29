@@ -12,26 +12,49 @@
   const photoUrls=new Map();
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   let motionPaused=reduced.matches;
+  const pitchVideo=$('#pitchVideo'),pitchPhotos=$('#pitchPhotos'),pitchVideoStep=$('#pitchVideoStep');
+  const pitchIndex=pitchPhotos?slides.indexOf(pitchPhotos.closest('.slide')):-1;
   slides.forEach((slide,i)=>{const o=document.createElement('option');o.value=i;o.textContent=String(i+1).padStart(2,'0');o.setAttribute('aria-label',`${i+1}. ${data[i].title}`);$('#slideSelect').append(o);});
   $('.total').textContent=`/ ${slides.length}`;
   const routeIndex=()=>{const m=location.hash.match(/^#slide-(\d+)$/);return m?Math.max(0,Math.min(slides.length-1,Number(m[1])-1)):0;};
   function show(index,history=true){
+    const previous=current;
     current=Math.max(0,Math.min(slides.length-1,Number(index)||0));
+    if(previous!==current){pitchVideo?.pause();if(current===pitchIndex){setPitchStep(false);pitchVideo.currentTime=0;}}
     slides.forEach((s,i)=>{s.hidden=i!==current;s.classList.toggle('active',i===current);s.setAttribute('aria-hidden',String(i!==current));});
     document.body.dataset.chapter=data[current].chapter;
     document.body.style.setProperty('--accent',data[current].chapter==='CUSTOMER'?'var(--violet)':data[current].chapter==='SELF'?'var(--amber)':'var(--green)');
     $('#chapter').textContent=data[current].chapter;
     $('#slideSelect').value=current;
     $('#prev').disabled=current===0;$('#next').disabled=current===slides.length-1;
+    $('#next').setAttribute('aria-label',current===pitchIndex&&pitchVideoStep.hidden?'피치 영상 보기':'다음 슬라이드');
     $('#progressFill').style.width=`${(current+1)/slides.length*100}%`;
     $('#announcement').textContent=`${current+1} / ${slides.length}. ${data[current].title}`;
     $('#stage').scrollTop=0;
     if(history)window.history.replaceState(null,'',`#slide-${current+1}`);
     if(document.activeElement.closest('.slide[hidden]')) $('#stage').focus({preventScroll:true});
   }
+  function setPitchStep(videoVisible,play=false){
+    if(!pitchVideo)return;
+    pitchPhotos.hidden=videoVisible;pitchVideoStep.hidden=!videoVisible;
+    if(!videoVisible)pitchVideo.pause();
+    $('#next').setAttribute('aria-label',videoVisible?'다음 슬라이드':'피치 영상 보기');
+    $('#stage').scrollTop=0;
+    $('#announcement').textContent=`14 / ${slides.length}. ${videoVisible?'실제 피치 영상':'100개 넘는 피치 연습 기록'}`;
+    if(document.activeElement.closest('[hidden]'))$('#stage').focus({preventScroll:true});
+    if(videoVisible&&play)pitchVideo.play().catch(()=>status('영상의 재생 버튼을 눌러 시작해 주세요.'));
+  }
+  function move(direction){
+    if(current===pitchIndex){
+      if(direction>0&&pitchVideoStep.hidden){setPitchStep(true,true);return;}
+      if(direction<0&&!pitchVideoStep.hidden){setPitchStep(false);return;}
+    }
+    show(current+direction);
+  }
   const fmt=n=>`${String(Math.floor(n/60)).padStart(2,'0')}:${String(Math.floor(n%60)).padStart(2,'0')}`;
   function elapsedTo(i){return data.slice(0,i).reduce((sum,s)=>sum+s.seconds,0);}
   function openPanel(title,label,body){
+    pitchVideo?.pause();
     if(!panel.open)lastFocus=document.activeElement;
     $('#panelTitle').textContent=title;$('#panelLabel').textContent=label;
     $('#panelBody').innerHTML=body;$('#panelBody').scrollTop=0;
@@ -66,12 +89,18 @@
   }
   $('#photoInput').onchange=async event=>{const file=event.target.files[0],id=photoTarget;event.target.value='';if(!file||id===null)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>15*1024*1024){status('15MB 이하의 JPG, PNG, WebP 사진을 선택해 주세요.');return;}try{const bitmap=await createImageBitmap(file);bitmap.close();await storePhoto(id,file);applyPhoto(id,file);photos();status('이 브라우저에 사진을 저장했습니다.');}catch{status('사진을 읽거나 저장하지 못했습니다. 다른 사진을 선택해 주세요.');}};
   $('#notesButton').onclick=notes;$('#outlineButton').onclick=outline;$('#settingsButton').onclick=photos;$('#fullscreen').onclick=toggleFullscreen;$('#timer').onclick=toggleTimer;
-  $('#prev').onclick=()=>show(current-1);$('#next').onclick=()=>show(current+1);$('#slideSelect').onchange=e=>show(e.target.value);
+  $('#prev').onclick=()=>move(-1);$('#next').onclick=()=>move(1);$('#slideSelect').onchange=e=>show(e.target.value);
+  if(pitchVideo){
+    $('#showPitchVideo').onclick=()=>setPitchStep(true,true);
+    $('#showPitchPhotos').onclick=()=>setPitchStep(false);
+    const videoError=()=>{$('#pitchVideoError').hidden=false;};
+    pitchVideo.addEventListener('error',videoError);pitchVideo.querySelector('source').addEventListener('error',videoError);
+  }
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
   $('#closePanel').onclick=()=>panel.close();panel.addEventListener('close',()=>{document.body.classList.remove('panel-open');lastFocus?.focus({preventScroll:true});});
   panel.addEventListener('click',e=>{if(e.target!==panel)return;const r=panel.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)panel.close();});
-  document.addEventListener('keydown',e=>{if(panel.open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,select,textarea,[contenteditable=true]'))return;const key=e.key.toLowerCase();if(e.target.closest('button,a')&&[' ','enter'].includes(key))return;if(['arrowright','pagedown',' '].includes(key)){e.preventDefault();show(current+1);}else if(['arrowleft','pageup'].includes(key)){e.preventDefault();show(current-1);}else if(key==='home'){e.preventDefault();show(0);}else if(key==='end'){e.preventDefault();show(slides.length-1);}else if(key==='n')notes();else if(key==='f')toggleFullscreen();else if(key==='m')toggleMotion();});
-  let touch=null;$('#stage').addEventListener('touchstart',e=>{if(e.target.closest('a,button,select')||e.touches.length!==1){touch=null;return;}const t=e.touches[0];touch={x:t.clientX,y:t.clientY,at:performance.now()};},{passive:true});$('#stage').addEventListener('touchend',e=>{if(!touch)return;const t=e.changedTouches[0],dx=t.clientX-touch.x,dy=t.clientY-touch.y;if(Math.abs(dx)>75&&Math.abs(dx)>Math.abs(dy)*1.7&&performance.now()-touch.at<800)show(current+(dx<0?1:-1));touch=null;},{passive:true});
+  document.addEventListener('keydown',e=>{if(panel.open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('video,input,select,textarea,[contenteditable=true]'))return;const key=e.key.toLowerCase();if(e.target.closest('button,a')&&[' ','enter'].includes(key))return;if(['arrowright','pagedown',' '].includes(key)){e.preventDefault();move(1);}else if(['arrowleft','pageup'].includes(key)){e.preventDefault();move(-1);}else if(key==='home'){e.preventDefault();show(0);}else if(key==='end'){e.preventDefault();show(slides.length-1);}else if(key==='n')notes();else if(key==='f')toggleFullscreen();else if(key==='m')toggleMotion();});
+  let touch=null;$('#stage').addEventListener('touchstart',e=>{if(e.target.closest('video,a,button,select')||e.touches.length!==1){touch=null;return;}const t=e.touches[0];touch={x:t.clientX,y:t.clientY,at:performance.now()};},{passive:true});$('#stage').addEventListener('touchend',e=>{if(!touch)return;const t=e.changedTouches[0],dx=t.clientX-touch.x,dy=t.clientY-touch.y;if(Math.abs(dx)>75&&Math.abs(dx)>Math.abs(dy)*1.7&&performance.now()-touch.at<800)move(dx<0?1:-1);touch=null;},{passive:true});
   window.addEventListener('hashchange',()=>show(routeIndex(),false));
   document.addEventListener('fullscreenchange',()=>{$('#fullscreen').textContent=document.fullscreenElement?'전체화면 종료':'전체화면';});
   reduced.addEventListener('change',()=>{motionPaused=reduced.matches;document.body.classList.toggle('motion-disabled',motionPaused);});
