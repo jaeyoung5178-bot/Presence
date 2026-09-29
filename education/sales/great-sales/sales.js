@@ -40,7 +40,7 @@
     if(!videoVisible)pitchVideo.pause();
     $('#next').setAttribute('aria-label',videoVisible?'다음 슬라이드':'피치 영상 보기');
     $('#stage').scrollTop=0;
-    $('#announcement').textContent=`14 / ${slides.length}. ${videoVisible?'실제 피치 영상':'100개 넘는 피치 연습 기록'}`;
+    $('#announcement').textContent=`${pitchIndex+1} / ${slides.length}. ${videoVisible?'실제 피치 영상':'100개 넘는 피치 연습 기록'}`;
     if(document.activeElement.closest('[hidden]'))$('#stage').focus({preventScroll:true});
     if(videoVisible&&play)pitchVideo.play().catch(()=>status('영상의 재생 버튼을 눌러 시작해 주세요.'));
   }

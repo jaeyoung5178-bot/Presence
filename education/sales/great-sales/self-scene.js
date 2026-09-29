@@ -1,4 +1,4 @@
-const slide = document.querySelector('#slide-13');
+const slide = document.querySelector('.self-cinematic');
 const host = document.querySelector('#innerPowerStage');
 const button = document.querySelector('#innerPowerMotion');
 let pending = false, render = null, frame = 0, last = 0, elapsed = 0;
