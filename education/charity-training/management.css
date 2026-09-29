@@ -5,3 +5,5 @@
 @font-face{font-family:Pretendard;src:url("fonts/Pretendard-Black.woff2");font-weight:900}#manageDialog[open]{display:flex;flex-direction:column}.manageScroll{flex:1;min-height:0;max-height:calc(94dvh - 160px)}.manageSaveBar{position:static;margin:0;padding:16px 24px;flex-shrink:0}.manageSaveBar[hidden]{display:none}.manageHead{flex-shrink:0}
 
 body.settings-loading .frame{visibility:hidden}body.settings-loading #status{position:fixed;inset:40% 20px auto;text-align:center;padding:24px;line-height:1.6}body.settings-loading .toolbar{pointer-events:none;opacity:.45}
+
+.agendaGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.agendaCell h2{font-size:2.6cqw}

@@ -1,4 +1,4 @@
-const agendaDefaults=[['우리가 하는 일','What we do'],['COD 1','COD 1'],['현장 진행','How to Field'],['자기소개','Introduce'],['옥스팜 이해','About OXFAM'],['후원 신청 안내','Sign up Guide'],['목소리와 몸짓','Tone of voice · Body Language'],['피드백','Feedback']].map(([title,sub])=>({title,sub}));
+const agendaDefaults=[['자기소개','Introduce'],['옥스팜 소개','About OXFAM · Oxfam Today'],['피드백 및 Q&A','Feedback · Questions']].map(([title,sub])=>({title,sub}));
 let lessonSettings={agenda:agendaDefaults,hidden:[],updatedAt:0},draft=null,admin=false,settingsReady=false;
 const settingsUrl=HUB_CONFIG.databaseURL+'/edu_lib/lessonSettings/charityTraining.json';
 function visibleIndices(){return slides.map((s,i)=>i).filter(i=>!lessonSettings.hidden.includes(i+1))}
@@ -18,7 +18,7 @@ function drawAgenda(){
 }
 function updateNavigation(){const v=visibleIndices(),pos=v.indexOf(cur);$('prev').disabled=pos<=0;$('next').disabled=pos===v.length-1&&!slides[cur].video;$('counter').textContent=`${String(pos+1).padStart(2,'0')} / ${v.length}`}
 function targetPage(step){const v=visibleIndices(),p=v.indexOf(cur);return v[p+step]}
-async function loadSettings(){if(!settingsReady)$('status').textContent='저장된 교육 구성을 불러오는 중…';try{const r=await fetch(settingsUrl,{cache:'no-store'});if(!r.ok)throw Error('설정 연결 실패');const d=await r.json();if(d&&Array.isArray(d.agenda)&&d.agenda.length){lessonSettings={agenda:d.agenda.slice(0,12),hidden:Array.isArray(d.hidden)?d.hidden.filter(n=>n>=1&&n<=slides.length):[],updatedAt:d.updatedAt||0}}settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent=''}catch(e){$('status').textContent='교육 설정을 불러오지 못했습니다. 연결을 확인하고 새로고침해 주세요.'}}
+async function loadSettings(){if(!settingsReady)$('status').textContent='저장된 교육 구성을 불러오는 중…';try{const r=await fetch(settingsUrl,{cache:'no-store'});if(!r.ok)throw Error('설정 연결 실패');const d=await r.json();if(d&&d.schemaVersion===2&&Array.isArray(d.agenda)&&d.agenda.length){lessonSettings={agenda:d.agenda.slice(0,12),hidden:Array.isArray(d.hidden)?d.hidden.filter(n=>n>=1&&n<=slides.length):[],updatedAt:d.updatedAt||0}}if(d&&d.schemaVersion!==2)lessonSettings.updatedAt=d.updatedAt||0;settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent=''}catch(e){settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent='기본 교육 구성으로 진행합니다.'}}
 let firebasePromise;
 function firebaseRuntime(){if(firebasePromise)return firebasePromise;firebasePromise=Promise.all([import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')]).then(([appApi,authApi,dbApi])=>{const app=appApi.getApps().length?appApi.getApp():appApi.initializeApp(HUB_CONFIG);return{authApi,dbApi,auth:authApi.getAuth(app),db:dbApi.getDatabase(app)}});return firebasePromise}
 async function saveSettings(){
@@ -26,7 +26,7 @@ async function saveSettings(){
  if(draft.hidden.length>=slides.length){$('manageStatus').textContent='교육 페이지는 최소 1장을 표시해야 합니다.';return}
  const savingDraft=structuredClone(draft);$('manageEditor').inert=true;$('saveManage').disabled=true;$('manageStatus').textContent='전체 기기에 저장 중…';
  try{const fb=await firebaseRuntime();await fb.auth.authStateReady();const user=fb.auth.currentUser||(await fb.authApi.signInAnonymously(fb.auth)).user;await fb.dbApi.set(fb.dbApi.ref(fb.db,'eduAdminProofs/'+user.uid),HUB_ADMIN_PROOF);
-  const value={agenda:savingDraft.agenda.map(a=>({title:a.title.trim(),sub:a.sub.trim()})),hidden:savingDraft.hidden,updatedAt:Date.now()};
+  const value={schemaVersion:2,agenda:savingDraft.agenda.map(a=>({title:a.title.trim(),sub:a.sub.trim()})),hidden:savingDraft.hidden,updatedAt:Date.now()};
   const result=await fb.dbApi.runTransaction(fb.dbApi.ref(fb.db,'edu_lib/lessonSettings/charityTraining'),current=>{if(current&&(current.updatedAt||0)!==savingDraft.updatedAt)return;return value;},{applyLocally:false});
   if(!result.committed)throw Error('다른 기기에서 먼저 변경했습니다. 관리를 닫고 다시 열어 최신 내용을 불러와 주세요.');
   lessonSettings=value;draft=structuredClone(value);applySettings();$('manageStatus').textContent='전체 기기에 저장되었습니다.';
@@ -42,7 +42,7 @@ function renderAgendaEditor(){
 }
 function moveAgenda(i,delta){const [a]=draft.agenda.splice(i,1);draft.agenda.splice(i+delta,0,a);renderAgendaEditor()}
 function renderPageEditor(){
- const list=$('pageEditor');list.replaceChildren();for(const s of slides){const row=document.createElement('label');row.className='pageEditRow';const check=document.createElement('input');check.type='checkbox';check.checked=!draft.hidden.includes(s.n);check.setAttribute('aria-label',`${s.n}페이지 표시`);check.onchange=()=>{draft.hidden=draft.hidden.filter(n=>n!==s.n);if(!check.checked)draft.hidden.push(s.n)};const im=document.createElement('img');im.src=`slides/slide-${String(s.n).padStart(2,'0')}.png`;im.alt='';im.loading='lazy';const title=document.createElement('span');title.textContent=`${String(s.n).padStart(2,'0')} · ${s.title}`;row.append(check,im,title);list.append(row)}
+ const list=$('pageEditor');list.replaceChildren();for(const s of slides){const row=document.createElement('label');row.className='pageEditRow';const check=document.createElement('input');check.type='checkbox';check.checked=!draft.hidden.includes(s.n);check.setAttribute('aria-label',`${s.n}페이지 표시`);check.onchange=()=>{draft.hidden=draft.hidden.filter(n=>n!==s.n);if(!check.checked)draft.hidden.push(s.n)};const im=document.createElement('img');im.src=s.image||`slides/slide-${String(s.n).padStart(2,'0')}.png`;im.alt='';im.loading='lazy';const title=document.createElement('span');title.textContent=`${String(s.n).padStart(2,'0')} · ${s.title}`;row.append(check,im,title);list.append(row)}
 }
 $('manage').onclick=async()=>{closeVideo(false);$('manageDialog').showModal();$('manageStatus').textContent='설정을 불러오는 중…';await loadSettings();managementForm()};
 $('closeManage').onclick=()=>{$('manageDialog').close();draft=null};$('saveManage').onclick=saveSettings;

@@ -1,474 +1,24 @@
 [
   {
-    "source": 1,
+    "source": null,
     "title": "오늘의 교육 순서",
-    "section": "신입교육",
+    "section": "교육 순서",
     "bg": "#F6F5F0",
     "items": [
       {
         "kind": "text",
-        "text": "PEACEMAKER  /  NEW CHARITY TRAINING",
-        "x": 54,
-        "y": 39,
-        "w": 1100,
-        "h": 30,
-        "size": 18,
-        "color": "#087342",
-        "weight": 700,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "text",
-        "text": "오늘의 교육 순서",
-        "x": 50,
-        "y": 90,
-        "w": 1135,
-        "h": 97,
-        "size": 62,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "rect",
-        "x": 54,
-        "y": 219,
-        "w": 272,
-        "h": 3,
-        "color": "#087342"
-      },
-      {
-        "kind": "text",
-        "text": "01",
-        "x": 54,
-        "y": 239,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "우리가 하는 일",
-        "x": 54,
-        "y": 334,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "What we do",
-        "x": 54,
-        "y": 387,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "rect",
-        "x": 354,
-        "y": 219,
-        "w": 272,
-        "h": 3,
-        "color": "#087342"
-      },
-      {
-        "kind": "text",
-        "text": "02",
-        "x": 354,
-        "y": 239,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "COD 1",
-        "x": 354,
-        "y": 334,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "COD 1",
-        "x": 354,
-        "y": 387,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "rect",
-        "x": 654,
-        "y": 219,
-        "w": 272,
-        "h": 3,
-        "color": "#087342"
-      },
-      {
-        "kind": "text",
-        "text": "03",
-        "x": 654,
-        "y": 239,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "현장 진행",
-        "x": 654,
-        "y": 334,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "How to Field",
-        "x": 654,
-        "y": 387,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "rect",
-        "x": 954,
-        "y": 219,
-        "w": 272,
-        "h": 3,
-        "color": "#087342"
-      },
-      {
-        "kind": "text",
-        "text": "04",
-        "x": 954,
-        "y": 239,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "자기소개",
-        "x": 954,
-        "y": 334,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "Introduce",
-        "x": 954,
-        "y": 387,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "rect",
-        "x": 54,
-        "y": 442,
-        "w": 272,
-        "h": 3,
-        "color": "#152019"
-      },
-      {
-        "kind": "text",
-        "text": "05",
-        "x": 54,
-        "y": 462,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "옥스팜 이해",
-        "x": 54,
-        "y": 557,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "About OXFAM",
-        "x": 54,
-        "y": 610,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "rect",
-        "x": 354,
-        "y": 442,
-        "w": 272,
-        "h": 3,
-        "color": "#152019"
-      },
-      {
-        "kind": "text",
-        "text": "06",
-        "x": 354,
-        "y": 462,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "후원 신청 안내",
-        "x": 354,
-        "y": 557,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "Sign up Guide",
-        "x": 354,
-        "y": 610,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "rect",
-        "x": 654,
-        "y": 442,
-        "w": 272,
-        "h": 3,
-        "color": "#152019"
-      },
-      {
-        "kind": "text",
-        "text": "07",
-        "x": 654,
-        "y": 462,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "목소리와 몸짓",
-        "x": 654,
-        "y": 557,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "Tone of voice · Body Language",
-        "x": 654,
-        "y": 610,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "rect",
-        "x": 954,
-        "y": 442,
-        "w": 272,
-        "h": 3,
-        "color": "#152019"
-      },
-      {
-        "kind": "text",
-        "text": "08",
-        "x": 954,
-        "y": 462,
-        "w": 185,
-        "h": 87,
-        "size": 64,
-        "color": "#087342",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "피드백",
-        "x": 954,
-        "y": 557,
-        "w": 285,
-        "h": 49,
-        "size": 28,
-        "color": "#152019",
-        "weight": 900,
-        "font": "Pretendard Black",
-        "align": "left",
-        "lineSpacing": 1.06
-      },
-      {
-        "kind": "text",
-        "text": "Feedback",
-        "x": 954,
-        "y": 610,
-        "w": 284,
-        "h": 47,
-        "size": 17,
-        "color": "#647168",
-        "weight": 400,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "text",
-        "text": "PEACEMAKER",
-        "x": 54,
-        "y": 675,
-        "w": 400,
-        "h": 20,
-        "size": 12,
-        "color": "#647168",
-        "weight": 700,
-        "font": "Pretendard",
-        "align": "left",
-        "lineSpacing": 1.24
-      },
-      {
-        "kind": "text",
-        "text": "01",
-        "x": 1177,
-        "y": 674,
-        "w": 49,
-        "h": 23,
-        "size": 14,
-        "color": "#647168",
-        "weight": 700,
-        "font": "Pretendard",
-        "align": "right",
-        "lineSpacing": 1.24
+        "y": 100,
+        "text": "자기소개 → 옥스팜 소개 → 피드백 및 Q&A"
       }
     ],
     "notes": "원본 1페이지\nAGENDAWhat  we doCOD 1How to FieldIntroduce About OXFAMSign up GuideTone of voiceBody LanguageFeedback\nAGENDA\nWhat we do\nCOD 1\nHow to Field\nIntroduce\nAbout OXFAM\nSign up Guide\nTone of voice\nBody Language\nFeedback\nOXFAM",
-    "n": 1
+    "n": 1,
+    "image": "assets/agenda.svg"
   },
   {
     "source": 2,
     "title": "나를\n소개합니다",
-    "section": "소개",
+    "section": "자기소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -552,12 +102,13 @@
       }
     ],
     "notes": "원본 2페이지\n       자기소개\n이름\n나이\n전에 했던 일 \nWhy Peace Maker\n입사 후 포부\n자기소개\n• 이름\n• 나이\n• 전에 했던 일\n• Why Peace Maker\n• 입사 후 포부",
-    "n": 2
+    "n": 2,
+    "image": "slides/slide-02.png"
   },
   {
     "source": 3,
     "title": "오늘의 한 상",
-    "section": "소개",
+    "section": "자기소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -627,12 +178,13 @@
       }
     ],
     "notes": "원본 3페이지\n\n오늘의 한 상\na homemade course\n간장게장\n6RIA\n한우 갈비살 스테이크\n제육볶음\n바질 새우 파스타\n봉골레\n샥슈카\n해물 토마토 파스타\n수제 치킨윙\n1E SONL\n명란 김 계란밥",
-    "n": 3
+    "n": 3,
+    "image": "slides/slide-03.png"
   },
   {
     "source": 4,
     "title": "나를 맞혀보세요",
-    "section": "소개",
+    "section": "자기소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -805,12 +357,13 @@
       }
     ],
     "notes": "원본 4페이지\n4. 무명가수로 활동한 경력이 있다.\n5. 요리사로 일한적이 있다.\n6. 지개차 운전면허 자격증이 있다.\n2. 바리스타 자격증이 있다.\n3. 대학교를 자퇴했다. \n1. 근무한지 1년 이하의 신입 팀장이다.\n7. 유튜브 편집자로 활동한 경력이 있다.\n1. 근무한지 1년 이하의 신입 팀장이다.\n2. 바리스타 자격증이 있다.\n3. 대학교를 자퇴했다.\n4. 무명가수로 활동한 경력이 있다.\n5. 요리사로 일한적이 있다.\n6. 지개차 운전면허 자격증이 있다.\n7. 유튜브 편집자로 활동한 경력이 있다.",
-    "n": 4
+    "n": 4,
+    "image": "slides/slide-04.png"
   },
   {
     "source": 4,
     "title": "나를 맞혀보세요",
-    "section": "소개",
+    "section": "자기소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -955,12 +508,13 @@
       }
     ],
     "notes": "원본 4페이지\n4. 무명가수로 활동한 경력이 있다.\n5. 요리사로 일한적이 있다.\n6. 지개차 운전면허 자격증이 있다.\n2. 바리스타 자격증이 있다.\n3. 대학교를 자퇴했다. \n1. 근무한지 1년 이하의 신입 팀장이다.\n7. 유튜브 편집자로 활동한 경력이 있다.\n1. 근무한지 1년 이하의 신입 팀장이다.\n2. 바리스타 자격증이 있다.\n3. 대학교를 자퇴했다.\n4. 무명가수로 활동한 경력이 있다.\n5. 요리사로 일한적이 있다.\n6. 지개차 운전면허 자격증이 있다.\n7. 유튜브 편집자로 활동한 경력이 있다.",
-    "n": 5
+    "n": 5,
+    "image": "slides/slide-05.png"
   },
   {
     "source": 5,
     "title": "About\nOXFAM",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#087342",
     "items": [
       {
@@ -1035,12 +589,13 @@
       }
     ],
     "notes": "원본 5페이지\nAbout\nAbout\nOXFAM\n옥스팜",
-    "n": 6
+    "n": 6,
+    "image": "slides/slide-06.png"
   },
   {
     "source": 6,
     "title": "옥스팜 Quiz",
-    "section": "퀴즈",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -1213,12 +768,13 @@
       }
     ],
     "notes": "원본 6페이지\nQuiz 1\nQuiz 2\n의 비전은?\n의 활동국은?\nQuiz 3\nQuiz 4\n의 출동 시간?\n의 핵심이 되는 통합사업 3가지는?\n0새 의 비전은?\n옥스팜\n임재영\nPresence01\nQuiz2\n) 0AM 의 활동국은?\nQuiz 3\n&\n9EAM 의 출동 시간?\nQuiz 4\n안채 의 핵심이 되는 통합사업 3가지는?",
-    "n": 7
+    "n": 7,
+    "image": "slides/slide-07.png"
   },
   {
     "source": 7,
     "title": "옥스팜 Quiz 정답",
-    "section": "퀴즈",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -1391,12 +947,13 @@
       }
     ],
     "notes": "원본 7페이지\nQuiz 1\nQuiz 2\n의 비전은?\n의 활동국은?\nQuiz 3\nQuiz 4\n의 출동 시간?\n의 핵심이 되는 통합사업 3가지는?\n80여 개국 \n“가난이 없는 공정한 세상”\n(긴급구호,  국제개발,  캠페인 옹호)\n\"재난 발생시 72시간 내\"\n0새 의 비전은?\n옥스팜\n\"가난이 없는 공정한 세상\"\nQuiz2\n0EAM 의 활동국은?\n80여 개국\nQuiz 3\n9채 의 출동 시간? 재난 발생시 72시간 내\"\nQuiz 4\n8 9새 의 핵심이 되는 통합사업 3가지는?",
-    "n": 8
+    "n": 8,
+    "image": "slides/slide-08.png"
   },
   {
     "source": 8,
     "title": "가난이 없는 공정한 세상",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -1452,12 +1009,13 @@
       }
     ],
     "notes": "원본 8페이지\nAbout\nAbout\nOXFAM\n옥스팜",
-    "n": 9
+    "n": 9,
+    "image": "slides/slide-09.png"
   },
   {
     "source": 9,
     "title": "옥스팜 소개 영상",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -1564,12 +1122,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 10
+    "n": 10,
+    "image": "slides/slide-10.png"
   },
   {
     "source": 10,
     "title": "1942년, 옥스퍼드에서",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -1686,12 +1245,13 @@
       }
     ],
     "notes": "원본 10페이지\n10\nOXFAM\n(OXFAM : Oxford Committee for Famine Relief)\n1942년 영국 옥스퍼드에서 시작된 옥스팜은 전 세계 90개국 이상에서 가난의 불공정을\n이겨내고 인간의 기본 권리가 보장되는 세상을 만들기 위해 노력해 온 국제구호 개발기구입니다.\n비전\n미션\n가난이 없는 공정한 세상\n옥스팜은 불평등하며 불공정한 가난을 끝내고 정의로운 세상을 만들기 위한 국제적, 사회적인\n무브언트(변화들 위한 움직임 및 활동)에 전 세계 모든 사람들과 교류하고, 변화시키며, 함께\n협력합니다.\n옥스팜이 일하는 방식\n사회적 변화 촉구\n옥스팜은 사회 운동에서 정부 정책에 이르기까지 가난의\n근본적 원인에 맞서 행동할 것입니다. 옥스맘은 빈곤을\n초래하는 부당함에 목소리를 높일 때, 변화를 이끌어낼 수\n있다는 것을 꾸준히 경험해 왔습니다.\n연대와 협력\n현지 파트너십: 옥스팜은 변화를 일으키는 전 세계 지역사회 기관들과 파트너십을 맺고 이를\n통해 효율적으로 일합니다.\n글로벌 네트워크: 옥스팜은 지원, 의사 결정권을 빈곤국까지 적극적으로 확대해 전 세계 개인 및\n조직과 함께 일하고 있습니다.",
-    "n": 11
+    "n": 11,
+    "image": "slides/slide-11.png"
   },
   {
     "source": 10,
     "title": "가난의 불공정을 이겨내는 일",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -1766,12 +1326,13 @@
       }
     ],
     "notes": "원본 10페이지\n10\nOXFAM\n(OXFAM : Oxford Committee for Famine Relief)\n1942년 영국 옥스퍼드에서 시작된 옥스팜은 전 세계 90개국 이상에서 가난의 불공정을\n이겨내고 인간의 기본 권리가 보장되는 세상을 만들기 위해 노력해 온 국제구호 개발기구입니다.\n비전\n미션\n가난이 없는 공정한 세상\n옥스팜은 불평등하며 불공정한 가난을 끝내고 정의로운 세상을 만들기 위한 국제적, 사회적인\n무브언트(변화들 위한 움직임 및 활동)에 전 세계 모든 사람들과 교류하고, 변화시키며, 함께\n협력합니다.\n옥스팜이 일하는 방식\n사회적 변화 촉구\n옥스팜은 사회 운동에서 정부 정책에 이르기까지 가난의\n근본적 원인에 맞서 행동할 것입니다. 옥스맘은 빈곤을\n초래하는 부당함에 목소리를 높일 때, 변화를 이끌어낼 수\n있다는 것을 꾸준히 경험해 왔습니다.\n연대와 협력\n현지 파트너십: 옥스팜은 변화를 일으키는 전 세계 지역사회 기관들과 파트너십을 맺고 이를\n통해 효율적으로 일합니다.\n글로벌 네트워크: 옥스팜은 지원, 의사 결정권을 빈곤국까지 적극적으로 확대해 전 세계 개인 및\n조직과 함께 일하고 있습니다.",
-    "n": 12
+    "n": 12,
+    "image": "slides/slide-12.png"
   },
   {
     "source": 10,
     "title": "변화를 만드는 두 가지 방식",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -1888,12 +1449,13 @@
       }
     ],
     "notes": "원본 10페이지\n10\nOXFAM\n(OXFAM : Oxford Committee for Famine Relief)\n1942년 영국 옥스퍼드에서 시작된 옥스팜은 전 세계 90개국 이상에서 가난의 불공정을\n이겨내고 인간의 기본 권리가 보장되는 세상을 만들기 위해 노력해 온 국제구호 개발기구입니다.\n비전\n미션\n가난이 없는 공정한 세상\n옥스팜은 불평등하며 불공정한 가난을 끝내고 정의로운 세상을 만들기 위한 국제적, 사회적인\n무브언트(변화들 위한 움직임 및 활동)에 전 세계 모든 사람들과 교류하고, 변화시키며, 함께\n협력합니다.\n옥스팜이 일하는 방식\n사회적 변화 촉구\n옥스팜은 사회 운동에서 정부 정책에 이르기까지 가난의\n근본적 원인에 맞서 행동할 것입니다. 옥스맘은 빈곤을\n초래하는 부당함에 목소리를 높일 때, 변화를 이끌어낼 수\n있다는 것을 꾸준히 경험해 왔습니다.\n연대와 협력\n현지 파트너십: 옥스팜은 변화를 일으키는 전 세계 지역사회 기관들과 파트너십을 맺고 이를\n통해 효율적으로 일합니다.\n글로벌 네트워크: 옥스팜은 지원, 의사 결정권을 빈곤국까지 적극적으로 확대해 전 세계 개인 및\n조직과 함께 일하고 있습니다.",
-    "n": 13
+    "n": 13,
+    "image": "slides/slide-13.png"
   },
   {
     "source": 11,
     "title": "옥스팜은 어디에서 일할까요?",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -2008,12 +1570,13 @@
       }
     ],
     "notes": "원본 11페이지\n11\nOXFAM 활동 지역\n15,500,000 2,248.\n지하시입\n1,036:\n옥스팜은 2023년 21개 회원국과\n구호활동을 진행하는 86개국에서\n1,550만명의 사람들을 지원하였습니다.",
-    "n": 14
+    "n": 14,
+    "image": "slides/slide-14.png"
   },
   {
     "source": 12,
     "title": "가난은\n불공정입니다",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -2097,12 +1660,13 @@
       }
     ],
     "notes": "원본 12페이지\n7\n필수불가결한 것이 아니며, 불공평하며, 정의롭지 못하며 충분히 극복할 수 있는 것\nOXFAM의 '가난' 정의\nHOPE\n가난 = 불공정\n필수불가결한 것이 아니며, 불공평하며, 정의롭지 못하며 충분히 극복할 수 있는 것",
-    "n": 15
+    "n": 15,
+    "image": "slides/slide-15.png"
   },
   {
     "source": 13,
     "title": "가난을 해결하는 세 가지 축",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -2256,12 +1820,13 @@
       }
     ],
     "notes": "원본 13페이지\n13\nOXFAM 활동 영역과 통합 솔루션\nA JUST WORLD AGAINST POVERTY\n가난이 없는 공정한 세상\n인도주의적 긴급구호활동\nMUMANITARIAN\n자연재해나 전쟁피해\nOXFAM\nSOLUTION\n구조적 불평등을 해결하기 위한\n문제 제기/해결 축구/취약계층\n권리옹호\n.\n캠페인 및 옹호활동\nCAMPAIGNING\n자립을 돕기 위한\n교육 및 기술 전수\n지속적, 장기적 국제개발사업\nEVE OP",
-    "n": 16
+    "n": 16,
+    "image": "slides/slide-16.png"
   },
   {
     "source": 14,
     "title": "채리티샵의 시작, 1948",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -2354,12 +1919,13 @@
       }
     ],
     "notes": "원본 14페이지\n1948년, 전세계 채리티샵의 시초\nFirst permanent Oxfam gift shop in Broad Street, Oxford, which opened in 1948.\nTeDi\nR) Oxiam\n0xlam\n& oxfam\n1948년, 전세계 채리티샵의 시초",
-    "n": 17
+    "n": 17,
+    "image": "slides/slide-17.png"
   },
   {
     "source": 15,
     "title": "한국을 도왔던 옥스팜",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -2466,12 +2032,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 18
+    "n": 18,
+    "image": "slides/slide-18.png"
   },
   {
     "source": 16,
     "title": "한국을 향한 원조, 1953",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -2564,12 +2131,13 @@
       }
     ],
     "notes": "원본 16페이지\n1953년, 한국 고아, 빈민 원조\n한국 고아, 빈민 원조 Appeal 포스\n터\n한국 고아, 빈민 원즈 Aopeal 포스\n1m a world\nproblem you\ncan help now\n구세군 급식소\nTOXFORD CONNITITE FAMNE RELIFE)\n1953년, 한국 고아, 빈민 원조\nOXFAM\nONiCEF AMNESTY MSE\nACF\nREACH BSMGF MATER ARL",
-    "n": 19
+    "n": 19,
+    "image": "slides/slide-19.png"
   },
   {
     "source": 17,
     "title": "What is\nClimate\nJustice",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -2653,12 +2221,13 @@
       }
     ],
     "notes": "원본 17페이지\n03\nWhat is Climate Justice\n17\n옥스팜 솔루션 - 캠페인\nWhat is Climate Justice\n03",
-    "n": 20
+    "n": 20,
+    "image": "slides/slide-20.png"
   },
   {
     "source": 18,
     "title": "기후정의 이야기",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -2765,12 +2334,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 21
+    "n": 21,
+    "image": "slides/slide-21.png"
   },
   {
     "source": 19,
     "title": "옥스팜의\n차별점",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#087342",
     "items": [
       {
@@ -2845,12 +2415,13 @@
       }
     ],
     "notes": "원본 19페이지\n\n옥스팜의 차별점\n0XFAM\nOXFAM\n옥스팜",
-    "n": 22
+    "n": 22,
+    "image": "slides/slide-22.png"
   },
   {
     "source": 20,
     "title": "가난에 대한\n구조적 접근",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -2934,12 +2505,13 @@
       }
     ],
     "notes": "원본 20페이지\n\nOXFAM의 차별점 1.\n가난에 대한 구조적 접근으로\nV\n통합적 해결책 마련\nOXFAM\n옥스팜",
-    "n": 23
+    "n": 23,
+    "image": "slides/slide-23.png"
   },
   {
     "source": 21,
     "title": "전문화된\n현지 네트워크",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -3023,12 +2595,13 @@
       }
     ],
     "notes": "원본 21페이지\n\nOXFAM의 차별점 2.\n전문화된 현지네트워크\n구축으로\n신속하고 혁신적인 긴급구호\nOXFAM\n옥스팜",
-    "n": 24
+    "n": 24,
+    "image": "slides/slide-24.png"
   },
   {
     "source": 22,
     "title": "여성의\n자립",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -3112,12 +2685,13 @@
       }
     ],
     "notes": "원본 22페이지\n\nOXFAM의 차별점 3.\nBESTY\n옥스팜의 모든 도움의 중심은\n가장 취약계층인 \"여성의 자립\"\nOXFAM\n옥스팜",
-    "n": 25
+    "n": 25,
+    "image": "slides/slide-25.png"
   },
   {
     "source": 23,
     "title": "오래 이어지는\n후원의 힘",
-    "section": "중장기 후원",
+    "section": "옥스팜 소개",
     "bg": "#087342",
     "items": [
       {
@@ -3192,12 +2766,13 @@
       }
     ],
     "notes": "원본 23페이지\n23\n23\n중장기후원의 중요성\nOXFAM\n옥스팜",
-    "n": 26
+    "n": 26,
+    "image": "slides/slide-26.png"
   },
   {
     "source": 24,
     "title": "캠페이너가 만드는 선순환",
-    "section": "중장기 후원",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -3412,12 +2987,13 @@
       }
     ],
     "notes": "원본 24페이지\n선 순 환\n중장기 후원유지와 성과의 상관관계\n중장기\n후원유지\n성과\n환\n캠페이너\n유지율향상을 위한 고민 -> 기구 이해를 위한 노력-> 자신감 상승 및\n피치 퀄리티 상승-> 다수의 후원자 개발 *장기후원유지\n후원자\n좋은 내용의 피치를 들음- 기구활동 및 활동가에 대한 신뢰도 상승\n-> 후원에 대한 확신과 높은 만족도 -> 장기 후원유지\n® 0새\n& QXFAM\n옥스팜",
-    "n": 27
+    "n": 27,
+    "image": "slides/slide-27.png"
   },
   {
     "source": 24,
     "title": "후원자가 만드는 선순환",
-    "section": "중장기 후원",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -3632,12 +3208,13 @@
       }
     ],
     "notes": "원본 24페이지\n선 순 환\n중장기 후원유지와 성과의 상관관계\n중장기\n후원유지\n성과\n환\n캠페이너\n유지율향상을 위한 고민 -> 기구 이해를 위한 노력-> 자신감 상승 및\n피치 퀄리티 상승-> 다수의 후원자 개발 *장기후원유지\n후원자\n좋은 내용의 피치를 들음- 기구활동 및 활동가에 대한 신뢰도 상승\n-> 후원에 대한 확신과 높은 만족도 -> 장기 후원유지\n® 0새\n& QXFAM\n옥스팜",
-    "n": 28
+    "n": 28,
+    "image": "slides/slide-28.png"
   },
   {
     "source": 25,
     "title": "지속적인 후원이 만드는 안정",
-    "section": "중장기 후원",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -3754,12 +3331,13 @@
       }
     ],
     "notes": "원본 25페이지\n\n중장기후원이 중요한 이유\n옥스팜\n긴급한 지원과\n중장기적인\n자립을 도울\n안정적인 자금\n확보\n캠페이너\n안정적이고\n높은 급여\n® 안섭새\nOXFAM\n옥스팜",
-    "n": 29
+    "n": 29,
+    "image": "slides/slide-29.png"
   },
   {
     "source": 26,
     "title": "시민님의 관심에서 시작하기",
-    "section": "중장기 후원",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -3876,12 +3454,13 @@
       }
     ],
     "notes": "원본 26페이지\n\n후원유지율을 높히기 위해서는?\n1. 연령대 선정\n2. 시민님이 관심을 표한 이슈와 연관성 있는 피치 & 중장기 후원이 필요한 이유\n설명\n3. 가입 신정 이후 중장기후원 독력 멘트로 클로징 (한번만, 2-3번만, 6개월만\n등의 기간한정을 의미하는 멘트, 언제든 후원해지 가능 X !!)\n+ 옥스팜의 활동소식을 전달받을 수 있도록 휴대전화번호 + 수신 동의 받을 것 /\n소식지 수신, 카카오 채널 추가 권장\nOKFAM\n옥스함\nOXFAM\n옥스팜",
-    "n": 30
+    "n": 30,
+    "image": "slides/slide-30.png"
   },
   {
     "source": 26,
     "title": "중장기 후원을 독려하는 클로징",
-    "section": "중장기 후원",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -3984,12 +3563,13 @@
       }
     ],
     "notes": "원본 26페이지\n\n후원유지율을 높히기 위해서는?\n1. 연령대 선정\n2. 시민님이 관심을 표한 이슈와 연관성 있는 피치 & 중장기 후원이 필요한 이유\n설명\n3. 가입 신정 이후 중장기후원 독력 멘트로 클로징 (한번만, 2-3번만, 6개월만\n등의 기간한정을 의미하는 멘트, 언제든 후원해지 가능 X !!)\n+ 옥스팜의 활동소식을 전달받을 수 있도록 휴대전화번호 + 수신 동의 받을 것 /\n소식지 수신, 카카오 채널 추가 권장\nOKFAM\n옥스함\nOXFAM\n옥스팜",
-    "n": 31
+    "n": 31,
+    "image": "slides/slide-31.png"
   },
   {
     "source": 27,
     "title": "옥스팜 소식과 연결되기",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -4115,12 +3695,53 @@
         "url": "https://www.instagram.com/oxfamkorea/"
       }
     ],
-    "n": 32
+    "n": 32,
+    "image": "slides/slide-32.png"
+  },
+  {
+    "source": null,
+    "title": "옥스팜 투데이 · 사진으로 만나는 변화",
+    "section": "옥스팜 소개",
+    "image": "assets/today-stories.svg",
+    "items": [
+      {
+        "kind": "text",
+        "text": "한 마리의 돼지, 학교에 가는 하루. 사진 속 이야기를 보고 옥스팜에 대해 새롭게 알게 된 점을 나눠 주세요.",
+        "y": 100
+      }
+    ],
+    "links": [
+      {
+        "label": "옥스팜 투데이 2026 열기",
+        "url": "https://campaigns.oxfam.or.kr/oxfamtoday2026/"
+      }
+    ],
+    "n": 33
+  },
+  {
+    "source": null,
+    "title": "옥스팜 투데이 · 함께 나누는 세 가지 질문",
+    "section": "옥스팜 소개",
+    "image": "assets/today-reflection.svg",
+    "items": [
+      {
+        "kind": "text",
+        "text": "옥스팜에 대해 새롭게 알게 된 사실\n가장 인상적인 부분과 그 이유\n옥스팜을 잘 모르는 사람들에게 꼭 하나만 소개하고 싶다면 어떤 부분인지",
+        "y": 100
+      }
+    ],
+    "links": [
+      {
+        "label": "옥스팜 투데이 2026 열기",
+        "url": "https://campaigns.oxfam.or.kr/oxfamtoday2026/"
+      }
+    ],
+    "n": 34
   },
   {
     "source": 28,
     "title": "작은 도구,\n큰 변화",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#087342",
     "items": [
       {
@@ -4195,12 +3816,13 @@
       }
     ],
     "notes": "원본 28페이지\n\n옥스팜\n주요 구호 물품 소개\nOXFAMA\n옥스팜",
-    "n": 33
+    "n": 35,
+    "image": "slides/slide-33.png"
   },
   {
     "source": 29,
     "title": "물 · 위생 · 보건",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -4376,12 +3998,13 @@
       }
     ],
     "notes": "원본 29페이지\n29\nWASH 관련 옥스팜 긴급구호물품\n(물•위생 • 보건)\n워터버킷\n음수문식용\n식수\n염도측정키트\n핸드워싱 스탠드\n(손세정대)\n라이프세이버\n(휴대용 물정수기)\n물 정화제\nOXFAM\n옥스팜",
-    "n": 34
+    "n": 36,
+    "image": "slides/slide-34.png"
   },
   {
     "source": 30,
     "title": "LIFE SAVER",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -4465,12 +4088,13 @@
       }
     ],
     "notes": "원본 30페이지\n물탱크나\t설치가 용이하지 않은 곳에서 깨끗한 물을 얻게 해주는 휴대용 물정화기\n물을 넣고\t회 가량 펌프질만 해주면 깨끗한 물이 됨 가장 작은 박테리아의 직경은\t나노미터 바이러스의 경우는\t\t나노미터인데 라이프세이버의 나노 정수필터는\t나노미터까지 필터링이 가능 모든 박테리아와 바이러스를 거를 수 있다는 것\n가장 일반적인 크기의 라이프세이버의 용량은 리터 하루에 한 가정이 물을 리터씩 쓴다고 가정했을 때 최대 년까지도 사용이 가능함\nLIFE SAVER\n30\nLIFE SAVER\n휴대용 물정수기 라이프세이버",
-    "n": 35
+    "n": 37,
+    "image": "slides/slide-35.png"
   },
   {
     "source": 31,
     "title": "라이프세이버 시연",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -4577,12 +4201,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 36
+    "n": 38,
+    "image": "slides/slide-36.png"
   },
   {
     "source": 32,
     "title": "워터버킷의 혁신",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -4764,12 +4389,13 @@
       }
     ],
     "notes": "원본 32페이지\n32\nWATER BUCKET\nWATER\n옥스팜의 벽선적인 워터버킷\n꽉 조여진 뚜껑으로\n물을 안전하게 보관할 수 있습니다.\n캡을 통해 뚜껑 전체를 열지 않고도\n물을 얻을 수 있기 때문에 오염을\n방지할 수 있습니다.\n깨끗한 물 최대 14L를\nUV처리가 된 튼튼한\n플라스틱으로 만들었습니다.\n일반적인 물 보관통과 달리,\n밑바닥 모시리를 둥글게 제작하여\n사람들이 보다 안전하고 편하게 머리\n위로 몰려 옮길 수 있습니다.\n겹겹이 쌓기 쉬워 물이 필요한\n환경에 적은 운송비용으로도\n많은 버킷을 지원할 수 있습니다.\n버킷 안에 컵을 직접 넣어 돌이\n오염되는 것을 방지하기 위해\n탭을 설치하였습니다.\n바닥이 오목하게 들어기있어\n쉽게 더러워지지 않고\n청결하게 사용할 수 있고\n머리에 이고기기 용이합니다.\nOXFAM\n옥스팜",
-    "n": 37
+    "n": 39,
+    "image": "slides/slide-37.png"
   },
   {
     "source": 32,
     "title": "워터버킷의 혁신",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -4951,12 +4577,13 @@
       }
     ],
     "notes": "원본 32페이지\n32\nWATER BUCKET\nWATER\n옥스팜의 벽선적인 워터버킷\n꽉 조여진 뚜껑으로\n물을 안전하게 보관할 수 있습니다.\n캡을 통해 뚜껑 전체를 열지 않고도\n물을 얻을 수 있기 때문에 오염을\n방지할 수 있습니다.\n깨끗한 물 최대 14L를\nUV처리가 된 튼튼한\n플라스틱으로 만들었습니다.\n일반적인 물 보관통과 달리,\n밑바닥 모시리를 둥글게 제작하여\n사람들이 보다 안전하고 편하게 머리\n위로 몰려 옮길 수 있습니다.\n겹겹이 쌓기 쉬워 물이 필요한\n환경에 적은 운송비용으로도\n많은 버킷을 지원할 수 있습니다.\n버킷 안에 컵을 직접 넣어 돌이\n오염되는 것을 방지하기 위해\n탭을 설치하였습니다.\n바닥이 오목하게 들어기있어\n쉽게 더러워지지 않고\n청결하게 사용할 수 있고\n머리에 이고기기 용이합니다.\nOXFAM\n옥스팜",
-    "n": 38
+    "n": 40,
+    "image": "slides/slide-38.png"
   },
   {
     "source": 33,
     "title": "똑똑한 지원을\n체감하는 시간",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#087342",
     "items": [
       {
@@ -5031,12 +4658,13 @@
       }
     ],
     "notes": "원본 33페이지\n옥스팜의 똑똑한 지원, 체감하기 \n옥스팜의 똑똑한 지원, 체감하기\n&\nOXFAM\n옥스팜",
-    "n": 39
+    "n": 41,
+    "image": "slides/slide-39.png"
   },
   {
     "source": 34,
     "title": "거울은\n왜 있을까요?",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5120,12 +4748,13 @@
       }
     ],
     "notes": "원본 34페이지\n거울의 존재 이유?\n콩고민주공화국 실향민 캠프에 설치된\n손 세정대를 한 여성이 사용하고\n있습니다. 코로나19 백신과 치료제를\n구하기 어려운 나라에서는 바이러스를\n예방할 수 있는 가장 좋은 방법이\n개인위생을 관리하는 것입니다.\n옥스팜은 학교, 병원, 시장 등 주요\n시설을 중심으로 비누와 손 세정대를\n설치하여,, 콩고민주공화국 지역민\n11만 명이 스스로 안전을 지킬 수\n있도로 지원하고 있습니다.\nA woman is using a hand sanitizer\ninstalled in a refugee Camp for\nthe Democratic Republic of\nCongorian. In countries where\nCOVID-19 vaccines and treatments\nare difficult to obtain, the best\nway to prevent the virus is to\nmanage personal hygiene.\nOxfam has installed soap and hand\nsanitizers around major\nfacilities such as schools,\nhospi-tals, and markets to help\n110,000 local residents of the\nDemocratic Republic of Congo keep\nthemselves safe.\n콩고민주공화국\nDemocratic Republic of the\nCongo\nCArlette Bashizi, 2021\n거울의 존재 이유?\nOXFAM\n옥스팜",
-    "n": 40
+    "n": 42,
+    "image": "slides/slide-40.png"
   },
   {
     "source": 34,
     "title": "스스로 안전을 지킬 수 있도록",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5251,12 +4880,13 @@
       }
     ],
     "notes": "원본 34페이지\n거울의 존재 이유?\n콩고민주공화국 실향민 캠프에 설치된\n손 세정대를 한 여성이 사용하고\n있습니다. 코로나19 백신과 치료제를\n구하기 어려운 나라에서는 바이러스를\n예방할 수 있는 가장 좋은 방법이\n개인위생을 관리하는 것입니다.\n옥스팜은 학교, 병원, 시장 등 주요\n시설을 중심으로 비누와 손 세정대를\n설치하여,, 콩고민주공화국 지역민\n11만 명이 스스로 안전을 지킬 수\n있도로 지원하고 있습니다.\nA woman is using a hand sanitizer\ninstalled in a refugee Camp for\nthe Democratic Republic of\nCongorian. In countries where\nCOVID-19 vaccines and treatments\nare difficult to obtain, the best\nway to prevent the virus is to\nmanage personal hygiene.\nOxfam has installed soap and hand\nsanitizers around major\nfacilities such as schools,\nhospi-tals, and markets to help\n110,000 local residents of the\nDemocratic Republic of Congo keep\nthemselves safe.\n콩고민주공화국\nDemocratic Republic of the\nCongo\nCArlette Bashizi, 2021\n거울의 존재 이유?\nOXFAM\n옥스팜",
-    "n": 41
+    "n": 43,
+    "image": "slides/slide-41.png"
   },
   {
     "source": 35,
     "title": "WATER MAKER",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5391,12 +5021,13 @@
       }
     ],
     "notes": "원본 35페이지\nWATER MAKER(물 정화제)\n35\nWATER MAKER(물 정화제)\n빗물이나 더러운 물을 사용할 수 밖에 없는 긴급구호\n현장에서 빠르고 간편하게 사용할 수 있는 물 정화제.\n가루형/알약형이 있고, 용량도 다양. 물 온도에\n상관없이 최소 5분~최대 10분 이상 넣고 두기만\n하면, 바이러스와 박테리아를 99.999% 박멸하여\n깨끗한 물로 정화함. 가루형 5g으로 20리터의 물을\n정화할 수 있음.\nHow Watermaker Works (6-10 minutes)\nIWATER\nKER™\nWATER\n25g=10t4fwacr\nfor for Penaid\net Holicg\n'of water\nOXFAM\n옥스팜",
-    "n": 42
+    "n": 44,
+    "image": "slides/slide-42.png"
   },
   {
     "source": 35,
     "title": "긴급구호 현장에서 빠르고 간편하게",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5527,12 +5158,13 @@
       }
     ],
     "notes": "원본 35페이지\nWATER MAKER(물 정화제)\n35\nWATER MAKER(물 정화제)\n빗물이나 더러운 물을 사용할 수 밖에 없는 긴급구호\n현장에서 빠르고 간편하게 사용할 수 있는 물 정화제.\n가루형/알약형이 있고, 용량도 다양. 물 온도에\n상관없이 최소 5분~최대 10분 이상 넣고 두기만\n하면, 바이러스와 박테리아를 99.999% 박멸하여\n깨끗한 물로 정화함. 가루형 5g으로 20리터의 물을\n정화할 수 있음.\nHow Watermaker Works (6-10 minutes)\nIWATER\nKER™\nWATER\n25g=10t4fwacr\nfor for Penaid\net Holicg\n'of water\nOXFAM\n옥스팜",
-    "n": 43
+    "n": 45,
+    "image": "slides/slide-43.png"
   },
   {
     "source": 36,
     "title": "구호물품박스",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5630,12 +5262,13 @@
       }
     ],
     "notes": "원본 36페이지\n•\n•\n•\n•\n36\n1688\n구호물품박스\n태양광 랜턴, 물 정화제,\n피푸백,\n비누 (사진 구성대로)\n무게가 있는 비누를 하단에 두어 칸막이 손상\n없도록 주의\n(이동시에는 박스를 닫아 비누가 하단에\n있도록 하여 세워서 봉투에 보관/이동)\n박스를 열어 부스에 설치하고 박스 또는 구성\n물품을 직접 들어 시민분들께 설명 활용\n구성 물품은 모두 긴급구호현장에 실제로 지급되는\n것이며, 박스는 이해를 돕기 위해 옥스팜.\n대면모금팀에서 제작한 것. 실제 구호현장에서는\n이러한 박스에 하나씩 담아서 제공하지 않음\n-> 시민분들께 설명시 혼동되지 않도록\n유념\nOXFAM\n옥스팜",
-    "n": 44
+    "n": 46,
+    "image": "slides/slide-44.png"
   },
   {
     "source": 36,
     "title": "박스를 다룰 때 기억할 것",
-    "section": "구호물품",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5766,12 +5399,13 @@
       }
     ],
     "notes": "원본 36페이지\n•\n•\n•\n•\n36\n1688\n구호물품박스\n태양광 랜턴, 물 정화제,\n피푸백,\n비누 (사진 구성대로)\n무게가 있는 비누를 하단에 두어 칸막이 손상\n없도록 주의\n(이동시에는 박스를 닫아 비누가 하단에\n있도록 하여 세워서 봉투에 보관/이동)\n박스를 열어 부스에 설치하고 박스 또는 구성\n물품을 직접 들어 시민분들께 설명 활용\n구성 물품은 모두 긴급구호현장에 실제로 지급되는\n것이며, 박스는 이해를 돕기 위해 옥스팜.\n대면모금팀에서 제작한 것. 실제 구호현장에서는\n이러한 박스에 하나씩 담아서 제공하지 않음\n-> 시민분들께 설명시 혼동되지 않도록\n유념\nOXFAM\n옥스팜",
-    "n": 45
+    "n": 47,
+    "image": "slides/slide-45.png"
   },
   {
     "source": 37,
     "title": "옥스팜코리아 홍보대사 · 이제훈",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5855,12 +5489,13 @@
       }
     ],
     "notes": "원본 37페이지\n\n옥스팜코리아 홍보대사\n배우 이제훈 (공식 홍보대사)\n옥스팜과 MBC가 함께한 LOVE철린지 프로그램을 통해\n필리핀, 탄자니아 현지 사업장에 방문한 후 '옥스팜\n트레일워커 100Km' 등 지속적으로 옥스팜이 다루는 글로벌\n이슈를 더 많은 대중에게 알리는 역할로 활동 중\n배우 이하늬 (공식 홍보대사)\n옥스팜 캄보디아 현지사업장을 방문한 후 나눔을 독려하는\n활동을 함께해 왔으며, 전 세계 빈곤인구의 대부분인\n여성들이 최소한의 권리를 보장받고 품을 이루며 살아갈 수\n있도록 대중들의 관심과 후원을 독려하는 다양한 활동 진행\nOXFAM\n옥스팜",
-    "n": 46
+    "n": 48,
+    "image": "slides/slide-46.png"
   },
   {
     "source": 37,
     "title": "옥스팜코리아 홍보대사 · 이하늬",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -5944,12 +5579,13 @@
       }
     ],
     "notes": "원본 37페이지\n\n옥스팜코리아 홍보대사\n배우 이제훈 (공식 홍보대사)\n옥스팜과 MBC가 함께한 LOVE철린지 프로그램을 통해\n필리핀, 탄자니아 현지 사업장에 방문한 후 '옥스팜\n트레일워커 100Km' 등 지속적으로 옥스팜이 다루는 글로벌\n이슈를 더 많은 대중에게 알리는 역할로 활동 중\n배우 이하늬 (공식 홍보대사)\n옥스팜 캄보디아 현지사업장을 방문한 후 나눔을 독려하는\n활동을 함께해 왔으며, 전 세계 빈곤인구의 대부분인\n여성들이 최소한의 권리를 보장받고 품을 이루며 살아갈 수\n있도록 대중들의 관심과 후원을 독려하는 다양한 활동 진행\nOXFAM\n옥스팜",
-    "n": 47
+    "n": 49,
+    "image": "slides/slide-47.png"
   },
   {
     "source": 38,
     "title": "모두를 위한 물",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -6056,12 +5692,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 48
+    "n": 50,
+    "image": "slides/slide-48.png"
   },
   {
     "source": 39,
     "title": "옥스팜 워크 현장 영상",
-    "section": "옥스팜 이해",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -6168,12 +5805,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 49
+    "n": 51,
+    "image": "slides/slide-49.png"
   },
   {
     "source": 40,
     "title": "옥스팜 워크 후기",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -6244,12 +5882,13 @@
     ],
     "notes": "원본 40페이지\n옥스팜워크 후기\n참가자만 느낄 수 있는\nRW ATER\nWALK\n- 참가자만 느낄 수 있는-\n옥스팜워크 후기\nh 1\n#\nPART MAL",
     "audio": "media/media3.mp3",
-    "n": 50
+    "n": 52,
+    "image": "slides/slide-50.png"
   },
   {
     "source": 41,
     "title": "함께 걸으며 확인할 것",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -6394,12 +6033,13 @@
       }
     ],
     "notes": "원본 41페이지\nINDEX\n목차\nwhy\n옥스팜 워크란?\n걷기의 의미\n후원금 사용처\nwhat\n24 옥스팜 워크\n행사 스케치\n후원자 참여 이벤트\nhow\n가치를 같이하다\n클라이언트에 대한 자부심\n후원자에게 받는 Rehash\nINDEX\n목차\nwhy\n옥스팜 워크란?\n• 걷기의 의미\n• 후원금 사용처\nwhat\n24 옥스팜 워크\n• 행사 스케치\n• 후원자 참여 이벤트\nhow\n가치를 같이하다\n• 클라이언트에 대한\n자부심\n• 후원자에게 받는\nRehash",
-    "n": 51
+    "n": 53,
+    "image": "slides/slide-51.png"
   },
   {
     "source": 42,
     "title": "누군가의 생존의 거리를 걷다",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -6511,12 +6151,13 @@
       }
     ],
     "notes": "원본 42페이지\n“옥스팜 워크” 소개해요\n물을 구하기 위해 하루에 \n수십키로미터를 걷는 여성들의 \"생존의 거리\"를 직접 체험하고 자립을 돕는 기부 걷기 프로젝트\n세상에서 가장 힘든 누군가의\n걸음을 멈추기 위한 우리의 \"걸음\"\n\"옥스팜 워크\" 소개해요\n또다른 생존자 시실리야 시마티는 마을의 우물이 모두 망가져\n수십 킬로미터를 걸어갑니다.\n하지만 구할 수 있는 건 바닥에 고인 흙탕물 뿐입니다.\n세상에서 가장 힘든 누군가의\n걸음을 멈추기 위한 우리의 \"걸음\" 9\n물을 구하기 위해 하루에\n수십키로미터를 걷는 여성들의\n\"생존의 거리\"를 직접 체험하고\n자립을 돕는 기부 걷기 프로젝트",
-    "n": 52
+    "n": 54,
+    "image": "slides/slide-52.png"
   },
   {
     "source": 43,
     "title": "옥스팜워크 후원금 · 생계를 유지하는 농사",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -6600,12 +6241,13 @@
       }
     ],
     "notes": "원본 43페이지\n\n소중한 후원금, 이렇게 사용됐어요!\n옥스팜워크 후원금\n옥스팜에서 비닐하우스 농사를 배우고 날씨와 상관 없이\n생계 유지를 할 수 있게 된 옥스팜 여성역량강화그룹 멤버 '바르샤*\n2024 옥스팜워크\nOXFAM\nWALK",
-    "n": 53
+    "n": 55,
+    "image": "slides/slide-53.png"
   },
   {
     "source": 44,
     "title": "옥스팜워크 후원금 · 지속적인 수입과 교육",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -6689,12 +6331,13 @@
       }
     ],
     "notes": "원본 44페이지\n\n소중한 후원금,이렇게 사용됐어요!\n옥스팜워크 후원금\n지원받은 염소를 기르고 저축 수업을 받아\n아이들 학비를 모아 기쁘다는 옥스팜 여성역량강화그룹 멤버 '니샤'\n2024 옥스팜워크\nOXFAM\nWAL.",
-    "n": 54
+    "n": 56,
+    "image": "slides/slide-54.png"
   },
   {
     "source": 45,
     "title": "옥스팜워크 후원금 · 여성의 경제적 자립",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -6778,12 +6421,13 @@
       }
     ],
     "notes": "원본 45페이지\n\n소중한 후원금, 이렇게 사용됐어요!\n옥스팜워크 후원금\n옥스팜은 네팔 칸찬푸르 여성 역량강화그룹을 조직해 취 창업 지원,\n금융 교육, 여성 권리 신장 활동을 총 251명에게 960회 이상 진행했습니다.\n2024 옥스팜워크\nOXFAM\nWALK",
-    "n": 55
+    "n": 57,
+    "image": "slides/slide-55.png"
   },
   {
     "source": 46,
     "title": "함께한 사람들",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -6853,12 +6497,13 @@
       }
     ],
     "notes": "원본 46페이지\n\n• grope lab\nDrYout\ntheVenti\nmon table\n몽테이블\nB05\ninver\n007\n0L",
-    "n": 56
+    "n": 58,
+    "image": "slides/slide-56.png"
   },
   {
     "source": 47,
     "title": "옥스팜 워크의 현장",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -6928,12 +6573,13 @@
       }
     ],
     "notes": "원본 47페이지\n\nYONRAPNEWS",
-    "n": 57
+    "n": 59,
+    "image": "slides/slide-57.png"
   },
   {
     "source": 48,
     "title": "옥스팜과 함께한 현장",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -7039,12 +6685,48 @@
       }
     ],
     "notes": "원본 48페이지\n\nJPEOPL\nTODAY\nIHINGEl\n24 옥스팜 트레일워커 10k%\n《FAM TRAILWAL\nTRAIL WALKE\nOXFAM\n옥스진\nIMEAMSHOP\n전MARPOZO\nPC\n옥스팜 존\n유KEAM\nOXFAM\nAN\n유자가\nTRAILWALKI\n우스랑 트너일위\nOXFAM\nTRAILWALKER\n옥스팜 트레일위치\nOXFAM\n옥스탕",
-    "n": 58
+    "n": 60,
+    "image": "slides/slide-58.png"
+  },
+  {
+    "source": null,
+    "title": "옥스팜 슈퍼라이브",
+    "section": "옥스팜 소개",
+    "image": "assets/superlive.svg",
+    "items": [
+      {
+        "kind": "text",
+        "text": "옥스팜 슈퍼라이브\n2026년 10월 17일 토요일 오후 6시\n광화문 세종로공원\n티켓 판매금 전액은 전 세계 취약계층의 식수, 위생, 생계, 자립 지원에 사용됩니다.",
+        "y": 100
+      }
+    ],
+    "links": [],
+    "n": 61
+  },
+  {
+    "source": null,
+    "title": "옥스팜 트레일워커 · 100km의 감동",
+    "section": "옥스팜 소개",
+    "image": "assets/trailwalker-today.svg",
+    "items": [
+      {
+        "kind": "text",
+        "text": "2026 옥스팜 트레일워커\n팀원들과 함께 만든 100km의 감동\n함께 걷는 도전이 변화로 이어집니다.",
+        "y": 100
+      }
+    ],
+    "links": [
+      {
+        "label": "옥스팜 투데이 · 트레일워커 이야기",
+        "url": "https://campaigns.oxfam.or.kr/oxfamtoday2026/story/1/"
+      }
+    ],
+    "n": 62
   },
   {
     "source": 49,
     "title": "옥스팜 트레일워커",
-    "section": "트레일워커",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -7156,12 +6838,13 @@
       }
     ],
     "notes": "원본 49페이지\n\n옥스팜 트레일워커 소개\n®\n100KM를 4인 1조가 되어 38시간 내에 완주하는 도전형식의 기부 프로젝트",
-    "n": 59
+    "n": 63,
+    "image": "slides/slide-59.png"
   },
   {
     "source": 50,
     "title": "트레일워커의 순간들",
-    "section": "트레일워커",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -7267,12 +6950,13 @@
       }
     ],
     "notes": "원본 50페이지\n\n047 김선다.",
-    "n": 60
+    "n": 64,
+    "image": "slides/slide-60.png"
   },
   {
     "source": 51,
     "title": "길을 따라, 함께 걷기",
-    "section": "트레일워커",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -7360,12 +7044,13 @@
       }
     ],
     "notes": "원본 51페이지\n\n코스지도 / 100km\nALKERR\n시간의 지도를 건물에 보세요!\n코스 고도\n32\n16430\n®\n2500K\n®\n30K\n0%\n800m\n500m\n200-\nIK\n207\n3™\nTASK LLTK\n1245K\n80K 9OK 100%",
-    "n": 61
+    "n": 65,
+    "image": "slides/slide-61.png"
   },
   {
     "source": 52,
     "title": "CP5에서 함께한 일",
-    "section": "트레일워커",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -7500,12 +7185,13 @@
       }
     ],
     "notes": "원본 52페이지\n\n활동사진 CPS\n제일 좋았던 50km 피니쉬 라인\n01\n02\n계측담당(배번호 스캐닝)음원하기, 서비스 안내하기\n힘든 길 걸어오신 참가자에게\n어떤 팀이 어느 구간을 통과중인지\n힘찬 응원으로 맞이하고\n확인하기 위해 팀원이 함께 모이면\n식음료, 마사지, 셔틀버스등\n스캐너로 계측하여 기록을 남긴다.\n필요한 서비스를 안내한다.\n03\n함께 사진찍기\n이 순간이 영원히 기억되길!\n함께 고난을 돌파하는 순간인\n만큼 사진은 필수\n04\nDNF(중도포기자)관리\n중도포기자를 기록 및 관리하여\n실제 트레일워커 진행중인\n인원은 몇명인지 파악함으로\n일정이 잘 진행되도록 돕는다.",
-    "n": 62
+    "n": 66,
+    "image": "slides/slide-62.png"
   },
   {
     "source": 52,
     "title": "CP5에서 함께한 일",
-    "section": "트레일워커",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -7640,12 +7326,13 @@
       }
     ],
     "notes": "원본 52페이지\n\n활동사진 CPS\n제일 좋았던 50km 피니쉬 라인\n01\n02\n계측담당(배번호 스캐닝)음원하기, 서비스 안내하기\n힘든 길 걸어오신 참가자에게\n어떤 팀이 어느 구간을 통과중인지\n힘찬 응원으로 맞이하고\n확인하기 위해 팀원이 함께 모이면\n식음료, 마사지, 셔틀버스등\n스캐너로 계측하여 기록을 남긴다.\n필요한 서비스를 안내한다.\n03\n함께 사진찍기\n이 순간이 영원히 기억되길!\n함께 고난을 돌파하는 순간인\n만큼 사진은 필수\n04\nDNF(중도포기자)관리\n중도포기자를 기록 및 관리하여\n실제 트레일워커 진행중인\n인원은 몇명인지 파악함으로\n일정이 잘 진행되도록 돕는다.",
-    "n": 63
+    "n": 67,
+    "image": "slides/slide-63.png"
   },
   {
     "source": 53,
     "title": "쉼과 식사도 함께",
-    "section": "트레일워커",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -7835,12 +7522,13 @@
       }
     ],
     "notes": "원본 53페이지\n\n01\n식을 서비스\n영향만점 맛있는 식사 대기중\n스팜 느\nDAT VALLEY.\nCOFFEE | DAT LATTE\n04\n카페\n(아이스크림, 커피, 라떼)\n그래놀라 오트 아이스크림\n아메리카노, 오트라떼 대기중",
-    "n": 64
+    "n": 68,
+    "image": "slides/slide-64.png"
   },
   {
     "source": 54,
     "title": "기억에 남는 참가자",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -7947,12 +7635,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 65
+    "n": 69,
+    "image": "slides/slide-65.png"
   },
   {
     "source": 55,
     "title": "기억에 남는 참가자",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -8059,12 +7748,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 66
+    "n": 70,
+    "image": "slides/slide-66.png"
   },
   {
     "source": 56,
     "title": "현장에서 함께한 시간",
-    "section": "트레일워커",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -8161,12 +7851,13 @@
       }
     ],
     "notes": "원본 56페이지\n\n명동식당\n아침식사됩니다\n옥스팜 존\n0X\nOXFAM\n스핌",
-    "n": 67
+    "n": 71,
+    "image": "slides/slide-67.png"
   },
   {
     "source": 57,
     "title": "기억에 남는 네 가지 순간",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -8375,12 +8066,13 @@
       }
     ],
     "notes": "원본 57페이지\n행사 스케치\nwhat\n옥스팜 워크 참가자에게 주어지는\n물품백 안에는 커피 쿠폰등 간식과 \n특별한 굳즈들이 들어있다!\n참가자 선물\n등산로중 특정위치 도달시 지비츠\n칩을 하나씩 획득 할 수 있으며\n마지막 완주 지점에서\n완주메달 지비츠가 증정된다.\n성취감\n등산로에 랜덤하게 비치된\n구호물자를 찾고 거기에 QR을\n스캔하여 이벤트 참여\n상품이 선착순 증정되기 때문에\n참여자가 많았다.\n의미를 찾다\n강원도 인재의 아름다운 \n자작나무 숲을 걸어가며\n멋진 자연을 마음껏..\n자연을 만끽\n참가자 선물\n옥스팜 워크 참가자에게\n주어지는\n물품백 안에는 커피 쿠폰등\n간식과\n특별한 굳즈들이 들어있다!\nwhat\n행사 스케치\n성취감\n의미를 찾다\n등산로중 특정위치 도달시\n지비츠\n침을 하나씩 획득 할 수 있으며\n마지막 완주 지점에서\n완주메달 지비츠가 증정된다.\nOXFAM\n등산로에 랜덤하게 비치된\n구호물자를 찾고 거기에 QR을\n스캔하여 이벤트 참여\n상품이 선착순 증정되기 때문에\n참여자가 많았다.\n자연을 만끽\n강원도 인재의 아름다운\n자작나무 숲을 걸어가며\n멋진 자연을 마음껏..",
-    "n": 68
+    "n": 72,
+    "image": "slides/slide-68.png"
   },
   {
     "source": 58,
     "title": "옥스팜 워크의 가을 풍경",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -8487,12 +8179,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 69
+    "n": 73,
+    "image": "slides/slide-69.png"
   },
   {
     "source": 59,
     "title": "행사장 배치도",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -8562,12 +8255,13 @@
       }
     ],
     "notes": "원본 59페이지\n\n행사장 배치도\n이벤트\n월전 스태프\n쉼터\n옥스팜\n더벤티\n장애인 주차구역\n무대\n등록 등록 등록\n화장실\n화장실\n화장실\n출빌\n셔틀버스 대기장소",
-    "n": 70
+    "n": 74,
+    "image": "slides/slide-70.png"
   },
   {
     "source": 60,
     "title": "참가 등록과 행사 준비",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -8673,12 +8367,13 @@
       }
     ],
     "notes": "원본 60페이지\n\n흡연표시가의\n이벤터스= 행사와 함께하는 모든 순간\ncort us.krl\n여성과 소녀를 위한 발걸음 2024 옥스팜\n워크\n행사 일시\n24.10.19(토) 1230~ 24.10.19(토) 17:00\n임채영\n• 오프라인 행사에서 사용됩니다.\nQR코드를 보여주시면 술식체크가 칩니다!\n09동석인증을 사용하지 않는 행사의 경우 이름을 말씀해주세요.\n• 디코모드의 경우 OF코드를 저장하여 사용해주세요\nQR코드 저장하기",
-    "n": 71
+    "n": 75,
+    "image": "slides/slide-71.png"
   },
   {
     "source": 61,
     "title": "구호물품과 함께한 부스",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -8748,12 +8443,13 @@
       }
     ],
     "notes": "원본 61페이지\n\nNATER\n옥스팜 이하니\n두를 위한 음\n선물해주세요!\n103\nOXFAM\n®\n0채\n4. ble\nAlch E\nOXF\n오 새끼",
-    "n": 72
+    "n": 76,
+    "image": "slides/slide-72.png"
   },
   {
     "source": 62,
     "title": "함께 받은 참가자 선물",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -8949,12 +8645,13 @@
       }
     ],
     "notes": "원본 62페이지\n\n-문지\nthemom\nEvendy\nSywcalty Callin\n그대한 풍화토\n700\nOXFAM WALK\n(Dalou) 에너지바\n아이스\n고마산후르츠\nAGAINST\nK\nTTARES\nRombuchar\n다친 공부치",
-    "n": 73
+    "n": 77,
+    "image": "slides/slide-73.png"
   },
   {
     "source": 63,
     "title": "기억에 남는 네 가지 순간",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -9163,12 +8860,13 @@
       }
     ],
     "notes": "원본 63페이지\n행사 스케치\n옥스팜 워크 참가자에게 주어지는\n물품백 안에는 \n커피 쿠폰등 간식과 \n특별한 굳즈들이 들어있다!\n참가자 선물\n등산로중 특정위치 도달시 지비츠 칩을 하나씩\n 획득 할 수 있으며\n마지막 완주 지점에서\n완주메달 지비츠가 증정된다.\n성취감\n등산로에 랜덤하게 비치된\n구호물자를 찾고 거기에 QR을\n스캔하여 이벤트 참여\n상품이 선착순 증정되기 때문에\n참여자가 많았다.\n의미를 찾다\n강원도 인재의 아름다운 \n자작나무 숲을 걸어가며\n멋진 자연을 마음껏..\n자연을 만끽\n행사 스케치\n참가자 선물\n성취감\n의미를 찾다\n1e\n옥스팜 워크 참가자에게\n주어지는\n물품백 안에는\n커피 쿠폰등 간식과\n특별한 굳즈들이 들어있다!\n등산로중 특정위치 도달시\n지비츠 침을 하나씩\n획득 할 수 있으며\n마지막 완주 지점에서\n완주메달 지비츠가 증정된다.\nOXFAM\n등산로에 랜덤하게 비치된\n구호물자를 찾고 거기에 QR을\n스캔하여 이벤트 참여\n상품이 선착순 증정되기 때문에\n참여자가 많았다.\n자연을 만끽\n강원도 인재의 아름다운\n자작나무 숲을 걸어가며\n멋진 자연을 마음껏..\nLOYEAM WAL",
-    "n": 74
+    "n": 78,
+    "image": "slides/slide-74.png"
   },
   {
     "source": 64,
     "title": "구호물품의\n쓰임을 찾다",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -9252,12 +8950,13 @@
       }
     ],
     "notes": "원본 64페이지\n스마트폰으로\nQR 코드 스캔하면\n등록된 링크를 통해\n구호물품의 쓰임과\n간단한 퀴즈를 통해\n선착순 상품이 \n증정되는 이벤트\n기막힌 \n구호물품 등장 타이밍\n(경사가 ..)\n스마트폰으로\nQR 코드 스캔하면\n등록된 링크를 통해\n구호물품의 쓰임과\n간단한 퀴즈를 통해\n선착순 상품이\n증정되는 이벤트\n기막힌\n구호물품 등장\n타이밍\n(경사가 .•)\n은 복스방위의 보물찾기 이벤!\n카레 QR코드를 찍어보세요\nLIFECAVCD\nG0RETEX",
-    "n": 75
+    "n": 79,
+    "image": "slides/slide-75.png"
   },
   {
     "source": 65,
     "title": "숨은 옥스팜워크 보물 찾기",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -9345,12 +9044,13 @@
       }
     ],
     "notes": "원본 65페이지\n\nN\n폼\n1/5\n숨은 옥스팜워크 보물 찾기!\n축하드입니다 ! 숨은 옥스팜위크 보물을 찾으셨군요! 후\n숨은 옥스팜워크 보물 찾기는 1인 1회만 참여 가능합니다!\n이전에 다른 보물을 잦으셔서 정보 입력을 하셨다면, 이번에는 다른\n참여자를 위해 양보해주시기 바랍니다\n앞으로 좀 더 힘을 내서 2024 옥스팜위크 무사 완주를\n응원합니다!\n2024.06.29. 오후 06:07~ 계한 없음\n숨은 옥스팜워크 보을 찾기!\n물 보관 용기의 표준이 된 옥스팜 워터버킷\"\n축하드립니다 1숨은 옥스팜위크 보물 1\n물등 그 이상의 '오스팜 위터버켓을 찾으셨네요!\n갑자기 덕친 재난 상황으로 안전하고 깨끗한 물을 구할 수 없는\n긴급구호 현장, 사람들에게 가장 먼저 제공되는 긴급구호물품은\n무엇일까요? 바로 운반식 물등처럼 보이는 '육스림\n워터버킷입니다.\n지난해부터 말리쉬, 모징비크, 잠비아, 짐비브웨 등 남아프리카\n국가들을 중심으로 188,000건의 콜레라가 발생하고 3,400명이\n사망했습니다. 콜레라는 오염된 물이나 음식을 통해 전화되는\n감염냉으로, 적절한 치료를 못할 경우 사양품이 50% 이상이\n이쁩니다.\n옥스팜은 콜레라로 인한 발수증 치료를 위해 수액과 소금을\n제공하고, 오염된 물을 정확하기 위한 영소, 깨끗한 불을 저장할\n워터버킷과 비누 등의 위생용품을 전달했습니다.\n식수•위생 전문가 옥스팜은 혁신적인 방법으로 모두를 위한 물을\n전달합니다.!\n성향과 배번호를 작성해주시고, 도착지 이번트부스로 오셔서\n선물받아가세요~!\n* 담번 필수\n1. 어떤 보물을 찾으셨나요!?\n옥스팜 손 세정대\n담반을 입력해주세력\n9. 배번호\n숫자만 입력 가능합니다.\n10. 도착지 이벤트 부스에서 선물(옴트 그래놀라) 받아가\n세요-!\n오늘 17시 전까지 도착해주셔야 합니다.\n. 네 확인했습니다!",
-    "n": 76
+    "n": 80,
+    "image": "slides/slide-76.png"
   },
   {
     "source": 66,
     "title": "기억에 남는 네 가지 순간",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -9559,12 +9259,13 @@
       }
     ],
     "notes": "원본 66페이지\n행사 스케치\n옥스팜 워크 참가자에게 주어지는\n물품백 안에는 커피 쿠폰등 간식과 \n특별한 굳즈들이 들어있다!\n참가자 선물\n등산로중 특정위치 도달시 지비츠\n칩을 하나씩 획득 할 수 있으며\n마지막 완주 지점에서\n완주메달 지비츠가 증정된다.\n성취감\n등산로에 랜덤하게 비치된\n구호물자를 찾고 거기에 QR을\n스캔하여 이벤트 참여\n상품이 선착순 증정되기 때문에\n참여자가 많았다.\n의미를 찾다\n강원도 인재의 아름다운 \n자작나무 숲을 걸어가며\n멋진 자연을 마음껏..\n자연을 만끽\n참가자 선물\n옥스팜 워크 참가자에게\n주어지는\n물품백 안에는 커피 쿠폰등\n간식과\n특별한 굳츠들이 들어있다!\n행사 스케치\n성취감\n의미를 찾다\n등산로중 특정위치 도달시\n지비츠\n침을 하나씩 획득 할 수 있으며\n마지막 완주 지점에서\n완주메달 지비츠가 증정된다.\nOXFAM\n등산로에 랜덤하게 비치된\n구호물자를 찾고 거기에 OR을\n스캔하여 이벤트 참여\n상품이 선착순 증정되기 때문에\n참여자가 많았다.\n자연을 만끽\n강원도 인재의 아름다운\n자작나무 숲을 걸어가며\n멋진 자연을 마음껏...",
-    "n": 77
+    "n": 81,
+    "image": "slides/slide-77.png"
   },
   {
     "source": 67,
     "title": "자연을 만끽하는 걸음",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -9671,12 +9372,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 78
+    "n": 82,
+    "image": "slides/slide-78.png"
   },
   {
     "source": 68,
     "title": "자작나무 숲의 풍경",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -9783,12 +9485,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 79
+    "n": 83,
+    "image": "slides/slide-79.png"
   },
   {
     "source": 69,
     "title": "함께 만든 옥스팜 워크",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -9975,12 +9678,13 @@
       }
     ],
     "notes": "원본 69페이지\n규모 안내\nDr.You, the Venti coffee, 몽테이블, \nBOB, Ilover, Uglyus, LG HelloVision OLZEN, \n옵트그래놀라, INTAKE, 지구를닦는사람들, TEAZEN, \n인제군, 인제천리길, 인제군체육회, 산림청인제국유림관리소, 인제군자원봉사센터, grape lab, \n지원기관 수\n18개 지원처\n옥스팜 후원자, 인제군 시민등 \n자원봉사자, 캠페이너\n참여자 수\n약 800 명\n참가비는 전세계 여성과 소녀의 권리신장을 위해 사용되며 행사가운데 모인 \n1,600만원의 후원금 역시 전액 기부됩니다. \n모금액\n1,600 만원\n참여자 수\n약 800 명\n옥스팜 후원자. 인제군 시민등\n자원봉사자, 껌페이너\n규모 안내\n지원기관 수\n18개 지원처\nDr.You the Venti coffee, 몽테이블,\nBOB, lover, Uglyus, LG HeloVision OLZEN.\n유트그래놀라, INTAKE, 지구를닦는사람들, TEAZEN,\n인제군, 인체전리김, 인제균체육회, 산업창인제국유정관리소,\n인제군자원봉사센터. grape kab.\n모금액\n1,600 만원\n참가비는 전세계 여성과 소녀의 권리신장을\n위해 사용되며 행사가운데 모인\n1,600만원의 후원금 역시 전액 기부됩니다.\nONPAN MALM",
-    "n": 80
+    "n": 84,
+    "image": "slides/slide-80.png"
   },
   {
     "source": 69,
     "title": "18개 지원처",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -10307,12 +10011,13 @@
       }
     ],
     "notes": "원본 69페이지\n규모 안내\nDr.You, the Venti coffee, 몽테이블, \nBOB, Ilover, Uglyus, LG HelloVision OLZEN, \n옵트그래놀라, INTAKE, 지구를닦는사람들, TEAZEN, \n인제군, 인제천리길, 인제군체육회, 산림청인제국유림관리소, 인제군자원봉사센터, grape lab, \n지원기관 수\n18개 지원처\n옥스팜 후원자, 인제군 시민등 \n자원봉사자, 캠페이너\n참여자 수\n약 800 명\n참가비는 전세계 여성과 소녀의 권리신장을 위해 사용되며 행사가운데 모인 \n1,600만원의 후원금 역시 전액 기부됩니다. \n모금액\n1,600 만원\n참여자 수\n약 800 명\n옥스팜 후원자. 인제군 시민등\n자원봉사자, 껌페이너\n규모 안내\n지원기관 수\n18개 지원처\nDr.You the Venti coffee, 몽테이블,\nBOB, lover, Uglyus, LG HeloVision OLZEN.\n유트그래놀라, INTAKE, 지구를닦는사람들, TEAZEN,\n인제군, 인체전리김, 인제균체육회, 산업창인제국유정관리소,\n인제군자원봉사센터. grape kab.\n모금액\n1,600 만원\n참가비는 전세계 여성과 소녀의 권리신장을\n위해 사용되며 행사가운데 모인\n1,600만원의 후원금 역시 전액 기부됩니다.\nONPAN MALM",
-    "n": 81
+    "n": 85,
+    "image": "slides/slide-81.png"
   },
   {
     "source": 70,
     "title": "클라이언트에\n대한 자부심",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -10397,12 +10102,13 @@
     ],
     "notes": "원본 70페이지\n함께 걷는 길\n후원자를 빈곤층을 위한 재정적 지원자로 여기는 것을\n뛰어 넘어 그들의 삶을 맛보고 도움의 필요를 체감하게 하는 노력\n클라이언트에 대한 자부심\n어쩌면 우리를 통해 피어난 작은 불꽃들이\n생각보다 더 뜨겁고, 꺼지지 않은체 세상을 \n밝게 비추는 큰 불씨가 되어가고 있음을 체감하는 시간\n후원자들과의 만남\n함께 걷는 길\n클라이언트에 대한 자부심\n후원자를 빈곤층을 위한 재정적 지원자로 여기는 것을\n뛰어 넘어 그들의 삶을 맛보고 도움의 필요를 체감하게 하는 노력\n후원자들과의 만남\n어쩌면 우리를 통해 피어난 작은 불꽃들이\n생각보다 더 뜨겁고, 꺼지지 않은체 세상을\n밝게 비추는 큰 불씨가 되어가고 있음을 체감하는 시간",
     "audio": "media/media9.mp3",
-    "n": 82
+    "n": 86,
+    "image": "slides/slide-82.png"
   },
   {
     "source": 70,
     "title": "후원자들과의\n만남",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -10486,12 +10192,13 @@
       }
     ],
     "notes": "원본 70페이지\n함께 걷는 길\n후원자를 빈곤층을 위한 재정적 지원자로 여기는 것을\n뛰어 넘어 그들의 삶을 맛보고 도움의 필요를 체감하게 하는 노력\n클라이언트에 대한 자부심\n어쩌면 우리를 통해 피어난 작은 불꽃들이\n생각보다 더 뜨겁고, 꺼지지 않은체 세상을 \n밝게 비추는 큰 불씨가 되어가고 있음을 체감하는 시간\n후원자들과의 만남\n함께 걷는 길\n클라이언트에 대한 자부심\n후원자를 빈곤층을 위한 재정적 지원자로 여기는 것을\n뛰어 넘어 그들의 삶을 맛보고 도움의 필요를 체감하게 하는 노력\n후원자들과의 만남\n어쩌면 우리를 통해 피어난 작은 불꽃들이\n생각보다 더 뜨겁고, 꺼지지 않은체 세상을\n밝게 비추는 큰 불씨가 되어가고 있음을 체감하는 시간",
-    "n": 83
+    "n": 87,
+    "image": "slides/slide-83.png"
   },
   {
     "source": 71,
     "title": "함께 걷는 길",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -10598,12 +10305,13 @@
       "w": 708,
       "h": 443
     },
-    "n": 84
+    "n": 88,
+    "image": "slides/slide-84.png"
   },
   {
     "source": 72,
     "title": "옥스팜워크 참가 후기",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -10687,12 +10395,13 @@
       }
     ],
     "notes": "원본 72페이지\n\n옥스팜워크 참가 후기\n\"\n난치병을 진단 받았지만\n남은 인생을 가치있게\n보내고 싶어요\n\"\n- 최성원님-\n1024 포스파위드\nOXFAM\nWALK W\n옥스팜워크 참가 후기\n10km를 걸어보니 지구\n반대편 여성과 소녀들의\n삶을 느낄 수 있었어요\n- 서지혜 님-\n200년 포스팜이크\nOXFAM\nWALK wA\n옥스팜워크 참가 후기\nOXFAM WALK\n\"\n후원이 얼마나\n가치있는 일인지를\n깨닫는 시간이었어요\n- 8차원 님 -\n200& 포스팜이트\nOXFAM\nWALK wate",
-    "n": 85
+    "n": 89,
+    "image": "slides/slide-85.png"
   },
   {
     "source": 72,
     "title": "옥스팜워크 참가 후기",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -10776,12 +10485,13 @@
       }
     ],
     "notes": "원본 72페이지\n\n옥스팜워크 참가 후기\n\"\n난치병을 진단 받았지만\n남은 인생을 가치있게\n보내고 싶어요\n\"\n- 최성원님-\n1024 포스파위드\nOXFAM\nWALK W\n옥스팜워크 참가 후기\n10km를 걸어보니 지구\n반대편 여성과 소녀들의\n삶을 느낄 수 있었어요\n- 서지혜 님-\n200년 포스팜이크\nOXFAM\nWALK wA\n옥스팜워크 참가 후기\nOXFAM WALK\n\"\n후원이 얼마나\n가치있는 일인지를\n깨닫는 시간이었어요\n- 8차원 님 -\n200& 포스팜이트\nOXFAM\nWALK wate",
-    "n": 86
+    "n": 90,
+    "image": "slides/slide-86.png"
   },
   {
     "source": 72,
     "title": "옥스팜워크 참가 후기",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#F6F5F0",
     "items": [
       {
@@ -10865,12 +10575,13 @@
       }
     ],
     "notes": "원본 72페이지\n\n옥스팜워크 참가 후기\n\"\n난치병을 진단 받았지만\n남은 인생을 가치있게\n보내고 싶어요\n\"\n- 최성원님-\n1024 포스파위드\nOXFAM\nWALK W\n옥스팜워크 참가 후기\n10km를 걸어보니 지구\n반대편 여성과 소녀들의\n삶을 느낄 수 있었어요\n- 서지혜 님-\n200년 포스팜이크\nOXFAM\nWALK wA\n옥스팜워크 참가 후기\nOXFAM WALK\n\"\n후원이 얼마나\n가치있는 일인지를\n깨닫는 시간이었어요\n- 8차원 님 -\n200& 포스팜이트\nOXFAM\nWALK wate",
-    "n": 87
+    "n": 91,
+    "image": "slides/slide-87.png"
   },
   {
     "source": 73,
     "title": "우리를 통해\n만들어진\n변화의 걸음",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -10940,12 +10651,13 @@
       }
     ],
     "notes": "원본 73페이지\n우리를 통해 만들어진 \n     변화의 걸음..\n(비를 통해 만 들어진\n연가한걸은\n417\nVOLCOM STONE",
-    "n": 88
+    "n": 92,
+    "image": "slides/slide-88.png"
   },
   {
     "source": 74,
     "title": "후원자와 함께하는 미니콘서트",
-    "section": "옥스팜 워크",
+    "section": "옥스팜 소개",
     "bg": "#101A15",
     "items": [
       {
@@ -11052,6 +10764,22 @@
       "w": 708,
       "h": 443
     },
-    "n": 89
+    "n": 93,
+    "image": "slides/slide-89.png"
+  },
+  {
+    "source": null,
+    "title": "피드백 및 Q&A",
+    "section": "피드백 및 Q&A",
+    "image": "assets/feedback-qa.svg",
+    "items": [
+      {
+        "kind": "text",
+        "text": "오늘 교육에서 가장 기억에 남는 것은?\n더 알고 싶거나 궁금한 것은?\n다음 교육에 바라는 점은?",
+        "y": 100
+      }
+    ],
+    "links": [],
+    "n": 94
   }
 ]

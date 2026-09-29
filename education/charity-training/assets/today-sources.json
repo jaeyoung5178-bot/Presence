@@ -1,0 +1,16 @@
+{
+  "source": "https://campaigns.oxfam.or.kr/oxfamtoday2026/",
+  "retrieved": "2026-09-29",
+  "userProvided": [
+    "today-pig.png",
+    "today-school.png",
+    "superlive-poster.png"
+  ],
+  "officialPhotos": {
+    "today-wash1.jpg": "https://campaigns.oxfam.or.kr/oxfamtoday2026/images/wash1.jpg",
+    "today-growth3.jpg": "https://campaigns.oxfam.or.kr/oxfamtoday2026/images/growth3.jpg",
+    "trailwalker-story1.jpg": "https://campaigns.oxfam.or.kr/oxfamtoday2026/images/story1.jpg"
+  },
+  "purpose": "옥스팜 소개 교육 및 토론",
+  "trailwalkerStory": "https://campaigns.oxfam.or.kr/oxfamtoday2026/story/1/"
+}

@@ -11,10 +11,10 @@ function closeVideo(focus=true){
 }
 function show(i,autoplay=false){
  if(!Number.isInteger(i)||i<0||i>=total)return;closeVideo(false);stopAudio();cur=i;const s=slides[i];
- $('slideImage').src=`slides/slide-${String(s.n).padStart(2,'0')}.png`;$('slideImage').alt=s.title;
+ $('slideImage').src=s.image||`slides/slide-${String(s.n).padStart(2,'0')}.png`;$('slideImage').alt=s.title;
  $('select').value=i;$('counter').textContent=`${String(i+1).padStart(2,'0')} / ${total}`;
  $('prev').disabled=i===0;$('next').disabled=i===total-1&&!s.video;
- $('section').textContent=s.section;$('play').hidden=!s.video;$('status').textContent='';
+ $('section').textContent=s.section;$('source').hidden=!s.source;$('play').hidden=!s.video;$('status').textContent='';
  if(s.video){const v=s.video;Object.assign($('play').style,{left:v.x/12.8+'%',top:v.y/7.2+'%',width:v.w/12.8+'%',height:v.h/7.2+'%'});$('play').setAttribute('aria-label',s.title+' 재생');prepare(i)}
  $('readBody').replaceChildren();for(const it of s.items){if(it.kind==='text'&&it.y<670){const p=document.createElement('p');p.textContent=it.text;$('readBody').append(p)}}
  $('music').hidden=!s.audio;$('music').textContent='배경음악';
