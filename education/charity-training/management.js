@@ -1,5 +1,17 @@
 const agendaDefaults=[['자기소개','Introduce'],['옥스팜 소개','About OXFAM · Oxfam Today'],['피드백 및 Q&A','Feedback · Questions']].map(([title,sub])=>({title,sub}));
-let lessonSettings={agenda:agendaDefaults,hidden:[],updatedAt:0},draft=null,admin=false,settingsReady=false;
+// Preserve the confirmed presentation exclusions even when settings are temporarily unavailable.
+const baselineHidden=[3,4,5,6];
+function migrateLegacyHidden(hidden){
+ const originalPages=new Map([[1,1]]);
+ for(const slide of slides){const match=/^slides\/slide-(\d+)\.png$/.exec(slide.image||'');if(match)originalPages.set(Number(match[1]),slide.n)}
+ return [...new Set(hidden.filter(Number.isInteger).map(n=>originalPages.get(n)).filter(Number.isInteger))];
+}
+function normalizeSettings(data){
+ const current=data?.schemaVersion===2;
+ const hidden=Array.isArray(data?.hidden)?data.hidden:baselineHidden;
+ return {schemaVersion:2,agenda:current&&Array.isArray(data.agenda)&&data.agenda.length?data.agenda.slice(0,12):structuredClone(agendaDefaults),hidden:current?[...new Set(hidden.filter(n=>Number.isInteger(n)&&n>=1&&n<=slides.length))]:migrateLegacyHidden(hidden),updatedAt:data?.updatedAt||0};
+}
+let lessonSettings=normalizeSettings(null),draft=null,admin=false,settingsReady=false;
 const settingsUrl=HUB_CONFIG.databaseURL+'/edu_lib/lessonSettings/charityTraining.json';
 function visibleIndices(){return slides.map((s,i)=>i).filter(i=>!lessonSettings.hidden.includes(i+1))}
 function applySettings(){
@@ -18,7 +30,15 @@ function drawAgenda(){
 }
 function updateNavigation(){const v=visibleIndices(),pos=v.indexOf(cur);$('prev').disabled=pos<=0;$('next').disabled=pos===v.length-1&&!slides[cur].video;$('counter').textContent=`${String(pos+1).padStart(2,'0')} / ${v.length}`}
 function targetPage(step){const v=visibleIndices(),p=v.indexOf(cur);return v[p+step]}
-async function loadSettings(){if(!settingsReady)$('status').textContent='저장된 교육 구성을 불러오는 중…';try{const r=await fetch(settingsUrl,{cache:'no-store'});if(!r.ok)throw Error('설정 연결 실패');const d=await r.json();if(d&&d.schemaVersion===2&&Array.isArray(d.agenda)&&d.agenda.length){lessonSettings={agenda:d.agenda.slice(0,12),hidden:Array.isArray(d.hidden)?d.hidden.filter(n=>n>=1&&n<=slides.length):[],updatedAt:d.updatedAt||0}}if(d&&d.schemaVersion!==2)lessonSettings.updatedAt=d.updatedAt||0;settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent=''}catch(e){settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent='기본 교육 구성으로 진행합니다.'}}
+async function loadSettings(){
+ if(!settingsReady)$('status').textContent='저장된 교육 구성을 불러오는 중…';
+ try{
+  const r=await fetch(settingsUrl,{cache:'no-store'});if(!r.ok)throw Error('설정 연결 실패');
+  lessonSettings=normalizeSettings(await r.json());settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent='';
+ }catch(e){
+  settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent='마지막으로 확인된 페이지 구성으로 진행합니다.';
+ }
+}
 let firebasePromise;
 function firebaseRuntime(){if(firebasePromise)return firebasePromise;firebasePromise=Promise.all([import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')]).then(([appApi,authApi,dbApi])=>{const app=appApi.getApps().length?appApi.getApp():appApi.initializeApp(HUB_CONFIG);return{authApi,dbApi,auth:authApi.getAuth(app),db:dbApi.getDatabase(app)}});return firebasePromise}
 async function saveSettings(){
