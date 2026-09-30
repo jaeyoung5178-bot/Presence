@@ -100,7 +100,23 @@
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
   $('#closePanel').onclick=()=>panel.close();panel.addEventListener('close',()=>{document.body.classList.remove('panel-open');lastFocus?.focus({preventScroll:true});});
   panel.addEventListener('click',e=>{if(e.target!==panel)return;const r=panel.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)panel.close();});
-  document.addEventListener('keydown',e=>{if(panel.open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('video,input,select,textarea,[contenteditable=true]'))return;const key=e.key.toLowerCase();if(e.target.closest('button,a')&&[' ','enter'].includes(key))return;if(['arrowright','pagedown',' '].includes(key)){e.preventDefault();move(1);}else if(['arrowleft','pageup'].includes(key)){e.preventDefault();move(-1);}else if(key==='home'){e.preventDefault();show(0);}else if(key==='end'){e.preventDefault();show(slides.length-1);}else if(key==='n')notes();else if(key==='f')toggleFullscreen();else if(key==='m')toggleMotion();});
+  document.addEventListener('keydown',e=>{
+    if(panel.open||e.ctrlKey||e.metaKey||e.altKey)return;
+    const target=e.target instanceof Element?e.target:document.body;
+    if(target.closest('input,textarea,[contenteditable=true]'))return;
+    const key=e.key.toLowerCase();
+    const remoteNext=['pagedown','mediatracknext','nexttrack'].includes(key);
+    const remotePrevious=['pageup','mediatrackprevious','previoustrack'].includes(key);
+    // Presenter keys must work even when the page selector or video has focus.
+    if(remoteNext||remotePrevious){e.preventDefault();e.stopPropagation();if(!e.repeat){move(remoteNext?1:-1);$('#stage').focus({preventScroll:true});}return;}
+    if(target.closest('video'))return;
+    if(target.closest('button,a')&&[' ','enter'].includes(key))return;
+    if(['arrowright','arrowdown',' ','enter'].includes(key)){e.preventDefault();if(!e.repeat){move(1);$('#stage').focus({preventScroll:true});}}
+    else if(['arrowleft','arrowup','backspace'].includes(key)){e.preventDefault();if(!e.repeat){move(-1);$('#stage').focus({preventScroll:true});}}
+    else if(key==='home'){e.preventDefault();show(0);}
+    else if(key==='end'){e.preventDefault();show(slides.length-1);}
+    else if(key==='n')notes();else if(key==='f')toggleFullscreen();else if(key==='m')toggleMotion();
+  },true);
   let touch=null;$('#stage').addEventListener('touchstart',e=>{if(e.target.closest('video,a,button,select')||e.touches.length!==1){touch=null;return;}const t=e.touches[0];touch={x:t.clientX,y:t.clientY,at:performance.now()};},{passive:true});$('#stage').addEventListener('touchend',e=>{if(!touch)return;const t=e.changedTouches[0],dx=t.clientX-touch.x,dy=t.clientY-touch.y;if(Math.abs(dx)>75&&Math.abs(dx)>Math.abs(dy)*1.7&&performance.now()-touch.at<800)move(dx<0?1:-1);touch=null;},{passive:true});
   window.addEventListener('hashchange',()=>show(routeIndex(),false));
   document.addEventListener('fullscreenchange',()=>{$('#fullscreen').textContent=document.fullscreenElement?'전체화면 종료':'전체화면';});
