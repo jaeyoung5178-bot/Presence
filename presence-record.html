@@ -3,168 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LIM JAE YOUNG — FIELD RECORD</title>
+<title>재영의 모험일지 · Presence</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0f131b">
+<meta name="theme-color" content="#f7f7ee">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Presence">
-<style>
-  :root{--ink:#0a0a0c;--amber:#e8b466;--amber-dim:#9a7a44;--green:#38a37a;--cream:#efe7d6;
-    --smoke:#6f6a60;--line:#2a2722;--film:#16140f;--red:#c05b4d;--blue:#5f8fe0;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--ink);color:var(--cream);font-family:"Times New Roman","Nanum Myeongjo",serif;
-    -webkit-font-smoothing:antialiased;min-height:100vh;word-break:keep-all;
-    background-image:radial-gradient(120% 90% at 50% -10%, rgba(232,180,102,.06), transparent 60%);}
-  .mono{font-family:"Courier New",ui-monospace,monospace;}
-  .wrap{max-width:900px;margin:0 auto;padding:26px 20px 60px;}
-  header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:26px;flex-wrap:wrap;}
-  .lockup{display:flex;align-items:center;gap:14px;}
-  .emblem{width:52px;height:52px;border-radius:22%;filter:drop-shadow(0 0 12px rgba(56,163,122,.25));}
-  .brand .kicker{font-size:9px;letter-spacing:.45em;color:var(--amber);}
-  .brand h1{font-weight:400;font-size:22px;margin-top:.25em;}
-  .brand h1 em{font-style:italic;color:var(--amber);}
-  .navbtns{display:flex;gap:8px;flex-wrap:wrap;}
-  .nb{text-decoration:none;font-family:"Courier New",monospace;font-size:10px;letter-spacing:.16em;
-    color:var(--cream);border:1px solid var(--line);border-radius:20px;padding:7px 13px;
-    background:rgba(22,20,15,.7);transition:.3s;white-space:nowrap;cursor:pointer;}
-  .nb:hover{border-color:var(--green);color:#fff;}
-  .nb.hub{border-color:var(--amber-dim);}
 
-  .hero{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1.4fr);gap:14px;margin-bottom:14px;}
-  @media(max-width:640px){.hero{grid-template-columns:1fr;}}
-  @media(max-width:480px){
-    .wrap{padding:18px 12px 50px;}
-    .brand h1{font-size:19px;}
-    .grades{grid-template-columns:repeat(2,1fr);}
-    .kpis{grid-template-columns:repeat(2,1fr);}
-    .kpis .kcell:last-child{grid-column:1/-1;}
-    .cell .v{font-size:20px;}
-    .cell{padding:11px 8px;}
-  }
-  .card{border:1px solid var(--line);border-radius:6px;background:rgba(22,20,15,.85);padding:18px 20px;}
-  .streak{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-    background:linear-gradient(160deg, rgba(56,163,122,.16), rgba(22,20,15,.9));border-color:rgba(56,163,122,.4);}
-  .streak .lbl{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--green);text-indent:.4em;}
-  .streak .num{font-size:clamp(58px,14vw,88px);line-height:1.05;color:#fff;text-shadow:0 0 40px rgba(56,163,122,.4);}
-  .streak .sub{font-size:11px;color:var(--smoke);font-family:"Courier New",monospace;letter-spacing:.14em;}
-  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:4px;overflow:hidden;height:100%;}
-  .cell{background:var(--film);padding:13px 12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:5px;}
-  .cell .k{font-family:"Courier New",monospace;font-size:8.5px;letter-spacing:.16em;color:var(--amber-dim);}
-  .cell .v{font-size:24px;color:var(--cream);}
-
-  .grades{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
-  .gcard{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:13px 8px;text-align:center;}
-  .gcard .gk{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.3em;text-indent:.3em;}
-  .gcard .gv{font-size:30px;margin-top:.15em;}
-  .gcard .gth{font-size:9px;color:var(--smoke);font-family:"Courier New",monospace;margin-top:.2em;}
-  .g-bell .gk,.g-bell .gv{color:#dda94e;} .g-gong .gk,.g-gong .gv{color:#a77bd4;}
-  .g-horn .gk,.g-horn .gv{color:#4fae9e;} .g-ten .gk,.g-ten .gv{color:#5f8fe0;}
-
-  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;}
-  .kcell{border:1px solid var(--line);border-radius:6px;background:var(--film);padding:12px;text-align:center;}
-  .kcell .k{font-family:"Courier New",monospace;font-size:8.5px;letter-spacing:.16em;color:var(--green);}
-  .kcell .v{font-size:22px;margin-top:.2em;}
-
-  .sect{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.4em;color:var(--amber);
-    display:flex;align-items:center;gap:14px;margin:26px 0 12px;}
-  .sect::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent);}
-  .sect.tgl{cursor:pointer;user-select:none;}
-  .sect.tgl:hover{color:#f5c888;}
-  .sect .arrow{color:var(--smoke);letter-spacing:.14em;}
-
-  .form{border:1px solid rgba(56,163,122,.35);border-radius:6px;background:rgba(22,20,15,.9);padding:18px;}
-  .frow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
-  .fld{display:flex;flex-direction:column;gap:6px;}
-  .fld label{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.2em;color:var(--amber-dim);}
-  input[type=date],select,input[type=text],textarea{background:var(--ink);border:1px solid var(--line);color:var(--cream);border-radius:4px;
-    padding:10px 12px;font-family:"Courier New",monospace;font-size:13.5px;color-scheme:dark;}
-  textarea{font-family:"Times New Roman","Nanum Myeongjo",serif;width:100%;min-height:56px;}
-  .step{display:flex;align-items:center;border:1px solid var(--line);border-radius:4px;background:var(--ink);}
-  .step button{background:none;border:none;color:var(--amber);font-size:20px;width:42px;height:42px;cursor:pointer;}
-  .step button:active{background:rgba(232,180,102,.12);}
-  .step input{width:56px;text-align:center;background:none;border:none;color:#fff;font-size:20px;font-family:"Courier New",monospace;}
-  .save{background:linear-gradient(160deg,#2f8e6a,#256d52);color:#fff;border:none;border-radius:4px;
-    padding:13px 26px;font-family:"Courier New",monospace;font-size:12px;letter-spacing:.2em;cursor:pointer;transition:.25s;}
-  .save:hover{box-shadow:0 0 24px rgba(56,163,122,.4);}
-  .quick{background:none;border:1px dashed var(--green);color:var(--green);border-radius:4px;
-    padding:13px 20px;font-family:"Courier New",monospace;font-size:12px;letter-spacing:.14em;cursor:pointer;transition:.25s;}
-  .quick:hover{background:rgba(56,163,122,.12);}
-  .gpreview{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.2em;color:var(--smoke);margin-top:12px;min-height:1.2em;}
-  .gpreview b{color:var(--amber);font-weight:400;}
-  .msg{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.14em;margin-top:8px;min-height:1.2em;}
-  .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
-
-  table{width:100%;border-collapse:collapse;}
-  th{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.18em;color:var(--amber-dim);
-    text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
-  td{padding:8px 10px;border-bottom:1px solid rgba(42,39,34,.6);font-size:13.5px;white-space:nowrap;}
-  td.mono{font-size:12px;color:var(--smoke);}
-  .chip{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:10px;border:1px solid var(--line);}
-  .chip.BELL{color:#dda94e;border-color:#dda94e55;} .chip.GONG{color:#a77bd4;border-color:#a77bd455;}
-  .chip.HORN{color:#4fae9e;border-color:#4fae9e55;} .chip.TEN{color:#5f8fe0;border-color:#5f8fe055;}
-  .chip.ZERO{color:var(--red);border-color:#c05b4d55;}
-  .chip.SHEET{color:var(--smoke);} .chip.WORK{color:var(--green);border-color:rgba(56,163,122,.4);}
-  .chip.TEAM{color:var(--blue);border-color:#5f8fe055;}
-  .chip.REC{color:var(--amber);border-color:rgba(232,180,102,.4);}
-  .chip.open{color:var(--blue);border-color:#5f8fe055;} .chip.pass{color:var(--green);border-color:rgba(56,163,122,.4);}
-  .chip.reject{color:var(--red);border-color:#c05b4d55;}
-  .del{background:none;border:none;color:var(--smoke);cursor:pointer;font-size:14px;transition:.2s;}
-  .del:hover{color:var(--red);}
-
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;}
-  .pick{background:var(--ink);border:1px solid var(--line);color:var(--smoke);border-radius:16px;
-    padding:6px 13px;font-size:12px;cursor:pointer;transition:.2s;font-family:"Courier New",monospace;}
-  .pick.on{color:var(--green);border-color:var(--green);}
-  .ybtn.on{color:var(--amber);border-color:var(--amber-dim);}
-  .rnstats{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
-  .rnstat{flex:1;min-width:70px;border:1px solid var(--line);border-radius:6px;background:var(--film);padding:10px;text-align:center;}
-  .rnstat .n{font-size:20px;} .rnstat .l{font-size:8.5px;font-family:"Courier New",monospace;color:var(--smoke);letter-spacing:.16em;margin-top:2px;}
-  .note{font-size:11.5px;color:var(--smoke);line-height:1.7;margin-top:16px;}
-  .note b{color:var(--amber-dim);font-weight:400;}
-  .src{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.14em;color:var(--smoke);margin-top:6px;}
-  .src .on{color:var(--green);}
-  .warn{font-family:"Courier New",monospace;font-size:10px;color:var(--amber-dim);letter-spacing:.1em;padding:10px 0;}
-  details.rn{border:1px solid var(--line);border-radius:6px;background:rgba(22,20,15,.9);padding:0;}
-  details.rn summary{cursor:pointer;padding:14px 18px;font-family:"Courier New",monospace;font-size:11px;
-    letter-spacing:.2em;color:var(--green);list-style:none;}
-  details.rn[open] summary{border-bottom:1px solid var(--line);}
-  details.rn .inner{padding:16px 18px;}
-  .scrollx{overflow-x:auto;}
-</style>
+<link rel="stylesheet" href="assets/record-adventure/record-adventure.css">
+<script>
+try { document.documentElement.dataset.recordTheme = localStorage.getItem('presence_record_theme') === 'night' ? 'night' : 'light'; } catch (_) { document.documentElement.dataset.recordTheme = 'light'; }
+</script>
+<script defer src="assets/record-adventure/record-adventure.js"></script>
 </head>
-<body>
+<body class="record-adventure">
+<a class="skip-link" href="#record-main">기록으로 바로 가기</a>
 <div class="wrap">
-  <header>
-    <div class="lockup">
-      <svg class="emblem" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-label="Presence">
-        <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#181c26"/><stop offset="1" stop-color="#0f131b"/></linearGradient></defs>
-        <rect x="8" y="8" width="1008" height="1008" rx="232" fill="url(#g)"/>
-        <path d="M544 232 L700 522 L392 522 Z" fill="#38a37a" stroke="#38a37a" stroke-width="24" stroke-linejoin="round"/>
-        <path d="M464 284 L652 520 L306 520 Z" fill="#efe8d9" stroke="#efe8d9" stroke-width="24" stroke-linejoin="round"/>
-        <text x="512" y="806" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="150" fill="#efe8d9" letter-spacing="2">Presence</text>
-      </svg>
-      <div class="brand">
-        <div class="kicker mono">PRESENCE · PERSONAL</div>
-        <h1>Lim Jae Young, <em>field record</em></h1>
-      </div>
-    </div>
-    <nav class="navbtns">
-      <a class="nb hub" href="index.html">◂ 허브</a>
-      <a class="nb" href="https://presence.co.kr" target="_blank" rel="noopener">WORK BOOK</a>
-      <a class="nb" href="https://jaeyoung5178-bot.github.io/matdosa.github.io/" target="_blank" rel="noopener">맛도사</a>
-    <a class="nb" href="memo.html">메모 &amp; 액션플랜</a>
+  <header class="site-header">
+    <a class="lockup" href="index.html" aria-label="Presence 허브로">
+      <span class="brand-mark" aria-hidden="true"><img src="icon-180.png" alt="" width="42" height="42"></span>
+      <span class="brand"><span class="kicker">PRESENCE</span><span class="brand-caption">우리의 작은 모험들</span></span>
+    </a>
+    <nav class="navbtns" aria-label="주요 메뉴">
+      <a class="nb hub" href="index.html">← 허브</a>
+      <a class="nb" href="https://presence.co.kr" target="_blank" rel="noopener">워크북 ↗</a>
+      <a class="nb" href="https://jaeyoung5178-bot.github.io/matdosa.github.io/" target="_blank" rel="noopener">맛도사 ↗</a>
+      <a class="nb" href="memo.html">메모 &amp; 액션플랜</a>
     </nav>
+    <div class="view-controls" aria-label="화면 설정">
+      <button class="icon-button" id="recordMotion" type="button" aria-label="잔잔한 움직임 끄기" aria-pressed="false" title="잔잔한 움직임 끄기"><span aria-hidden="true">≈</span></button>
+      <button class="icon-button" id="recordTheme" type="button" aria-label="밤 테마로 바꾸기" aria-pressed="false" title="밤 테마로 바꾸기"><span aria-hidden="true">☾</span></button>
+    </div>
   </header>
+  <main id="record-main">
+    <section class="journey-hero" aria-labelledby="journal-title">
+      <div class="journey-copy">
+        <div class="eyebrow"><span class="live-dot" aria-hidden="true"></span> MY LITTLE ADVENTURE <span class="chapter-tag">나만의 성장 기록</span></div>
+        <h1 id="journal-title">재영의 <span>모험일지</span><span class="title-star" aria-hidden="true">✧</span></h1>
+        <p class="hero-message">한 걸음씩 쌓인 날들이, 어느새 나만의 이야기가 됐어요.</p>
+        <div class="journey-calendar">
+          <div class="calendar-heading"><span class="calendar-icon" aria-hidden="true">▦</span><h2>전체 근무기간 <span>· 함께한 여정</span></h2></div>
+          <div class="duration" id="journeyDuration" aria-live="polite">오늘의 여정을 세는 중…</div>
+          <p class="day-line"><span id="journeyElapsed">총 —일 경과</span><span class="day-divider" aria-hidden="true">·</span><span>오늘 <strong id="journeyDay">—</strong>째</span></p>
+          <div class="journey-rule"><span class="little-spark" aria-hidden="true">✦</span> NA와 쉬어간 날까지, 모든 날을 함께 세요.</div>
+          <div class="calendar-dates"><span>첫 출발 <time datetime="2023-11-01">2023. 11. 01.</time></span><span>오늘 <time id="journeyAsOf">—</time> <span class="timezone">KST</span></span></div>
+          <div class="anniversary">
+            <div class="anniversary-label"><span id="journeyMilestone">다음 기념일까지</span><strong id="journeyCountdown">—</strong></div>
+            <div class="journey-progress" id="journeyProgress" role="progressbar" aria-label="다음 근무 기념일까지의 진행" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="journeyProgressFill"></span><span class="progress-star" aria-hidden="true">✦</span></div>
+            <div class="anniversary-dates"><span id="journeyLastAnniversary">—</span><span id="journeyNextAnniversary">—</span></div>
+          </div>
+        </div>
+        <a class="journey-cta" href="#today-record">오늘의 기록 쓰기 <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="journey-art">
+        <img src="assets/record-adventure/hero.webp" alt="초록빛 바다와 작은 마을을 바라보며 함께 길을 떠나는 두 모험가" width="1536" height="1024" fetchpriority="high">
+        <div class="art-stamp"><span aria-hidden="true">✦</span> EVERY DAY, A NEW PAGE</div>
+        <div class="art-note"><span class="note-star" aria-hidden="true">✧</span><span>오늘도, 우리답게.<small>조금씩 멀리 가는 중</small></span></div>
+      </div>
+    </section>
 
-  <div class="hero">
+    <section class="record-overview" aria-labelledby="overview-title">
+      <div class="section-heading"><div><span class="section-kicker">MY ADVENTURE STATS</span><h2 id="overview-title">차곡차곡 쌓인 발자국</h2></div><span class="section-note">기록이 쌓일 때마다 함께 자라요</span></div>
+  <div class="hero stats-hero">
     <div class="card streak">
-      <div class="lbl">연속 NO ZERO</div>
+      <div class="streak-spark" aria-hidden="true">✦</div><div class="lbl">연속 NO ZERO</div>
       <div class="num" id="streak">—</div>
-      <div class="sub">일차 진행 중 · 입력 시 자동 갱신</div>
+      <div class="sub">일차 진행 중</div><div class="streak-caption">오늘의 한 걸음도 빛나고 있어요</div>
     </div>
     <div class="grid6">
       <div class="cell"><span class="k">누적 후원자</span><span class="v" id="donors">—</span></div>
@@ -177,10 +83,10 @@
   </div>
 
   <div class="grades">
-    <div class="gcard g-bell"><div class="gk">BELL</div><div class="gv" id="bell">—</div><div class="gth">≥ 2</div></div>
-    <div class="gcard g-gong"><div class="gk">GONG</div><div class="gv" id="gong">—</div><div class="gth">≥ 3</div></div>
-    <div class="gcard g-horn"><div class="gk">HORN</div><div class="gv" id="horn">—</div><div class="gth">≥ 5</div></div>
-    <div class="gcard g-ten"><div class="gk">TEN</div><div class="gv" id="ten">—</div><div class="gth">≥ 10</div></div>
+    <div class="gcard g-bell"><span class="badge-art badge-bell" aria-hidden="true"></span><div class="badge-content"><div class="gk">BELL</div><div class="gv" id="bell">—</div><div class="gth">≥ 2</div></div></div>
+    <div class="gcard g-gong"><span class="badge-art badge-gong" aria-hidden="true"></span><div class="badge-content"><div class="gk">GONG</div><div class="gv" id="gong">—</div><div class="gth">≥ 3</div></div></div>
+    <div class="gcard g-horn"><span class="badge-art badge-horn" aria-hidden="true"></span><div class="badge-content"><div class="gk">HORN</div><div class="gv" id="horn">—</div><div class="gth">≥ 5</div></div></div>
+    <div class="gcard g-ten"><span class="badge-art badge-ten" aria-hidden="true"></span><div class="badge-content"><div class="gk">TEN</div><div class="gv" id="ten">—</div><div class="gth">≥ 10</div></div></div>
   </div>
 
   <div class="kpis">
@@ -189,22 +95,26 @@
     <div class="kcell"><div class="k">KPI (클로즈/후원자)</div><div class="v" id="kpi">—</div></div>
   </div>
 
-  <div class="sect">RECORD TODAY — 오늘의 기록</div>
+    </section>
+    <section class="record-section today-section" id="today-record" aria-labelledby="today-title">
+  <div class="section-heading"><div><span class="section-kicker">TODAY’S QUEST</span><h2 id="today-title">오늘의 한 페이지</h2></div><span class="section-note">작은 기록 하나로, 오늘을 남겨요</span></div>
   <div class="form">
     <div class="frow">
       <div class="fld"><label>날짜</label><input type="date" id="fdate"></div>
       <div class="fld"><label>후원자</label>
-        <div class="step"><button id="dMinus">−</button><input id="fd" value="0" inputmode="numeric"><button id="dPlus">+</button></div></div>
+        <div class="step"><button id="dMinus" aria-label="후원자 1명 줄이기">−</button><input id="fd" value="0" inputmode="numeric"><button id="dPlus" aria-label="후원자 1명 늘리기">+</button></div></div>
       <div class="fld"><label>클로즈</label>
-        <div class="step"><button id="cMinus">−</button><input id="fc" value="0" inputmode="numeric"><button id="cPlus">+</button></div></div>
+        <div class="step"><button id="cMinus" aria-label="클로즈 1개 줄이기">−</button><input id="fc" value="0" inputmode="numeric"><button id="cPlus" aria-label="클로즈 1개 늘리기">+</button></div></div>
       <button class="save" id="save">기록 저장</button>
       <button class="quick" id="quick1">⚡ 오늘 후원자 +1</button>
     </div>
     <div class="gpreview" id="gprev"></div>
-    <div class="msg" id="msg"></div>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
   </div>
 
-  <div class="sect tgl" id="rnToggle">REJECT NOTE — 후원 안정성 추적&nbsp;<span class="arrow" id="rnArrow">▾ 접기</span></div>
+    </section>
+    <section class="record-section" aria-labelledby="supporter-title">
+  <button class="sect tgl" id="rnToggle" type="button" aria-expanded="true" aria-controls="rnWrap"><span><span class="section-kicker">OUR CONNECTIONS</span><span class="section-title" id="supporter-title">소중한 인연의 기록 <small>후원 안정성 추적</small></span></span><span class="arrow" id="rnArrow">▾ 접기</span></button>
   <div id="rnWrap">
   <div class="rnstats">
     <div class="rnstat"><div class="n" id="rnTot">0</div><div class="l">전체</div></div>
@@ -247,10 +157,10 @@
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--smoke);cursor:pointer">
           <input type="checkbox" id="rnPlus" checked> 오늘 후원자 +1 함께 기록</label>
       </div>
-      <div class="msg" id="rnMsg"></div>
+      <div class="msg" id="rnMsg" role="status" aria-live="polite"></div>
     </div>
   </details>
-  <div class="card scrollx" style="padding:6px 4px;margin-top:12px;">
+  <div class="card scrollx" role="region" aria-label="후원자 기록 표. 좌우로 스크롤할 수 있습니다" tabindex="0" style="margin-top:12px;">
     <table>
       <thead><tr><th>날짜</th><th>이름</th><th>클라이언트</th><th>금액</th><th>결제</th><th>장소</th><th>상태</th><th></th></tr></thead>
       <tbody id="rnList"><tr><td class="mono" colspan="8">불러오는 중…</td></tr></tbody>
@@ -258,36 +168,34 @@
   </div>
   </div><!-- /rnWrap -->
 
-  <div class="sect">HISTORY — 전체 기록 (연도 · 월 · 일)</div>
+    </section>
+    <section class="record-section history-section" aria-labelledby="history-title">
+  <div class="section-heading"><div><span class="section-kicker">THE STORY SO FAR</span><h2 id="history-title">지나온 모험들</h2></div><span class="section-note">전체 기록 · 연도 / 월 / 일</span></div>
   <div class="chips" id="years"></div>
   <div class="chips" id="months"></div>
   <div class="warn" id="histWarn" style="display:none"></div>
-  <div class="card scrollx" style="padding:6px 4px;">
+  <div class="card scrollx" role="region" aria-label="전체 근무 기록 표. 좌우로 스크롤할 수 있습니다" tabindex="0">
     <table>
       <thead><tr><th>날짜</th><th>요일</th><th>후원자</th><th>클로즈</th><th>등급</th><th>노제로</th><th>연속</th><th>출처</th><th></th></tr></thead>
       <tbody id="hist"><tr><td class="mono" colspan="9">불러오는 중…</td></tr></tbody>
     </table>
   </div>
 
+    </section>
+  </main>
+  <footer class="record-footer">
+    <div class="footer-message"><span aria-hidden="true">✧</span> 모든 하루는 이야기의 한 조각이에요.</div>
+    <details class="data-details"><summary>기록 연결 정보</summary>
   <div class="note">
     <b>데이터 흐름</b> — 2026-06-01까지는 스프레드시트 기록, 2026-06-02부터는 워크북(+버튼)과 이 페이지의 기록이
     실시간으로 이어집니다. 같은 날짜에 양쪽 입력이 있으면 더 최근 것이 우선하고, 리젝노트는 워크북 리젝노트와 완전히 연동됩니다.
     연도별 과거 일자 기록을 표에 채우려면 게시된 시트에서 연도 탭(2023~2026)을 클릭할 때 주소창에 보이는 <b>gid 숫자 4개</b>를 알려주세요.
   </div>
   <div class="src" id="src">DATA · SHEET <span id="s1">…</span> · FIREBASE <span id="s2">…</span> · YEAR TABS <span id="s3">대기</span> · SYNC v6</div>
+    </details>
+    <span class="footer-brand">PRESENCE · KEEP YOUR OWN PACE</span>
+  </footer>
 </div>
-
-<script>
-/* ═══════ 후원 안정성 추적 접기/펼치기 ═══════ */
-(function(){
-  var K='presence-rn-open';
-  var w=document.getElementById('rnWrap'), h=document.getElementById('rnToggle'), a=document.getElementById('rnArrow');
-  function ap(o){ w.style.display=o?'':'none'; a.textContent=o?'▾ 접기':'▸ 펼치기'; }
-  var o=true; try{o=localStorage.getItem(K)!=='0';}catch(e){}
-  ap(o);
-  h.addEventListener('click',function(){ o=!o; try{localStorage.setItem(K,o?'1':'0');}catch(e){} ap(o); });
-})();
-</script>
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -687,23 +595,6 @@
       }).catch(e=>{alert('저장 실패: '+e.message);});
     };
   }
-</script>
-
-<!-- PRESENCE THEME TOGGLE -->
-<style id="pth-style">
-html.pth-light{filter:invert(1) hue-rotate(180deg);background:#efe9db}
-html.pth-light img,html.pth-light video,html.pth-light iframe,html.pth-light svg.emblem,html.pth-light .mat-logo svg{filter:invert(1) hue-rotate(180deg)}
-html.pth-light .vignette,html.pth-light .grain,html.pth-light .beam{display:none!important}
-#pth-btn{position:fixed;right:18px;bottom:18px;z-index:99999;width:46px;height:46px;border-radius:50%;border:1px solid rgba(150,140,120,.5);cursor:pointer;font-size:19px;line-height:1;background:rgba(22,20,15,.85);color:#efe7d6;box-shadow:0 4px 18px rgba(0,0,0,.4);transition:.25s}
-#pth-btn:hover{transform:scale(1.1)}
-html.pth-light #pth-btn{filter:invert(1) hue-rotate(180deg)}
-</style>
-<button id="pth-btn" title="라이트 / 나이트 모드" aria-label="테마 전환">☀</button>
-<script>
-(function(){var K="presence_theme",b=document.getElementById("pth-btn"),h=document.documentElement;
-function ap(t){h.classList.toggle("pth-light",t==="light");b.textContent=t==="light"?"☾":"☀";}
-var t="night";try{t=localStorage.getItem(K)||"night"}catch(e){}ap(t);
-b.addEventListener("click",function(){t=(t==="light")?"night":"light";try{localStorage.setItem(K,t)}catch(e){}ap(t);});})();
 </script>
 </body>
 </html>
