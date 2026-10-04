@@ -402,3 +402,34 @@ html[data-record-motion="off"] *, html[data-record-motion="off"] *::before, html
 @media (max-width: 800px) {
   .art-note { left: 16px; right: auto; max-width: 190px; }
 }
+
+/* Two different calendar periods, kept distinct from recorded NO ZERO days. */
+.journey-calendar.calendar-pair { padding: 0; border: 0; background: none; box-shadow: none; }
+.calendar-period { border: 1px solid var(--line); border-radius: 19px; padding: 18px 21px; background: var(--film); }
+.calendar-period + .calendar-period { margin-top: 12px; }
+.calendar-period.nozero-period { background: var(--mint); border-color: var(--mint-strong); }
+.nozero-period .duration { color: var(--green); }
+.calendar-period .duration { margin-top: 8px; }
+.calendar-period .calendar-dates { margin-top: 11px; }
+.calendar-period .day-divider { color: var(--smoke); opacity: .6; }
+.period-note { font-size: 12px; color: var(--smoke); margin-top: 10px; }
+.total-period .duration { font-size: clamp(25px, 2.3vw, 30px); }
+.calendar-pair > .journey-rule { margin: 12px 3px 0; }
+.calendar-period .anniversary { margin-top: 12px; padding-top: 12px; }
+@media (max-width: 1100px) {
+  .calendar-period { padding: 17px; }
+}
+@media (max-width: 480px) {
+  .calendar-period { padding: 17px 15px; border-radius: 17px; }
+  .calendar-period .calendar-heading h2 { line-height: 1.7; }
+  .calendar-period .calendar-heading h2 span { display: inline-block; }
+  .nozero-period .duration { font-size: 29px; }
+  .total-period .duration { font-size: 27px; }
+  .calendar-pair > .journey-rule { margin-inline: 1px; }
+  .streak .lbl { line-height: 1.7; }
+}
+@media (max-width: 359px) {
+  .calendar-period { padding-inline: 12px; }
+  .nozero-period .duration { font-size: 26px; }
+  .total-period .duration { font-size: 25px; }
+}

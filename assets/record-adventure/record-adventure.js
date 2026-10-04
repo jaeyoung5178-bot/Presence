@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const START_DATE = '2023-11-01';
+  const NO_ZERO_START_DATE = '2024-11-02';
   const DAY_MS = 86400000;
   const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;
   const $ = id => document.getElementById(id);
@@ -57,11 +58,22 @@
       progress: Math.min(100, Math.max(0, anniversaryElapsed / anniversaryDays * 100))
     };
   }
+  function calculateNoZeroJourney(asOf = koreanDate()) {
+    return calculateJourney(asOf, NO_ZERO_START_DATE);
+  }
   function shortDate(iso) { return iso.replaceAll('-', '. ') + '.'; }
   let midnightTimer;
   function refreshJourney() {
     const journey = calculateJourney();
     if (!$('journeyDuration')) return journey;
+    const noZero = calculateNoZeroJourney(journey.asOf);
+    if ($('noZeroDuration')) {
+      $('noZeroDuration').textContent = noZero.durationText;
+      $('noZeroDay').textContent = `${number(noZero.inclusiveDays)}일`;
+      $('noZeroElapsed').textContent = `총 ${number(noZero.elapsedDays)}일 경과`;
+      $('noZeroAsOf').textContent = shortDate(noZero.asOf);
+      $('noZeroAsOf').dateTime = noZero.asOf;
+    }
     $('journeyDuration').textContent = journey.durationText;
     $('journeyDay').textContent = `${number(journey.inclusiveDays)}일`;
     $('journeyElapsed').textContent = `총 ${number(journey.elapsedDays)}일 경과`;
@@ -79,7 +91,7 @@
     midnightTimer = setTimeout(refreshJourney, Math.max(1000, nextMidnight - Date.now() + 100));
     return journey;
   }
-  window.PresenceJourney = Object.freeze({ START_DATE, DAY_MS, parseISODate, koreanDate, getSeoulDate: koreanDate, calendarDuration, daysBetween, addMonths, calculateJourney, getJourney: calculateJourney, refresh: refreshJourney });
+  window.PresenceJourney = Object.freeze({ START_DATE, NO_ZERO_START_DATE, DAY_MS, parseISODate, koreanDate, getSeoulDate: koreanDate, calendarDuration, daysBetween, addMonths, calculateJourney, calculateNoZeroJourney, getJourney: calculateJourney, refresh: refreshJourney });
 
   const html = document.documentElement;
   function readPreference(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }

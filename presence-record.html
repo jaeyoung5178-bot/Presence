@@ -12,11 +12,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Presence">
 
-<link rel="stylesheet" href="assets/record-adventure/record-adventure.css">
+<link rel="stylesheet" href="assets/record-adventure/record-adventure.css?v=20261004-periods">
 <script>
 try { document.documentElement.dataset.recordTheme = localStorage.getItem('presence_record_theme') === 'night' ? 'night' : 'light'; } catch (_) { document.documentElement.dataset.recordTheme = 'light'; }
 </script>
-<script defer src="assets/record-adventure/record-adventure.js"></script>
+<script defer src="assets/record-adventure/record-adventure.js?v=20261004-periods"></script>
 </head>
 <body class="record-adventure">
 <a class="skip-link" href="#record-main">기록으로 바로 가기</a>
@@ -43,17 +43,26 @@ try { document.documentElement.dataset.recordTheme = localStorage.getItem('prese
         <div class="eyebrow"><span class="live-dot" aria-hidden="true"></span> MY LITTLE ADVENTURE <span class="chapter-tag">나만의 성장 기록</span></div>
         <h1 id="journal-title">재영의 <span>모험일지</span><span class="title-star" aria-hidden="true">✧</span></h1>
         <p class="hero-message">한 걸음씩 쌓인 날들이, 어느새 나만의 이야기가 됐어요.</p>
-        <div class="journey-calendar">
-          <div class="calendar-heading"><span class="calendar-icon" aria-hidden="true">▦</span><h2>전체 근무기간 <span>· 함께한 여정</span></h2></div>
-          <div class="duration" id="journeyDuration" aria-live="polite">오늘의 여정을 세는 중…</div>
-          <p class="day-line"><span id="journeyElapsed">총 —일 경과</span><span class="day-divider" aria-hidden="true">·</span><span>오늘 <strong id="journeyDay">—</strong>째</span></p>
-          <div class="journey-rule"><span class="little-spark" aria-hidden="true">✦</span> NA와 쉬어간 날까지, 모든 날을 함께 세요.</div>
-          <div class="calendar-dates"><span>첫 출발 <time datetime="2023-11-01">2023. 11. 01.</time></span><span>오늘 <time id="journeyAsOf">—</time> <span class="timezone">KST</span></span></div>
-          <div class="anniversary">
-            <div class="anniversary-label"><span id="journeyMilestone">다음 기념일까지</span><strong id="journeyCountdown">—</strong></div>
-            <div class="journey-progress" id="journeyProgress" role="progressbar" aria-label="다음 근무 기념일까지의 진행" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="journeyProgressFill"></span><span class="progress-star" aria-hidden="true">✦</span></div>
-            <div class="anniversary-dates"><span id="journeyLastAnniversary">—</span><span id="journeyNextAnniversary">—</span></div>
-          </div>
+        <div class="journey-calendar calendar-pair">
+          <section class="calendar-period nozero-period" aria-labelledby="noZeroPeriodTitle">
+            <div class="calendar-heading"><span class="calendar-icon" aria-hidden="true">✦</span><h2 id="noZeroPeriodTitle">현재 연속 노제로 기간 <span>· 달력 기준</span></h2></div>
+            <div class="duration" id="noZeroDuration" aria-live="polite">노제로의 여정을 세는 중…</div>
+            <p class="day-line"><span id="noZeroElapsed">총 —일 경과</span><span class="day-divider" aria-hidden="true">·</span><span>오늘 <strong id="noZeroDay">—</strong>째</span></p>
+            <div class="calendar-dates"><span>노제로 시작 <time datetime="2024-11-02">2024. 11. 02.</time></span><span>오늘 <time id="noZeroAsOf">—</time> <span class="timezone">KST</span></span></div>
+            <p class="period-note">현재 노제로가 시작된 날부터 오늘까지의 시간</p>
+          </section>
+          <section class="calendar-period total-period" aria-labelledby="totalPeriodTitle">
+            <div class="calendar-heading"><span class="calendar-icon" aria-hidden="true">▦</span><h2 id="totalPeriodTitle">전체 근무기간 <span>· 첫 근무일부터</span></h2></div>
+            <div class="duration" id="journeyDuration" aria-live="polite">오늘의 여정을 세는 중…</div>
+            <p class="day-line"><span id="journeyElapsed">총 —일 경과</span><span class="day-divider" aria-hidden="true">·</span><span>오늘 <strong id="journeyDay">—</strong>째</span></p>
+            <div class="calendar-dates"><span>첫 근무 <time datetime="2023-11-01">2023. 11. 01.</time></span><span>오늘 <time id="journeyAsOf">—</time> <span class="timezone">KST</span></span></div>
+            <div class="anniversary">
+              <div class="anniversary-label"><span id="journeyMilestone">다음 근무 기념일까지</span><strong id="journeyCountdown">—</strong></div>
+              <div class="journey-progress" id="journeyProgress" role="progressbar" aria-label="다음 근무 기념일까지의 진행" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="journeyProgressFill"></span><span class="progress-star" aria-hidden="true">✦</span></div>
+              <div class="anniversary-dates"><span id="journeyLastAnniversary">—</span><span id="journeyNextAnniversary">—</span></div>
+            </div>
+          </section>
+          <div class="journey-rule"><span class="little-spark" aria-hidden="true">✦</span> 두 기간 모두 NA·휴무를 포함해 모든 달력 날짜를 세요.</div>
         </div>
         <a class="journey-cta" href="#today-record">오늘의 기록 쓰기 <span aria-hidden="true">↓</span></a>
       </div>
@@ -68,9 +77,9 @@ try { document.documentElement.dataset.recordTheme = localStorage.getItem('prese
       <div class="section-heading"><div><span class="section-kicker">MY ADVENTURE STATS</span><h2 id="overview-title">차곡차곡 쌓인 발자국</h2></div><span class="section-note">기록이 쌓일 때마다 함께 자라요</span></div>
   <div class="hero stats-hero">
     <div class="card streak">
-      <div class="streak-spark" aria-hidden="true">✦</div><div class="lbl">연속 NO ZERO</div>
+      <div class="streak-spark" aria-hidden="true">✦</div><div class="lbl">연속 NO ZERO · 기록일수</div>
       <div class="num" id="streak">—</div>
-      <div class="sub">일차 진행 중</div><div class="streak-caption">오늘의 한 걸음도 빛나고 있어요</div>
+      <div class="sub">일차 진행 중</div><div class="streak-caption">달력 기간과 별도로 집계한 기록</div>
     </div>
     <div class="grid6">
       <div class="cell"><span class="k">누적 후원자</span><span class="v" id="donors">—</span></div>
