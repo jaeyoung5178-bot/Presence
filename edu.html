@@ -219,6 +219,7 @@
     v:1,
     folders:["신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
     items:[
+      {id:"presence-3step-5step",tag:"TRAINING",title:"3step, 5step 트레이닝",sub:"고객을 대하는 3가지 자세와 대화를 이어가는 5단계 · 무드와 대화의 실전 연습",href:"education/sales/3step-5step/index.html",target:"_blank",folder:"세일즈"},
       {id:"presence-great-sales",tag:"SALES",title:"3 Keys to Great Sales",sub:"멋진 세일즈를 위한 3가지 · 제품, 고객, 자신을 이해하는 25분 키노트",href:"education/sales/great-sales/index.html",target:"_blank",folder:"세일즈"},
       {id:"presence-oxfam-test",tag:"OXFAM",title:"OXFAM 테스트링크",sub:"신입을 위한 옥스팜 후원 연습판과 테스트 참여 기록",href:"oxfam-test.html",target:"",folder:"신입"},
       {id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"신입 체리티교육 · 89장 프레젠테이션과 현장 영상",href:"education/charity-training/index.html",target:"_blank",folder:"신입"},
@@ -337,6 +338,17 @@
 
   // 기존 핸들링 자료와 별도로, 니즈파악 중심의 발표형 교육 자료를 유지합니다.
   // Keep the new sales keynote available for existing local and remote libraries.
+  // Make the training available for both existing and new Education libraries.
+  function ensureStepsTraining(d){
+    if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
+    var changed=false;
+    if(d.folders.indexOf("세일즈")<0){d.folders.push("세일즈");changed=true;}
+    var found=d.items.find(function(it){return it.id==="presence-3step-5step" || it.href==="education/sales/3step-5step/index.html";});
+    if(!found){d.items.unshift({id:"presence-3step-5step",tag:"TRAINING",title:"3step, 5step 트레이닝",sub:"고객을 대하는 3가지 자세와 대화를 이어가는 5단계 · 무드와 대화의 실전 연습",href:"education/sales/3step-5step/index.html",target:"_blank",folder:"세일즈"});return true;}
+    if(found.folder!=="세일즈"){found.folder="세일즈";changed=true;}
+    return changed;
+  }
+
   function ensureGreatSalesGuide(d){
     if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
     var changed=false;
@@ -501,6 +513,7 @@
       data=local;
       var localChanged=ensureNeedsObjectionGuide(data);
       localChanged=ensureGreatSalesGuide(data)||localChanged;
+      localChanged=ensureStepsTraining(data)||localChanged;
       localChanged=ensureOxfamTestLink(data)||localChanged;
       localChanged=ensureCharityTraining(data)||localChanged;
       localChanged=ensureOxfamNewHireGuide(data)||localChanged;
@@ -521,6 +534,7 @@
         ensureOxfamTestLink(data);
         var remoteChanged=ensureNeedsObjectionGuide(data);
         remoteChanged=ensureGreatSalesGuide(data)||remoteChanged;
+        remoteChanged=ensureStepsTraining(data)||remoteChanged;
         remoteChanged=ensureCharityTraining(data)||remoteChanged;
         remoteChanged=ensureOxfamNewHireGuide(data)||remoteChanged;
         remoteChanged=ensureWarHistoryTodayGuide(data)||remoteChanged;
@@ -534,12 +548,12 @@
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureGreatSalesGuide(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureGreatSalesGuide(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
     });
   }
   function save(silent){
