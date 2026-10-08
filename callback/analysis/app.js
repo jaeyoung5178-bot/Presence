@@ -1,43 +1,60 @@
 import { analyze, METRICS, localToday } from './analysis-model.js?v=20261009-transcription1';
-import { readAccountIdentity } from '../sheets/cloud.js?v=20261009-transcription1';
-import { validateSheet } from '../sheets/sheet-model.js?v=20261009-transcription1';
+import { createCloudClient, readAccountIdentity } from '../sheets/cloud.js?v=20261009-transcription1';
+import { mergeAnalysisSources, readLocalAnalysisRows } from './analysis-sources.js?v=20261009-analysiscloud1';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const number = value => value === null ? '—' : value.toLocaleString('ko-KR', { maximumFractionDigits: 1 });
 let records = [], period = 'month', report, request = 0, firstLoad = true, historical = false, signature = readAccountIdentity().signature;
+const cloud = createCloudClient({ timeoutMs: 45000 });
+let loadError = '';
 $('#anchor-date').value = localToday();
 
-// This page never imports the writer's storage singleton: its online listener can upload
-// pending writes. Read only the current namespace in an existing IndexedDB database.
-async function readLocalSheets(identity) {
-  return new Promise((resolve, reject) => {
-    const open = indexedDB.open('presence-paper-sheets-v1'); let absent = false;
-    open.onupgradeneeded = () => { absent = true; open.transaction.abort(); };
-    open.onerror = () => absent ? resolve([]) : reject(new Error('저장된 기록을 읽지 못했어요. 다시 읽기를 눌러 주세요.'));
-    open.onsuccess = () => {
-      const db = open.result;
-      if (!db.objectStoreNames.contains('records')) { db.close(); resolve([]); return; }
-      const tx = db.transaction('records', 'readonly'), get = tx.objectStore('records').index('namespace').getAll(identity.namespace);
-      get.onsuccess = () => { const rows = get.result; db.close(); if (readAccountIdentity().signature !== identity.signature) { resolve(null); return; } resolve(rows.filter(row => !row.document?.deleted && validateSheet(row.document?.sheet).valid).map(row => row.document.sheet)); };
-      get.onerror = () => { db.close(); reject(new Error('기록 목록을 읽지 못했어요. 다시 시도해 주세요.')); };
-    };
-  });
+// The cloud client establishes the existing account session but only reads paper data.
+// Keep the writer's storage singleton out of analysis: it can upload pending local writes.
+function displayRecords(loaded, settled = false) {
+  records = loaded;
+  const selectedAuthor = $('#author-filter').value;
+  $('#author-filter').innerHTML = '<option value="*">저장된 전체 기록 · 다른 작성자 포함</option>' + [...new Set(records.map(record => record.meta?.name?.trim() || '이름 없음'))].sort().map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  if ([...$('#author-filter').options].some(option => option.value === selectedAuthor)) $('#author-filter').value = selectedAuthor;
+  if (firstLoad && records.length) {
+    const initial = analyze(records, localToday(), period);
+    if (!initial.current.records && initial.latest) { $('#anchor-date').value = initial.latest; historical = true; }
+    else { $('#anchor-date').value = localToday(); historical = false; }
+    if (settled) firstLoad = false;
+  }
+  render();
 }
 async function load() {
   const version = ++request, identity = readAccountIdentity();
   if (signature !== identity.signature) { records = []; signature = identity.signature; firstLoad = true; historical = false; $('#anchor-date').value = localToday(); $('#author-filter').innerHTML = '<option value="*">저장된 전체 기록 · 다른 작성자 포함</option>'; render(); }
-  $('#refresh').disabled = true; $('#load-status').textContent = '나의 기록을 불러오는 중…'; $('#report').setAttribute('aria-busy', 'true'); $('#error').hidden = true;
+  loadError = ''; $('#refresh').disabled = true; $('#load-status').textContent = identity.uid ? '계정의 서버 기록을 불러오는 중…' : '이 브라우저의 기록을 불러오는 중…'; $('#report').setAttribute('aria-busy', 'true'); $('#error').hidden = true;
+  $('#analysis-account').textContent = identity.uid ? `${identity.name || '연결된 계정'} · 나의 콜백싯` : '계정 연결 전 · 이 브라우저의 기록';
+  $('#connection-message').textContent = identity.uid ? '다른 기기에 저장한 기록도 확인하고 있어요.' : '서버 기록을 보려면 워크북에서 Profit → 콜백싯 → 내 콜백싯 열기를 눌러 주세요.';
+  $('#connect-workbook').hidden = !!identity.uid;
+  $('#account-status').dataset.state = 'loading';
   try {
-    const loaded = await readLocalSheets(identity);
-    if (version !== request || loaded === null || readAccountIdentity().signature !== identity.signature) return;
-    records = loaded;
-    const selectedAuthor = $('#author-filter').value;
-    $('#author-filter').innerHTML = '<option value="*">저장된 전체 기록 · 다른 작성자 포함</option>' + [...new Set(records.map(record => record.meta?.name?.trim() || '이름 없음'))].sort().map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
-    if ([...$('#author-filter').options].some(option => option.value === selectedAuthor)) $('#author-filter').value = selectedAuthor;
-    if (firstLoad) { const initial = analyze(records, $('#anchor-date').value, period); if (!initial.current.records && initial.latest) { $('#anchor-date').value = initial.latest; historical = true; } firstLoad = false; }
-    render(); $('#load-status').textContent = '이 브라우저에 저장된 수기·사진 콜백싯 기준';
-  } catch (error) { if (version === request) { $('#error').textContent = error.message; $('#error').hidden = false; $('#load-status').textContent = '기록 읽기 실패'; } }
+    const localRequest = readLocalAnalysisRows(identity).then(rows => {
+      if (version === request && readAccountIdentity().signature === identity.signature) { displayRecords(mergeAnalysisSources(rows).records); if (identity.uid && !records.length) $('#empty').hidden = true; }
+      return rows;
+    });
+    const [localResult, remoteResult] = await Promise.allSettled([localRequest, identity.uid ? cloud.readAll(identity) : Promise.resolve(null)]);
+    if (version !== request || readAccountIdentity().signature !== identity.signature) return;
+    const local = localResult.status === 'fulfilled' ? localResult.value : [];
+    const remote = remoteResult.status === 'fulfilled' ? remoteResult.value : null;
+    let merged;
+    try { merged = mergeAnalysisSources(local, remote); }
+    catch (error) { merged = mergeAnalysisSources(local); loadError = error.message; }
+    if (localResult.status === 'rejected') loadError = localResult.reason.message;
+    if (remoteResult.status === 'rejected') loadError = remoteResult.reason.message;
+    if (merged.invalid) loadError = `${loadError ? loadError + ' ' : ''}형식을 확인할 수 없는 기록 ${merged.invalid}개는 분석에서 제외했어요.`;
+    displayRecords(merged.records, true);
+    const connected = !!identity.uid && remoteResult.status === 'fulfilled' && !loadError;
+    $('#account-status').dataset.state = connected ? 'connected' : identity.uid ? 'error' : 'local';
+    $('#connect-workbook').hidden = connected;
+    $('#load-status').textContent = connected ? `서버 기록 ${merged.remoteRecords}개 확인 · 분석 가능한 기록 ${records.length}개` : identity.uid ? '서버 확인 미완료 · 이 브라우저의 기록 기준' : '이 브라우저에 저장된 기록 기준';
+    $('#connection-message').textContent = connected ? `다른 기기의 저장 기록을 불러왔어요.${merged.pending ? ` 이 브라우저에 동기화 대기 ${merged.pending}개가 있어요. 보관함에서 동기화할 수 있어요.` : ''}` : identity.uid ? '연결을 다시 확인하려면 워크북에서 Profit → 콜백싯 → 내 콜백싯 열기를 눌러 주세요. 기존 로컬 기록은 유지돼요.' : '워크북에서 본인 전용 콜백 링크를 열면 이 기기에서도 서버 기록을 볼 수 있어요.';
+  } catch (error) { if (version === request) { loadError = error.message; $('#error').textContent = loadError; $('#error').hidden = false; $('#load-status').textContent = '기록 읽기 실패'; $('#account-status').dataset.state = 'error'; $('#connect-workbook').hidden = false; } }
   finally { if (version === request) { $('#refresh').disabled = false; $('#report').setAttribute('aria-busy', 'false'); } }
 }
 function compare(now, before) {
@@ -48,7 +65,7 @@ function compare(now, before) {
 function render() {
   const author = $('#author-filter').value, selected = author === '*' ? records : records.filter(record => (record.meta?.name?.trim() || '이름 없음') === author);
   try { report = analyze(selected, $('#anchor-date').value, period); } catch (error) { $('#error').textContent = error.message; $('#error').hidden = false; return; }
-  $('#error').hidden = true;
+  $('#error').textContent = loadError; $('#error').hidden = !loadError;
   const { range, current, previous } = report;
   $('#period-label').textContent = `${range.start} — ${range.end} · ${range.days}일`;
   $('#historical-notice').hidden = !historical; $('#historical-copy').textContent = `가장 최근 기록 ${$('#anchor-date').value} 기준으로 보고 있어요.`;
@@ -59,7 +76,7 @@ function render() {
   $('#comparison-period').textContent = `이전 비교: ${range.previousStart} — ${range.previousEnd} (${previous.days}일 · ${previous.records}개 기록)`;
   $('#metrics').innerHTML = METRICS.map(({ id, label }) => { const now = current.metrics[id], before = previous.metrics[id]; return `<article class="metric-card"><h3>${label}</h3><div class="metric-number">${number(now.total)}<small>${id === 'donors' ? '명' : '회'}</small></div><p>${now.knownRecords}/${current.records}개 확인${now.missingRecords ? ` · ${now.missingRecords}개 미확인` : ''}${now.transcriptionRecords ? `<br>사진에서 읽은 합계 ${now.transcriptionRecords}개 포함` : ''}<br>기록일 평균 ${number(now.perDay)} · ${now.knownDays}일 기준</p><p class="comparison">${compare(now, before)}<br>이전 평균 ${number(before.perDay)} · ${before.knownDays}일 기준</p></article>`; }).join('');
   $('#rates').innerHTML = current.rates.map(rate => `<article class="rate"><h3>${rate.from === 'contact' ? 'Contact → Stop' : rate.from === 'stop' ? 'Stop → Presentation' : 'Presentation → Close'}</h3><strong>${rate.percent === null ? '—' : number(rate.percent) + '%'}</strong><p>${number(rate.numerator)} / ${number(rate.denominator)} · 시간별 입력 ${rate.rows}행 · 사진 합계 ${rate.photoRecords}개${rate.exceeds ? '<br>뒷 단계가 더 많아요. 입력 기준을 확인해 주세요.' : ''}</p></article>`).join('');
-  $('#source-detail').textContent = `이번 기간 후원자 근거: 체크된 케이스·특이사항 ${current.donorBasis.cases}개 기록 · 입력 Rehash ${current.donorBasis.rehash}개 · 사진 확인값 ${current.donorBasis.photo}개 · 사진 전사 Rehash ${current.donorBasis.transcription}개 · 미확인 ${current.donorBasis.unknown}개. 자동 기록 도구의 세션은 이 분석에 아직 합산하지 않아요. 다른 기기의 기록은 콜백싯 열람에서 동기화한 뒤 다시 읽어 주세요.`;
+  $('#source-detail').textContent = `이번 기간 후원자 근거: 체크된 케이스·특이사항 ${current.donorBasis.cases}개 기록 · 입력 Rehash ${current.donorBasis.rehash}개 · 사진 확인값 ${current.donorBasis.photo}개 · 사진 전사 Rehash ${current.donorBasis.transcription}개 · 미확인 ${current.donorBasis.unknown}개. 자동 기록 도구의 세션은 이 분석에 아직 합산하지 않아요. 서버 기록은 현재 연결 계정으로 읽으며, 이 화면에서 기록을 업로드하거나 수정하지 않아요.`;
   renderChart(); renderReview('pitch', 'Pitch · Skill', '설명과 대화에서 발견한 것'); renderReview('attitude', 'Attitude · Mental', '필드에 임하는 나의 태도');
 }
 function renderChart() {
@@ -82,9 +99,10 @@ function renderReview(key, title, subtitle) {
   if (!review.coverage) container.querySelector('.review-empty').textContent = '이 기간에는 판독되거나 직접 입력된 회고가 없어요. 읽지 못한 손글씨의 내용을 추측하지 않아요.';
 }
 document.querySelectorAll('[data-period]').forEach(button => button.addEventListener('click', () => { period = button.dataset.period; document.querySelectorAll('[data-period]').forEach(item => item.setAttribute('aria-pressed', String(item === button))); render(); }));
-$('#anchor-date').addEventListener('change', () => { historical = false; render(); }); $('#anchor-today').addEventListener('click', () => { historical = false; $('#anchor-date').value = localToday(); render(); }); $('#chart-metric').addEventListener('change', renderChart); $('#refresh').addEventListener('click', load);
+$('#anchor-date').addEventListener('change', () => { firstLoad = false; historical = false; render(); }); $('#anchor-today').addEventListener('click', () => { firstLoad = false; historical = false; $('#anchor-date').value = localToday(); render(); }); $('#chart-metric').addEventListener('change', renderChart); $('#refresh').addEventListener('click', load);
 $('#jump-latest').addEventListener('click', () => { if (report?.latest) { $('#anchor-date').value = report.latest; render(); } });
 $('#author-filter').addEventListener('change', render);
 window.addEventListener('storage', event => { if (['fcos_hub_identity', 'fcos_callback_access_key', 'fcos_personal_launch_v2', null].includes(event.key)) load(); });
 window.addEventListener('focus', () => { if (signature !== readAccountIdentity().signature) load(); });
+window.addEventListener('online', load);
 load();
