@@ -72,6 +72,147 @@ async function serviceWorkerChecks() {
   check('SW unknown document cannot fall back to wrong app shell', await visit('/callback/unknown.html') === undefined);
 }
 
+function donorModelChecks(model) {
+  const legacy = model.createSheet(new Date('2026-06-10T12:00:00Z'));
+  legacy.id = 'legacy-before-donor-feature';
+  legacy.meta = { name: 'QA 이름', weather: '맑음', team: 'QA 팀', location: 'QA 장소', theme: 'QA 테마' };
+  legacy.rows.forEach(row => { delete row.donorCases; });
+  Object.assign(legacy.rows[0], { time: '11:45', endTime: '12:15', contact: 7, stop: 4, presentation: 3, close: 2 });
+  check('legacy record stays byte-equivalent through normalization', JSON.stringify(model.normalizeSheet(legacy)) === JSON.stringify({ ...legacy, meta: { name: 'QA 이름', location: 'QA 장소', team: 'QA 팀', weather: '맑음', theme: 'QA 테마' } }));
+  const mixed = structuredClone(legacy); mixed.id = 'mixed-donor-reference';
+  mixed.rows[0].donorCases = [
+    { id: 'case-a', donor: true, counts: { contact: 2, stop: 1, presentation: 1, close: 1 }, note: 'DONOR-RED-NOTE-A 후원자 기본정보' },
+    { id: 'case-b', donor: false, counts: { contact: 1, stop: 1, presentation: 1, close: 0 }, note: 'ORDINARY-BLACK-NOTE 일반 대화' },
+    { id: 'case-c', donor: true, counts: { contact: 1, stop: 0, presentation: 0, close: 0 }, note: 'DONOR-RED-NOTE-C 후원자 대화' },
+  ];
+  check('mixed donor and ordinary cases are valid', model.validateSheet(mixed).valid);
+  check('case annotations do not inflate hourly totals', JSON.stringify(model.getTotals(mixed)) === JSON.stringify(model.getTotals(legacy)));
+  check('only selected cases contribute donor counts', JSON.stringify(model.getCaseTotals(mixed.rows[0], { donorsOnly: true })) === JSON.stringify({ contact: 3, stop: 1, presentation: 1, close: 1 }));
+  const clone = model.normalizeSheet(mixed); clone.rows[0].donorCases[0].counts.contact = 0;
+  check('case normalization deeply copies nested counts', mixed.rows[0].donorCases[0].counts.contact === 2);
+  for (const mutate of [
+    sheet => { sheet.rows[0].donorCases[0].counts.contact = 8; },
+    sheet => { sheet.rows[0].donorCases[0].counts.close = -1; },
+    sheet => { sheet.rows[0].donorCases[0].counts.stop = 1.5; },
+    sheet => { sheet.rows[0].donorCases[0].donor = 'true'; },
+    sheet => { sheet.rows[0].donorCases[1].id = 'case-a'; },
+    sheet => { sheet.rows[0].donorCases[0].note = 'x'.repeat(12001); },
+  ]) { const bad = structuredClone(mixed); mutate(bad); check('invalid or excess donor contribution rejected', !model.validateSheet(bad).valid); }
+  const unchecked = structuredClone(mixed); unchecked.rows[0].donorCases.forEach(item => { item.donor = false; });
+  check('unchecking donors changes no totals and removes donor contributions', JSON.stringify(model.getTotals(unchecked)) === JSON.stringify(model.getTotals(mixed)) && Object.values(model.getCaseTotals(unchecked.rows[0], { donorsOnly: true })).every(value => value === 0));
+  return { legacy, mixed };
+}
+
+const isRed = color => { const match = /^#([0-9a-f]{6})$/i.exec(color); if (!match) return false; const rgb = match[1].match(/../g).map(value => parseInt(value, 16)); return rgb[0] > rgb[1] * 1.3 && rgb[0] > rgb[2] * 1.3; };
+
+async function donorRendererChecks(browser, mixed) {
+  const { context, page } = await fixture(browser);
+  try {
+    await openPage(page);
+    const result = await page.evaluate(async sheet => {
+      const renderer = await import('./sheet-renderer.js?v=20261008-paper2');
+      await document.fonts.ready;
+      const originalText = CanvasRenderingContext2D.prototype.fillText;
+      const originalCurve = CanvasRenderingContext2D.prototype.quadraticCurveTo;
+      const originalStroke = CanvasRenderingContext2D.prototype.stroke;
+      let texts = [], strokes = [];
+      CanvasRenderingContext2D.prototype.fillText = function (text, x, y, ...args) { texts.push({ text: String(text), x, y, color: this.fillStyle }); return originalText.call(this, text, x, y, ...args); };
+      CanvasRenderingContext2D.prototype.quadraticCurveTo = function (...args) { this.__qaTallyStroke = true; return originalCurve.apply(this, args); };
+      CanvasRenderingContext2D.prototype.stroke = function (...args) { if (this.__qaTallyStroke) { strokes.push(this.strokeStyle); delete this.__qaTallyStroke; } return originalStroke.apply(this, args); };
+      try {
+        const canvas = document.createElement('canvas');
+        await renderer.renderSheet(canvas, sheet, { scale: 1.7 });
+        const previewTrace = { texts, strokes }; texts = []; strokes = [];
+        const output = await renderer.exportSheetPNG(sheet);
+        const exportTrace = { texts, strokes };
+        const png = await new Promise(resolve => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(output.blob); });
+        return { previewTrace, exportTrace, png, width: output.width, height: output.height };
+      } finally {
+        CanvasRenderingContext2D.prototype.fillText = originalText;
+        CanvasRenderingContext2D.prototype.quadraticCurveTo = originalCurve;
+        CanvasRenderingContext2D.prototype.stroke = originalStroke;
+      }
+    }, mixed);
+    check('preview and downloaded PNG use identical text, positions, and ink', JSON.stringify(result.previewTrace) === JSON.stringify(result.exportTrace));
+    const calls = result.exportTrace.texts, text = calls.map(call => call.text).join(' ');
+    for (const label of ['Call Back Sheet', 'Field Time', 'Contact', 'Stop', 'Presentation', 'Close', '오브젝션 핸들링 사유', '과정 목표(Goal)', '시리얼(기본정보)', 'Number', 'Pitch(Skill)', 'Attitude(Mental)']) check(`new reference label ${label} is present`, calls.some(call => call.text === label));
+    check('reference summary includes exact motto', text.includes('환경을 탓하지 말고 나의 노력을 탓하라'));
+    check('unrequested branding, quote, and per-result captions removed', !/P\s*R\s*E\s*S\s*E\s*N\s*C\s*E|FIELD\s*NOTES|매일의 기록|목표\s*\/\s*결과/.test(text));
+    for (const label of ['Number', 'Pitch(Skill)', 'Attitude(Mental)']) check(`${label} prints only on positive review row`, calls.filter(call => call.text === label).length === 1);
+    const meta = label => calls.find(call => call.text === label || call.text === label + ':');
+    const name = meta('Name'), weather = meta('Weather'), team = meta('Team'), location = meta('Location'), date = meta('Date'), theme = meta('오늘의 테마');
+    check('reference metadata uses Name/Weather, Team/Location, Date/Theme columns', name && weather && team && location && date && theme && name.x === weather.x && team.x === location.x && date.x === theme.x && name.x < team.x && team.x < date.x && weather.y > name.y && location.y > team.y && theme.y > date.y);
+    for (const [label, value] of [['Name', 'QA 이름'], ['Weather', '맑음'], ['Team', 'QA 팀'], ['Location', 'QA 장소'], ['오늘의 테마', 'QA 테마']]) { const key = meta(label), entered = calls.find(call => call.text === value); check(`${label} value is inline beside its printed label`, key && entered && Math.abs(key.y - entered.y) < 1 && entered.x > key.x); }
+    const colors = result.exportTrace.strokes.map(isRed);
+    const expected = [false,false,false,true,true,false,true, false,false,true,false, false,true,false, false,true];
+    check('only selected case strokes turn red inside mixed 正 groups', JSON.stringify(colors) === JSON.stringify(expected), result.exportTrace.strokes);
+    const redText = calls.filter(call => isRed(call.color)).map(call => call.text).join('');
+    const blackText = calls.filter(call => !isRed(call.color)).map(call => call.text).join('');
+    check('only donor case notes are red', redText.includes('DONOR-RED-NOTE-A') && redText.includes('DONOR-RED-NOTE-C') && !redText.includes('ORDINARY-BLACK-NOTE') && blackText.includes('ORDINARY-BLACK-NOTE'));
+    check('new paper still exports a high-resolution PNG', result.width >= 2000 && result.height >= 3000);
+    await fs.writeFile(path.join(OUT, 'exact-reference-mixed-donors.png'), Buffer.from(result.png.split(',')[1], 'base64'));
+  } finally { await context.close(); }
+}
+
+async function donorMatrix(browser, specimens) {
+  for (const role of ['member', 'leader', 'admin']) for (const viewport of [{ width: 390, height: 844 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+    if (process.argv.includes('--donor-unload') && !(role === 'member' && viewport.width === 390)) continue;
+    const { context, page } = await fixture(browser, { role, viewport, connected: true });
+    const label = `donor-${role}-${viewport.width}`;
+    try {
+      await openPage(page);
+      await field(page, 'meta.name').fill(`QA ${role}`);
+      for (const key of ['contact', 'stop', 'presentation', 'close']) await field(page, `rows.0.${key}`).fill(String(specimens.mixed.rows[0][key]));
+      for (let i = 0; i < 3; i++) {
+        if (!(await page.locator('[data-add-case="0"]').isVisible())) await page.locator('[data-add-case="0"]').locator('xpath=ancestor::details').locator('summary').click();
+        await page.locator('[data-add-case="0"]').click();
+        const item = specimens.mixed.rows[0].donorCases[i];
+        for (const key of ['contact', 'stop', 'presentation', 'close']) await field(page, `rows.0.donorCases.${i}.counts.${key}`).fill(String(item.counts[key]));
+        await field(page, `rows.0.donorCases.${i}.donor`).setChecked(item.donor);
+        await field(page, `rows.0.donorCases.${i}.note`).fill(item.note);
+      }
+      await geometry(page, label);
+      check(`${label} annotations leave Contact total at seven`, await page.locator('#total-contact').textContent() === '7');
+      await page.locator('#save-sheet').click();
+      await page.waitForFunction(() => document.querySelector('#save-status').textContent.includes('보관함에 저장됨'));
+      await page.reload({ waitUntil: 'networkidle' });
+      check(`${label} donor selection and case counts survive saved reload`, await field(page, 'rows.0.donorCases.0.donor').isChecked() && !(await field(page, 'rows.0.donorCases.1.donor').isChecked()) && await field(page, 'rows.0.donorCases.2.donor').isChecked() && await field(page, 'rows.0.donorCases.0.counts.contact').inputValue() === '2');
+      if (await page.locator('[data-view="preview"]').isVisible()) await page.locator('[data-view="preview"]').click();
+      await geometry(page, `${label}-preview`);
+      if (role === 'member' && viewport.width === 390) {
+        if (await page.locator('[data-view="edit"]').isVisible()) await page.locator('[data-view="edit"]').click();
+        if (!(await field(page, 'rows.0.donorCases.0.counts.contact').isVisible())) await page.locator('[data-add-case="0"]').locator('xpath=ancestor::details').locator('summary').click();
+        await field(page, 'rows.0.donorCases.0.counts.contact').fill('8');
+        await page.locator('#save-sheet').click();
+        check('overallocated donor cases cannot be saved', await page.locator('#error-banner').isVisible());
+        check('overallocated cases protect unload while autosave is suspended', await page.evaluate(() => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; }));
+        await field(page, 'rows.0.donorCases.0.counts.contact').fill('2');
+        check('valid donor record does not trigger unload warning', !(await page.evaluate(() => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; })));
+        await page.locator('#open-archive').click();
+        await page.locator('#archive-dialog').waitFor({ state: 'visible' });
+        const pending = page.waitForEvent('download'); await page.locator('#backup-export').click(); const download = await pending;
+        await download.saveAs(path.join(OUT, 'donor-backup.json'));
+        const backup = JSON.parse(await fs.readFile(path.join(OUT, 'donor-backup.json'), 'utf8'));
+        check('JSON backup retains case order, selected flags, counts, and notes', JSON.stringify(backup.sheets[0].rows[0].donorCases.map(({ id, ...item }) => item)) === JSON.stringify(specimens.mixed.rows[0].donorCases.map(({ id, ...item }) => item)));
+      }
+    } finally { await context.close(); }
+  }
+  const { context, page } = await fixture(browser);
+  try {
+    await openPage(page);
+    await page.evaluate(async legacy => {
+      await new Promise((resolve, reject) => { const req = indexedDB.open('presence-paper-sheets-v1', 1); req.onerror = () => reject(req.error); req.onsuccess = () => { const db = req.result, tx = db.transaction('records', 'readwrite'); tx.objectStore('records').put({ key: `guest\0${legacy.id}`, namespace: 'guest', id: legacy.id, pending: false, baseRevision: 'legacy-rev-1', document: { version: 1, revision: 'legacy-rev-1', deleted: false, updatedAt: legacy.updatedAt, sheet: legacy } }); tx.oncomplete = () => { db.close(); resolve(); }; tx.onerror = () => reject(tx.error); }; });
+    }, specimens.legacy);
+    await page.locator('#open-archive').click(); await page.locator(`[data-open-sheet="${specimens.legacy.id}"]`).click();
+    check('already-saved legacy record opens with its original totals', await field(page, 'rows.0.contact').inputValue() === '7' && await field(page, 'meta.name').inputValue() === 'QA 이름');
+    check('valid legacy record does not trigger unload warning', !(await page.evaluate(() => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; })));
+    await page.locator('#save-sheet').click();
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent.includes('보관함에 저장됨'));
+    const persisted = await page.evaluate(async () => (await import('./storage.js?v=20261008-paper2')).loadSheets());
+    check('legacy save does not invent cases or rewrite old totals', persisted.length === 1 && !('donorCases' in persisted[0].rows[0]) && persisted[0].rows[0].contact === 7 && persisted[0].rows[0].close === 2);
+  } finally { await context.close(); }
+}
+
 async function fixture(browser, { viewport = { width: 1440, height: 900 }, role = 'member', connected = false } = {}) {
   const context = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: 'ko-KR', timezoneId: 'Asia/Seoul', reducedMotion: 'reduce', serviceWorkers: 'block', acceptDownloads: true });
   const mockData = {}; let mockVersion = 1;
@@ -172,8 +313,8 @@ async function rendererChecks(browser) {
     const data = await page.evaluate(async () => {
       const font = new FontFace('Callback Hand', 'url(/callback/sheets/fonts/NanumPenScript-Regular.ttf)');
       document.fonts.add(await font.load());
-      const model = await import('/callback/sheets/sheet-model.js');
-      const renderer = await import('/callback/sheets/sheet-renderer.js');
+      const model = await import('/callback/sheets/sheet-model.js?v=20261008-paper2');
+      const renderer = await import('/callback/sheets/sheet-renderer.js?v=20261008-paper2');
       const sheet = model.createSheet(new Date('2026-10-08T12:00:00Z'));
       sheet.meta = { name: '획순과 숫자 확인', location: 'QA 전용', team: '테스트 팀', weather: '맑음', theme: '한 획씩 또렷하게' };
       sheet.rows.forEach((row, i) => { row.time = `${String(i + 9).padStart(2, '0')}:00`; row.contact = i; row.stop = i; row.presentation = i; row.close = i; });
@@ -318,13 +459,19 @@ async function workflow(browser) {
 
 let browser;
 try {
-  await modelChecks();
+  const model = await modelChecks();
+  const donorSpecimens = process.argv.includes('--donor') ? donorModelChecks(model) : null;
   await serviceWorkerChecks();
   if (!process.argv.includes('--model')) {
     const { chromium } = require('playwright');
     browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
-    await rendererChecks(browser);
-    if (!process.argv.includes('--renderer')) {
+    if (donorSpecimens) {
+      await donorRendererChecks(browser, donorSpecimens.mixed);
+      if (!process.argv.includes('--renderer')) await donorMatrix(browser, donorSpecimens);
+    } else {
+      await rendererChecks(browser);
+    }
+    if (!donorSpecimens && !process.argv.includes('--renderer')) {
       if (!process.argv.includes('--workflow')) await matrix(browser);
       if (!process.argv.includes('--matrix')) results.workflow = await workflow(browser);
       await integration(browser);

@@ -2,6 +2,28 @@ export const METRICS = ['contact', 'stop', 'presentation', 'close', 'rehash'];
 export const ROW_METRICS = METRICS;
 export const LABELS = { contact: 'Contact', stop: 'Stop', presentation: 'Presentation', close: 'Close', rehash: 'Rehash' };
 export const MAX_ROWS = 60;
+export const CASE_METRICS = METRICS.slice(0, 4);
+export function getCaseTotals(row, { donorsOnly = false } = {}) { return Object.fromEntries(CASE_METRICS.map(key => [key, (row.donorCases || []).reduce((sum, item) => sum + ((!donorsOnly || item.donor) ? item.counts[key] : 0), 0)])); }
+export function createDonorCase(row) { const used = getCaseTotals(row); return { id: makeId(), donor: false, counts: Object.fromEntries(CASE_METRICS.map(key => [key, Math.min(1, Math.max(0, (row[key] ?? 0) - used[key]))])), note: '' }; }
+export const MAX_SOURCE_BYTES = 2 * 1024 * 1024;
+export function validatePhotoSource(source) {
+  const errors = [], error = (key, message) => errors.push({ path: `source.${key}`, message });
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return [{ path: 'source', message: '사진 원본의 형식이 올바르지 않아요.' }];
+  if (source.type !== 'photo') error('type', '지원하지 않는 원본 형식이에요.');
+  const value = source.imageDataUrl;
+  if (typeof value !== 'string' || value.length > Math.ceil(MAX_SOURCE_BYTES / 3) * 4 + 32) error('imageDataUrl', '사진 원본은 2MiB 이하의 JPEG 또는 PNG여야 해요.');
+  else {
+    const prefix = value.match(/^data:image\/(jpeg|png);base64,/), base64 = prefix ? value.slice(prefix[0].length) : '';
+    const bytes = base64.length / 4 * 3 - (base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0);
+    const signature = prefix?.[1] === 'jpeg' ? base64.startsWith('/9j/') : base64.startsWith('iVBORw0KGgo');
+    if (!prefix || base64.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64) || bytes < 24 || bytes > MAX_SOURCE_BYTES || !signature) error('imageDataUrl', '사진 원본은 유효한 JPEG 또는 PNG 데이터여야 해요.');
+  }
+  if (typeof source.filename !== 'string' || !source.filename || source.filename.length > 255 || /[\\/\x00-\x1f\x7f]/.test(source.filename) || source.filename === '.' || source.filename === '..') error('filename', '사진 이름에는 폴더 경로 없이 파일 이름만 넣어 주세요.');
+  if (typeof source.notes !== 'string' || source.notes.length > 12000) error('notes', '사진 메모는 12,000자 이내로 입력해 주세요.');
+  if (!Number.isInteger(source.duplicateCount) || source.duplicateCount < 0 || source.duplicateCount > 9999) error('duplicateCount', '중복 촬영 수가 올바르지 않아요.');
+  if (!['written', 'capture', 'unknown'].includes(source.dateBasis)) error('dateBasis', '사진 날짜의 근거가 올바르지 않아요.');
+  return errors;
+}
 export function makeId() { return globalThis.crypto?.randomUUID?.() || `sheet-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
 export function localDate(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
 export function createRow() { return { id: makeId(), time: '', endTime: '', ...Object.fromEntries(METRICS.map(key => [key, null])) }; }
@@ -30,17 +52,34 @@ export function validateSheet(sheet) {
       ids.add(row.id);
       for (const key of ['time', 'endTime']) if (typeof row[key] !== 'string' || (row[key] !== '' && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(row[key]))) error(`rows.${i}.${key}`, '시간을 시:분 형식으로 입력해 주세요.');
       for (const key of METRICS) number(row[key], `rows.${i}.${key}`);
+      if (row.donorCases !== undefined) {
+        if (!Array.isArray(row.donorCases) || row.donorCases.length > 100) error(`rows.${i}.donorCases`, '한 시간에 세일즈 케이스는 100개까지 기록할 수 있어요.');
+        else {
+          const caseIds = new Set(), sums = Object.fromEntries(CASE_METRICS.map(key => [key, 0]));
+          row.donorCases.forEach((item, j) => {
+            const path = `rows.${i}.donorCases.${j}`;
+            if (!item || typeof item !== 'object' || Array.isArray(item)) { error(path, '세일즈 케이스 형식이 올바르지 않아요.'); return; }
+            if (typeof item.id !== 'string' || !/^[A-Za-z0-9_-]{1,180}$/.test(item.id) || caseIds.has(item.id)) error(`${path}.id`, '세일즈 케이스 ID가 없거나 중복되었어요.');
+            caseIds.add(item.id);
+            if (typeof item.donor !== 'boolean') error(`${path}.donor`, '후원자 여부를 체크해 주세요.');
+            for (const key of CASE_METRICS) { const value = item.counts?.[key]; if (!Number.isInteger(value) || value < 0 || value > 999) error(`${path}.counts.${key}`, '케이스별 숫자는 0~999 사이의 정수여야 해요.'); else sums[key] += value; }
+            text(item.note, `${path}.note`);
+          });
+          for (const key of CASE_METRICS) if (sums[key] > (row[key] ?? 0)) error(`rows.${i}.${key}`, `${i + 1}행 ${LABELS[key]}: 케이스 숫자의 합(${sums[key]})이 위 시간별 합계(${row[key] ?? 0})를 넘어요. 시간별 합계 또는 케이스 숫자를 확인해 주세요.`);
+        }
+      }
     });
   }
   text(sheet.objections, 'objections');
   for (const key of ['loa', 'pitch', 'attitude']) for (const polarity of ['good', 'bad']) text(sheet.review?.[key]?.[polarity], `review.${key}.${polarity}`);
   for (const key of ['createdAt', 'updatedAt']) if (typeof sheet[key] !== 'string' || !Number.isFinite(Date.parse(sheet[key]))) error(key, '기록 시간이 올바르지 않아요.');
+  if (sheet.source !== undefined) errors.push(...validatePhotoSource(sheet.source));
   return { valid: !errors.length, errors };
 }
 export function normalizeSheet(sheet) {
   const result = validateSheet(sheet);
   if (!result.valid) { const error = new Error(result.errors[0].message); error.errors = result.errors; throw error; }
   // Copy only the documented fields; imported JSON cannot add prototype keys or executable content.
-  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])) })), objections: sheet.objections, review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt };
+  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])), ...(row.donorCases === undefined ? {} : { donorCases: row.donorCases.map(item => ({ id: item.id, donor: item.donor, counts: Object.fromEntries(CASE_METRICS.map(key => [key, item.counts[key]])), note: item.note })) }) })), objections: sheet.objections, review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt, ...(sheet.source === undefined ? {} : { source: Object.fromEntries(['type', 'imageDataUrl', 'filename', 'notes', 'duplicateCount', 'dateBasis'].map(key => [key, sheet.source[key]])) }) };
 }
 export function formatDate(date) { return date.replaceAll('-', '. '); }

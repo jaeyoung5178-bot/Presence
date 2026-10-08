@@ -1,13 +1,18 @@
-import { makeId, normalizeSheet, validateSheet } from './sheet-model.js';
-import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js';
+import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261008-paper2';
+import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261008-paper2';
 
 const DB_NAME = 'presence-paper-sheets-v1';
 const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(id);
 const copy = value => value == null ? value : JSON.parse(JSON.stringify(value));
 const recordKey = (namespace, id) => `${namespace}\u0000${id}`;
 const nextDate = previous => new Date(Math.max(Date.now(), (Date.parse(previous) || 0) + 1)).toISOString();
+const samePhotoOriginal = (a, b) => a?.source?.type === 'photo' && b?.source?.type === 'photo'
+  && a.source.imageDataUrl === b.source.imageDataUrl && a.source.filename === b.source.filename;
+class PhotoImportConflictError extends Error {
+  constructor() { super('이미 있는 원본 사진 ID에 다른 사진 파일이 연결되어 있어 가져오지 않았어요. 기존 기록은 유지돼요.'); this.name = 'PhotoImportConflictError'; }
+}
 const localError = error => {
-  if (error instanceof IdentityChangedError) return error;
+  if (error instanceof IdentityChangedError || error instanceof PhotoImportConflictError) return error;
   const wrapped = new Error(error?.name === 'QuotaExceededError'
     ? '브라우저 저장 공간이 부족해 저장하지 못했어요. 사진이나 JSON 백업을 먼저 내려받아 주세요.'
     : '이 브라우저에 저장하지 못했어요. 입력 내용을 유지한 채 다시 시도하거나 JSON으로 백업해 주세요.');
@@ -154,6 +159,16 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       });
     });
   }
+  async function acceptExistingOriginal(ctx, submitted, remote) {
+    return transaction(ctx, ['records'], 'readwrite', ({ records }, done, guard) => {
+      records.get(submitted.key).onsuccess = guard(event => {
+        const latest = event.target.result;
+        if (!latest || latest.document.revision !== submitted.document.revision) { done(false); return; }
+        records.put({ ...latest, document: copy(remote), pending: false, originalImport: false, baseRevision: remote.revision });
+        done(true);
+      });
+    });
+  }
   async function mergeRemote(ctx, remote) {
     if (!remote || typeof remote !== 'object' || Array.isArray(remote)) throw new Error('서버 기록 형식이 올바르지 않아 병합하지 않았어요.');
     const entries = Object.entries(remote);
@@ -177,14 +192,15 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
   }
   async function synchronize(ctx) {
     const forks = new Map();
+    const skippedOriginals = new Map();
     assertIdentity(ctx);
     if (!ctx.uid) {
       await refreshCount(ctx, { phase: 'idle', mode: 'local', error: '', message: '이 브라우저에 저장 · 개인 콜백 링크 연결 전 기록은 자동 업로드되지 않아요' });
-      return { forks, cloudSaved: false };
+      return { forks, skippedOriginals, cloudSaved: false };
     }
     if (globalThis.navigator?.onLine === false) {
       await refreshCount(ctx, { phase: 'idle', error: '', message: '오프라인 · 이 브라우저에 저장했어요. 연결되면 동기화를 다시 시도해요.' });
-      return { forks, cloudSaved: false };
+      return { forks, skippedOriginals, cloudSaved: false };
     }
     emit({ phase: 'syncing', error: '', message: '계정의 콜백싯을 동기화하고 있어요…' });
     try {
@@ -203,6 +219,11 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
           assertIdentity(ctx);
           if (remote.data && !validDocument(remote.data, row.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
           if (remote.data?.revision === row.document.revision) { await acknowledge(ctx, row); continue; }
+          if (row.originalImport && remote.data) {
+            if (!remote.data.deleted && !samePhotoOriginal(row.document.sheet, remote.data.sheet)) throw new PhotoImportConflictError();
+            if (await acceptExistingOriginal(ctx, row, remote.data)) skippedOriginals.set(row.id, remote.data);
+            continue;
+          }
           if ((remote.data?.revision || null) === row.baseRevision) {
             const response = await cloud.write(row.id, row.document, remote.etag, ctx);
             assertIdentity(ctx);
@@ -212,6 +233,11 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
             assertIdentity(ctx);
             if (remote.data && !validDocument(remote.data, row.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
             if (remote.data?.revision === row.document.revision) { await acknowledge(ctx, row); continue; }
+            if (row.originalImport && remote.data) {
+              if (!remote.data.deleted && !samePhotoOriginal(row.document.sheet, remote.data.sheet)) throw new PhotoImportConflictError();
+              if (await acceptExistingOriginal(ctx, row, remote.data)) skippedOriginals.set(row.id, remote.data);
+              continue;
+            }
           }
           const fork = await preserveConflict(ctx, row, remote.data);
           conflicts++;
@@ -226,11 +252,11 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         message: conflicts ? '다른 곳에서 변경된 기록이 있어요. 서버 기록을 유지하고 내 수정본은 별도 기록으로 보존했어요.' : '계정에 동기화했어요 · 다른 기기에서도 같은 개인 콜백 링크로 열 수 있어요' });
       if (status.pending) emit({ message: '이 브라우저에 저장했어요. 아직 동기화할 기록이 남아 있어요.' });
       changed(ctx);
-      return { forks, cloudSaved: status.pending === 0 };
+      return { forks, skippedOriginals, cloudSaved: status.pending === 0 };
     } catch (error) {
       if (error instanceof IdentityChangedError) { context(); throw error; }
       await refreshCount(ctx, { phase: 'error', error: error.message, message: `${error.message} 동기화 대기 기록은 이 브라우저에 보관돼요.` });
-      return { forks, cloudSaved: false };
+      return { forks, skippedOriginals, cloudSaved: false };
     }
   }
   const api = {
@@ -256,27 +282,44 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         assertIdentity(ctx);
         let conflict = false;
         let sheet;
+        let skipped = false, deleted = false, previousPending = false;
         try {
           sheet = await transaction(ctx, ['records'], 'readwrite', ({ records }, done, guard) => {
             records.get(recordKey(ctx.namespace, input.id)).onsuccess = guard(event => {
               let previous = event.target.result;
               if (previous && !validDocument(previous.document, previous.id)) throw new Error('기존 기록을 읽을 수 없어 덮어쓰지 않았어요.');
+              if (options.importOriginal && input.source?.type === 'photo' && previous) {
+                if (!previous.document.deleted && !samePhotoOriginal(input, previous.document.sheet)) throw new PhotoImportConflictError();
+                skipped = true;
+                deleted = previous.document.deleted;
+                previousPending = previous.pending;
+                done(copy(previous.document.sheet || input));
+                return;
+              }
               sheet = copy(input);
               if (previous && (previous.document.deleted || previous.document.sheet.updatedAt !== input.updatedAt)) {
                 sheet.id = makeId(); previous = null; conflict = true;
               }
               sheet.updatedAt = nextDate(previous?.document.updatedAt || input.updatedAt);
-              records.put(makeRecord(ctx, sheet, previous));
+              const record = makeRecord(ctx, sheet, previous);
+              if (options.importOriginal && input.source?.type === 'photo') record.originalImport = true;
+              records.put(record);
               done(sheet);
             });
           });
+          if (skipped) {
+            await refreshCount(ctx, { message: deleted ? '이미 삭제한 사진 기록이라 다시 가져오지 않았어요.' : '이미 있는 원본 사진이에요. 저장된 내용과 수정 사항을 유지했어요.' });
+            return { sheet: copy(sheet), localSaved: true, cloudSaved: !!ctx.uid && !previousPending, skipped: true, deleted, conflict: false, status: { ...status } };
+          }
           await refreshCount(ctx, { error: '', phase: 'idle', message: '이 브라우저에 저장했어요.' });
           changed(ctx);
         } catch (error) { emit({ phase: 'error', error: error.message, message: error.message }); throw error; }
         const result = options.deferSync ? { forks: new Map(), cloudSaved: false } : await synchronize(ctx);
+        const existingOriginal = result.skippedOriginals?.get(sheet.id);
+        if (existingOriginal) { skipped = true; deleted = existingOriginal.deleted; sheet = copy(existingOriginal.sheet || sheet); }
         if (result.forks.has(sheet.id)) { sheet = result.forks.get(sheet.id); conflict = true; }
         if (conflict) emit({ conflicts: Math.max(status.conflicts, 1), message: '다른 곳에서 변경된 기록이 있어 수정본을 별도 기록으로 보존했어요.' });
-        return { sheet: copy(sheet), localSaved: true, cloudSaved: result.cloudSaved, conflict, status: { ...status } };
+        return { sheet: copy(sheet), localSaved: true, cloudSaved: result.cloudSaved, conflict, skipped, deleted, status: { ...status } };
       });
     },
     deleteSheet(id, options = {}) {

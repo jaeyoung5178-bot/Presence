@@ -95,6 +95,35 @@ try {
     kv.set('fcos_callback_access_key', 'key'); kv.set('fcos_hub_identity', JSON.stringify({ uid: '../admin' }));
     check(readAccountIdentity(local).namespace === 'guest', 'path-injection account IDs are rejected');
 
+    const canvas = window.document.createElement('canvas'); canvas.width = 40; canvas.height = 60;
+    const pen = canvas.getContext('2d'); pen.fillStyle = '#faf5e9'; pen.fillRect(0, 0, 40, 60); pen.fillStyle = '#253040'; pen.fillText('QA', 5, 20);
+    const photo = createSheet(); photo.id = 'photo-' + 'a'.repeat(64);
+    photo.source = { type: 'photo', imageDataUrl: canvas.toDataURL('image/png'), filename: 'synthetic-qa.png', notes: 'Synthetic fixture; no personal photo', duplicateCount: 0, dateBasis: 'written' };
+    identity = guest;
+    const photoStore = createSheetStorage({ ...options, dbName: dbName + '-photo' });
+    const original = await photoStore.saveSheet(photo, { importOriginal: true });
+    let transcribed = original.sheet; transcribed.rows[0].contact = 22; transcribed.meta.theme = 'User transcription';
+    transcribed = (await photoStore.saveSheet(transcribed)).sheet;
+    const reimport = await photoStore.saveSheet(photo, { importOriginal: true });
+    check(reimport.skipped && reimport.sheet.rows[0].contact === 22 && reimport.sheet.updatedAt === transcribed.updatedAt && (await photoStore.loadSheets()).length === 1, 'reimported photo preserves typed edits and does not create a fork');
+    const collision = copy(photo); pen.fillStyle = 'red'; pen.fillRect(0, 0, 20, 20); collision.source.imageDataUrl = canvas.toDataURL('image/png');
+    let rejectedCollision = false;
+    try { await photoStore.saveSheet(collision, { importOriginal: true }); } catch (error) { rejectedCollision = error.name === 'PhotoImportConflictError' && error.message.includes('다른 사진'); }
+    check(rejectedCollision && (await photoStore.loadSheets())[0].rows[0].contact === 22, 'same photo ID with different image bytes fails clearly without modifying existing record');
+    await photoStore.deleteSheet(photo.id);
+    const deletedImport = await photoStore.saveSheet(photo, { importOriginal: true });
+    check(deletedImport.skipped && deletedImport.deleted && (await photoStore.loadSheets()).length === 0, 'reimport does not resurrect an intentionally deleted photo');
+    identity = alice;
+    const remotePhoto = copy(photo); remotePhoto.rows[0].close = 33;
+    remote.set(alice.uid + '/' + photo.id, { version: 1, revision: crypto.randomUUID(), deleted: false, updatedAt: remotePhoto.updatedAt, sheet: remotePhoto });
+    const fresh = createSheetStorage({ ...options, dbName: dbName + '-fresh-photo' });
+    const remoteReimport = await fresh.saveSheet(photo, { importOriginal: true });
+    check(remoteReimport.skipped && remoteReimport.sheet.rows[0].close === 33 && (await fresh.loadSheets()).filter(s => s.id === photo.id).length === 1, 'fresh-browser photo import preserves existing remote transcriptions');
+    const racePhoto = copy(photo); racePhoto.id = 'photo-' + 'b'.repeat(64);
+    beforeWrite = async () => { const latest = copy(racePhoto); latest.rows[0].stop = 44; remote.set(alice.uid + '/' + racePhoto.id, { version: 1, revision: crypto.randomUUID(), deleted: false, updatedAt: latest.updatedAt, sheet: latest }); };
+    const photoRace = await fresh.saveSheet(racePhoto, { importOriginal: true });
+    check(photoRace.skipped && !photoRace.conflict && photoRace.sheet.rows[0].stop === 44, 'concurrent same-original ETag import keeps remote edits without creating a duplicate');
+
     // Exercise cloud auth and RTDB's actual wire format without sending network requests.
     identity = alice;
     const calls = [], wire = new Map(); let authReady = false, anonymousSignins = 0;

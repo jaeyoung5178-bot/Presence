@@ -1,7 +1,9 @@
-import { METRICS, getTotals, hasValues } from './sheet-model.js';
+import { METRICS, getTotals, hasValues } from './sheet-model.js?v=20261008-paper2';
 
-const WIDTH = 900, MARGIN = 44, INNER = WIDTH - MARGIN * 2;
-const INK = '#244d76', GRAPHITE = '#565957', PAPER = '#fffdf7';
+const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
+export const INK = '#292c2a', DONOR_INK = '#b13e43';
+const GRAPHITE = '#555954', PAPER = '#fffef9';
+export const PRINTED_EXAMPLES = ['Ex) 유니세프 하는 중', 'Ex) swp2400001/카드/3만/', '71년생 어머님/ 자모후'];
 let fontsReady;
 export function loadPaperFonts() {
   return fontsReady ||= document.fonts.load('24px "Callback Hand"').catch(() => []).then(() => document.fonts.ready);
@@ -20,7 +22,7 @@ function wrap(ctx, value, width) {
   }
   return lines;
 }
-function handLines(ctx, lines, x, y, lineHeight = 25, size = 24) { pen(ctx, size); lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeight)); }
+function handLines(ctx, lines, x, y, lineHeight = 25, size = 24, color = INK) { pen(ctx, size); ctx.fillStyle = color; lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeight)); }
 function line(ctx, x, y, x2, y2, color = GRAPHITE, width = 1) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke(); }
 function box(ctx, x, y, width, height, fill) { if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, width, height); } ctx.strokeStyle = GRAPHITE; ctx.lineWidth = .8; ctx.strokeRect(x, y, width, height); }
 function centered(ctx, text, x, y) { const previous = ctx.textAlign; ctx.textAlign = 'center'; ctx.fillText(text, x, y); ctx.textAlign = previous; }
@@ -36,7 +38,14 @@ export function tallyGroups(value) {
   return Array.from({ length: Math.ceil(value / 5) }, (_, i) => Math.min(5, value - i * 5));
 }
 function tallyHeight(value, width) { const cols = Math.max(1, Math.floor((width - 18) / 25)); return Math.max(40, Math.ceil(Math.ceil((value || 0) / 5) / cols) * 29 + 16); }
-function drawTally(ctx, value, x, y, width, height, seed) {
+export function tallyInk(row, metric) {
+  const total = row[metric] ?? 0, cases = row.donorCases || [], assigned = cases.reduce((sum, item) => sum + item.counts[metric], 0);
+  // Unclassified contacts remain black; explicit cases keep their entered order.
+  const colors = Array.from({ length: Math.max(0, total - assigned) }, () => INK);
+  for (const item of cases) for (let i = 0; i < item.counts[metric] && colors.length < total; i++) colors.push(item.donor ? DONOR_INK : INK);
+  return colors;
+}
+function drawTally(ctx, value, x, y, width, height, seed, colors = []) {
   if (value === null || value === undefined) return;
   if (value === 0) { line(ctx, x + width / 2 - 7, y + height / 2 + 1, x + width / 2 + 8, y + height / 2 - 1, INK, 1.5); return; }
   const groups = tallyGroups(value), cols = Math.max(1, Math.floor((width - 18) / 25)), visibleCols = Math.min(cols, groups.length);
@@ -45,36 +54,47 @@ function drawTally(ctx, value, x, y, width, height, seed) {
   groups.forEach((strokes, i) => {
     const jitter = Math.sin(seed * 13 + i * 11) * .7;
     ctx.save(); ctx.translate(startX + i % cols * 25, startY + Math.floor(i / cols) * 29 + jitter); ctx.rotate(Math.sin(seed + i * 7) * .024);
-    tallyStrokes(strokes).forEach(([[a, b], [c, d]], s) => { ctx.beginPath(); ctx.moveTo(a, b); ctx.quadraticCurveTo((a + c) / 2 + Math.sin(seed + i + s) * .5, (b + d) / 2 + .35, c, d); ctx.strokeStyle = INK; ctx.lineWidth = 1.55; ctx.stroke(); });
+    tallyStrokes(strokes).forEach(([[a, b], [c, d]], s) => { ctx.beginPath(); ctx.moveTo(a, b); ctx.quadraticCurveTo((a + c) / 2 + Math.sin(seed + i + s) * .5, (b + d) / 2 + .35, c, d); ctx.strokeStyle = colors[i * 5 + s] || INK; ctx.lineWidth = 1.55; ctx.stroke(); });
     ctx.restore();
   });
   ctx.restore();
 }
 function plan(ctx, sheet) {
-  const metaColumns = [ [['Name', sheet.meta.name], ['Date', sheet.date.replaceAll('-', '. ')]], [['Location', sheet.meta.location], ['Team', sheet.meta.team]], [['Weather', sheet.meta.weather], ['Theme 테마', sheet.meta.theme]] ];
-  pen(ctx, 23);
-  const metadata = metaColumns.map(col => col.map(([label, value]) => ({ label, lines: wrap(ctx, value, INNER / 3 - 32) })));
-  const metaFirstHeight = Math.max(...metadata.map(col => col[0].lines.length)) * 23 + 24;
-  const metaSecondHeight = Math.max(...metadata.map(col => col[1].lines.length)) * 23 + 24;
-  const tableY = 104 + metaFirstHeight + metaSecondHeight;
-  const cols = [90, 126, 126, 126, 126, 218];
+  const metaColumns = [ [['Name:', sheet.meta.name], ['Weather:', sheet.meta.weather]], [['Team:', sheet.meta.team], ['Location:', sheet.meta.location]], [['Date:', sheet.date.replaceAll('-', '. ')], ['오늘의 테마:', sheet.meta.theme]] ];
+  const metadata = metaColumns.map((col, i) => col.map(([label, value]) => {
+    const offset = [40, 16, 0][i]; print(ctx, 14, 700); const labelWidth = ctx.measureText(label).width + 10;
+    pen(ctx, 23); return { label, x: MARGIN + i * INNER / 3 + offset, labelWidth, lines: wrap(ctx, value, INNER / 3 - offset - labelWidth - 10) };
+  }));
+  const metaFirstHeight = Math.max(...metadata.map(col => col[0].lines.length)) * 24 + 10;
+  const metaSecondHeight = Math.max(...metadata.map(col => col[1].lines.length)) * 24;
+  const tableY = 112 + metaFirstHeight + metaSecondHeight + 16;
+  const cols = [144, 134, 112, 108, 108, 198];
   pen(ctx, 22);
   const processLines = METRICS.slice(0, 4).map((key, i) => wrap(ctx, sheet.processGoals[key], cols[i + 1] - 16));
-  const goalHeight = Math.max(36, ...processLines.map(lines => lines.length * 23 + 12));
-  const rowHeights = sheet.rows.map(row => Math.max(44, ...METRICS.slice(0, 4).map((key, i) => tallyHeight(row[key], cols[i + 1])), row.rehash !== null ? (row.endTime ? 80 : 58) : 44, row.endTime ? 58 : 44));
+  const goalHeight = Math.max(34, ...processLines.map(lines => lines.length * 23 + 10));
+  const rowHeights = sheet.rows.map(row => Math.max(43, ...METRICS.slice(0, 4).map((key, i) => tallyHeight(row[key], cols[i + 1]))));
   pen(ctx, 23);
   const objectionLines = wrap(ctx, sheet.objections, cols[5] - 24);
+  const notes = sheet.objections ? [{ lines: objectionLines, color: INK }] : [];
+  let caseNumber = 0;
+  sheet.rows.forEach(row => (row.donorCases || []).forEach(item => {
+    caseNumber++;
+    if (item.note) notes.push({ lines: wrap(ctx, `${caseNumber <= 20 ? String.fromCodePoint(0x245f + caseNumber) : `${caseNumber}.`} ${item.note}`, cols[5] - 20), color: item.donor ? DONOR_INK : INK });
+  }));
+  print(ctx, 12);
+  const exampleLines = PRINTED_EXAMPLES.flatMap(text => wrap(ctx, text, cols[5] - 18));
+  const exampleHeight = exampleLines.length * 21 + 15;
   const rowTotal = rowHeights.reduce((a, b) => a + b, 0);
-  const tableBodyHeight = Math.max(rowTotal, objectionLines.length * 24 + 22);
+  const tableBodyHeight = Math.max(rowTotal, exampleHeight + notes.reduce((sum, note) => sum + note.lines.length * 23 + 7, 0) + 16);
   if (tableBodyHeight > rowTotal) rowHeights[rowHeights.length - 1] += tableBodyHeight - rowTotal;
-  const summaryY = tableY + 36 + goalHeight + tableBodyHeight + 24;
-  const reviewY = summaryY + 117;
+  const summaryY = tableY + 32 + goalHeight + tableBodyHeight + 23;
+  const reviewY = summaryY + 102;
   pen(ctx, 24);
   const reviews = ['loa', 'pitch', 'attitude'].map(key => ({ good: wrap(ctx, sheet.review[key].good, INNER / 3 - 26), bad: wrap(ctx, sheet.review[key].bad, INNER / 3 - 26) }));
-  const goodHeight = Math.max(152, ...reviews.map(r => r.good.length * 25 + 52));
-  const badHeight = Math.max(152, ...reviews.map(r => r.bad.length * 25 + 52));
-  const height = Math.max(Math.round(WIDTH * 297 / 210), reviewY + 32 + goodHeight + badHeight + 62);
-  return { metadata, metaFirstHeight, tableY, cols, goalHeight, processLines, rowHeights, tableBodyHeight, objectionLines, summaryY, reviewY, reviews, goodHeight, badHeight, height };
+  const goodHeight = Math.max(145, ...reviews.map(r => r.good.length * 25 + 52));
+  const badHeight = Math.max(145, ...reviews.map(r => r.bad.length * 25 + 46));
+  const height = Math.max(Math.round(WIDTH * 297 / 210), reviewY + 32 + goodHeight + badHeight + 66);
+  return { metadata, metaFirstHeight, tableY, cols, goalHeight, processLines, rowHeights, tableBodyHeight, notes, exampleLines, exampleHeight, summaryY, reviewY, reviews, goodHeight, badHeight, height };
 }
 export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
   await loadPaperFonts();
@@ -86,46 +106,47 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
   canvas.style.aspectRatio = `${WIDTH} / ${p.height}`;
   ctx.scale(actualScale, actualScale); ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = PAPER; ctx.fillRect(0, 0, WIDTH, p.height);
-  ctx.fillStyle = 'rgba(98,84,44,.026)';
-  for (let i = 0; i < p.height * 2; i++) { const x = (Math.sin(i * 12.9898) * 43758.5453) % 1; const y = (Math.cos(i * 7.233) * 16384.73) % 1; ctx.fillRect(Math.abs(x) * WIDTH, Math.abs(y) * p.height, .75, .75); }
   print(ctx, 26, 700); centered(ctx, 'Call Back Sheet', WIDTH / 2, 64);
-  print(ctx, 9, 600); ctx.fillStyle = '#8d938d'; centered(ctx, 'P R E S E N C E   /   F I E L D   N O T E S', WIDTH / 2, 85);
-  p.metadata.forEach((col, i) => col.forEach((field, j) => { const x = MARGIN + i * INNER / 3 + 10, y = 118 + (j ? p.metaFirstHeight : 0); print(ctx, 12, 650); ctx.fillText(field.label, x, y); handLines(ctx, field.lines, x, y + 25, 23, 23); }));
-  const headers = ['Field Time', 'Contact / Intro', 'Stop / Qualifying', 'Presentation', 'Close', 'Time & Why'];
+  p.metadata.forEach(col => col.forEach((field, j) => { const y = 112 + (j ? p.metaFirstHeight : 0); print(ctx, 14, 700); ctx.fillText(field.label, field.x, y); handLines(ctx, field.lines, field.x + field.labelWidth, y, 24, 23); }));
+  const headers = ['Field Time', 'Contact', 'Stop', 'Presentation', 'Close', '오브젝션 핸들링 사유'];
   let x = MARGIN;
-  p.cols.forEach((w, i) => { box(ctx, x, p.tableY, w, 36, '#e9eae4'); print(ctx, i === 2 ? 11 : 12, 650); centered(ctx, headers[i], x + w / 2, p.tableY + 23); x += w; });
+  p.cols.forEach((w, i) => { box(ctx, x, p.tableY, w, 32, '#e9eae4'); print(ctx, i === 5 ? 14 : 15, 700); centered(ctx, headers[i], x + w / 2, p.tableY + 22); x += w; });
   x = MARGIN;
-  p.cols.forEach((w, i) => { box(ctx, x, p.tableY + 36, w, p.goalHeight, '#f3f2eb'); if (!i) { print(ctx, 12, 650); centered(ctx, '과정목표', x + w / 2, p.tableY + 36 + p.goalHeight / 2 + 5); } else if (i < 5) handLines(ctx, p.processLines[i - 1], x + 10, p.tableY + 60, 23, 22); else { print(ctx, 11); centered(ctx, '오브젝션 · 핸들링 사유', x + w / 2, p.tableY + 36 + p.goalHeight / 2 + 4); } x += w; });
-  let y = p.tableY + 36 + p.goalHeight;
+  p.cols.forEach((w, i) => { box(ctx, x, p.tableY + 32, w, p.goalHeight, '#f0f0e9'); if (!i) { print(ctx, 14, 700); centered(ctx, '과정 목표(Goal)', x + w / 2, p.tableY + 32 + p.goalHeight / 2 + 5); } else if (i < 5) handLines(ctx, p.processLines[i - 1], x + 10, p.tableY + 56, 23, 22); else { print(ctx, 15, 700); centered(ctx, '시리얼(기본정보)', x + w / 2, p.tableY + 32 + p.goalHeight / 2 + 5); } x += w; });
+  let y = p.tableY + 32 + p.goalHeight;
   const notesX = MARGIN + p.cols.slice(0, 5).reduce((a, b) => a + b, 0);
   box(ctx, notesX, y, p.cols[5], p.tableBodyHeight);
-  handLines(ctx, p.objectionLines, notesX + 12, y + 28, 24, 23);
+  print(ctx, 12); p.exampleLines.forEach((text, index) => ctx.fillText(text, notesX + 9, y + 25 + index * 21));
+  let noteY = y + p.exampleHeight + 19;
+  p.notes.forEach(note => { handLines(ctx, note.lines, notesX + 10, noteY, 23, 23, note.color); noteY += note.lines.length * 23 + 7; });
   sheet.rows.forEach((row, index) => {
     const h = p.rowHeights[index]; x = MARGIN;
-    p.cols.slice(0, 5).forEach((w, i) => { box(ctx, x, y, w, h); if (i) drawTally(ctx, row[METRICS[i - 1]], x, y, w, h, index * 5 + i); else {
-      const timeline = row.time && row.endTime ? [row.time, `– ${row.endTime}`] : [row.time || (row.endTime ? `– ${row.endTime}` : '')];
-      const linesH = timeline.length * 21 + (row.rehash !== null ? 16 : 0), start = y + Math.min(24, (h - linesH) / 2 + 19);
-      pen(ctx, 23); timeline.forEach((value, j) => centered(ctx, value, x + w / 2, start + j * 21));
-      if (row.rehash !== null) { print(ctx, 10); ctx.fillStyle = INK; centered(ctx, `Rehash ${row.rehash}`, x + w / 2, start + timeline.length * 21 - 2); }
+    p.cols.slice(0, 5).forEach((w, i) => { box(ctx, x, y, w, h); if (i) drawTally(ctx, row[METRICS[i - 1]], x, y, w, h, index * 5 + i, tallyInk(row, METRICS[i - 1])); else {
+      const baseline = y + Math.min(29, h / 2 + 8);
+      pen(ctx, 22); ctx.fillText(row.time, x + 10, baseline); if (row.endTime) ctx.fillText(row.endTime, x + 91, baseline);
+      print(ctx, 27, 750); centered(ctx, '/', x + 81, baseline + 1);
     } x += w; }); y += h;
   });
-  box(ctx, MARGIN, p.summaryY, INNER, 30, '#e9eae4'); print(ctx, 15, 700); centered(ctx, '오늘의 목표 & 결과', WIDTH / 2, p.summaryY + 21);
-  const summaryLabels = ['Contact / Intro', 'Stop / Short Story', 'Presentation', 'Close', 'Rehash'], totals = getTotals(sheet);
+  box(ctx, MARGIN, p.summaryY, INNER, 30, '#e9eae4'); print(ctx, 15, 700); centered(ctx, '오늘의 목표 & 결과 (환경을 탓하지 말고 나의 노력을 탓하라)', WIDTH / 2, p.summaryY + 21);
+  const summaryLabels = ['Contact', 'Stop', 'Presentation', 'Close', 'Rehash'], totals = getTotals(sheet);
   METRICS.forEach((key, i) => {
     const w = INNER / 5, x = MARGIN + i * w;
-    box(ctx, x, p.summaryY + 30, w, 28, '#f3f2eb'); print(ctx, 11, 650); centered(ctx, summaryLabels[i], x + w / 2, p.summaryY + 49);
-    box(ctx, x, p.summaryY + 58, w, 59); pen(ctx, 29); centered(ctx, `${sheet.goals[key] ?? '—'}   /   ${hasValues(sheet, key) ? totals[key] : '—'}`, x + w / 2, p.summaryY + 88);
-    print(ctx, 9); ctx.fillStyle = '#818b87'; centered(ctx, '목표  /  결과', x + w / 2, p.summaryY + 106);
+    box(ctx, x, p.summaryY + 30, w, 27, '#f0f0e9'); print(ctx, 15, 700); centered(ctx, summaryLabels[i], x + w / 2, p.summaryY + 49);
+    box(ctx, x, p.summaryY + 57, w, 45);
+    // The paper prints a slash, with independently positioned handwritten goal/result values.
+    pen(ctx, 28); ctx.textAlign = 'right'; ctx.fillText(sheet.goals[key] ?? '', x + w / 2 - 16, p.summaryY + 87); ctx.textAlign = 'left'; ctx.fillText(hasValues(sheet, key) ? totals[key] : '', x + w / 2 + 15, p.summaryY + 87);
+    print(ctx, 27, 750); centered(ctx, '/', x + w / 2, p.summaryY + 89);
   });
   box(ctx, MARGIN, p.reviewY, INNER, 32, '#e9eae4'); print(ctx, 14, 700); centered(ctx, '내일을 위한 Analysis & Evaluation', WIDTH / 2, p.reviewY + 22);
   p.reviews.forEach((review, i) => {
     const w = INNER / 3, x = MARGIN + i * w;
     for (const [key, top, height] of [['good', p.reviewY + 32, p.goodHeight], ['bad', p.reviewY + 32 + p.goodHeight, p.badHeight]]) {
-      box(ctx, x, top, w, height); print(ctx, 13, 700); ctx.fillText(['L.O.A', 'Pitch / Skill', 'Attitude'][i], x + 12, top + 23); ctx.textAlign = 'right'; ctx.fillText(key === 'good' ? '(+)' : '(−)', x + w - 12, top + 23); ctx.textAlign = 'left';
-      handLines(ctx, review[key], x + 13, top + 53, 25, 24);
+      box(ctx, x, top, w, height); print(ctx, 15, 700);
+      if (key === 'good') { const title = ['Number', 'Pitch(Skill)', 'Attitude(Mental)'][i]; ctx.fillText(title, x + 10, top + 23); line(ctx, x + 10, top + 26, x + 10 + ctx.measureText(title).width, top + 26, '#2e3535', 1); }
+      ctx.textAlign = 'right'; ctx.fillText(key === 'good' ? '(+)' : '(−)', x + w - 12, top + 23); ctx.textAlign = 'left';
+      handLines(ctx, review[key], x + 13, top + (key === 'good' ? 53 : 47), 25, 24);
     }
   });
-  print(ctx, 9); ctx.fillStyle = '#9b9f94'; centered(ctx, '매일의 기록이 내일의 나를 만듭니다.', WIDTH / 2, p.height - 26);
   return { width: canvas.width, height: canvas.height, logicalHeight: p.height };
 }
 export async function exportSheetPNG(sheet) {
