@@ -26,6 +26,7 @@ try {
       if (url.pathname.endsWith('firebase-app.js')) { body = 'export const getApp=()=>({});export const initializeApp=()=>({});'; contentType = 'text/javascript'; }
       else if (url.pathname.endsWith('firebase-auth.js')) { body = 'export const browserLocalPersistence={};const user={uid:"open-record-session",getIdToken:async()=>"test-token"};export const getAuth=()=>({currentUser:user,authStateReady:async()=>{}});export const setPersistence=async()=>{};export const signInAnonymously=async()=>({user});export const signOut=async()=>{};'; contentType = 'text/javascript'; }
       else if (url.pathname.startsWith('/callbackSessions/')) body = JSON.stringify({ userUid: uid, accessKey: 'synthetic-only', createdAt: 1 });
+      else if (url.pathname.endsWith('/_paperSheetsAnalysisIndex.json')) body = request.method() === 'PUT' ? request.postData() : 'null';
       else if (url.pathname.includes('/_paperSheets')) {
         assert.ok(url.pathname.includes(`/${uid}/`), 'only current synthetic namespace is accessed');
         const id = url.pathname.split('/_paperSheets/')[1]?.replace(/\.json$/, '');

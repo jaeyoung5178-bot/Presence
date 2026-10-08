@@ -1,4 +1,5 @@
 import { validateSheet } from '../sheets/sheet-model.js?v=20261009-transcription1';
+import { projectLocalAnalysisRows, validAnalysisDocument, validImageDigest } from './analysis-projection.js?v=20261009-analysisindex1';
 
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(value);
 function validDocument(value, id) {
@@ -30,6 +31,34 @@ export function mergeAnalysisSources(localRows, remote = null) {
     selected.set(id, document.sheet);
   }
   return { records: [...selected.values()], remoteRecords, pending: [...local.values()].filter(row => row.pending).length, invalid };
+}
+
+// Summaries remain display-only. They never enter the writer's records/drafts stores.
+export function mergeAnalysisProjections(localResult, remote = null) {
+  if (remote !== null && (!remote || typeof remote.documents !== 'object' || !remote.documents || Array.isArray(remote.documents))) throw new Error('서버의 분석 기록 형식을 확인할 수 없어요.');
+  const local = new Map(), selected = new Map(); let invalid = localResult.invalid || 0, remoteRecords = 0;
+  for (const row of localResult.rows) {
+    if (!validAnalysisDocument(row.document, row.id)) { invalid++; continue; }
+    local.set(row.id, row);
+    if (!row.document.deleted) selected.set(row.id, row.document.analysisRecord);
+  }
+  for (const [id, document] of Object.entries(remote?.documents || {})) {
+    if (!validAnalysisDocument(document, id)) { invalid++; continue; }
+    if (document.deleted) { selected.delete(id); continue; }
+    remoteRecords++;
+    const pending = local.get(id);
+    if (pending?.pending) {
+      if (pending.document.deleted) { selected.delete(id); continue; }
+      const record = pending.document.analysisRecord, source = document.analysisRecord.source;
+      if (source?.transcription && record.source?.type === 'photo' && !record.source.transcription && validImageDigest(source.imageDigest) && source.imageDigest === record.source.imageDigest && source.filename === record.source.filename) selected.set(id, { ...record, source: { ...record.source, transcription: source.transcription } });
+      continue;
+    }
+    selected.set(id, document.analysisRecord);
+  }
+  return { records: [...selected.values()], remoteRecords, pending: [...local.values()].filter(row => row.pending).length, invalid: invalid + (remote?.invalid || 0) };
+}
+export async function readLocalAnalysisProjections(identity, idb = globalThis.indexedDB) {
+  return projectLocalAnalysisRows(await readLocalAnalysisRows(identity, idb));
 }
 
 export async function readLocalAnalysisRows(identity, idb = globalThis.indexedDB) {

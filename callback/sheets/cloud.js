@@ -162,7 +162,7 @@ export function createCloudClient({ readIdentity = readAccountIdentity, fetchImp
     assertIdentity(context);
     return user;
   }
-  async function authenticated(context, path, options, step) {
+  async function authenticated(context, path, options, step, allowedStatuses = []) {
     const user = await ensure(context);
     let response = await userRequest(context, user, path, options);
     if ((response.status === 401 || response.status === 403) && context.fallbackAccessKey && activeAccessKey !== context.fallbackAccessKey) {
@@ -173,7 +173,7 @@ export function createCloudClient({ readIdentity = readAccountIdentity, fetchImp
       attempt.catch(() => { if (ready === attempt) ready = null; });
       response = await userRequest(context, await attempt, path, options);
     }
-    if (!response.ok && response.status !== 412) throw serverError(response.status, step);
+    if (!response.ok && response.status !== 412 && !allowedStatuses.includes(response.status)) throw serverError(response.status, step);
     return response;
   }
   function path(context, id = '') {
@@ -181,6 +181,41 @@ export function createCloudClient({ readIdentity = readAccountIdentity, fetchImp
     return `callbacksheets/${context.uid}/_paperSheets${id ? `/${id}` : ''}`;
   }
   return {
+    // Only this analysis path accepts 304. The writer's readAll/read/write contracts stay unchanged.
+    async readAnalysisSnapshot(context) {
+      const { ANALYSIS_INDEX_KEY, decodeAnalysisIndex, projectCanonicalDocuments, createAnalysisIndex, validSourceEtag } = await import('../analysis/analysis-projection.js?v=20261009-analysisindex1');
+      assertIdentity(context);
+      const sourcePath = path(context), indexPath = `callbacksheets/${context.uid}/${ANALYSIS_INDEX_KEY}`;
+      let indexResponse = null, candidate = null;
+      try {
+        indexResponse = await authenticated(context, indexPath, { headers: { 'X-Firebase-ETag': 'true' } }, '분석 요약 조회');
+        if (indexResponse.status === 200 && indexResponse.data) {
+          try { candidate = { documents: decodeAnalysisIndex(indexResponse.data, context), etag: indexResponse.data.sourceEtag }; } catch { /* Invalid summaries never become analysis evidence. */ }
+        }
+      } catch (error) { if (error instanceof IdentityChangedError) throw error; }
+      assertIdentity(context);
+      let response = await authenticated(context, sourcePath, { headers: { 'X-Firebase-ETag': 'true', ...(candidate ? { 'If-None-Match': candidate.etag } : {}) } }, '원본 기록 확인', candidate ? [304, 400, 405, 501] : []);
+      assertIdentity(context);
+      if (candidate && response.status === 304) return { documents: candidate.documents, invalid: 0, source: 'index', cacheUpdate: Promise.resolve({ saved: false, reason: 'current' }) };
+      // A server that rejects conditional GET can still serve the ordinary canonical endpoint.
+      if (candidate && [400, 405, 501].includes(response.status)) response = await authenticated(context, sourcePath, { headers: { 'X-Firebase-ETag': 'true' } }, '원본 기록 조회');
+      if (response.status !== 200) throw serverError(response.status, '원본 기록 조회');
+      const projected = await projectCanonicalDocuments(response.data);
+      assertIdentity(context);
+      let cacheUpdate = Promise.resolve({ saved: false, reason: 'unavailable' });
+      if (!projected.invalid && validSourceEtag(response.etag) && validSourceEtag(indexResponse?.etag)) {
+        let nextIndex;
+        try { nextIndex = createAnalysisIndex(projected.documents, { uid: context.uid, sourceEtag: response.etag }); } catch { /* A cache failure cannot invalidate successfully read originals. */ }
+        if (nextIndex) {
+          // The original body and its ETag come from this same GET. A stale publisher cannot
+          // overwrite a newer index; a 412 is final and never retried with an unconditional PUT.
+          cacheUpdate = authenticated(context, indexPath, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'If-Match': indexResponse.etag, 'X-Firebase-ETag': 'true' }, body: JSON.stringify(nextIndex) }, '분석 요약 갱신')
+            .then(result => ({ saved: result.ok, reason: result.status === 412 ? 'changed' : result.ok ? 'updated' : 'unavailable' }))
+            .catch(() => ({ saved: false, reason: 'unavailable' }));
+        }
+      }
+      return { ...projected, source: 'canonical', cacheUpdate };
+    },
     async readAll(context) {
       const response = await authenticated(context, path(context), undefined, '기록 목록 조회');
       if (!response.data) return {};

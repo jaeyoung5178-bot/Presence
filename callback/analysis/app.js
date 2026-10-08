@@ -1,6 +1,6 @@
-import { analyze, METRICS, localToday, authorKey, authorLabel, defaultAuthor, filterAuthor } from './analysis-model.js?v=20261009-datebasis1';
-import { createCloudClient, readAccountIdentity } from '../sheets/cloud.js?v=20261009-transcription1';
-import { mergeAnalysisSources, readLocalAnalysisRows } from './analysis-sources.js?v=20261009-analysiscloud1';
+import { analyze, METRICS, localToday, authorKey, authorLabel, defaultAuthor, filterAuthor } from './analysis-model.js?v=20261009-analysisindex1';
+import { createCloudClient, readAccountIdentity } from '../sheets/cloud.js?v=20261009-analysisindex1';
+import { mergeAnalysisProjections, readLocalAnalysisProjections } from './analysis-sources.js?v=20261009-analysisindex1';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -44,17 +44,17 @@ async function load() {
   $('#connect-workbook').hidden = !!identity.uid;
   $('#account-status').dataset.state = 'loading';
   try {
-    const localRequest = readLocalAnalysisRows(identity).then(rows => {
-      if (version === request && readAccountIdentity().signature === identity.signature) { displayRecords(mergeAnalysisSources(rows).records); if (identity.uid && !records.length) $('#empty').hidden = true; }
+    const localRequest = readLocalAnalysisProjections(identity).then(rows => {
+      if (version === request && readAccountIdentity().signature === identity.signature) { displayRecords(mergeAnalysisProjections(rows).records); if (identity.uid && !records.length) $('#empty').hidden = true; }
       return rows;
     });
-    const [localResult, remoteResult] = await Promise.allSettled([localRequest, identity.uid ? cloud.readAll(identity) : Promise.resolve(null)]);
+    const [localResult, remoteResult] = await Promise.allSettled([localRequest, identity.uid ? cloud.readAnalysisSnapshot(identity) : Promise.resolve(null)]);
     if (version !== request || readAccountIdentity().signature !== identity.signature) return;
-    const local = localResult.status === 'fulfilled' ? localResult.value : [];
+    const local = localResult.status === 'fulfilled' ? localResult.value : { rows: [], invalid: 0 };
     const remote = remoteResult.status === 'fulfilled' ? remoteResult.value : null;
     let merged;
-    try { merged = mergeAnalysisSources(local, remote); }
-    catch (error) { merged = mergeAnalysisSources(local); loadError = error.message; }
+    try { merged = mergeAnalysisProjections(local, remote); }
+    catch (error) { merged = mergeAnalysisProjections(local); loadError = error.message; }
     if (localResult.status === 'rejected') loadError = localResult.reason.message;
     if (remoteResult.status === 'rejected') loadError = remoteResult.reason.message;
     if (merged.invalid) loadError = `${loadError ? loadError + ' ' : ''}형식을 확인할 수 없는 기록 ${merged.invalid}개는 분석에서 제외했어요.`;
@@ -95,7 +95,7 @@ function render() {
   if (previousDates) $('#comparison-period').textContent += ` · ${previousDates} 포함 · 실제 기록일 확인 필요`;
   $('#metrics').innerHTML = METRICS.map(({ id, label }) => { const now = current.metrics[id], before = previous.metrics[id]; return `<article class="metric-card"><h3>${label}</h3><div class="metric-number">${number(now.total)}<small>${id === 'donors' ? '명' : '회'}</small></div><p>${now.knownRecords}/${current.records}개 확인${now.missingRecords ? ` · ${now.missingRecords}개 미확인` : ''}${now.transcriptionRecords ? `<br>사진에서 읽은 합계 ${now.transcriptionRecords}개 포함` : ''}<br>기록일 평균 ${number(now.perDay)} · ${now.knownDays}일 기준</p><p class="comparison">${compare(now, before)}<br>이전 평균 ${number(before.perDay)} · ${before.knownDays}일 기준</p></article>`; }).join('');
   $('#rates').innerHTML = current.rates.map(rate => `<article class="rate"><h3>${rate.from === 'contact' ? 'Contact → Stop' : rate.from === 'stop' ? 'Stop → Presentation' : 'Presentation → Close'}</h3><strong>${rate.percent === null ? '—' : number(rate.percent) + '%'}</strong><p>${number(rate.numerator)} / ${number(rate.denominator)} · 시간별 입력 ${rate.rows}행 · 사진 합계 ${rate.photoRecords}개${rate.exceeds ? '<br>뒷 단계가 더 많아요. 입력 기준을 확인해 주세요.' : ''}</p></article>`).join('');
-  $('#source-detail').textContent = `이번 기간 후원자 근거: 체크된 케이스·특이사항 ${current.donorBasis.cases}개 기록 · 입력 Rehash ${current.donorBasis.rehash}개 · 사진 확인값 ${current.donorBasis.photo}개 · 사진 전사 Rehash ${current.donorBasis.transcription}개 · 미확인 ${current.donorBasis.unknown}개. 자동 기록 도구의 세션은 이 분석에 아직 합산하지 않아요. 서버 기록은 현재 연결 계정으로 읽으며, 이 화면에서 기록을 업로드하거나 수정하지 않아요.`;
+  $('#source-detail').textContent = `이번 기간 후원자 근거: 체크된 케이스·특이사항 ${current.donorBasis.cases}개 기록 · 입력 Rehash ${current.donorBasis.rehash}개 · 사진 확인값 ${current.donorBasis.photo}개 · 사진 전사 Rehash ${current.donorBasis.transcription}개 · 미확인 ${current.donorBasis.unknown}개. 자동 기록 도구의 세션은 이 분석에 아직 합산하지 않아요. 서버 기록은 현재 연결 계정으로 읽으며, 이 화면에서 원본 콜백싯을 업로드하거나 수정하지 않아요.`;
   if (currentDates) $('#source-detail').textContent += ` 날짜 근거: ${currentDates}을 포함해요. 해당 사진은 실제 기록일을 확인해야 하며, 원본 숫자와 정렬 날짜는 그대로 사용했어요.`;
   renderChart(); renderReview('pitch', 'Pitch · Skill', '설명과 대화에서 발견한 것'); renderReview('attitude', 'Attitude · Mental', '필드에 임하는 나의 태도');
 }

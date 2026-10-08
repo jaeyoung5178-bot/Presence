@@ -1,4 +1,5 @@
 import { getDonorSummary, getMetricReading, getReviewReading, hasValues } from '../sheets/sheet-model.js?v=20261009-transcription1';
+import { validImageDigest } from './analysis-projection.js?v=20261009-analysisindex1';
 export const PERIODS = [{ id: 'week', label: '1주', days: 7 }, { id: 'month', label: '1개월', months: 1 }, { id: 'quarter', label: '3개월', months: 3 }, { id: 'half', label: '6개월', months: 6 }, { id: 'year', label: '1년', months: 12 }];
 export const METRICS = [{ id: 'contact', label: 'Contact' }, { id: 'stop', label: 'Stop' }, { id: 'presentation', label: 'Presentation' }, { id: 'close', label: 'Close' }, { id: 'donors', label: '후원자' }];
 // Only this alias pair has been confirmed by the owner. Never infer other surnames.
@@ -33,7 +34,7 @@ export function metricValue(sheet, metric) {
 }
 export function uniqueRecords(records) {
   const ids = new Set(), photos = new Set();
-  return [...records].filter(record => validDate(record.date)).sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))).filter(record => { if (ids.has(record.id)) return false; ids.add(record.id); if (record.source?.type === 'photo' && record.source.imageDataUrl) { if (photos.has(record.source.imageDataUrl)) return false; photos.add(record.source.imageDataUrl); } return true; });
+  return [...records].filter(record => validDate(record.date)).sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))).filter(record => { if (ids.has(record.id)) return false; ids.add(record.id); if (record.source?.type === 'photo') { const key = validImageDigest(record.source.imageDigest) ? record.source.imageDigest : record.source.imageDataUrl; if (key) { if (photos.has(key)) return false; photos.add(key); } } return true; });
 }
 function dateBasisCounts(records) {
   return records.reduce((counts, record) => {

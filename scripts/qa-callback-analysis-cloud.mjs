@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createSheet } from '../callback/sheets/sheet-model.js';
 import { mergeAnalysisSources } from '../callback/analysis/analysis-sources.js';
+import { createAnalysisIndex, projectCanonicalDocuments, ANALYSIS_INDEX_KEY } from '../callback/analysis/analysis-projection.js';
 
 const require = createRequire('/Users/jaeyoung5178/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json');
 const BASE = process.env.QA_BASE_URL || 'http://127.0.0.1:8768', OUT = process.env.QA_OUTPUT || '/tmp/presence-analysis-cloud-qa';
@@ -24,18 +25,22 @@ check('fresh browser can use96 server records with no IDB',mergeAnalysisSources(
 const immutable=JSON.stringify(remote);mergeAnalysisSources([],remote);check('display merge does not mutate server data',JSON.stringify(remote)===immutable);
 const other=sheet('other-author',50);other.meta.name='김민수';const unknown=sheet('unknown-author',50);unknown.meta.name='';
 const mixedRemote={...remote,[other.id]:document(other),[unknown.id]:document(unknown)};
+// A real-shaped photo DTO travels through the browser's conditional304 path too.
+// Existing manually entered numbers must still take priority over its transcription.
+mixedRemote['server-0'].sheet.source={type:'photo',imageDataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lU8AAAAASUVORK5CYII=',filename:'synthetic-photo.png',notes:'',duplicateCount:0,dateBasis:'capture',transcription:{version:1,status:'partial',totals:{contact:999,stop:null,presentation:3,close:2,rehash:99},review:{loa:{good:'과정 목표 달성',bad:'시간 배분 점검'},pitch:{good:'',bad:'핵심 설명을 짧게 전달하기'},attitude:{good:'끝까지 인사',bad:''}}}};
 
 await fs.mkdir(OUT,{recursive:true});
 const {chromium}=require('playwright');const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
 try{
 for(const role of ['member','leader','admin'])for(const viewport of [{width:390,height:844},{width:1024,height:768},{width:1440,height:900}]){
   const tag=`${role}-${viewport.width}`,uid=`cloud-qa-${role}`,context=await browser.newContext({viewport,locale:'ko-KR',timezoneId:'Asia/Seoul',serviceWorkers:'block',reducedMotion:'reduce'});
+  const analysisIndex=createAnalysisIndex((await projectCanonicalDocuments(mixedRemote)).documents,{uid,sourceEtag:'"source-fixture"'});
   let mode='ok',delay=0;
   await context.route('**/*',async route=>{
     const request=route.request(),url=new URL(request.url());
     if(url.hostname==='hub.presence.co.kr'&&new URL(BASE).hostname==='127.0.0.1')return route.fulfill({response:await route.fetch({url:BASE+url.pathname+url.search})});
     if(/firebasedatabase\.app$|firebaseio\.com$|googleapis\.com$|gstatic\.com$/.test(url.hostname)){
-      calls.push({tag,method:request.method(),path:url.pathname});let body='null',contentType='application/json',status=200;
+      calls.push({tag,method:request.method(),path:url.pathname,conditional:request.headers()['if-none-match']||null});let body='null',contentType='application/json',status=200;
       if(url.pathname.endsWith('firebase-app.js')){body='const apps={};export function initializeApp(c,n="default"){return apps[n]={name:n};}export function getApp(n="default"){if(!apps[n])throw Error("missing");return apps[n];}';contentType='text/javascript';}
       else if(url.pathname.endsWith('firebase-auth.js')){body='export const browserLocalPersistence={};const user={uid:"analysis-test-session",getIdToken:async()=>"test-token"};const auth={currentUser:user,authStateReady:async()=>{}};export const getAuth=()=>auth;export const setPersistence=async()=>{};export const signInAnonymously=async()=>({user});export const signOut=async()=>{};';contentType='text/javascript';}
       else if(request.headers().accept?.includes('text/event-stream')){body='event: put\ndata: {"path":"/","data":null}\n\n';contentType='text/event-stream';}
@@ -43,6 +48,8 @@ for(const role of ['member','leader','admin'])for(const viewport of [{width:390,
         if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
         if(mode==='denied'){status=401;body=JSON.stringify({error:'permission denied'});}
         else if(mode==='malformed')body='[]';
+        else if(url.pathname.endsWith(`/${ANALYSIS_INDEX_KEY}.json`))body=JSON.stringify(analysisIndex);
+        else if(url.pathname.includes(`/${uid}/`)&&request.headers()['if-none-match']==='"source-fixture"'){status=304;body='';}
         else if(url.pathname.includes(`/${uid}/`))body=JSON.stringify(Object.fromEntries(Object.entries(mixedRemote).map(([id,doc])=>{const {sheet,...rest}=doc;return [id,{...rest,sheetJson:JSON.stringify(sheet)}];})));
         else body='{}';
       }
@@ -58,6 +65,8 @@ for(const role of ['member','leader','admin'])for(const viewport of [{width:390,
   await page.waitForFunction(()=>document.querySelector('#account-status').dataset.state==='connected');
   check(`${tag} server-only first visit filters96 own records from98 server records`,(await page.locator('#load-status').textContent()).includes('서버 기록 98개')&&(await page.locator('#coverage-title').textContent()).includes('96개의 콜백싯'));
   check(`${tag} server-only totals computed`,(await page.locator('.metric-card').first().locator('.metric-number').textContent()).trim()==='960회');
+  check(`${tag} fresh browser validates index with conditional original request`,calls.some(c=>c.tag===tag&&c.path.endsWith('/_paperSheets.json')&&c.conditional==='"source-fixture"'));
+  check(`${tag} photo index renders transcription and date basis without image payload`,(await page.locator('#pitch-review').textContent()).includes('핵심 설명을 짧게 전달하기')&&(await page.locator('#coverage-detail').textContent()).includes('촬영일 기준 1건')&&!analysisIndex.documentsJson.includes('imageDataUrl'));
   check(`${tag} connected owner displayed withoutuid/key`,(await page.locator('#analysis-account').textContent())==='임재영 · 나의 콜백싯'&&!(await page.locator('#account-status').textContent()).includes(uid)&&!(await page.locator('body').textContent()).includes('synthetic-only'));
   check(`${tag} confirmed own aliases selected and grouped by default`,await page.locator('#author-filter').inputValue()==='name:임재영'&&(await page.locator('#author-filter option:checked').textContent()).includes('임재영 · 재영'));
   await page.locator('#author-filter').selectOption('*');check(`${tag} explicit all view includes other and unknown authors`,(await page.locator('.metric-number').first().textContent()).trim()==='1,060회');
@@ -85,7 +94,8 @@ for(const role of ['member','leader','admin'])for(const viewport of [{width:390,
   // A delayed old-account response must never repopulate a new-account screen.
   delay=500;await page.locator('#refresh').click();await page.evaluate(()=>{localStorage.setItem('fcos_hub_identity',JSON.stringify({uid:'different-account',name:'새 계정'}));window.dispatchEvent(new StorageEvent('storage',{key:'fcos_hub_identity'}));});await page.waitForFunction(()=>document.querySelector('#analysis-account').textContent.includes('새 계정')&&!document.querySelector('#refresh').disabled);check(`${tag} delayed old response cannot leak to new account`,await page.locator('#empty').isVisible()&&!(await page.locator('#load-status').textContent()).includes('96개'));
   await page.evaluate(()=>{localStorage.removeItem('fcos_callback_access_key');localStorage.removeItem('fcos_personal_launch_v2');window.dispatchEvent(new StorageEvent('storage',{key:'fcos_callback_access_key'}));});await page.waitForFunction(()=>document.querySelector('#account-status').dataset.state==='local');check(`${tag} guest status and guide explicit`,(await page.locator('#analysis-account').textContent()).includes('계정 연결 전')&&await page.locator('#connect-workbook').isVisible());
-  check(`${tag} no paper writes in any analysis state`,!calls.filter(c=>c.tag===tag).some(c=>c.path.includes('/_paperSheets')&&c.method!=='GET'));
+  check(`${tag} no original paper writes in any analysis state`,!calls.filter(c=>c.tag===tag).some(c=>/\/_paperSheets(?:\/|\.json$)/.test(c.path)&&c.method!=='GET'));
+  check(`${tag} derived publication is limited to the fixed sibling index`,calls.filter(c=>c.tag===tag&&c.path.includes('/_paperSheets')&&c.method!=='GET').every(c=>c.method==='PUT'&&c.path.endsWith(`/${ANALYSIS_INDEX_KEY}.json`)));
   check(`${tag} no admin-only selector`,await page.locator('[data-admin-only],#admin-picker').count()===0);
   await page.goto(`${BASE}/callback/index.html?qa=legacy-menu`,{waitUntil:'networkidle'});
   const menu=page.locator('.callback-workspace-nav a');await menu.waitFor();const menuBounds=await menu.boundingBox();check(`${tag} automatic counter menu target fits44px`,menuBounds.width>=44&&menuBounds.height>=44&&menuBounds.x>=0&&menuBounds.x+menuBounds.width<=viewport.width+1);
