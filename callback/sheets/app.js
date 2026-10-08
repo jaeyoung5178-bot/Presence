@@ -1,6 +1,6 @@
 import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261009-transcription1';
 import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261009-transcription1';
-import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-transcription1';
+import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-sync1';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

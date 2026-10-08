@@ -60,7 +60,7 @@ function encodeDocument(value) {
   return sheet ? { ...document, sheetJson: JSON.stringify(sheet) } : document;
 }
 
-export function createCloudClient({ readIdentity = readAccountIdentity, fetchImpl = (...args) => fetch(...args), loadFirebase: load = loadFirebase, timeoutMs = 12000 } = {}) {
+export function createCloudClient({ readIdentity = readAccountIdentity, fetchImpl = (...args) => fetch(...args), loadFirebase: load = loadFirebase, timeoutMs = 45000 } = {}) {
   let ready = null, readySignature = '', activeAuth = null, activeUser = null, activeAccessKey = '';
   const assertIdentity = context => { if (readIdentity().signature !== context.signature) throw new IdentityChangedError(); };
   const bounded = promise => {

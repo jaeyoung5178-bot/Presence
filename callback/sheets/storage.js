@@ -1,5 +1,5 @@
 import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261009-transcription1';
-import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261009-transcription1';
+import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261009-sync1';
 
 const DB_NAME = 'presence-paper-sheets-v1';
 const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(id);
@@ -285,6 +285,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       assertIdentity(ctx);
       await mergeRemote(ctx, initial);
       let pending = (await allRecords(ctx)).filter(row => row.pending);
+      const hadPending = pending.length > 0;
       let conflicts = 0;
       // Forks created by conflicts are also uploaded in this pass. Bound work when another tab edits.
       for (let pass = 0; pass < 2 && pending.length; pass++) {
@@ -315,9 +316,13 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         }
         pending = (await allRecords(ctx)).filter(row => row.pending);
       }
-      const remote = await cloud.readAll(ctx);
-      assertIdentity(ctx);
-      await mergeRemote(ctx, remote);
+      // A read-only sync already merged the complete snapshot, including original photos.
+      // Re-read only after processing writes, when server state may have changed during the push.
+      if (hadPending) {
+        const remote = await cloud.readAll(ctx);
+        assertIdentity(ctx);
+        await mergeRemote(ctx, remote);
+      }
       await refreshCount(ctx, { phase: 'idle', mode: 'connected', error: '', conflicts,
         message: conflicts ? '다른 곳에서 변경된 기록이 있어요. 서버 기록을 유지하고 내 수정본은 별도 기록으로 보존했어요.' : '계정에 동기화했어요 · 다른 기기에서도 같은 개인 콜백 링크로 열 수 있어요' });
       if (status.pending) emit({ message: '이 브라우저에 저장했어요. 아직 동기화할 기록이 남아 있어요.' });

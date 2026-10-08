@@ -19,11 +19,11 @@ try {
     const alice = { namespace: 'user:qa-alice', uid: 'qa-alice', name: 'QA', accessKey: 'mock-key', signature: 'qa-alice-key' };
     const bob = { namespace: 'user:qa-bob', uid: 'qa-bob', name: 'QA2', accessKey: 'mock-key2', signature: 'qa-bob-key' };
     let identity = guest;
-    let writes = 0, failCloud = false, beforeWrite = null;
+    let writes = 0, archiveReads = 0, failCloud = false, beforeWrite = null;
     const remote = new Map();
     const copy = v => JSON.parse(JSON.stringify(v));
     const cloud = {
-      async readAll(ctx) { if (failCloud) throw new Error('mock offline'); return copy(Object.fromEntries([...remote].filter(([key]) => key.startsWith(ctx.uid + '/')).map(([key, value]) => [key.split('/')[1], value]))); },
+      async readAll(ctx) { archiveReads++; if (failCloud) throw new Error('mock offline'); return copy(Object.fromEntries([...remote].filter(([key]) => key.startsWith(ctx.uid + '/')).map(([key, value]) => [key.split('/')[1], value]))); },
       async read(id, ctx) { if (failCloud) throw new Error('mock offline'); const value = remote.get(ctx.uid + '/' + id) || null; return { ok: true, status: 200, data: copy(value), etag: value?.revision || 'null_etag' }; },
       async write(id, value, etag, ctx) {
         if (failCloud) throw new Error('mock offline');
@@ -54,10 +54,14 @@ try {
     let guarded = false;
     try { await store.saveSheet(first, { owner: 'guest' }); } catch (error) { guarded = error.name === 'IdentityChangedError'; }
     check(guarded, 'old editor owner cannot write into a newly selected account');
+    archiveReads = 0;
     await store.syncSheets();
     check(writes === 0, 'connecting an account never uploads guest records');
+    check(archiveReads === 1, 'clean account sync downloads the archive only once');
+    archiveReads = 0;
     let accountSheet = (await store.saveSheet(createSheet())).sheet;
     check(remote.has(alice.uid + '/' + accountSheet.id) && store.getStorageStatus().mode === 'connected', 'authenticated explicit save is acknowledged by cloud');
+    check(archiveReads === 2, 'pending save retains the final archive reconciliation after upload');
     failCloud = true; accountSheet.rows[0].close = 3;
     saved = await store.saveSheet(accountSheet); accountSheet = saved.sheet;
     check(saved.localSaved && !saved.cloudSaved && saved.status.pending === 1, 'cloud failure keeps successful local save and pending status');
@@ -65,9 +69,11 @@ try {
     const remoteKey = alice.uid + '/' + accountSheet.id;
     remote.get(remoteKey).revision = crypto.randomUUID();
     remote.get(remoteKey).sheet.meta.theme = '다른 기기의 변경';
+    archiveReads = 0;
     await store.syncSheets();
     const merged = await store.loadSheets();
     check(merged.length === 2 && merged.find(s => s.id === accountSheet.id).meta.theme === '다른 기기의 변경' && merged.some(s => s.id !== accountSheet.id && s.rows[0].close === 3), 'remote edit conflict retains server version and offline copy');
+    check(archiveReads === 2, 'conflicting pending edits retain both archive reads and reconcile forked records');
     const copiedSheet = merged.find(s => s.id !== accountSheet.id);
     await store.deleteSheet(copiedSheet.id);
     check(remote.get(alice.uid + '/' + copiedSheet.id).deleted && (await store.loadSheets()).length === 1, 'deletion persists a tombstone and hides deleted sheet');
@@ -123,6 +129,27 @@ try {
     beforeWrite = async () => { const latest = copy(racePhoto); latest.rows[0].stop = 44; remote.set(alice.uid + '/' + racePhoto.id, { version: 1, revision: crypto.randomUUID(), deleted: false, updatedAt: latest.updatedAt, sheet: latest }); };
     const photoRace = await fresh.saveSheet(racePhoto, { importOriginal: true });
     check(photoRace.skipped && !photoRace.conflict && photoRace.sheet.rows[0].stop === 44, 'concurrent same-original ETag import keeps remote edits without creating a duplicate');
+
+    let cleanReads = 0, cleanFails = false;
+    const cleanDocument = { version: 1, revision: crypto.randomUUID(), deleted: false, updatedAt: photo.updatedAt, sheet: copy(photo) };
+    const readOnlyCloud = {
+      async readAll() { cleanReads++; if (cleanFails) throw new Error('mock timeout'); return { [photo.id]: copy(cleanDocument) }; },
+      async read() { throw new Error('clean sync must not request individual uploads'); },
+      async write() { throw new Error('clean sync must not write'); },
+    };
+    const readOnlyStore = createSheetStorage({ ...options, dbName: dbName + '-read-only', cloud: readOnlyCloud });
+    await readOnlyStore.syncSheets();
+    const cleanPhoto = (await readOnlyStore.loadSheets())[0];
+    check(cleanReads === 1 && cleanPhoto.source.imageDataUrl === photo.source.imageDataUrl && readOnlyStore.getStorageStatus().pending === 0, 'fresh-device read-only sync keeps the complete original photo after one archive download');
+    cleanFails = true;
+    await readOnlyStore.syncSheets();
+    check(readOnlyStore.getStorageStatus().phase === 'error' && (await readOnlyStore.loadSheets())[0].source.imageDataUrl === photo.source.imageDataUrl, 'failed clean sync leaves the previously downloaded original photo intact');
+    cleanFails = false;
+    cleanDocument.deleted = true; delete cleanDocument.sheet;
+    cleanDocument.revision = crypto.randomUUID(); cleanDocument.updatedAt = new Date(Date.now() + 1000).toISOString();
+    cleanReads = 0;
+    await readOnlyStore.syncSheets();
+    check(cleanReads === 1 && (await readOnlyStore.loadSheets()).length === 0, 'one-pass clean sync also applies remote tombstones without resurrecting deleted photos');
 
     // Calendar backfill may add a verified count, but never overwrite transcriptions or known counts.
     identity = guest;
@@ -273,6 +300,20 @@ try {
     }
     const jsonResponse = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { ETag: 'test-etag' } });
     const matching = { userUid: alice.uid, accessKey: alice.accessKey, createdAt: 1 };
+    const scheduledDelays = [], originalSetTimeout = globalThis.setTimeout;
+    const slowFixture = authFixture();
+    const archiveClient = createCloudClient({ readIdentity: () => alice, loadFirebase: async () => slowFixture.sdk, fetchImpl: async url => jsonResponse(new URL(url).pathname.startsWith('/callbackSessions/') ? matching : {}) });
+    try {
+      globalThis.setTimeout = (callback, delay, ...args) => { scheduledDelays.push(delay); return originalSetTimeout(callback, delay, ...args); };
+      await archiveClient.readAll(alice);
+    } finally { globalThis.setTimeout = originalSetTimeout; }
+    check(scheduledDelays.length >= 2 && scheduledDelays.every(delay => delay === 45000), 'default archive client allows 45 seconds for session setup and archive transfer');
+    const timeoutFixture = authFixture(); let timeoutMessage = '';
+    const timeoutClient = createCloudClient({ readIdentity: () => alice, timeoutMs: 5, loadFirebase: async () => timeoutFixture.sdk, fetchImpl: (url, config) => new URL(url).pathname.startsWith('/callbackSessions/')
+      ? Promise.resolve(jsonResponse(matching))
+      : new Promise((resolve, reject) => config.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true })) });
+    try { await timeoutClient.readAll(alice); } catch (error) { timeoutMessage = error.message; }
+    check(timeoutMessage.includes('연결 시간이 초과') && timeoutMessage.includes('기록은 유지'), 'bounded transfer timeout aborts the request and truthfully preserves local records');
     let sessionGets = 0, matchingPuts = 0;
     const expired = authFixture();
     const expiredClient = createCloudClient({ readIdentity: () => alice, loadFirebase: async () => expired.sdk, fetchImpl: async (url, opts) => {
