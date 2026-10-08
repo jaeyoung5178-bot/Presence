@@ -1,4 +1,4 @@
-import { METRICS, getTotals, hasValues } from './sheet-model.js?v=20261008-calendar1';
+import { METRICS, getTotals, hasValues, parseObjectionBlocks } from './sheet-model.js?v=20261008-callback3';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';
@@ -74,8 +74,7 @@ function plan(ctx, sheet) {
   const goalHeight = Math.max(34, ...processLines.map(lines => lines.length * 23 + 10));
   const rowHeights = sheet.rows.map(row => Math.max(43, ...METRICS.slice(0, 4).map((key, i) => tallyHeight(row[key], cols[i + 1]))));
   pen(ctx, 23);
-  const objectionLines = wrap(ctx, sheet.objections, cols[5] - 24);
-  const notes = sheet.objections ? [{ lines: objectionLines, color: INK }] : [];
+  const notes = parseObjectionBlocks(sheet.objections).map(block => ({ lines: wrap(ctx, block, cols[5] - 24), color: sheet.donorObjections?.includes(block) ? DONOR_INK : INK }));
   let caseNumber = 0;
   sheet.rows.forEach(row => (row.donorCases || []).forEach(item => {
     caseNumber++;

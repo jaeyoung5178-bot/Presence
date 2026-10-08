@@ -1,5 +1,5 @@
-import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261008-calendar1';
-import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261008-calendar1';
+import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261008-callback3';
+import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261008-callback3';
 
 const DB_NAME = 'presence-paper-sheets-v1';
 const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(id);

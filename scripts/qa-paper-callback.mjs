@@ -553,6 +553,60 @@ async function calendarMatrix(browser) {
   }
 }
 
+async function analysisMatrix(browser) {
+  for (const role of ['member', 'leader', 'admin']) for (const viewport of [{ width: 390, height: 844 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+    const { context, page } = await fixture(browser, { role, viewport, connected: true });
+    try {
+      await page.goto(`${BASE}/callback/overview/index.html?qa=${Date.now()}`, { waitUntil: 'networkidle' });
+      await geometry(page, `overview-${role}-${viewport.width}`);
+      check(`overview ${role}-${viewport.width} three required routes`, (await page.locator('#open-calendar').getAttribute('href')).includes('view=archive') && (await page.locator('#open-analysis').getAttribute('href')).includes('analysis'));
+      await page.locator('#open-record-options').click(); await page.locator('#record-mode-dialog').waitFor({ state: 'visible' });
+      await geometry(page, `overview-dialog-${role}-${viewport.width}`);
+      check(`overview ${role}-${viewport.width} auto and manual routes distinct`, (await page.locator('#record-auto').getAttribute('href')) !== (await page.locator('#record-manual').getAttribute('href')));
+      await page.keyboard.press('Escape'); check(`overview ${role}-${viewport.width} Escape closes chooser`, !(await page.locator('#record-mode-dialog').isVisible()));
+      await page.evaluate(async role => {
+        const model = await import('/callback/sheets/sheet-model.js?v=20261008-calendar1');
+        const records = [];
+        const a = model.createSheet(); a.id = 'analysis-a'; a.date = '2024-05-01'; a.meta.name = '내 기록'; a.rows[0].contact = 6; a.rows[0].stop = 3; a.rows[0].presentation = 2; a.rows[0].close = 1; a.rows[0].rehash = 1; a.review.pitch.good = '상대의 말을 경청했다'; a.review.pitch.bad = '질문 후 기다리기'; a.review.attitude.good = '끝까지 밝게 인사했다'; a.review.attitude.bad = '피곤할 때 호흡을 고르기'; records.push(a);
+        const b = model.createSheet(); b.id = 'analysis-b'; b.date = '2024-04-30'; b.meta.name = '내 기록'; b.rows[0].contact = 0; b.rows[0].rehash = 0; records.push(b);
+        const c = model.createSheet(); c.id = 'analysis-c'; c.date = '2024-04-05'; c.meta.name = '다른 작성자'; const canvas = document.createElement('canvas'); canvas.width = 20; canvas.height = 20; c.source = { type: 'photo', imageDataUrl: canvas.toDataURL(), filename: 'synthetic.png', notes: '', duplicateCount: 0, dateBasis: 'written', donorCount: 3 }; records.push(c);
+        await new Promise((resolve, reject) => { const open = indexedDB.open('presence-paper-sheets-v1', 1); open.onupgradeneeded = () => { const db = open.result; const store = db.createObjectStore('records', { keyPath: 'key' }); store.createIndex('namespace', 'namespace'); db.createObjectStore('drafts', { keyPath: 'namespace' }); }; open.onerror = () => reject(open.error); open.onsuccess = () => { const db = open.result, tx = db.transaction('records', 'readwrite'), namespace = `user:paper-qa-${role}`; for (const sheet of records) tx.objectStore('records').put({ key: namespace + '\0' + sheet.id, namespace, id: sheet.id, document: { version: 1, revision: 'analysis-fixture', deleted: false, updatedAt: sheet.updatedAt, sheet } }); tx.oncomplete = () => { db.close(); resolve(); }; }; });
+      }, role);
+      const remoteBefore = results.blockedRemoteRequests.length;
+      await page.goto(`${BASE}/callback/analysis/index.html?qa=${Date.now()}`, { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => document.querySelector('#load-status').textContent.includes('브라우저에 저장'));
+      check(`analysis ${role}-${viewport.width} no cloud reads or writes`, results.blockedRemoteRequests.length === remoteBefore);
+      check(`analysis ${role}-${viewport.width} transparent historical default`, await page.locator('#anchor-date').inputValue() === '2024-05-01' && await page.locator('#historical-notice').isVisible());
+      check(`analysis ${role}-${viewport.width} confirmed photo counts without invented hourly data`, /4/.test(await page.locator('.metric-card').last().locator('.metric-number').textContent()) && (await page.locator('.metric-card').first().textContent()).includes('1개 미확인'));
+      check(`analysis ${role}-${viewport.width} grounded skill and attitude evidence`, (await page.locator('#pitch-review').textContent()).includes('질문 후 기다리기') && (await page.locator('#attitude-review').textContent()).includes('피곤할 때 호흡을 고르기'));
+      await geometry(page, `analysis-${role}-${viewport.width}`);
+      await page.locator('#author-filter').selectOption('내 기록');
+      check(`analysis ${role}-${viewport.width} author filter avoids attributing others`, (await page.locator('#coverage-title').textContent()).includes('2개의 콜백싯') && /^1/.test(await page.locator('.metric-card').last().locator('.metric-number').textContent()));
+      for (const choice of ['week', 'quarter', 'half', 'year', 'month']) { await page.locator(`[data-period="${choice}"]`).click(); check(`analysis ${role}-${viewport.width} ${choice} period selectable`, await page.locator(`[data-period="${choice}"]`).getAttribute('aria-pressed') === 'true'); }
+      await page.locator('#chart-metric').selectOption('donors'); check(`analysis ${role}-${viewport.width} accessible donor trend`, (await page.locator('#chart svg').getAttribute('aria-label')).includes('후원자'));
+      await page.locator('#anchor-today').click(); check(`analysis ${role}-${viewport.width} empty current period`, await page.locator('#empty').isVisible());
+      await page.locator('#jump-latest').click(); check(`analysis ${role}-${viewport.width} latest-record jump`, !(await page.locator('#empty').isVisible()));
+      check(`analysis ${role}-${viewport.width} no privileged controls`, await page.locator('[data-admin-only],#admin-picker').count() === 0);
+    } finally { await context.close(); }
+  }
+}
+
+async function objectionSmoke(browser) {
+  const { context, page } = await fixture(browser, { viewport: { width: 390, height: 844 }, connected: true });
+  try {
+    await openPage(page); await page.locator('#objections').fill('1. 일반 대화\n2. 후원자 안내');
+    await page.locator('[data-objection-donor="1"]').check();
+    check('numbered special note can be marked donor', await page.locator('[data-objection-donor="1"]').isChecked() && !(await page.locator('[data-objection-donor="0"]').isChecked()));
+    await page.locator('#save-sheet').click(); await page.waitForFunction(() => document.querySelector('#save-status').textContent.includes('보관함에 저장됨'));
+    await page.reload({ waitUntil: 'networkidle' });
+    check('special note donor flag survives save and reload', await page.locator('[data-objection-donor="1"]').isChecked());
+    const ink = await page.evaluate(async () => { const q = new URL(document.querySelector('script[type="module"][src]').src).search, storage = await import('./storage.js' + q), renderer = await import('./sheet-renderer.js' + q), model = await import('./sheet-model.js' + q); const sheet = (await storage.loadSheets())[0], calls = [], old = CanvasRenderingContext2D.prototype.fillText; CanvasRenderingContext2D.prototype.fillText = function(text, ...args) { calls.push({ text, ink: this.fillStyle }); return old.call(this, text, ...args); }; try { await renderer.renderSheet(document.createElement('canvas'), sheet); } finally { CanvasRenderingContext2D.prototype.fillText = old; } return { calls, count: model.getDonorSummary(sheet).count }; });
+    check('only checked special note renders red and donor count is one', ink.count === 1 && ink.calls.some(item => item.text.includes('후원자 안내') && isRed(item.ink)) && ink.calls.some(item => item.text.includes('일반 대화') && !isRed(item.ink)));
+    await page.goto(`${BASE}/callback/analysis/index.html?qa=${Date.now()}`, { waitUntil: 'networkidle' });
+    check('analysis includes checked special note donor count', /^1/.test(await page.locator('.metric-card').last().locator('.metric-number').textContent()));
+  } finally { await context.close(); }
+}
+
 let browser;
 try {
   const model = await modelChecks();
@@ -562,7 +616,11 @@ try {
   if (!process.argv.includes('--model')) {
     const { chromium } = require('playwright');
     browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
-    if (process.argv.includes('--calendar')) {
+    if (process.argv.includes('--objection')) {
+      await objectionSmoke(browser);
+    } else if (process.argv.includes('--analysis')) {
+      await analysisMatrix(browser);
+    } else if (process.argv.includes('--calendar')) {
       await calendarMatrix(browser);
     } else if (donorSpecimens) {
       await donorRendererChecks(browser, donorSpecimens.mixed);
@@ -570,7 +628,7 @@ try {
     } else {
       await rendererChecks(browser);
     }
-    if (!process.argv.includes('--calendar') && !donorSpecimens && !process.argv.includes('--renderer')) {
+    if (!process.argv.includes('--objection') && !process.argv.includes('--analysis') && !process.argv.includes('--calendar') && !donorSpecimens && !process.argv.includes('--renderer')) {
       if (!process.argv.includes('--workflow')) await matrix(browser);
       if (!process.argv.includes('--matrix')) results.workflow = await workflow(browser);
       await integration(browser);

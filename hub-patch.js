@@ -6,11 +6,11 @@
    ============================================================ */
 (function(){
   'use strict';
-  /* 허브의 콜백싯은 종이 기록 작성기를 연다.
-     계정 연결은 작성기에서 기존 개인 연결 정보를 읽어 유지한다. */
+  /* 허브의 콜백싯은 기록·열람·분석 메뉴를 연다.
+     기존 실시간 카운터와 수동 작성기 경로는 유지한다. */
   try{
     var callbackMenu=document.querySelector('a[data-paper-callback], a[href="callback/index.html"]');
-    if(callbackMenu)callbackMenu.href='callback/sheets/index.html';
+    if(callbackMenu)callbackMenu.href='callback/overview/index.html';
   }catch(e){}
   var FB    = 'https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/hub_photos';
   var PASS  = '0001';                    // 관리자 비밀번호

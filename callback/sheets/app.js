@@ -1,6 +1,6 @@
-import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261008-calendar1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261008-calendar1';
-import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261008-calendar1';
+import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261008-callback3';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261008-callback3';
+import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261008-callback3';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,7 +33,12 @@ function setupFields() {
 function hydrate() {
   invalid.clear(); renderRows();
   $$('[data-field]').forEach(input => { if (input.type === 'checkbox') input.checked = !!get(input.dataset.field); else input.value = get(input.dataset.field) ?? ''; input.removeAttribute('aria-invalid'); input.setCustomValidity(''); });
-  updateTotals(); updateSourceBanner(); schedulePreview();
+  renderObjectionFlags(); updateTotals(); updateSourceBanner(); schedulePreview();
+}
+function renderObjectionFlags() {
+  const blocks = parseObjectionBlocks(sheet.objections), host = $('#objection-donor-list');
+  host.hidden = !blocks.length;
+  host.innerHTML = '<p class="case-guide">후원자에 체크하면 이미 적은 특이사항이 빨간색으로 표시돼요.</p>' + blocks.map((block, index) => `<label class="objection-donor-toggle"><input type="checkbox" data-objection-donor="${index}" aria-label="${index + 1}번째 특이사항 후원자" ${sheet.donorObjections?.includes(block) ? 'checked' : ''}><span><strong>후원자</strong><span>${esc(block)}</span></span></label>`).join('');
 }
 function sourceValueCount(record) { return record.rows.reduce((total, row) => total + METRICS.filter(key => row[key] !== null).length, 0); }
 function sourceStatus(record) { const count = sourceValueCount(record); return count ? `사진 원본 · 숫자 ${count}칸 입력` : '사진 기록 · 숫자 미전사'; }
@@ -252,7 +257,14 @@ $('#sheet-form').addEventListener('input', event => {
     invalid.set(path, message); input.setCustomValidity(message); input.setAttribute('aria-invalid', 'true'); error(message); changed(); return;
   }
   invalid.delete(path); input.setCustomValidity(''); input.removeAttribute('aria-invalid'); set(path, isNumeric(path) ? value === '' ? (path.includes('.counts.') ? 0 : null) : Number(value) : value);
+  if (path === 'objections') { if (sheet.donorObjections) sheet.donorObjections = sheet.donorObjections.filter(note => parseObjectionBlocks(sheet.objections).includes(note)); renderObjectionFlags(); }
   if (!invalid.size) error(); changed();
+});
+$('#objection-donor-list').addEventListener('change', event => {
+  const input = event.target.closest('[data-objection-donor]'); if (!input) return;
+  const block = parseObjectionBlocks(sheet.objections)[Number(input.dataset.objectionDonor)]; if (!block) return;
+  const flags = new Set(sheet.donorObjections || []); if (input.checked) flags.add(block); else flags.delete(block);
+  sheet.donorObjections = [...flags]; changed();
 });
 $('#time-rows').addEventListener('click', async event => {
   const addCase = event.target.closest('[data-add-case]'), removeCase = event.target.closest('[data-remove-case]');

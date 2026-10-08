@@ -33,9 +33,19 @@ export function createSheet(now = new Date()) {
 }
 export function getTotals(sheet) { return Object.fromEntries(METRICS.map(key => [key, sheet.rows.reduce((sum, row) => sum + (Number.isInteger(row[key]) ? row[key] : 0), 0)])); }
 export function hasValues(sheet, key) { return sheet.rows.some(row => row[key] !== null && row[key] !== undefined); }
+export function parseObjectionBlocks(text) {
+  const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n'), numbered = line => /^\s*(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))/.test(line);
+  if (!lines.some(numbered)) return lines.join('\n').split(/\n\s*\n/).map(block => block.trim()).filter(Boolean);
+  const blocks = []; let current = [];
+  for (const line of lines) { if (numbered(line) && current.length) { const block = current.join('\n').trim(); if (block) blocks.push(block); current = []; } current.push(line); }
+  const last = current.join('\n').trim(); if (last) blocks.push(last); return blocks;
+}
+function noteIdentity(text) { return text.replace(/^\s*(?:\d{1,3}[.)]\s*|[①-⑳]\s*|\(\d{1,3}\)\s*)/, '').replace(/\s+/g, ' ').trim(); }
 export function getDonorSummary(sheet) {
   const cases = sheet.rows.flatMap(row => row.donorCases || []);
-  if (cases.length) return { count: cases.filter(item => item.donor).length, basis: 'cases' };
+  const donorCases = cases.filter(item => item.donor), caseNotes = new Set(donorCases.map(item => noteIdentity(item.note)).filter(Boolean));
+  const flags = (sheet.donorObjections || []).filter(note => parseObjectionBlocks(sheet.objections).includes(note));
+  if (cases.length || Array.isArray(sheet.donorObjections)) return { count: donorCases.length + new Set(flags.map(noteIdentity).filter(note => !caseNotes.has(note))).size, basis: 'cases' };
   if (hasValues(sheet, 'rehash')) return { count: getTotals(sheet).rehash, basis: 'rehash' };
   if (sheet.source?.type === 'photo' && Number.isInteger(sheet.source.donorCount)) return { count: sheet.source.donorCount, basis: 'photo' };
   return { count: null, basis: 'unknown' };
@@ -79,6 +89,10 @@ export function validateSheet(sheet) {
     });
   }
   text(sheet.objections, 'objections');
+  if (sheet.donorObjections !== undefined) {
+    const blocks = new Set(parseObjectionBlocks(sheet.objections));
+    if (!Array.isArray(sheet.donorObjections) || sheet.donorObjections.length > 500 || sheet.donorObjections.some(note => typeof note !== 'string' || !blocks.has(note)) || new Set(sheet.donorObjections).size !== sheet.donorObjections.length) error('donorObjections', '후원자 표시는 현재 특이사항의 문장과 일치해야 해요.');
+  }
   for (const key of ['loa', 'pitch', 'attitude']) for (const polarity of ['good', 'bad']) text(sheet.review?.[key]?.[polarity], `review.${key}.${polarity}`);
   for (const key of ['createdAt', 'updatedAt']) if (typeof sheet[key] !== 'string' || !Number.isFinite(Date.parse(sheet[key]))) error(key, '기록 시간이 올바르지 않아요.');
   if (sheet.source !== undefined) errors.push(...validatePhotoSource(sheet.source));
@@ -88,6 +102,6 @@ export function normalizeSheet(sheet) {
   const result = validateSheet(sheet);
   if (!result.valid) { const error = new Error(result.errors[0].message); error.errors = result.errors; throw error; }
   // Copy only the documented fields; imported JSON cannot add prototype keys or executable content.
-  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])), ...(row.donorCases === undefined ? {} : { donorCases: row.donorCases.map(item => ({ id: item.id, donor: item.donor, counts: Object.fromEntries(CASE_METRICS.map(key => [key, item.counts[key]])), note: item.note })) }) })), objections: sheet.objections, review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt, ...(sheet.source === undefined ? {} : { source: Object.fromEntries(['type', 'imageDataUrl', 'filename', 'notes', 'duplicateCount', 'dateBasis', ...(sheet.source.donorCount === undefined ? [] : ['donorCount'])].map(key => [key, sheet.source[key]])) }) };
+  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])), ...(row.donorCases === undefined ? {} : { donorCases: row.donorCases.map(item => ({ id: item.id, donor: item.donor, counts: Object.fromEntries(CASE_METRICS.map(key => [key, item.counts[key]])), note: item.note })) }) })), objections: sheet.objections, ...(sheet.donorObjections === undefined ? {} : { donorObjections: [...sheet.donorObjections] }), review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt, ...(sheet.source === undefined ? {} : { source: Object.fromEntries(['type', 'imageDataUrl', 'filename', 'notes', 'duplicateCount', 'dateBasis', ...(sheet.source.donorCount === undefined ? [] : ['donorCount'])].map(key => [key, sheet.source[key]])) }) };
 }
 export function formatDate(date) { return date.replaceAll('-', '. '); }
