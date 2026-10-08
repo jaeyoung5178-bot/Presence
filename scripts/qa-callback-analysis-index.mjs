@@ -121,9 +121,12 @@ const ordinary = fixture({ unexpected304: true }); let writerRejected = false; t
 if (process.env.CANONICAL_ANALYSIS_FIXTURE) {
   const raw = JSON.parse(await fs.readFile(process.env.CANONICAL_ANALYSIS_FIXTURE, 'utf8')), source = Object.fromEntries(Object.entries(raw).map(([id, value]) => [id, value.sheetJson ? { ...value, sheet: JSON.parse(value.sheetJson) } : value]));
   const result = await projectCanonicalDocuments(raw); check('actual archive has no invalid documents', result.invalid === 0);
-  const originals = Object.values(source).filter(value => !value.deleted).map(value => value.sheet), projectedRecords = Object.values(result.documents).filter(value => !value.deleted).map(value => value.analysisRecord), anchor = originals.map(value => value.date).sort().at(-1);
+  const originals = Object.values(source).filter(value => !value.deleted).map(value => value.sheet), projectedRecords = Object.values(result.documents).filter(value => !value.deleted).map(value => value.analysisRecord);
+  // Include an anchor from every recorded year so historical photos outside the latest
+  // year are also covered by complete numerical and all-six-review-field comparisons.
+  const anchors = [...new Set(originals.map(value => value.date.slice(0,4)))].map(year => originals.filter(value => value.date.startsWith(year)).map(value => value.date).sort().at(-1));
   const authorKeys = [...new Set(['*', 'name:임재영', 'unknown', ...originals.map(value => 'name:' + value.meta.name)])];
-  for (const period of ['week', 'month', 'quarter', 'half', 'year']) for (const author of authorKeys) check(`actual archive full/DTO equality: ${period}/${author === '*' ? 'all' : 'author'}`, JSON.stringify(analyze(filterAuthor(originals, author), anchor, period)) === JSON.stringify(analyze(filterAuthor(projectedRecords, author), anchor, period)));
+  for (const anchor of anchors) for (const period of ['week', 'month', 'quarter', 'half', 'year']) for (const author of authorKeys) check(`actual archive full/DTO equality: ${anchor.slice(0,4)}/${period}/${author === '*' ? 'all' : 'author'}`, JSON.stringify(analyze(filterAuthor(originals, author), anchor, period)) === JSON.stringify(analyze(filterAuthor(projectedRecords, author), anchor, period)));
   console.log(JSON.stringify({ actualDocuments: Object.keys(raw).length, originalBytes: Buffer.byteLength(JSON.stringify(raw)), projectedBytes: Buffer.byteLength(JSON.stringify(result.documents)) }));
 }
 console.log(JSON.stringify({ passed: checks.length, checks }, null, 2));
