@@ -1,4 +1,4 @@
-import { analyze, METRICS, localToday } from './analysis-model.js?v=20261009-transcription1';
+import { analyze, METRICS, localToday, authorKey, authorLabel, defaultAuthor, filterAuthor } from './analysis-model.js?v=20261009-author1';
 import { createCloudClient, readAccountIdentity } from '../sheets/cloud.js?v=20261009-transcription1';
 import { mergeAnalysisSources, readLocalAnalysisRows } from './analysis-sources.js?v=20261009-analysiscloud1';
 
@@ -8,17 +8,27 @@ const number = value => value === null ? '—' : value.toLocaleString('ko-KR', {
 let records = [], period = 'month', report, request = 0, firstLoad = true, historical = false, signature = readAccountIdentity().signature;
 const cloud = createCloudClient({ timeoutMs: 45000 });
 let loadError = '';
+let authorSelection = readAuthorPreference(readAccountIdentity());
 $('#anchor-date').value = localToday();
+
+function readAuthorPreference(identity) {
+  try { const saved = sessionStorage.getItem(`presence-analysis-author-v1:${identity.namespace}`); if (saved && (saved === '*' || saved === 'unknown' || saved === 'account:unknown' || saved.startsWith('name:'))) return saved; } catch {}
+  return defaultAuthor(identity);
+}
+function renderAuthorOptions() {
+  const own = defaultAuthor(readAccountIdentity());
+  const keys = [...new Set([...records.map(record => authorKey(record.meta?.name)), ...(own === '*' ? [] : [own]), ...(authorSelection === '*' ? [] : [authorSelection])])].sort();
+  $('#author-filter').innerHTML = '<option value="*">저장된 전체 기록 · 다른 작성자 포함</option>' + keys.map(key => `<option value="${esc(key)}">${key === own ? '내 기록 · ' : ''}${esc(authorLabel(key))}</option>`).join('');
+  $('#author-filter').value = authorSelection;
+}
 
 // The cloud client establishes the existing account session but only reads paper data.
 // Keep the writer's storage singleton out of analysis: it can upload pending local writes.
 function displayRecords(loaded, settled = false) {
   records = loaded;
-  const selectedAuthor = $('#author-filter').value;
-  $('#author-filter').innerHTML = '<option value="*">저장된 전체 기록 · 다른 작성자 포함</option>' + [...new Set(records.map(record => record.meta?.name?.trim() || '이름 없음'))].sort().map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
-  if ([...$('#author-filter').options].some(option => option.value === selectedAuthor)) $('#author-filter').value = selectedAuthor;
+  renderAuthorOptions();
   if (firstLoad && records.length) {
-    const initial = analyze(records, localToday(), period);
+    const initial = analyze(filterAuthor(records, authorSelection), localToday(), period);
     if (!initial.current.records && initial.latest) { $('#anchor-date').value = initial.latest; historical = true; }
     else { $('#anchor-date').value = localToday(); historical = false; }
     if (settled) firstLoad = false;
@@ -27,7 +37,7 @@ function displayRecords(loaded, settled = false) {
 }
 async function load() {
   const version = ++request, identity = readAccountIdentity();
-  if (signature !== identity.signature) { records = []; signature = identity.signature; firstLoad = true; historical = false; $('#anchor-date').value = localToday(); $('#author-filter').innerHTML = '<option value="*">저장된 전체 기록 · 다른 작성자 포함</option>'; render(); }
+  if (signature !== identity.signature) { records = []; signature = identity.signature; firstLoad = true; historical = false; authorSelection = readAuthorPreference(identity); $('#anchor-date').value = localToday(); renderAuthorOptions(); render(); }
   loadError = ''; $('#refresh').disabled = true; $('#load-status').textContent = identity.uid ? '계정의 서버 기록을 불러오는 중…' : '이 브라우저의 기록을 불러오는 중…'; $('#report').setAttribute('aria-busy', 'true'); $('#error').hidden = true;
   $('#analysis-account').textContent = identity.uid ? `${identity.name || '연결된 계정'} · 나의 콜백싯` : '계정 연결 전 · 이 브라우저의 기록';
   $('#connection-message').textContent = identity.uid ? '다른 기기에 저장한 기록도 확인하고 있어요.' : '서버 기록을 보려면 워크북에서 Profit → 콜백싯 → 내 콜백싯 열기를 눌러 주세요.';
@@ -63,7 +73,7 @@ function compare(now, before) {
   return `기록일 평균 ${diff > 0 ? '+' : ''}${number(diff)}${before.perDay > 0 ? ` (${diff > 0 ? '+' : ''}${number(diff / before.perDay * 100)}%)` : ' · 이전 평균 0'}`;
 }
 function render() {
-  const author = $('#author-filter').value, selected = author === '*' ? records : records.filter(record => (record.meta?.name?.trim() || '이름 없음') === author);
+  const selected = filterAuthor(records, authorSelection);
   try { report = analyze(selected, $('#anchor-date').value, period); } catch (error) { $('#error').textContent = error.message; $('#error').hidden = false; return; }
   $('#error').textContent = loadError; $('#error').hidden = !loadError;
   const { range, current, previous } = report;
@@ -72,7 +82,7 @@ function render() {
   $('#empty').hidden = current.records > 0; $('#report').hidden = current.records === 0;
   $('#jump-latest').hidden = !report.latest || current.records > 0;
   $('#coverage-title').textContent = `${current.days}일의 현장, ${current.records}개의 콜백싯`;
-  $('#coverage-detail').textContent = `선택한 ${range.days}일 중 기록 ${current.days}일 · 사진 원본 ${current.photoRecords}개 중 읽어낸 기록 ${current.transcriptionRecords}개${current.partialTranscriptionRecords ? ` (일부 판독 ${current.partialTranscriptionRecords}개)` : ''} · 저장된 전체 기록 ${report.totalRecords}개`;
+  $('#coverage-detail').textContent = `선택한 ${range.days}일 중 기록 ${current.days}일 · 사진 원본 ${current.photoRecords}개 중 읽어낸 기록 ${current.transcriptionRecords}개${current.partialTranscriptionRecords ? ` (일부 판독 ${current.partialTranscriptionRecords}개)` : ''} · 선택한 작성자의 전체 기록 ${report.totalRecords}개`;
   $('#comparison-period').textContent = `이전 비교: ${range.previousStart} — ${range.previousEnd} (${previous.days}일 · ${previous.records}개 기록)`;
   $('#metrics').innerHTML = METRICS.map(({ id, label }) => { const now = current.metrics[id], before = previous.metrics[id]; return `<article class="metric-card"><h3>${label}</h3><div class="metric-number">${number(now.total)}<small>${id === 'donors' ? '명' : '회'}</small></div><p>${now.knownRecords}/${current.records}개 확인${now.missingRecords ? ` · ${now.missingRecords}개 미확인` : ''}${now.transcriptionRecords ? `<br>사진에서 읽은 합계 ${now.transcriptionRecords}개 포함` : ''}<br>기록일 평균 ${number(now.perDay)} · ${now.knownDays}일 기준</p><p class="comparison">${compare(now, before)}<br>이전 평균 ${number(before.perDay)} · ${before.knownDays}일 기준</p></article>`; }).join('');
   $('#rates').innerHTML = current.rates.map(rate => `<article class="rate"><h3>${rate.from === 'contact' ? 'Contact → Stop' : rate.from === 'stop' ? 'Stop → Presentation' : 'Presentation → Close'}</h3><strong>${rate.percent === null ? '—' : number(rate.percent) + '%'}</strong><p>${number(rate.numerator)} / ${number(rate.denominator)} · 시간별 입력 ${rate.rows}행 · 사진 합계 ${rate.photoRecords}개${rate.exceeds ? '<br>뒷 단계가 더 많아요. 입력 기준을 확인해 주세요.' : ''}</p></article>`).join('');
@@ -101,7 +111,7 @@ function renderReview(key, title, subtitle) {
 document.querySelectorAll('[data-period]').forEach(button => button.addEventListener('click', () => { period = button.dataset.period; document.querySelectorAll('[data-period]').forEach(item => item.setAttribute('aria-pressed', String(item === button))); render(); }));
 $('#anchor-date').addEventListener('change', () => { firstLoad = false; historical = false; render(); }); $('#anchor-today').addEventListener('click', () => { firstLoad = false; historical = false; $('#anchor-date').value = localToday(); render(); }); $('#chart-metric').addEventListener('change', renderChart); $('#refresh').addEventListener('click', load);
 $('#jump-latest').addEventListener('click', () => { if (report?.latest) { $('#anchor-date').value = report.latest; render(); } });
-$('#author-filter').addEventListener('change', render);
+$('#author-filter').addEventListener('change', () => { authorSelection = $('#author-filter').value; firstLoad = false; try { sessionStorage.setItem(`presence-analysis-author-v1:${readAccountIdentity().namespace}`, authorSelection); } catch {} render(); });
 window.addEventListener('storage', event => { if (['fcos_hub_identity', 'fcos_callback_access_key', 'fcos_personal_launch_v2', null].includes(event.key)) load(); });
 window.addEventListener('focus', () => { if (signature !== readAccountIdentity().signature) load(); });
 window.addEventListener('online', load);

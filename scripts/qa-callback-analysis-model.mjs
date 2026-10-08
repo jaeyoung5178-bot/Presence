@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
-import { analyze, metricValue, periodRange, uniqueRecords, validDate } from '../callback/analysis/analysis-model.js';
+import { analyze, metricValue, periodRange, uniqueRecords, validDate, authorKey, authorLabel, defaultAuthor, filterAuthor } from '../callback/analysis/analysis-model.js';
 import { createSheet, createRow } from '../callback/sheets/sheet-model.js';
 const checks = [];
 const check = (name, fn) => { fn(); checks.push(name); };
 function sheet(id, day, rows = []) { const s=createSheet(new Date('2024-01-01T12:00:00Z')); s.id=id;s.date=day;s.rows=rows.length?rows:[createRow()];return s; }
 const row = values => ({ ...createRow(), ...values });
+check('only the confirmed Jaeyoung alias pair groups together',()=>{assert.equal(authorKey(' 재영 '),authorKey('임재영'));assert.notEqual(authorKey('김재영'),authorKey('재영'));assert.notEqual(authorKey('김민수'),authorKey('민수'));assert.equal(authorLabel('name:임재영'),'임재영 · 재영');});
+check('connected account defaults to its own name while guest retains all',()=>{assert.equal(defaultAuthor({uid:'admin',name:'임재영'}),'name:임재영');assert.equal(defaultAuthor({uid:'named',name:'재영'}),'name:임재영');assert.equal(defaultAuthor({uid:'other',name:'민수'}),'name:민수');assert.equal(defaultAuthor({uid:null,name:'임재영'}),'*');});
+check('unnamed connected identity cannot silently include unknown photo authors',()=>{assert.equal(defaultAuthor({uid:'x',name:''}),'account:unknown');assert.notEqual(defaultAuthor({uid:'x'}),authorKey(''));});
+check('self filter excludes other and unknown authors without changing source names',()=>{const records=['재영','임재영','김민수','',undefined].map((name,index)=>({...sheet('author-'+index,'2024-05-01',[row({contact:10})]),meta:{name}}));assert.equal(filterAuthor(records,'name:임재영').length,2);assert.equal(analyze(filterAuthor(records,'name:임재영'),'2024-05-01').current.metrics.contact.total,20);assert.equal(filterAuthor(records,'unknown').length,2);assert.equal(filterAuthor(records,'*').length,5);assert.equal(records[0].meta.name,'재영');assert.equal(filterAuthor(records,'account:unknown').length,0);});
 check('7-day range crosses the year and compares the immediately preceding 7 days',()=>assert.deepEqual(periodRange('2024-01-01','week'),{start:'2023-12-26',end:'2024-01-01',days:7,previousStart:'2023-12-19',previousEnd:'2023-12-25',label:'1주'}));
 check('month ending March 31 handles February clamp without overflow',()=>{const r=periodRange('2023-03-31','month');assert.equal(r.start,'2023-03-01');assert.equal(r.days,31);assert.equal(r.previousEnd,'2023-02-28');assert.equal(r.previousStart,'2023-01-29');});
 check('leap year range keeps February 29 and equal-length preceding comparison',()=>{const r=periodRange('2024-03-31','month');assert.equal(r.start,'2024-03-01');assert.equal(r.previousStart,'2024-01-30');assert.equal(r.previousEnd,'2024-02-29');});

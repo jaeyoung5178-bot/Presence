@@ -8,7 +8,7 @@ const require = createRequire('/Users/jaeyoung5178/.cache/codex-runtimes/codex-p
 const BASE = process.env.QA_BASE_URL || 'http://127.0.0.1:8768', OUT = process.env.QA_OUTPUT || '/tmp/presence-analysis-cloud-qa';
 const checks = [], errors = [], calls = [];
 function check(name, value) { assert.ok(value, name); checks.push(name); }
-function sheet(id, contact = 10) { const s = createSheet(new Date('2024-05-01T12:00:00Z')); s.id=id;s.meta.name='합성 서버 기록';s.rows[0].contact=contact;s.rows[0].stop=5;s.rows[0].presentation=3;s.rows[0].close=2;s.rows[0].rehash=1;return s; }
+function sheet(id, contact = 10) { const s = createSheet(new Date('2024-05-01T12:00:00Z')); s.id=id;s.meta.name='재영';s.rows[0].contact=contact;s.rows[0].stop=5;s.rows[0].presentation=3;s.rows[0].close=2;s.rows[0].rehash=1;return s; }
 const document = (s, deleted=false) => ({version:1,revision:`revision-${s.id}`,updatedAt:s.updatedAt,deleted,...(deleted?{}:{sheet:s})});
 const local = (s,pending=false,deleted=false) => ({id:s.id,pending,document:document(s,deleted)});
 const server = sheet('shared',20), pending=sheet('shared',3);
@@ -19,9 +19,11 @@ check('server tombstone never resurrects pending local record',mergeAnalysisSour
 check('missing remote document preserves local-only saved record',mergeAnalysisSources([local(pending)],{}).records.length===1);
 check('malformed and mismatched server entries are excluded explicitly',mergeAnalysisSources([],{bad:document(server),shared:{broken:true}}).invalid===2);
 check('malformed remote collection rejected',assert.throws(()=>mergeAnalysisSources([],[]))===undefined);
-const remote=Object.fromEntries(Array.from({length:96},(_,i)=>{const s=sheet(`server-${i}`);return [s.id,document(s)];}));
+const remote=Object.fromEntries(Array.from({length:96},(_,i)=>{const s=sheet(`server-${i}`);if(i%2)s.meta.name='임재영';return [s.id,document(s)];}));
 check('fresh browser can use96 server records with no IDB',mergeAnalysisSources([],remote).records.length===96);
 const immutable=JSON.stringify(remote);mergeAnalysisSources([],remote);check('display merge does not mutate server data',JSON.stringify(remote)===immutable);
+const other=sheet('other-author',50);other.meta.name='김민수';const unknown=sheet('unknown-author',50);unknown.meta.name='';
+const mixedRemote={...remote,[other.id]:document(other),[unknown.id]:document(unknown)};
 
 await fs.mkdir(OUT,{recursive:true});
 const {chromium}=require('playwright');const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
@@ -41,22 +43,28 @@ for(const role of ['member','leader','admin'])for(const viewport of [{width:390,
         if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
         if(mode==='denied'){status=401;body=JSON.stringify({error:'permission denied'});}
         else if(mode==='malformed')body='[]';
-        else if(url.pathname.includes(`/${uid}/`))body=JSON.stringify(Object.fromEntries(Object.entries(remote).map(([id,doc])=>{const {sheet,...rest}=doc;return [id,{...rest,sheetJson:JSON.stringify(sheet)}];})));
+        else if(url.pathname.includes(`/${uid}/`))body=JSON.stringify(Object.fromEntries(Object.entries(mixedRemote).map(([id,doc])=>{const {sheet,...rest}=doc;return [id,{...rest,sheetJson:JSON.stringify(sheet)}];})));
         else body='{}';
       }
       return route.fulfill({status,contentType,body,headers:{'access-control-allow-origin':'*','access-control-expose-headers':'ETag',ETag:'"test"'}});
     }
     return route.continue();
   });
-  await context.addInitScript(({role,uid})=>{if(!sessionStorage.getItem('identity-initialized')){localStorage.setItem('fcos_hub_identity',JSON.stringify({uid,name:`테스트 ${role}`,role}));localStorage.setItem('fcos_callback_access_key','synthetic-only');sessionStorage.setItem('identity-initialized','yes');}},{role,uid});
+  await context.addInitScript(({role,uid})=>{if(!sessionStorage.getItem('identity-initialized')){localStorage.setItem('fcos_hub_identity',JSON.stringify({uid,name:'임재영',role}));localStorage.setItem('fcos_callback_access_key','synthetic-only');sessionStorage.setItem('identity-initialized','yes');}},{role,uid});
   const page=await context.newPage();
   page.on('pageerror',e=>errors.push({tag,message:e.message}));
   page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('401'))errors.push({tag,message:m.text()});});
   await page.goto(`${BASE}/callback/analysis/index.html?qa=cloud-${Date.now()}`,{waitUntil:'networkidle'});
   await page.waitForFunction(()=>document.querySelector('#account-status').dataset.state==='connected');
-  check(`${tag} server-only first visit shows96records`,(await page.locator('#load-status').textContent()).includes('서버 기록 96개')&&(await page.locator('#coverage-title').textContent()).includes('96개의 콜백싯'));
+  check(`${tag} server-only first visit filters96 own records from98 server records`,(await page.locator('#load-status').textContent()).includes('서버 기록 98개')&&(await page.locator('#coverage-title').textContent()).includes('96개의 콜백싯'));
   check(`${tag} server-only totals computed`,(await page.locator('.metric-card').first().locator('.metric-number').textContent()).trim()==='960회');
-  check(`${tag} connected owner displayed withoutuid/key`,(await page.locator('#analysis-account').textContent())===`테스트 ${role} · 나의 콜백싯`&&!(await page.locator('#account-status').textContent()).includes(uid)&&!(await page.locator('body').textContent()).includes('synthetic-only'));
+  check(`${tag} connected owner displayed withoutuid/key`,(await page.locator('#analysis-account').textContent())==='임재영 · 나의 콜백싯'&&!(await page.locator('#account-status').textContent()).includes(uid)&&!(await page.locator('body').textContent()).includes('synthetic-only'));
+  check(`${tag} confirmed own aliases selected and grouped by default`,await page.locator('#author-filter').inputValue()==='name:임재영'&&(await page.locator('#author-filter option:checked').textContent()).includes('임재영 · 재영'));
+  await page.locator('#author-filter').selectOption('*');check(`${tag} explicit all view includes other and unknown authors`,(await page.locator('.metric-number').first().textContent()).trim()==='1,060회');
+  await page.locator('#refresh').click();await page.waitForFunction(()=>!document.querySelector('#refresh').disabled);check(`${tag} explicit all selection survives refresh`,await page.locator('#author-filter').inputValue()==='*');
+  await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>!document.querySelector('#refresh').disabled);check(`${tag} explicit selection survives reload in this account`,await page.locator('#author-filter').inputValue()==='*');
+  await page.locator('#author-filter').selectOption('name:김민수');check(`${tag} other author can still be inspected separately`,(await page.locator('.metric-number').first().textContent()).trim()==='50회');
+  await page.locator('#author-filter').selectOption('name:임재영');
   check(`${tag} no archive prerequisite`,await page.locator('#connect-workbook').isHidden());
   check(`${tag} no writer storage imported`,!await page.evaluate(()=>performance.getEntriesByType('resource').some(item=>/\/sheets\/storage\.js/.test(item.name))));
   check(`${tag} analysis did not create an archive database`,await page.evaluate(async()=>!(await indexedDB.databases()).some(db=>db.name==='presence-paper-sheets-v1')));

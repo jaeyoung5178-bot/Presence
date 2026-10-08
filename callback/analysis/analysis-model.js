@@ -1,6 +1,14 @@
 import { getDonorSummary, getMetricReading, getReviewReading, hasValues } from '../sheets/sheet-model.js?v=20261009-transcription1';
 export const PERIODS = [{ id: 'week', label: '1주', days: 7 }, { id: 'month', label: '1개월', months: 1 }, { id: 'quarter', label: '3개월', months: 3 }, { id: 'half', label: '6개월', months: 6 }, { id: 'year', label: '1년', months: 12 }];
 export const METRICS = [{ id: 'contact', label: 'Contact' }, { id: 'stop', label: 'Stop' }, { id: 'presentation', label: 'Presentation' }, { id: 'close', label: 'Close' }, { id: 'donors', label: '후원자' }];
+// Only this alias pair has been confirmed by the owner. Never infer other surnames.
+export function authorKey(name) {
+  const value = typeof name === 'string' ? name.trim() : '';
+  return value ? `name:${value === '재영' ? '임재영' : value}` : 'unknown';
+}
+export function defaultAuthor(identity) { return identity?.uid ? (authorKey(identity.name) === 'unknown' ? 'account:unknown' : authorKey(identity.name)) : '*'; }
+export function authorLabel(key) { return key === 'unknown' ? '이름 없음' : key === 'account:unknown' ? '연결 계정 · 이름 확인 필요' : key === 'name:임재영' ? '임재영 · 재영' : key.replace(/^name:/, ''); }
+export function filterAuthor(records, key) { return key === '*' ? records : records.filter(record => authorKey(record.meta?.name) === key); }
 const DAY = 86400000;
 const date = value => new Date(`${value}T12:00:00Z`);
 const iso = value => value.toISOString().slice(0, 10);
