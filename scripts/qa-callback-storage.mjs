@@ -148,6 +148,79 @@ try {
     let noEtag = false;
     try { await client.write(wireSheet.id, document, null, alice); } catch { noEtag = true; }
     check(noEtag, 'missing ETag cannot trigger an unconditional overwrite');
+
+    const savedCredentials = new Map([
+      ['fcos_hub_identity', JSON.stringify({ uid: alice.uid, name: alice.name })],
+      ['fcos_callback_access_key', 'old-mock-key'],
+      ['fcos_personal_launch_v2', JSON.stringify({ u: alice.uid, n: alice.name, k: 'new-mock-key' })],
+    ]);
+    const credentialStorage = { getItem: key => savedCredentials.get(key) || null };
+    const remembered = readAccountIdentity(credentialStorage);
+    check(remembered.uid === alice.uid && remembered.accessKey === 'old-mock-key' && remembered.fallbackAccessKey === 'new-mock-key', 'same-account remembered launch is an explicit fallback without replacing active identity');
+    savedCredentials.set('fcos_personal_launch_v2', JSON.stringify({ u: bob.uid, n: bob.name, k: 'bob-only-key' }));
+    check(!readAccountIdentity(credentialStorage).fallbackAccessKey, 'a different account remembered launch can never supply a fallback key');
+    savedCredentials.delete('fcos_callback_access_key');
+    check(readAccountIdentity(credentialStorage).namespace === 'guest', 'missing active key cannot adopt another account remembered launch');
+    savedCredentials.set('fcos_personal_launch_v2', JSON.stringify({ u: alice.uid, n: alice.name, k: 'new-mock-key' }));
+    check(readAccountIdentity(credentialStorage).accessKey === 'new-mock-key', 'missing key recovers only from an exact same-account remembered launch');
+
+    function authFixture() {
+      let fresh = 0, forced = 0;
+      const makeUser = () => ({ uid: `paper-auth-${fresh}`, getIdToken: async force => { if (force) forced++; return force ? 'fresh-mock-token' : 'cached-mock-token'; } });
+      const auth = { currentUser: makeUser(), async authStateReady() {} };
+      return { auth, forced: () => forced, sdk: { getApp: () => ({}), initializeApp: () => ({}), getAuth: () => auth, browserLocalPersistence: 'local', setPersistence: async () => {}, signOut: async () => { auth.currentUser = null; }, signInAnonymously: async () => { fresh++; auth.currentUser = makeUser(); return { user: auth.currentUser }; } } };
+    }
+    const jsonResponse = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { ETag: 'test-etag' } });
+    const matching = { userUid: alice.uid, accessKey: alice.accessKey, createdAt: 1 };
+    let sessionGets = 0, matchingPuts = 0;
+    const expired = authFixture();
+    const expiredClient = createCloudClient({ readIdentity: () => alice, loadFirebase: async () => expired.sdk, fetchImpl: async (url, opts) => {
+      if (new URL(url).pathname.startsWith('/callbackSessions/')) {
+        if (opts.method === 'PUT') { matchingPuts++; return jsonResponse({}, 403); }
+        sessionGets++; return sessionGets === 1 ? jsonResponse({ error: 'expired test token' }, 401) : jsonResponse(matching);
+      }
+      return jsonResponse({});
+    } });
+    await expiredClient.readAll(alice);
+    check(sessionGets === 2 && expired.forced() === 1, 'initial session lookup retries a 401 once with a refreshed Firebase token');
+    check(matchingPuts === 0, 'matching persisted callback session is reused without re-registering or mutating it');
+
+    const claimExpired = authFixture(); let claimPuts = 0;
+    const claimRetryClient = createCloudClient({ readIdentity: () => alice, loadFirebase: async () => claimExpired.sdk, fetchImpl: async (url, opts) => {
+      if (!new URL(url).pathname.startsWith('/callbackSessions/')) return jsonResponse({});
+      if (opts.method !== 'PUT') return jsonResponse(null);
+      claimPuts++; return claimPuts === 1 ? jsonResponse({}, 401) : jsonResponse({});
+    } });
+    await claimRetryClient.readAll(alice);
+    check(claimPuts === 2 && claimExpired.forced() === 1, 'initial session registration retries a 401 once with a refreshed token');
+
+    const recoveryIdentity = { ...remembered };
+    for (const existingOldSession of [false, true]) {
+      const recovery = authFixture(), sessions = new Map();
+      if (existingOldSession) sessions.set(recovery.auth.currentUser.uid, { userUid: recoveryIdentity.uid, accessKey: recoveryIdentity.accessKey });
+      const registrations = []; let deletes = 0;
+      const recoveryClient = createCloudClient({ readIdentity: () => recoveryIdentity, loadFirebase: async () => recovery.sdk, fetchImpl: async (url, opts) => {
+        const path = new URL(url).pathname;
+        if (opts.method === 'DELETE') deletes++;
+        if (path.startsWith('/callbackSessions/')) {
+          const uid = path.split('/').at(-1).replace(/\.json$/, '');
+          if (opts.method !== 'PUT') return jsonResponse(sessions.get(uid) || null);
+          const value = JSON.parse(opts.body); registrations.push(value);
+          if (value.accessKey !== 'new-mock-key') return jsonResponse({}, 403);
+          sessions.set(uid, value); return jsonResponse(value);
+        }
+        const active = sessions.get(recovery.auth.currentUser.uid);
+        return active?.accessKey === 'new-mock-key' ? jsonResponse({}) : jsonResponse({}, 403);
+      } });
+      await recoveryClient.readAll(recoveryIdentity);
+      check(deletes === 0 && registrations.every(value => value.userUid === alice.uid) && registrations.at(-1)?.accessKey === 'new-mock-key', existingOldSession
+        ? 'revoked matching session recovers with same-account remembered key without deleting old sessions'
+        : 'rejected old key recovers with only the same-account remembered key');
+    }
+    const deniedFixture = authFixture(); let deniedRequests = 0, deniedMessage = '';
+    const deniedClient = createCloudClient({ readIdentity: () => alice, loadFirebase: async () => deniedFixture.sdk, fetchImpl: async () => { deniedRequests++; return jsonResponse({ error: 'mock-token mock-key should not be surfaced' }, 401); } });
+    try { await deniedClient.readAll(alice); } catch (error) { deniedMessage = error.message; }
+    check(deniedRequests === 2 && deniedMessage.includes('세션 조회') && deniedMessage.includes('401') && !deniedMessage.includes('mock-key') && !deniedMessage.includes('mock-token'), 'auth failure has bounded retries and sanitized phase/status without credentials or server body');
     return checks;
   });
   assert.ok(report.length >= 20);
