@@ -22,6 +22,7 @@ export function validatePhotoSource(source) {
   if (typeof source.notes !== 'string' || source.notes.length > 12000) error('notes', '사진 메모는 12,000자 이내로 입력해 주세요.');
   if (!Number.isInteger(source.duplicateCount) || source.duplicateCount < 0 || source.duplicateCount > 9999) error('duplicateCount', '중복 촬영 수가 올바르지 않아요.');
   if (!['written', 'capture', 'unknown'].includes(source.dateBasis)) error('dateBasis', '사진 날짜의 근거가 올바르지 않아요.');
+  if (source.donorCount !== undefined && source.donorCount !== null && (!Number.isInteger(source.donorCount) || source.donorCount < 0 || source.donorCount > 99999)) error('donorCount', '사진의 후원자 수는 0~99,999 사이의 정수 또는 미확인이어야 해요.');
   return errors;
 }
 export function makeId() { return globalThis.crypto?.randomUUID?.() || `sheet-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
@@ -32,6 +33,13 @@ export function createSheet(now = new Date()) {
 }
 export function getTotals(sheet) { return Object.fromEntries(METRICS.map(key => [key, sheet.rows.reduce((sum, row) => sum + (Number.isInteger(row[key]) ? row[key] : 0), 0)])); }
 export function hasValues(sheet, key) { return sheet.rows.some(row => row[key] !== null && row[key] !== undefined); }
+export function getDonorSummary(sheet) {
+  const cases = sheet.rows.flatMap(row => row.donorCases || []);
+  if (cases.length) return { count: cases.filter(item => item.donor).length, basis: 'cases' };
+  if (hasValues(sheet, 'rehash')) return { count: getTotals(sheet).rehash, basis: 'rehash' };
+  if (sheet.source?.type === 'photo' && Number.isInteger(sheet.source.donorCount)) return { count: sheet.source.donorCount, basis: 'photo' };
+  return { count: null, basis: 'unknown' };
+}
 export function validateSheet(sheet) {
   const errors = [], error = (path, message) => errors.push({ path, message });
   if (!sheet || typeof sheet !== 'object' || Array.isArray(sheet)) return { valid: false, errors: [{ path: '', message: '콜백싯 형식이 올바르지 않아요.' }] };
@@ -80,6 +88,6 @@ export function normalizeSheet(sheet) {
   const result = validateSheet(sheet);
   if (!result.valid) { const error = new Error(result.errors[0].message); error.errors = result.errors; throw error; }
   // Copy only the documented fields; imported JSON cannot add prototype keys or executable content.
-  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])), ...(row.donorCases === undefined ? {} : { donorCases: row.donorCases.map(item => ({ id: item.id, donor: item.donor, counts: Object.fromEntries(CASE_METRICS.map(key => [key, item.counts[key]])), note: item.note })) }) })), objections: sheet.objections, review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt, ...(sheet.source === undefined ? {} : { source: Object.fromEntries(['type', 'imageDataUrl', 'filename', 'notes', 'duplicateCount', 'dateBasis'].map(key => [key, sheet.source[key]])) }) };
+  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])), ...(row.donorCases === undefined ? {} : { donorCases: row.donorCases.map(item => ({ id: item.id, donor: item.donor, counts: Object.fromEntries(CASE_METRICS.map(key => [key, item.counts[key]])), note: item.note })) }) })), objections: sheet.objections, review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt, ...(sheet.source === undefined ? {} : { source: Object.fromEntries(['type', 'imageDataUrl', 'filename', 'notes', 'duplicateCount', 'dateBasis', ...(sheet.source.donorCount === undefined ? [] : ['donorCount'])].map(key => [key, sheet.source[key]])) }) };
 }
 export function formatDate(date) { return date.replaceAll('-', '. '); }

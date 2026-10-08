@@ -457,21 +457,120 @@ async function workflow(browser) {
   } finally { await context.close(); }
 }
 
+function calendarModelChecks(model) {
+  const sheet = model.createSheet();
+  const summary = () => model.getDonorSummary(sheet);
+  check('calendar blank record donor count is unknown', summary().count === null && summary().basis === 'unknown');
+  sheet.rows[0].rehash = 0;
+  check('calendar explicit zero Rehash is known zero', summary().count === 0 && summary().basis === 'rehash');
+  sheet.rows[0].rehash = 9;
+  sheet.rows[0].donorCases = [model.createDonorCase(sheet.rows[0]), model.createDonorCase(sheet.rows[0]), model.createDonorCase(sheet.rows[0])];
+  sheet.rows[0].donorCases[0].donor = true; sheet.rows[0].donorCases[2].donor = true;
+  check('calendar checked case count takes precedence over legacy Rehash', summary().count === 2 && summary().basis === 'cases');
+  sheet.rows[0].donorCases.forEach(item => { item.donor = false; });
+  check('calendar unchecked cases mean known zero without Rehash fallback', summary().count === 0 && summary().basis === 'cases');
+  sheet.rows[0].donorCases = [];
+  check('calendar empty optional case array retains legacy Rehash fallback', summary().count === 9 && summary().basis === 'rehash');
+  sheet.rows[0].rehash = null;
+  sheet.source = { type: 'photo', imageDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', filename: 'synthetic.png', notes: '', duplicateCount: 0, dateBasis: 'written' };
+  check('calendar existing photo without donorCount remains valid and unknown', model.validateSheet(sheet).valid && summary().count === null && !('donorCount' in model.normalizeSheet(sheet).source));
+  for (const value of [null, 0, 3, 99999]) { sheet.source.donorCount = value; check(`calendar photo donorCount ${value} survives roundtrip`, model.validateSheet(sheet).valid && model.normalizeSheet(sheet).source.donorCount === value && summary().count === value); }
+  for (const value of [-1, 0.5, 100000, '3']) { sheet.source.donorCount = value; check(`calendar invalid photo donorCount ${value} rejected`, !model.validateSheet(sheet).valid); }
+}
+
+async function calendarMatrix(browser) {
+  for (const role of ['member', 'leader', 'admin']) for (const viewport of [{ width: 390, height: 844 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+    if (process.argv.includes('--calendar-smoke') && !(role === 'member' && viewport.width === 390)) continue;
+    const { context, page } = await fixture(browser, { role, viewport, connected: true });
+    const label = `calendar-${role}-${viewport.width}`;
+    try {
+      await openPage(page);
+      await page.evaluate(async () => {
+        const query = new URL(document.querySelector('script[type="module"][src]').src).search;
+        const model = await import('./sheet-model.js' + query), storage = await import('./storage.js' + query);
+        const saved = [];
+        const typed = (id, date, count) => { const item = model.createSheet(); item.id = id; item.date = date; item.meta.name = id; if (count !== null) item.rows[0].rehash = count; saved.push(item); return item; };
+        typed('legacy-two', '2026-10-03', 2);
+        const cases = typed('cases-two', '2026-10-04', 9);
+        cases.rows[0].donorCases = [true, false, true].map(donor => ({ ...model.createDonorCase(cases.rows[0]), donor }));
+        typed('same-date-one', '2026-10-05', 1); typed('same-date-three', '2026-10-05', 3);
+        const photo = (id, date, color, count) => { const item = typed(id, date, null), canvas = document.createElement('canvas'); canvas.width = 100; canvas.height = 130; const ctx = canvas.getContext('2d'); ctx.fillStyle = color; ctx.fillRect(0, 0, 100, 130); item.source = { type: 'photo', imageDataUrl: canvas.toDataURL('image/png'), filename: id + '.png', notes: 'Synthetic test image only', duplicateCount: 0, dateBasis: 'written', ...(count === undefined ? {} : { donorCount: count }) }; return item; };
+        photo('photo-unknown', '2026-10-06', '#735c40'); photo('photo-three', '2026-10-07', '#426333', 3);
+        typed('september-four', '2026-09-30', 4);
+        typed('partial-two', '2026-10-09', 2); photo('partial-unknown', '2026-10-09', '#385866');
+        photo('august-unknown', '2026-08-01', '#61495c', null);
+        const duplicate = structuredClone(saved.find(item => item.id === 'photo-three')); duplicate.id = 'photo-three-duplicate'; duplicate.updatedAt = '2024-01-01T00:00:00.000Z'; saved.push(duplicate);
+        for (const item of saved) await storage.saveSheet(item, { deferSync: true });
+      });
+      await page.locator('#open-archive').click();
+      await page.waitForFunction(() => !document.querySelector('#archive-dialog').hasAttribute('aria-busy'));
+      const day = date => page.locator(`[data-calendar-date="${date}"]`);
+      check(`${label} calendar is the default archive`, await page.locator('#archive-calendar').isVisible() && !(await page.locator('#archive-list').isVisible()));
+      check(`${label} current month and exact donor counts`, await page.locator('#archive-month').inputValue() === '2026-10' && /후원자 2명/.test(await day('2026-10-03').getAttribute('aria-label')) && /후원자 2명/.test(await day('2026-10-04').getAttribute('aria-label')));
+      check(`${label} same-date records summed and preserved`, /후원자 4명.*콜백싯 2개/.test(await day('2026-10-05').getAttribute('aria-label')));
+      check(`${label} unknown photo is never displayed as zero`, /후원자 미확인/.test(await day('2026-10-06').getAttribute('aria-label')) && await day('2026-10-06').locator('.calendar-donors').textContent() === '미확인');
+      check(`${label} verified photo count and exact-photo deduplication`, /후원자 3명.*콜백싯 1개/.test(await day('2026-10-07').getAttribute('aria-label')));
+      check(`${label} partial day clearly retains unknown count`, /후원자 2명 및 미확인 기록 있음/.test(await day('2026-10-09').getAttribute('aria-label')));
+      check(`${label} monthly known count and unknown records explicit`, /후원자 13명 \+ 미확인 기록 2개 · 콜백싯 8개/.test(await page.locator('#calendar-summary').textContent()));
+      await geometry(page, label);
+      await day('2026-10-05').click();
+      check(`${label} multiple same-date records show picker without loss`, await page.locator('#calendar-selection').isVisible() && await page.locator('#archive-list [data-open-sheet]').count() === 2 && await page.locator('[data-open-sheet="same-date-one"]').isVisible() && await page.locator('[data-open-sheet="same-date-three"]').isVisible());
+      check(`${label} date picker transfers keyboard focus to its first record`, await page.evaluate(() => Boolean(document.activeElement?.matches('#archive-list [data-open-sheet]'))));
+      await page.locator('#calendar-clear-date').click();
+      await day('2026-10-03').focus(); await page.keyboard.press('ArrowRight');
+      check(`${label} arrow keys navigate recorded dates`, await page.evaluate(() => document.activeElement?.dataset.calendarDate) === '2026-10-04');
+      await day('2026-10-03').click();
+      await page.locator('#archive-dialog').waitFor({ state: 'hidden' });
+      check(`${label} single typed date opens its saved record directly`, !(await page.locator('#archive-dialog').isVisible()) && await field(page, 'meta.name').inputValue() === 'legacy-two');
+      await field(page, 'meta.name').fill('unsaved-calendar-draft');
+      await page.locator('#open-archive').click(); await day('2026-10-06').click();
+      await page.locator('#source-dialog').waitFor({ state: 'visible' });
+      await page.waitForFunction(() => document.querySelector('#source-image').complete);
+      const sourceState = { visible: await page.locator('#source-image').isVisible(), name: await field(page, 'meta.name').inputValue(), confirm: await page.locator('#confirm-dialog').isVisible(), error: await page.locator('#source-image-error').textContent() };
+      check(`${label} single photo date opens original without altering dirty writer`, sourceState.visible && sourceState.name === 'unsaved-calendar-draft' && !sourceState.confirm, sourceState);
+      await page.locator('[data-close-dialog="source-dialog"]').click();
+      await page.locator('#calendar-prev').click();
+      check(`${label} previous month works`, await page.locator('#archive-month').inputValue() === '2026-09' && /후원자 4명/.test(await day('2026-09-30').getAttribute('aria-label')));
+      await page.locator('#calendar-next').click();
+      check(`${label} next month works`, await page.locator('#archive-month').inputValue() === '2026-10');
+      await page.locator('#archive-month').fill('2026-08');
+      check(`${label} all-unknown month never claims zero`, (await page.locator('#calendar-summary').textContent()).startsWith('후원자 미확인'));
+      await page.locator('#archive-search').fill('september-four');
+      check(`${label} search works across months`, !(await page.locator('#archive-calendar').isVisible()) && await page.locator('#archive-list [data-open-sheet]').count() === 1 && await page.locator('[data-open-sheet="september-four"]').isVisible());
+      await page.locator('#archive-search').fill(''); await page.locator('#archive-month').fill('2026-10');
+      await page.locator('#archive-view-toggle').click();
+      check(`${label} list mode remains available`, !(await page.locator('#archive-calendar').isVisible()) && await page.locator('#archive-list').isVisible() && await page.locator('#archive-list [data-open-sheet]').count() === 8);
+      if (role === 'member' && viewport.width === 390) {
+        const pending = page.waitForEvent('download'); await page.locator('#backup-export').click(); const download = await pending;
+        await download.saveAs(path.join(OUT, 'calendar-backup.json'));
+        const backup = JSON.parse(await fs.readFile(path.join(OUT, 'calendar-backup.json'), 'utf8'));
+        check('calendar backup retains verified photo count and all original saved IDs', backup.sheets.find(item => item.id === 'photo-three').source.donorCount === 3 && backup.sheets.some(item => item.id === 'same-date-one') && backup.sheets.some(item => item.id === 'same-date-three'));
+        check('calendar backup preserves missing versus explicit unknown photo count', !('donorCount' in backup.sheets.find(item => item.id === 'photo-unknown').source) && backup.sheets.find(item => item.id === 'august-unknown').source.donorCount === null);
+      }
+      await page.keyboard.press('Escape');
+      check(`${label} calendar closes by keyboard with writer preserved`, !(await page.locator('#archive-dialog').isVisible()) && await field(page, 'meta.name').inputValue() === 'unsaved-calendar-draft');
+    } finally { await context.close(); }
+  }
+}
+
 let browser;
 try {
   const model = await modelChecks();
+  if (process.argv.includes('--calendar')) calendarModelChecks(model);
   const donorSpecimens = process.argv.includes('--donor') ? donorModelChecks(model) : null;
   await serviceWorkerChecks();
   if (!process.argv.includes('--model')) {
     const { chromium } = require('playwright');
     browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
-    if (donorSpecimens) {
+    if (process.argv.includes('--calendar')) {
+      await calendarMatrix(browser);
+    } else if (donorSpecimens) {
       await donorRendererChecks(browser, donorSpecimens.mixed);
       if (!process.argv.includes('--renderer')) await donorMatrix(browser, donorSpecimens);
     } else {
       await rendererChecks(browser);
     }
-    if (!donorSpecimens && !process.argv.includes('--renderer')) {
+    if (!process.argv.includes('--calendar') && !donorSpecimens && !process.argv.includes('--renderer')) {
       if (!process.argv.includes('--workflow')) await matrix(browser);
       if (!process.argv.includes('--matrix')) results.workflow = await workflow(browser);
       await integration(browser);

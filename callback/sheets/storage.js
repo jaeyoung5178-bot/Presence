@@ -1,5 +1,5 @@
-import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261008-paper2';
-import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261008-paper2';
+import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261008-calendar1';
+import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261008-calendar1';
 
 const DB_NAME = 'presence-paper-sheets-v1';
 const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(id);
@@ -8,6 +8,14 @@ const recordKey = (namespace, id) => `${namespace}\u0000${id}`;
 const nextDate = previous => new Date(Math.max(Date.now(), (Date.parse(previous) || 0) + 1)).toISOString();
 const samePhotoOriginal = (a, b) => a?.source?.type === 'photo' && b?.source?.type === 'photo'
   && a.source.imageDataUrl === b.source.imageDataUrl && a.source.filename === b.source.filename;
+function fillPhotoDonorCount(existing, incoming) {
+  const value = incoming?.source?.donorCount;
+  if (!samePhotoOriginal(existing, incoming) || existing.source.donorCount != null
+    || !Number.isInteger(value) || value < 0 || value > 99999) return null;
+  const sheet = copy(existing);
+  sheet.source.donorCount = value;
+  return sheet;
+}
 class PhotoImportConflictError extends Error {
   constructor() { super('이미 있는 원본 사진 ID에 다른 사진 파일이 연결되어 있어 가져오지 않았어요. 기존 기록은 유지돼요.'); this.name = 'PhotoImportConflictError'; }
 }
@@ -129,6 +137,9 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         if (latest.document.revision === submitted.document.revision) {
           latest.pending = false;
           latest.baseRevision = submitted.document.revision;
+          latest.originalImport = false;
+          delete latest.donorCountFill;
+          delete latest.donorCountFillOnly;
           records.put(latest);
         } else if (latest.baseRevision === submitted.baseRevision) {
           // Another tab edited while this request was in flight. Its edit remains pending, based on
@@ -159,15 +170,56 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       });
     });
   }
-  async function acceptExistingOriginal(ctx, submitted, remote) {
+  async function acceptExistingOriginal(ctx, submitted, remote, previousRemoteRevision = remote.revision) {
     return transaction(ctx, ['records'], 'readwrite', ({ records }, done, guard) => {
       records.get(submitted.key).onsuccess = guard(event => {
         const latest = event.target.result;
         if (!latest || latest.document.revision !== submitted.document.revision) { done(false); return; }
-        records.put({ ...latest, document: copy(remote), pending: false, originalImport: false, baseRevision: remote.revision });
+        if (submitted.donorCountFill !== undefined && !submitted.donorCountFillOnly && !submitted.originalImport) {
+          // Preserve edits already waiting locally when metadata import began. Rebase only if
+          // our metadata write was the sole intervening server change; real edit conflicts remain.
+          if (!remote.deleted && latest.baseRevision === previousRemoteRevision) latest.baseRevision = remote.revision;
+          if (!remote.deleted && Number.isInteger(remote.sheet.source?.donorCount)) latest.document.sheet.source.donorCount = remote.sheet.source.donorCount;
+          delete latest.donorCountFill;
+          delete latest.donorCountFillOnly;
+          records.put(latest);
+        } else {
+          const accepted = { ...latest, document: copy(remote), pending: false, originalImport: false, baseRevision: remote.revision };
+          delete accepted.donorCountFill;
+          delete accepted.donorCountFillOnly;
+          records.put(accepted);
+        }
         done(true);
       });
     });
+  }
+  async function resolvePhotoOriginal(ctx, submitted, initialRemote, skippedOriginals) {
+    let remote = initialRemote;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (!remote.data) return false;
+      if (!validDocument(remote.data, submitted.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
+      if (!remote.data.deleted && !samePhotoOriginal(submitted.document.sheet, remote.data.sheet)) throw new PhotoImportConflictError();
+      const filled = remote.data.deleted ? null : fillPhotoDonorCount(remote.data.sheet, submitted.document.sheet);
+      const previousRevision = remote.data.revision;
+      let resolved = remote.data;
+      if (filled) {
+        filled.updatedAt = nextDate(remote.data.updatedAt);
+        resolved = { ...copy(remote.data), revision: makeId(), updatedAt: filled.updatedAt, sheet: filled };
+        const response = await cloud.write(submitted.id, resolved, remote.etag, ctx);
+        assertIdentity(ctx);
+        if (!response.ok) {
+          if (response.status !== 412) throw new Error('사진의 후원자 수 저장을 확인하지 못했어요. 다시 동기화해 주세요.');
+          remote = await cloud.read(submitted.id, ctx);
+          assertIdentity(ctx);
+          continue;
+        }
+      }
+      if (await acceptExistingOriginal(ctx, submitted, resolved, previousRevision)) {
+        if (submitted.originalImport || submitted.donorCountFillOnly) skippedOriginals.set(submitted.id, { ...resolved, metadataFilled: !!filled });
+      }
+      return true;
+    }
+    throw new Error('사진 기록이 다른 곳에서 계속 변경되어 후원자 수를 아직 반영하지 않았어요. 기존 기록은 유지돼요.');
   }
   async function mergeRemote(ctx, remote) {
     if (!remote || typeof remote !== 'object' || Array.isArray(remote)) throw new Error('서버 기록 형식이 올바르지 않아 병합하지 않았어요.');
@@ -219,11 +271,8 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
           assertIdentity(ctx);
           if (remote.data && !validDocument(remote.data, row.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
           if (remote.data?.revision === row.document.revision) { await acknowledge(ctx, row); continue; }
-          if (row.originalImport && remote.data) {
-            if (!remote.data.deleted && !samePhotoOriginal(row.document.sheet, remote.data.sheet)) throw new PhotoImportConflictError();
-            if (await acceptExistingOriginal(ctx, row, remote.data)) skippedOriginals.set(row.id, remote.data);
-            continue;
-          }
+          if (!row.document.deleted && (row.originalImport || row.donorCountFill !== undefined) && remote.data
+            && await resolvePhotoOriginal(ctx, row, remote, skippedOriginals)) continue;
           if ((remote.data?.revision || null) === row.baseRevision) {
             const response = await cloud.write(row.id, row.document, remote.etag, ctx);
             assertIdentity(ctx);
@@ -233,11 +282,8 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
             assertIdentity(ctx);
             if (remote.data && !validDocument(remote.data, row.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
             if (remote.data?.revision === row.document.revision) { await acknowledge(ctx, row); continue; }
-            if (row.originalImport && remote.data) {
-              if (!remote.data.deleted && !samePhotoOriginal(row.document.sheet, remote.data.sheet)) throw new PhotoImportConflictError();
-              if (await acceptExistingOriginal(ctx, row, remote.data)) skippedOriginals.set(row.id, remote.data);
-              continue;
-            }
+            if (!row.document.deleted && (row.originalImport || row.donorCountFill !== undefined) && remote.data
+              && await resolvePhotoOriginal(ctx, row, remote, skippedOriginals)) continue;
           }
           const fork = await preserveConflict(ctx, row, remote.data);
           conflicts++;
@@ -282,7 +328,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         assertIdentity(ctx);
         let conflict = false;
         let sheet;
-        let skipped = false, deleted = false, previousPending = false;
+        let skipped = false, deleted = false, previousPending = false, metadataFilled = false;
         try {
           sheet = await transaction(ctx, ['records'], 'readwrite', ({ records }, done, guard) => {
             records.get(recordKey(ctx.namespace, input.id)).onsuccess = guard(event => {
@@ -290,6 +336,18 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
               if (previous && !validDocument(previous.document, previous.id)) throw new Error('기존 기록을 읽을 수 없어 덮어쓰지 않았어요.');
               if (options.importOriginal && input.source?.type === 'photo' && previous) {
                 if (!previous.document.deleted && !samePhotoOriginal(input, previous.document.sheet)) throw new PhotoImportConflictError();
+                const filled = previous.document.deleted ? null : fillPhotoDonorCount(previous.document.sheet, input);
+                if (filled) {
+                  filled.updatedAt = nextDate(previous.document.updatedAt);
+                  const record = makeRecord(ctx, filled, previous);
+                  record.originalImport = !!previous.originalImport;
+                  record.donorCountFill = input.source.donorCount;
+                  record.donorCountFillOnly = !previous.pending || !!previous.donorCountFillOnly || !!previous.originalImport;
+                  records.put(record);
+                  metadataFilled = true;
+                  done(filled);
+                  return;
+                }
                 skipped = true;
                 deleted = previous.document.deleted;
                 previousPending = previous.pending;
@@ -316,10 +374,10 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         } catch (error) { emit({ phase: 'error', error: error.message, message: error.message }); throw error; }
         const result = options.deferSync ? { forks: new Map(), cloudSaved: false } : await synchronize(ctx);
         const existingOriginal = result.skippedOriginals?.get(sheet.id);
-        if (existingOriginal) { skipped = true; deleted = existingOriginal.deleted; sheet = copy(existingOriginal.sheet || sheet); }
+        if (existingOriginal) { skipped = !existingOriginal.metadataFilled; metadataFilled ||= !!existingOriginal.metadataFilled; deleted = existingOriginal.deleted; sheet = copy(existingOriginal.sheet || sheet); }
         if (result.forks.has(sheet.id)) { sheet = result.forks.get(sheet.id); conflict = true; }
         if (conflict) emit({ conflicts: Math.max(status.conflicts, 1), message: '다른 곳에서 변경된 기록이 있어 수정본을 별도 기록으로 보존했어요.' });
-        return { sheet: copy(sheet), localSaved: true, cloudSaved: result.cloudSaved, conflict, skipped, deleted, status: { ...status } };
+        return { sheet: copy(sheet), localSaved: true, cloudSaved: result.cloudSaved, conflict, skipped, deleted, metadataFilled, status: { ...status } };
       });
     },
     deleteSheet(id, options = {}) {

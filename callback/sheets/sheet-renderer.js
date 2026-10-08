@@ -1,4 +1,4 @@
-import { METRICS, getTotals, hasValues } from './sheet-model.js?v=20261008-paper2';
+import { METRICS, getTotals, hasValues } from './sheet-model.js?v=20261008-calendar1';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';

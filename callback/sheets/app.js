@@ -1,11 +1,12 @@
-import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, hasValues, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261008-paper2';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261008-paper2';
-import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261008-paper2';
+import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261008-calendar1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261008-calendar1';
+import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261008-calendar1';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let sheet = createSheet(), records = [], owner = getStorageStatus().namespace, dirty = false, editVersion = 0, draftTimer, renderTimer, toastTimer, imageURL, imageFile, sourceRecord = null, loadEpoch = 0, ready = false;
 let backupURLs = [];
+let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', selectedDate = '';
 const invalid = new Map();
 function error(message = '') { $('#error-banner').textContent = message; $('#error-banner').hidden = !message; }
 function toast(message) { clearTimeout(toastTimer); $('#toast').textContent = message; $('#toast').hidden = false; toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 4500); }
@@ -105,19 +106,65 @@ async function newSheet() {
   clearTimeout(draftTimer); sheet = createSheet(); dirty = false; editVersion++; error(); hydrate(); $('#archive-dialog').close(); view('edit');
   await persistDraft(); status('새로운 하루 · 기록을 시작해 보세요'); window.scrollTo({ top: 0, behavior: 'smooth' }); $('#sheet-name').focus({ preventScroll: true });
 }
-async function refreshRecords() { const thisOwner = owner, loaded = await loadSheets(); if (thisOwner !== owner) return; records = loaded; $('#archive-count').textContent = records.length; renderArchive(); }
+function dedupeRecords(loaded) {
+  const seenIds = new Set(), seenPhotos = new Set();
+  return [...loaded].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).filter(record => {
+    if (seenIds.has(record.id)) return false;
+    seenIds.add(record.id);
+    if (record.source?.type === 'photo') { if (seenPhotos.has(record.source.imageDataUrl)) return false; seenPhotos.add(record.source.imageDataUrl); }
+    return true;
+  });
+}
+async function refreshRecords() { const thisOwner = owner, loaded = await loadSheets(); if (thisOwner !== owner) return; records = dedupeRecords(loaded); $('#archive-count').textContent = records.length; renderArchive(); }
+function donorGroupSummary(group) {
+  return group.reduce((summary, record) => { const donor = getDonorSummary(record); if (donor.count === null) summary.unknown++; else summary.known += donor.count; return summary; }, { known: 0, unknown: 0 });
+}
+function shiftCalendarMonth(offset) {
+  const [year, month] = archiveMonth.split('-').map(Number), target = new Date(year, month - 1 + offset, 1);
+  archiveMonth = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}`; archiveMonthChosen = true; selectedDate = ''; renderArchive();
+}
+function renderCalendar() {
+  const [year, month] = archiveMonth.split('-').map(Number), monthRecords = records.filter(record => record.date.startsWith(archiveMonth)), byDate = new Map();
+  monthRecords.forEach(record => { if (!byDate.has(record.date)) byDate.set(record.date, []); byDate.get(record.date).push(record); });
+  $('#calendar-month-label').textContent = `${year}년 ${month}월`;
+  const total = donorGroupSummary(monthRecords);
+  $('#calendar-summary').textContent = monthRecords.length ? (total.unknown === monthRecords.length ? `후원자 미확인 · 미확인 기록 ${total.unknown}개` : `후원자 ${total.known.toLocaleString()}명${total.unknown ? ` + 미확인 기록 ${total.unknown}개` : ''} · 콜백싯 ${monthRecords.length}개`) : '이 달에는 저장된 콜백싯이 없어요.';
+  const first = new Date(year, month - 1, 1).getDay(), days = new Date(year, month, 0).getDate(), today = localDate();
+  let markup = '<span class="calendar-pad" aria-hidden="true"></span>'.repeat(first);
+  for (let day = 1; day <= days; day++) {
+    const date = `${archiveMonth}-${String(day).padStart(2, '0')}`, group = byDate.get(date) || [], counts = donorGroupSummary(group), unknownOnly = counts.unknown === group.length && group.length > 0;
+    const detail = group.length ? `${unknownOnly ? '후원자 미확인' : `후원자 ${counts.known}명${counts.unknown ? ' 및 미확인 기록 있음' : ''}`}, 콜백싯 ${group.length}개` : '기록 없음';
+    markup += `<button class="calendar-day${group.length ? ' has-record' : ''}${date === today ? ' is-today' : ''}${date === selectedDate ? ' is-selected' : ''}" data-calendar-date="${date}" aria-label="${year}년 ${month}월 ${day}일, ${detail}" ${date === today ? 'aria-current="date"' : ''} ${!group.length ? 'disabled' : ''}><span class="calendar-date">${day}</span>${group.length ? `<span class="calendar-donors ${unknownOnly ? 'is-unknown' : ''}">${unknownOnly ? '미확인' : `${counts.known}명${counts.unknown ? '+?' : ''}`}</span>${group.length > 1 ? `<span class="calendar-record-count">${group.length}개</span>` : ''}` : ''}</button>`;
+  }
+  $('#calendar-grid').innerHTML = markup;
+}
 function renderArchive() {
-  const query = $('#archive-search').value.trim().toLocaleLowerCase(), month = $('#archive-month').value;
-  const filtered = records.filter(record => (!month || record.date.startsWith(month)) && (!query || [record.date, ...Object.values(record.meta)].join(' ').toLocaleLowerCase().includes(query))).sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt));
+  const query = $('#archive-search').value.trim().toLocaleLowerCase(), currentMonth = localDate().slice(0, 7);
+  if (!archiveMonth || !archiveMonthChosen) archiveMonth = records.some(record => record.date.startsWith(currentMonth)) || !records.length ? currentMonth : records.map(record => record.date.slice(0, 7)).sort().at(-1);
+  $('#archive-month').value = archiveMonth;
+  $('#archive-calendar').hidden = archiveView === 'list' || !!query;
+  $('#archive-view-toggle').textContent = archiveView === 'calendar' ? '목록으로 보기' : '달력으로 보기';
+  $('#archive-view-toggle').setAttribute('aria-label', $('#archive-view-toggle').textContent);
+  $('#calendar-selection').hidden = !selectedDate || !!query;
+  $('#calendar-selection-title').textContent = selectedDate ? `${formatDate(selectedDate)} 콜백싯` : '';
+  renderCalendar();
+  const filtered = records.filter(record => (query ? [record.date, ...Object.values(record.meta)].join(' ').toLocaleLowerCase().includes(query) : selectedDate ? record.date === selectedDate : record.date.startsWith(archiveMonth))).sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt));
+  $('#archive-list').hidden = !query && !selectedDate && archiveView === 'calendar' && records.length > 0;
   if (!filtered.length) { $('#archive-list').innerHTML = `<div class="archive-empty"><strong>${records.length ? '찾는 기록이 없어요' : '첫 번째 필드를 기다리고 있어요'}</strong><p>${records.length ? '검색어나 월을 바꾸어 다시 찾아보세요.' : '새 기록을 작성하고 저장하면 날짜순으로 모여요.'}</p></div>`; return; }
   $('#archive-list').innerHTML = filtered.map(record => {
-    const totals = getTotals(record), photo = record.source?.type === 'photo', title = [record.meta.name, record.meta.location, record.meta.theme].filter(Boolean).join(' · ') || '이름 없는 필드 기록';
-    return `<article class="archive-record${photo ? ' record-photo' : ''}"><button class="record-open" data-open-sheet="${esc(record.id)}" aria-label="${esc(record.date + ' ' + title)} ${photo ? '원본 사진' : '기록'} 열기">${photo ? `<img class="record-thumbnail" data-source-thumb="${esc(record.id)}" loading="lazy" alt="">` : ''}<span class="record-date">${formatDate(record.date)}</span><span class="record-title">${esc(title)}</span>${photo ? `<span class="source-badge">${sourceStatus(record)}</span>${record.source.dateBasis !== 'written' ? `<span class="record-date-basis">${record.source.dateBasis === 'capture' ? '촬영일 기준' : '날짜 미확인 · 임시 정렬'}</span>` : ''}` : ''}${!photo || sourceValueCount(record) ? `<span class="record-stats">${METRICS.map(key => `<span>${LABELS[key]} <b>${hasValues(record, key) ? totals[key] : '—'}</b></span>`).join('')}</span>` : ''}</button><button class="icon-button record-delete" data-delete-sheet="${esc(record.id)}" aria-label="${record.date} 기록 삭제">×</button></article>`;
+    const totals = getTotals(record), donor = getDonorSummary(record), photo = record.source?.type === 'photo', title = [record.meta.name, record.meta.location, record.meta.theme].filter(Boolean).join(' · ') || '이름 없는 필드 기록';
+    return `<article class="archive-record${photo ? ' record-photo' : ''}"><button class="record-open" data-open-sheet="${esc(record.id)}" aria-label="${esc(record.date + ' ' + title)} ${photo ? '원본 사진' : '기록'} 열기">${photo ? `<img class="record-thumbnail" data-source-thumb="${esc(record.id)}" loading="lazy" alt="">` : ''}<span class="record-date">${formatDate(record.date)}</span><span class="record-title">${esc(title)}</span><span class="record-donor-count">${donor.count === null ? '후원자 미확인' : `후원자 ${donor.count.toLocaleString()}명`}${donor.basis === 'rehash' ? ' · Rehash 기준' : ''}</span>${photo ? `<span class="source-badge">${sourceStatus(record)}</span>${record.source.dateBasis !== 'written' ? `<span class="record-date-basis">${record.source.dateBasis === 'capture' ? '촬영일 기준' : '날짜 미확인 · 임시 정렬'}</span>` : ''}` : ''}${!photo || sourceValueCount(record) ? `<span class="record-stats">${METRICS.map(key => `<span>${LABELS[key]} <b>${hasValues(record, key) ? totals[key] : '—'}</b></span>`).join('')}</span>` : ''}</button><button class="icon-button record-delete" data-delete-sheet="${esc(record.id)}" aria-label="${record.date} 기록 삭제">×</button></article>`;
   }).join('');
   const byId = new Map(filtered.filter(record => record.source).map(record => [record.id, record]));
   $$('[data-source-thumb]').forEach(image => { image.src = byId.get(image.dataset.sourceThumb).source.imageDataUrl; });
 }
-async function openArchive() { try { await refreshRecords(); $('#archive-dialog').showModal(); } catch (e) { error(e.message); } }
+async function openArchive() {
+  if (!$('#archive-dialog').open) $('#archive-dialog').showModal();
+  $('#archive-loading').hidden = false; $('#archive-error').hidden = true; $('#archive-dialog').setAttribute('aria-busy', 'true'); renderArchive();
+  try { await refreshRecords(); }
+  catch (e) { $('#archive-error').textContent = e.message || '기록을 불러오지 못했어요. 다시 열어 주세요.'; $('#archive-error').hidden = false; }
+  finally { $('#archive-loading').hidden = true; $('#archive-dialog').removeAttribute('aria-busy'); }
+}
 async function saveCurrent() {
   if (!checkValid()) return;
   clearTimeout(draftTimer); const button = $('#save-sheet'), revision = editVersion, thisOwner = owner, currentId = sheet.id; button.disabled = true; status('콜백싯 저장 중…');
@@ -173,15 +220,15 @@ async function importBackup(file) {
     const sheets = source.map(normalizeSheet), ids = new Set();
     for (const record of sheets) { if (ids.has(record.id)) throw new Error('백업에 중복된 기록 ID가 있어요.'); ids.add(record.id); }
     if (!await confirmAction('백업을 가져올까요?', `${sheets.length}개의 기록을 보관함에 추가해요. 기존 기록은 유지돼요.`, '가져오기')) return;
-    const thisOwner = owner; let imported = 0, skipped = 0;
-    try { for (const record of sheets) { const result = await saveSheet(record, { owner: thisOwner, deferSync: true, importOriginal: record.source?.type === 'photo' }); if (result.skipped) skipped++; else imported++; } }
+    const thisOwner = owner; let imported = 0, skipped = 0, filled = 0;
+    try { for (const record of sheets) { const result = await saveSheet(record, { owner: thisOwner, deferSync: true, importOriginal: record.source?.type === 'photo' }); if (result.metadataFilled) filled++; else if (result.skipped) skipped++; else imported++; } }
     catch (e) { throw new Error(`${imported}개를 가져온 후 중단되었어요. ${e.message}`); }
-    await refreshRecords(); toast(`${imported}개의 기록을 가져왔어요.${skipped ? ` 이미 가져온 사진 ${skipped}개는 그대로 유지했어요.` : ''}`); syncSheets().then(refreshRecords).catch(e => error(e.message));
+    await refreshRecords(); toast(`${imported}개의 새 기록을 가져왔어요.${filled ? ` 기존 사진 ${filled}개의 후원자 수를 보완했어요.` : ''}${skipped ? ` 이미 가져온 사진 ${skipped}개는 그대로 유지했어요.` : ''}`); syncSheets().then(refreshRecords).catch(e => error(e.message));
   } catch (e) { toast(e instanceof SyntaxError ? 'JSON 파일을 읽을 수 없어요.' : e.message); }
   finally { $('#import-file').value = ''; }
 }
 async function loadNamespace() {
-  const epoch = ++loadEpoch; ready = false; clearTimeout(draftTimer); owner = getStorageStatus().namespace; invalid.clear(); dirty = false;
+  const epoch = ++loadEpoch; ready = false; clearTimeout(draftTimer); owner = getStorageStatus().namespace; invalid.clear(); dirty = false; archiveMonth = ''; archiveMonthChosen = false; selectedDate = '';
   try {
     const draft = await loadDraft(); if (epoch !== loadEpoch) return;
     sheet = draft ? normalizeSheet(draft) : createSheet(); editVersion++; hydrate(); await refreshRecords(); if (epoch !== loadEpoch) return;
@@ -221,7 +268,22 @@ $$('[data-view]').forEach(button => button.addEventListener('click', () => view(
 $('#save-sheet').addEventListener('click', saveCurrent); $('#export-image').addEventListener('click', exportImage);
 $('#open-archive').addEventListener('click', openArchive); $('#new-sheet').addEventListener('click', newSheet); $('#archive-new').addEventListener('click', newSheet);
 $$('[data-close-dialog]').forEach(button => button.addEventListener('click', () => $(`#${button.dataset.closeDialog}`).close()));
-$('#archive-search').addEventListener('input', renderArchive); $('#archive-month').addEventListener('input', renderArchive);
+$('#archive-search').addEventListener('input', renderArchive);
+$('#archive-month').addEventListener('input', event => { if (/^\d{4}-\d{2}$/.test(event.target.value)) { archiveMonth = event.target.value; archiveMonthChosen = true; selectedDate = ''; } renderArchive(); });
+$('#calendar-prev').addEventListener('click', () => shiftCalendarMonth(-1)); $('#calendar-next').addEventListener('click', () => shiftCalendarMonth(1));
+$('#archive-view-toggle').addEventListener('click', () => { archiveView = archiveView === 'calendar' ? 'list' : 'calendar'; selectedDate = ''; $('#archive-search').value = ''; renderArchive(); });
+$('#calendar-clear-date').addEventListener('click', () => { selectedDate = ''; renderArchive(); });
+$('#calendar-grid').addEventListener('click', async event => {
+  const button = event.target.closest('[data-calendar-date]'); if (!button || button.disabled) return;
+  const group = records.filter(record => record.date === button.dataset.calendarDate);
+  if (group.length === 1) { if (group[0].source?.type === 'photo') openSource(group[0]); else await editRecord(group[0]); }
+  else { selectedDate = button.dataset.calendarDate; renderArchive(); $('#calendar-selection').scrollIntoView({ block: 'nearest' }); $('#archive-list [data-open-sheet]')?.focus({ preventScroll: true }); }
+});
+$('#calendar-grid').addEventListener('keydown', event => {
+  const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key]; if (!offset) return;
+  const buttons = $$('[data-calendar-date]'); let index = buttons.indexOf(document.activeElement) + offset;
+  while (index >= 0 && index < buttons.length) { if (!buttons[index].disabled) { event.preventDefault(); buttons[index].focus(); return; } index += offset; }
+});
 $('#archive-list').addEventListener('click', async event => {
   const open = event.target.closest('[data-open-sheet]'), remove = event.target.closest('[data-delete-sheet]');
   if (open) { const record = records.find(item => item.id === open.dataset.openSheet); if (!record) return; if (record.source?.type === 'photo') openSource(record); else await editRecord(record); }

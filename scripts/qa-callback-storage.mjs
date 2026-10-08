@@ -124,6 +124,61 @@ try {
     const photoRace = await fresh.saveSheet(racePhoto, { importOriginal: true });
     check(photoRace.skipped && !photoRace.conflict && photoRace.sheet.rows[0].stop === 44, 'concurrent same-original ETag import keeps remote edits without creating a duplicate');
 
+    // Calendar backfill may add a verified count, but never overwrite transcriptions or known counts.
+    identity = guest;
+    const countsStore = createSheetStorage({ ...options, dbName: dbName + '-photo-counts' });
+    const countOriginal = copy(photo); countOriginal.id = 'photo-' + 'c'.repeat(64); countOriginal.source.donorCount = null;
+    let countSaved = await countsStore.saveSheet(countOriginal, { importOriginal: true });
+    countSaved.sheet.rows[0].contact = 61; countSaved.sheet.review.pitch.good = '기존 수기 전사 유지';
+    countSaved = await countsStore.saveSheet(countSaved.sheet);
+    const withCount = copy(countOriginal); withCount.source.donorCount = 3; withCount.rows[0].contact = 999;
+    const localFilled = await countsStore.saveSheet(withCount, { importOriginal: true });
+    check(localFilled.metadataFilled && localFilled.sheet.source.donorCount === 3 && localFilled.sheet.rows[0].contact === 61 && localFilled.sheet.review.pitch.good === '기존 수기 전사 유지' && (await countsStore.loadSheets()).length === 1, 'photo count fills only missing local metadata and preserves edited rows/reviews without duplicates');
+    withCount.source.donorCount = 9;
+    const knownLocal = await countsStore.saveSheet(withCount, { importOriginal: true });
+    check(knownLocal.skipped && knownLocal.sheet.source.donorCount === 3, 'reimport cannot replace an already known local photo count');
+    await countsStore.deleteSheet(countOriginal.id);
+    check((await countsStore.saveSheet(withCount, { importOriginal: true })).deleted && (await countsStore.loadSheets()).length === 0, 'count backfill cannot resurrect a local photo tombstone');
+
+    identity = alice;
+    const countCloud = createSheetStorage({ ...options, dbName: dbName + '-cloud-photo-counts' });
+    function remoteCountPhoto(letter, count) {
+      const sheet = copy(photo); sheet.id = 'photo-' + letter.repeat(64); sheet.rows[0].contact = 72; sheet.review.loa.good = '서버에서 작성한 내용';
+      if (count !== undefined) sheet.source.donorCount = count;
+      remote.set(alice.uid + '/' + sheet.id, { version: 1, revision: crypto.randomUUID(), deleted: false, updatedAt: sheet.updatedAt, sheet });
+      const incoming = copy(sheet); incoming.rows[0].contact = 999; incoming.review.loa.good = '가져온 파일의 오래된 내용'; incoming.source.donorCount = 7;
+      return incoming;
+    }
+    const cloudCountInput = remoteCountPhoto('d');
+    const cloudFilled = await countCloud.saveSheet(cloudCountInput, { importOriginal: true });
+    check(cloudFilled.cloudSaved && cloudFilled.metadataFilled && !cloudFilled.conflict && cloudFilled.sheet.source.donorCount === 7 && cloudFilled.sheet.rows[0].contact === 72 && cloudFilled.sheet.review.loa.good === '서버에서 작성한 내용', 'fresh-browser count backfill preserves all existing remote transcriptions');
+    const knownZeroInput = remoteCountPhoto('e', 0);
+    const zeroPreserved = await countCloud.saveSheet(knownZeroInput, { importOriginal: true });
+    check(zeroPreserved.skipped && zeroPreserved.sheet.source.donorCount === 0, 'known remote zero is authoritative and is never replaced by imported count');
+    const raceCountInput = remoteCountPhoto('f');
+    beforeWrite = async () => { const value = copy(remote.get(alice.uid + '/' + raceCountInput.id)); value.revision = crypto.randomUUID(); value.sheet.rows[0].stop = 88; remote.set(alice.uid + '/' + raceCountInput.id, value); };
+    const raceCountFilled = await countCloud.saveSheet(raceCountInput, { importOriginal: true });
+    check(raceCountFilled.cloudSaved && !raceCountFilled.conflict && raceCountFilled.sheet.source.donorCount === 7 && raceCountFilled.sheet.rows[0].stop === 88 && (await countCloud.loadSheets()).filter(s => s.id === raceCountInput.id).length === 1, 'ETag-racing count backfill retries against newest remote edits without forking');
+    const raceKnownCount = remoteCountPhoto('h');
+    beforeWrite = async () => { const value = copy(remote.get(alice.uid + '/' + raceKnownCount.id)); value.revision = crypto.randomUUID(); value.sheet.source.donorCount = 0; remote.set(alice.uid + '/' + raceKnownCount.id, value); };
+    const wonKnownCount = await countCloud.saveSheet(raceKnownCount, { importOriginal: true });
+    check(wonKnownCount.sheet.source.donorCount === 0 && !wonKnownCount.conflict, 'a concurrently verified count wins over backfill after ETag retry');
+    const raceDeletedCount = remoteCountPhoto('i');
+    beforeWrite = async () => { remote.set(alice.uid + '/' + raceDeletedCount.id, { version: 1, revision: crypto.randomUUID(), deleted: true, updatedAt: new Date().toISOString() }); };
+    const wonDeletedCount = await countCloud.saveSheet(raceDeletedCount, { importOriginal: true });
+    check(wonDeletedCount.deleted && !wonDeletedCount.conflict && !(await countCloud.loadSheets()).some(s => s.id === raceDeletedCount.id), 'a concurrent remote tombstone stops count backfill without resurrection or fork');
+    const pendingCountInput = remoteCountPhoto('g');
+    let pendingCountSaved = await countCloud.saveSheet({ ...copy(pendingCountInput), source: { ...copy(pendingCountInput.source), donorCount: null } }, { importOriginal: true });
+    pendingCountSaved.sheet.rows[0].close = 83;
+    await countCloud.saveSheet(pendingCountSaved.sheet, { deferSync: true });
+    await countCloud.saveSheet(pendingCountInput, { importOriginal: true, deferSync: true });
+    await countCloud.syncSheets();
+    const pendingCountRemote = remote.get(alice.uid + '/' + pendingCountInput.id).sheet;
+    check(pendingCountRemote.rows[0].close === 83 && pendingCountRemote.source.donorCount === 7 && (await countCloud.loadSheets()).filter(s => s.id === pendingCountInput.id).length === 1, 'count backfill also retains already pending local edits and safely rebases its metadata-only write');
+    await countCloud.deleteSheet(cloudCountInput.id);
+    const remoteDeletedCount = await countCloud.saveSheet(cloudCountInput, { importOriginal: true });
+    check(remoteDeletedCount.deleted && remote.get(alice.uid + '/' + cloudCountInput.id).deleted, 'synced imported photos can be deleted and count reimport does not resurrect them');
+
     // Exercise cloud auth and RTDB's actual wire format without sending network requests.
     identity = alice;
     const calls = [], wire = new Map(); let authReady = false, anonymousSignins = 0;
