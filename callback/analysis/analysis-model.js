@@ -35,6 +35,12 @@ export function uniqueRecords(records) {
   const ids = new Set(), photos = new Set();
   return [...records].filter(record => validDate(record.date)).sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))).filter(record => { if (ids.has(record.id)) return false; ids.add(record.id); if (record.source?.type === 'photo' && record.source.imageDataUrl) { if (photos.has(record.source.imageDataUrl)) return false; photos.add(record.source.imageDataUrl); } return true; });
 }
+function dateBasisCounts(records) {
+  return records.reduce((counts, record) => {
+    if (record.source?.type === 'photo' && (record.source.dateBasis === 'capture' || record.source.dateBasis === 'unknown')) counts[record.source.dateBasis]++;
+    return counts;
+  }, { capture: 0, unknown: 0 });
+}
 function aggregate(records) {
   const days = new Set(records.map(record => record.date)).size;
   const metrics = Object.fromEntries(METRICS.map(({ id }) => {
@@ -49,7 +55,7 @@ function aggregate(records) {
     const numerator = matched.reduce((sum, row) => sum + row[to], 0) + photos.reduce((sum, record) => sum + metricValue(record, to), 0), denominator = matched.reduce((sum, row) => sum + row[from], 0) + photos.reduce((sum, record) => sum + metricValue(record, from), 0);
     return { from, to, rows: matched.length, photoRecords: photos.length, numerator, denominator, percent: denominator > 0 ? numerator / denominator * 100 : null, exceeds: numerator > denominator };
   });
-  return { records: records.length, days, metrics, rates, photoRecords: records.filter(record => record.source?.type === 'photo').length, transcriptionRecords: records.filter(record => record.source?.transcription).length, partialTranscriptionRecords: records.filter(record => record.source?.transcription?.status === 'partial').length, donorBasis: records.reduce((result, record) => { result[donorValue(record).basis]++; return result; }, { cases: 0, rehash: 0, photo: 0, transcription: 0, unknown: 0 }) };
+  return { records: records.length, days, metrics, rates, dateBasis: dateBasisCounts(records), photoRecords: records.filter(record => record.source?.type === 'photo').length, transcriptionRecords: records.filter(record => record.source?.transcription).length, partialTranscriptionRecords: records.filter(record => record.source?.transcription?.status === 'partial').length, donorBasis: records.reduce((result, record) => { result[donorValue(record).basis]++; return result; }, { cases: 0, rehash: 0, photo: 0, transcription: 0, unknown: 0 }) };
 }
 const THEMES = {
   pitch: [
@@ -64,7 +70,7 @@ const THEMES = {
   ],
 };
 function reviewAnalysis(records, category) {
-  const entries = records.flatMap(record => ['good', 'bad'].map(kind => ({ id: record.id, date: record.date, kind, ...getReviewReading(record, category, kind) })).filter(item => item.text));
+  const entries = records.flatMap(record => ['good', 'bad'].map(kind => ({ id: record.id, date: record.date, dateBasis: record.source?.type === 'photo' ? record.source.dateBasis : 'written', kind, ...getReviewReading(record, category, kind) })).filter(item => item.text));
   const themes = THEMES[category].map(theme => { const evidence = entries.filter(item => theme.pattern.test(item.text)); return { label: theme.label, action: theme.action, count: new Set(evidence.map(item => item.id)).size, improvementCount: new Set(evidence.filter(item => item.kind === 'bad').map(item => item.id)).size, evidence: evidence.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2) }; }).filter(theme => theme.count).sort((a, b) => b.improvementCount - a.improvementCount || b.count - a.count);
   return { coverage: new Set(entries.map(item => item.id)).size, transcriptionCoverage: new Set(entries.filter(item => item.basis === 'transcription').map(item => item.id)).size, good: entries.filter(item => item.kind === 'good').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), bad: entries.filter(item => item.kind === 'bad').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), themes, suggestions: themes.filter(theme => theme.improvementCount).slice(0, 2) };
 }
@@ -75,7 +81,7 @@ export function analyze(records, anchor = localToday(), period = 'month') {
   const trend = [];
   for (let stamp = +date(range.start); stamp <= +date(range.end); stamp += DAY) {
     const day = iso(new Date(stamp)), records = currentRecords.filter(record => record.date === day);
-    trend.push({ date: day, records: records.length, ...Object.fromEntries(METRICS.map(({ id }) => { const values = records.map(record => metricValue(record, id)).filter(value => value !== null); return [id, values.length ? values.reduce((a, b) => a + b, 0) : null]; })), missing: Object.fromEntries(METRICS.map(({ id }) => [id, records.filter(record => metricValue(record, id) === null).length])) });
+    trend.push({ date: day, records: records.length, dateBasis: dateBasisCounts(records), ...Object.fromEntries(METRICS.map(({ id }) => { const values = records.map(record => metricValue(record, id)).filter(value => value !== null); return [id, values.length ? values.reduce((a, b) => a + b, 0) : null]; })), missing: Object.fromEntries(METRICS.map(({ id }) => [id, records.filter(record => metricValue(record, id) === null).length])) });
   }
   return { range, current, previous, trend, latest: all.map(record => record.date).sort().at(-1) || null, totalRecords: all.length, reviews: { pitch: reviewAnalysis(currentRecords, 'pitch'), attitude: reviewAnalysis(currentRecords, 'attitude') } };
 }

@@ -4,7 +4,7 @@ import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, g
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-let sheet = createSheet(), records = [], owner = getStorageStatus().namespace, dirty = false, editVersion = 0, draftTimer, renderTimer, toastTimer, imageURL, imageFile, sourceRecord = null, loadEpoch = 0, ready = false;
+let sheet = createSheet(), records = [], owner = getStorageStatus().namespace, dirty = false, editVersion = 0, persistedDraftVersion = 0, draftTimer, renderTimer, toastTimer, imageURL, imageFile, sourceRecord = null, loadEpoch = 0, ready = false;
 let backupURLs = [];
 let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', selectedDate = '';
 const invalid = new Map();
@@ -91,19 +91,24 @@ function openSource(record) {
   $('#source-dialog .dialog-shell').scrollTop = 0;
 }
 async function editRecord(record) {
+  let opened = false;
   if (sheet.id !== record.id) {
     if (!await canLeave()) return false;
     clearTimeout(draftTimer); sheet = normalizeSheet(record); dirty = false; editVersion++; hydrate(); error();
-    await persistDraft(); status(sheet.source ? '원본을 보면서 기록을 옮겨 적어요 · 원본 사진은 그대로 보관돼요' : '저장한 기록을 열었어요 · 수정 후 다시 저장할 수 있어요');
+    opened = true;
+    status(sheet.source ? '원본을 보면서 기록을 옮겨 적어요 · 원본 사진은 그대로 보관돼요' : '저장한 기록을 열었어요 · 수정 후 다시 저장할 수 있어요');
   }
-  $('#source-dialog').close(); $('#archive-dialog').close(); view('edit'); window.scrollTo({ top: 0 }); return true;
+  $('#source-dialog').close(); $('#archive-dialog').close(); view('edit'); window.scrollTo({ top: 0 });
+  // Drafts share the cloud-sync queue; showing a saved record must not wait for a download.
+  if (opened) void persistDraft();
+  return true;
 }
 function updateTotals() { const totals = getTotals(sheet); METRICS.forEach(key => { $(`#total-${key}`).textContent = hasValues(sheet, key) ? totals[key].toLocaleString() : '—'; }); }
 function schedulePreview() { clearTimeout(renderTimer); renderTimer = setTimeout(async () => { try { await renderSheet($('#paper-preview'), structuredClone(sheet)); $('#preview-loading').hidden = true; } catch (e) { $('#preview-loading').hidden = false; $('#preview-loading').textContent = e.message; } }, 90); }
 async function persistDraft() {
   if (!ready || invalid.size || !validateSheet(sheet).valid) return;
   const thisOwner = owner, revision = editVersion, snapshot = structuredClone(sheet);
-  try { await saveDraft(snapshot, { owner: thisOwner }); if (thisOwner === owner && revision === editVersion && dirty) status('작성 중 · 임시 저장됨'); }
+  try { await saveDraft(snapshot, { owner: thisOwner }); if (thisOwner === owner && revision === editVersion) { persistedDraftVersion = revision; if (dirty) status('작성 중 · 임시 저장됨'); } }
   catch (e) { if (thisOwner === owner) { error(e.message || '임시 저장하지 못했어요.'); status('임시 저장 실패 · 이 창을 유지해 주세요'); } }
 }
 function changed() { dirty = true; editVersion++; updateTotals(); updateSourceBanner(); schedulePreview(); clearTimeout(draftTimer); const validation = validateSheet(sheet); if (!invalid.size) error(validation.valid ? '' : validation.errors[0].message); status(invalid.size || !validation.valid ? '입력 확인 필요 · 임시 저장 대기' : '작성 중 · 임시 저장 중…'); if (!invalid.size && validation.valid) draftTimer = setTimeout(persistDraft, 450); }
@@ -249,7 +254,7 @@ async function loadNamespace() {
   const epoch = ++loadEpoch; ready = false; clearTimeout(draftTimer); owner = getStorageStatus().namespace; invalid.clear(); dirty = false; archiveMonth = ''; archiveMonthChosen = false; selectedDate = '';
   try {
     const draft = await loadDraft(); if (epoch !== loadEpoch) return;
-    sheet = draft ? normalizeSheet(draft) : createSheet(); editVersion++; hydrate(); await refreshRecords(); if (epoch !== loadEpoch) return;
+    sheet = draft ? normalizeSheet(draft) : createSheet(); editVersion++; persistedDraftVersion = editVersion; hydrate(); await refreshRecords(); if (epoch !== loadEpoch) return;
     dirty = !!draft && !records.some(record => record.id === draft.id && JSON.stringify(record) === JSON.stringify(draft)); ready = true; status(draft ? (dirty ? '임시 저장한 기록을 이어서 작성해요' : '저장한 기록을 불러왔어요') : '새로운 하루 · 기록을 시작해 보세요');
   } catch (e) { ready = true; error(e.message || '저장된 기록을 읽지 못했어요.'); status('기록 불러오기 오류'); }
 }
@@ -323,7 +328,7 @@ $('#source-image').addEventListener('load', event => { $('#source-photo-frame').
 $('#source-image').addEventListener('error', () => { if (sourceRecord) { $('#source-image').hidden = true; $('#source-image-error').hidden = false; } });
 $('#source-zoom').addEventListener('click', () => { const zoomed = $('#source-zoom').getAttribute('aria-pressed') !== 'true'; $('#source-photo-frame').dataset.zoomed = String(zoomed); $('#source-zoom').setAttribute('aria-pressed', String(zoomed)); $('#source-zoom').textContent = zoomed ? '화면에 맞추기' : '원본 크기로 보기'; });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { clearTimeout(draftTimer); persistDraft(); } });
-window.addEventListener('beforeunload', event => { if (invalid.size || !validateSheet(sheet).valid) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if ((dirty && persistedDraftVersion !== editVersion) || invalid.size || !validateSheet(sheet).valid) { event.preventDefault(); event.returnValue = ''; } });
 subscribe(storageStatusChanged); storageStatusChanged();
 await loadNamespace();
 if (new URLSearchParams(location.search).get('view') === 'archive') await openArchive();
