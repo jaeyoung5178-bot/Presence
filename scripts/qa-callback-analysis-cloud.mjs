@@ -28,6 +28,9 @@ const mixedRemote={...remote,[other.id]:document(other),[unknown.id]:document(un
 // A real-shaped photo DTO travels through the browser's conditional304 path too.
 // Existing manually entered numbers must still take priority over its transcription.
 mixedRemote['server-0'].sheet.source={type:'photo',imageDataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lU8AAAAASUVORK5CYII=',filename:'synthetic-photo.png',notes:'',duplicateCount:0,dateBasis:'capture',transcription:{version:1,status:'partial',totals:{contact:999,stop:null,presentation:3,close:2,rehash:99},review:{loa:{good:'과정 목표 달성',bad:'시간 배분 점검'},pitch:{good:'',bad:'핵심 설명을 짧게 전달하기'},attitude:{good:'끝까지 인사',bad:''}}}};
+mixedRemote['server-0'].sheet.date='2024-04-29';
+mixedRemote['server-1'].sheet.review.pitch.good='핵심 설명을 잘 전달했다';
+mixedRemote['server-2'].sheet.review.pitch.good='설명과 스토리를 짧게 전달했다';
 
 await fs.mkdir(OUT,{recursive:true});
 const {chromium}=require('playwright');const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
@@ -71,6 +74,8 @@ for(const role of ['member','leader','admin'])for(const viewport of [{width:390,
   const loa=page.locator('#loa-review');
   check(`${tag} LOA positive and improvement photo quotes keep their source`,(await loa.textContent()).includes('과정 목표 달성')&&(await loa.textContent()).includes('시간 배분 점검')&&(await loa.textContent()).includes('원본 사진에서 읽음')&&(await loa.textContent()).includes('촬영일 기준'));
   check(`${tag} LOA practice derives from improvement evidence only`,(await loa.locator('.practice').textContent()).includes('시간 배분과 공백')&&!(await loa.locator('.practice').textContent()).includes('과정 목표와 기회량'));
+  const pitchPractice=page.locator('#pitch-review .practice').filter({has:page.locator('strong',{hasText:'설명과 핵심 전달'})});
+  check(`${tag} improvement practice cites its older source despite newer positives`,(await pitchPractice.locator('small').textContent()).includes('2024-04-29 (촬영일 기준)')&&!(await pitchPractice.locator('small').textContent()).includes('위 개선 회고'));
   const panels=await page.locator('.review-grid > section').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,scroll:node.scrollWidth,client:node.clientWidth};}));
   check(`${tag} all three review panels fit their adaptive layout`,panels.length===3&&panels.every(r=>r.width>=300&&r.x>=0&&r.right<=viewport.width+1&&r.scroll<=r.client+1)&&(viewport.width>1100?Math.abs(panels[0].y-panels[2].y)<1:viewport.width>700?panels[0].width>panels[1].width*1.9&&Math.abs(panels[1].y-panels[2].y)<1:panels[0].y<panels[1].y&&panels[1].y<panels[2].y));
   await page.locator('.review-grid').screenshot({path:`${OUT}/reviews-${tag}.png`});

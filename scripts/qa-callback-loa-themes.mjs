@@ -59,4 +59,11 @@ check('a different period or empty review has no invented LOA observation or pra
 check('adding LOA preserves existing pitch and attitude review coverage',()=>{assert.equal(report.reviews.pitch.good[0].text,'설명을 짧게');assert.equal(report.reviews.attitude.good[0].text,'밝게 인사');});
 const dto=await projectAnalysisRecord(photo);
 check('image-free index preserves all three review categories exactly',()=>{assert.deepEqual(analyze([dto],'2024-05-01').reviews,analyze([photo],'2024-05-01').reviews);});
+check('older improvement evidence is not displaced by two newer positive reviews',()=>{
+  const older=sheet('older');older.date='2024-04-29';older.review.pitch.bad='핵심 설명을 짧게';
+  const recent=sheet('recent');recent.review.pitch.good='설명과 핵심 전달을 잘했다';
+  const newer=sheet('newer');newer.review.pitch.good='짧게 설명했다';
+  const practice=analyze([older,recent,newer],'2024-05-01').reviews.pitch.suggestions.find(item=>item.label==='설명과 핵심 전달');
+  assert.equal(practice.count,3);assert.equal(practice.improvementCount,1);assert.equal(practice.evidence.length,1);assert.equal(practice.evidence[0].date,'2024-04-29');assert.equal(practice.evidence[0].kind,'bad');assert.equal(practice.evidence[0].text,'핵심 설명을 짧게');
+});
 console.log(JSON.stringify({ passed: checks.length, checks }, null, 2));

@@ -1,4 +1,4 @@
-import { analyze, METRICS, localToday, authorKey, authorLabel, defaultAuthor, filterAuthor } from './analysis-model.js?v=20261009-loa1';
+import { analyze, METRICS, localToday, authorKey, authorLabel, defaultAuthor, filterAuthor } from './analysis-model.js?v=20261009-evidence1';
 import { createCloudClient, readAccountIdentity } from '../sheets/cloud.js?v=20261009-analysisindex1';
 import { mergeAnalysisProjections, readLocalAnalysisProjections } from './analysis-sources.js?v=20261009-analysisindex1';
 

@@ -74,7 +74,13 @@ const THEMES = {
 };
 function reviewAnalysis(records, category) {
   const entries = records.flatMap(record => ['good', 'bad'].map(kind => ({ id: record.id, date: record.date, dateBasis: record.source?.type === 'photo' ? record.source.dateBasis : 'written', kind, ...getReviewReading(record, category, kind) })).filter(item => item.text));
-  const themes = THEMES[category].map(theme => { const evidence = entries.filter(item => theme.pattern.test(item.text)); return { label: theme.label, action: theme.action, count: new Set(evidence.map(item => item.id)).size, improvementCount: new Set(evidence.filter(item => item.kind === 'bad').map(item => item.id)).size, evidence: evidence.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2) }; }).filter(theme => theme.count).sort((a, b) => b.improvementCount - a.improvementCount || b.count - a.count);
+  const themes = THEMES[category].map(theme => {
+    const evidence = entries.filter(item => theme.pattern.test(item.text));
+    const improvements = evidence.filter(item => item.kind === 'bad');
+    // Practice suggestions need their actual improvement dates even when newer positive
+    // notes exist. Counts and quoted source text still use the complete matched entries.
+    return { label: theme.label, action: theme.action, count: new Set(evidence.map(item => item.id)).size, improvementCount: new Set(improvements.map(item => item.id)).size, evidence: (improvements.length ? improvements : evidence).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2) };
+  }).filter(theme => theme.count).sort((a, b) => b.improvementCount - a.improvementCount || b.count - a.count);
   return { coverage: new Set(entries.map(item => item.id)).size, transcriptionCoverage: new Set(entries.filter(item => item.basis === 'transcription').map(item => item.id)).size, good: entries.filter(item => item.kind === 'good').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), bad: entries.filter(item => item.kind === 'bad').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), themes, suggestions: themes.filter(theme => theme.improvementCount).slice(0, 2) };
 }
 export function analyze(records, anchor = localToday(), period = 'month') {
