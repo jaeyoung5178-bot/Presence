@@ -1,6 +1,6 @@
-import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261008-callback3';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261008-callback3';
-import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261008-callback3';
+import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261009-transcription1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261009-transcription1';
+import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-transcription1';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -41,7 +41,19 @@ function renderObjectionFlags() {
   host.innerHTML = '<p class="case-guide">후원자에 체크하면 이미 적은 특이사항이 빨간색으로 표시돼요.</p>' + blocks.map((block, index) => `<label class="objection-donor-toggle"><input type="checkbox" data-objection-donor="${index}" aria-label="${index + 1}번째 특이사항 후원자" ${sheet.donorObjections?.includes(block) ? 'checked' : ''}><span><strong>후원자</strong><span>${esc(block)}</span></span></label>`).join('');
 }
 function sourceValueCount(record) { return record.rows.reduce((total, row) => total + METRICS.filter(key => row[key] !== null).length, 0); }
-function sourceStatus(record) { const count = sourceValueCount(record); return count ? `사진 원본 · 숫자 ${count}칸 입력` : '사진 기록 · 숫자 미전사'; }
+function sourceStatus(record) {
+  const count = sourceValueCount(record), read = record.source?.transcription;
+  if (read) return `사진 원본 · 하루 합계 ${METRICS.filter(key => Number.isInteger(read.totals[key])).length}/5개 읽음${count ? ` · 시간별 숫자 ${count}칸 입력` : ''}`;
+  return count ? `사진 원본 · 숫자 ${count}칸 입력` : '사진 기록 · 숫자 미전사';
+}
+function renderTranscription(record) {
+  const transcription = record.source.transcription;
+  let host = $('#source-transcription');
+  if (!host) { host = document.createElement('section'); host.id = 'source-transcription'; host.className = 'source-transcription'; host.setAttribute('aria-label', '사진에서 읽어낸 기록'); $('#source-notes').insertAdjacentElement('afterend', host); }
+  if (!transcription) { host.innerHTML = '<h3>읽어낸 기록</h3><p class="subtle">아직 이 사진에서 읽어낸 숫자와 회고가 없어요.</p>'; return; }
+  const numeric = value => value === null ? '<span class="transcription-unknown">판독 불가 · 미기록</span>' : value.toLocaleString('ko-KR');
+  host.innerHTML = `<div class="transcription-heading"><h3>읽어낸 기록</h3><span class="source-badge">${transcription.status === 'reviewed' ? '원본 대조 완료' : '일부 판독 · 확인 필요'}</span></div><p class="subtle">종이에 적힌 하루 합계와 회고예요. 읽지 못한 칸은 비워 두었고, 시간별 숫자는 배분하지 않았어요. 분석은 직접 입력한 칸을 우선해요.</p><div class="transcription-totals">${METRICS.map(key => `<div><h4>${LABELS[key]}</h4><span class="transcription-result" data-transcription-total="${key}">${numeric(transcription.totals[key])}</span>${transcription.goals ? `<small>목표 ${numeric(transcription.goals[key])}</small>` : ''}</div>`).join('')}</div><div class="transcription-reviews">${[['loa', 'Number · L.O.A'], ['pitch', 'Pitch · Skill'], ['attitude', 'Attitude · Mental']].map(([key, title]) => `<article><h4>${title}</h4>${[['good', '잘한 점 (+)'], ['bad', '개선할 점 (−)']].map(([kind, label]) => `<div><h5>${label}</h5><p data-transcription-review="${key}.${kind}" class="${transcription.review[key][kind].trim() ? '' : 'transcription-unknown'}">${esc(transcription.review[key][kind].trim() || '판독 불가 또는 미기록')}</p></div>`).join('')}</article>`).join('')}</div>${transcription.notes ? `<p class="transcription-notes">${esc(transcription.notes)}</p>` : ''}`;
+}
 function dateBasisText(record) {
   if (record.source.dateBasis === 'capture') return '촬영일 기준 · 종이에 적힌 날짜는 확인이 필요해요.';
   if (record.source.dateBasis === 'unknown') return '날짜 미확인 · 보관함 정렬 날짜는 임시 날짜예요.';
@@ -65,6 +77,7 @@ function openSource(record) {
   $('#source-filename').textContent = record.source.filename;
   $('#source-notes').textContent = record.source.notes;
   $('#source-notes').hidden = !record.source.notes;
+  renderTranscription(record);
   $('#source-image-error').hidden = true;
   $('#source-image').hidden = false;
   $('#source-image').src = record.source.imageDataUrl;
@@ -228,7 +241,7 @@ async function importBackup(file) {
     const thisOwner = owner; let imported = 0, skipped = 0, filled = 0;
     try { for (const record of sheets) { const result = await saveSheet(record, { owner: thisOwner, deferSync: true, importOriginal: record.source?.type === 'photo' }); if (result.metadataFilled) filled++; else if (result.skipped) skipped++; else imported++; } }
     catch (e) { throw new Error(`${imported}개를 가져온 후 중단되었어요. ${e.message}`); }
-    await refreshRecords(); toast(`${imported}개의 새 기록을 가져왔어요.${filled ? ` 기존 사진 ${filled}개의 후원자 수를 보완했어요.` : ''}${skipped ? ` 이미 가져온 사진 ${skipped}개는 그대로 유지했어요.` : ''}`); syncSheets().then(refreshRecords).catch(e => error(e.message));
+    await refreshRecords(); toast(`${imported}개의 새 기록을 가져왔어요.${filled ? ` 기존 사진 ${filled}개의 읽어낸 기록을 보완했어요.` : ''}${skipped ? ` 이미 가져온 사진 ${skipped}개는 그대로 유지했어요.` : ''}`); syncSheets().then(refreshRecords).catch(e => error(e.message));
   } catch (e) { toast(e instanceof SyntaxError ? 'JSON 파일을 읽을 수 없어요.' : e.message); }
   finally { $('#import-file').value = ''; }
 }

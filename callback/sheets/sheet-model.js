@@ -6,6 +6,27 @@ export const CASE_METRICS = METRICS.slice(0, 4);
 export function getCaseTotals(row, { donorsOnly = false } = {}) { return Object.fromEntries(CASE_METRICS.map(key => [key, (row.donorCases || []).reduce((sum, item) => sum + ((!donorsOnly || item.donor) ? item.counts[key] : 0), 0)])); }
 export function createDonorCase(row) { const used = getCaseTotals(row); return { id: makeId(), donor: false, counts: Object.fromEntries(CASE_METRICS.map(key => [key, Math.min(1, Math.max(0, (row[key] ?? 0) - used[key]))])), note: '' }; }
 export const MAX_SOURCE_BYTES = 2 * 1024 * 1024;
+export function validateTranscription(value) {
+  const errors = [], error = (key, message) => errors.push({ path: `source.transcription${key ? `.${key}` : ''}`, message });
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [{ path: 'source.transcription', message: '사진에서 읽은 기록 형식이 올바르지 않아요.' }];
+  if (value.version !== 1) error('version', '지원하지 않는 사진 전사 버전이에요.');
+  if (!['reviewed', 'partial'].includes(value.status)) error('status', '사진 전사 확인 상태가 올바르지 않아요.');
+  for (const group of ['totals', ...(value.goals === undefined ? [] : ['goals'])]) for (const key of METRICS) {
+    const number = value[group]?.[key];
+    if (number !== null && (!Number.isInteger(number) || number < 0 || number > 99999)) error(`${group}.${key}`, '사진의 숫자는 0~99,999 사이의 정수 또는 미확인이어야 해요.');
+  }
+  for (const key of ['loa', 'pitch', 'attitude']) for (const kind of ['good', 'bad']) {
+    const text = value.review?.[key]?.[kind];
+    if (typeof text !== 'string' || text.length > 12000) error(`review.${key}.${kind}`, '사진의 회고는 12,000자 이내의 텍스트여야 해요.');
+  }
+  if (value.notes !== undefined && (typeof value.notes !== 'string' || value.notes.length > 12000)) error('notes', '전사 메모는 12,000자 이내여야 해요.');
+  return errors;
+}
+export function normalizeTranscription(value) {
+  const errors = validateTranscription(value);
+  if (errors.length) throw new Error(errors[0].message);
+  return { version: 1, status: value.status, totals: Object.fromEntries(METRICS.map(key => [key, value.totals[key]])), ...(value.goals === undefined ? {} : { goals: Object.fromEntries(METRICS.map(key => [key, value.goals[key]])) }), review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(key => [key, { good: value.review[key].good, bad: value.review[key].bad }])), ...(value.notes === undefined ? {} : { notes: value.notes }) };
+}
 export function validatePhotoSource(source) {
   const errors = [], error = (key, message) => errors.push({ path: `source.${key}`, message });
   if (!source || typeof source !== 'object' || Array.isArray(source)) return [{ path: 'source', message: '사진 원본의 형식이 올바르지 않아요.' }];
@@ -23,6 +44,7 @@ export function validatePhotoSource(source) {
   if (!Number.isInteger(source.duplicateCount) || source.duplicateCount < 0 || source.duplicateCount > 9999) error('duplicateCount', '중복 촬영 수가 올바르지 않아요.');
   if (!['written', 'capture', 'unknown'].includes(source.dateBasis)) error('dateBasis', '사진 날짜의 근거가 올바르지 않아요.');
   if (source.donorCount !== undefined && source.donorCount !== null && (!Number.isInteger(source.donorCount) || source.donorCount < 0 || source.donorCount > 99999)) error('donorCount', '사진의 후원자 수는 0~99,999 사이의 정수 또는 미확인이어야 해요.');
+  if (source.transcription !== undefined) errors.push(...validateTranscription(source.transcription));
   return errors;
 }
 export function makeId() { return globalThis.crypto?.randomUUID?.() || `sheet-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
@@ -33,6 +55,17 @@ export function createSheet(now = new Date()) {
 }
 export function getTotals(sheet) { return Object.fromEntries(METRICS.map(key => [key, sheet.rows.reduce((sum, row) => sum + (Number.isInteger(row[key]) ? row[key] : 0), 0)])); }
 export function hasValues(sheet, key) { return sheet.rows.some(row => row[key] !== null && row[key] !== undefined); }
+export function getMetricReading(sheet, key) {
+  if (hasValues(sheet, key)) return { value: getTotals(sheet)[key], basis: 'manual' };
+  const value = sheet.source?.type === 'photo' ? sheet.source.transcription?.totals?.[key] : null;
+  return Number.isInteger(value) && value >= 0 ? { value, basis: 'transcription' } : { value: null, basis: 'unknown' };
+}
+export function getReviewReading(sheet, category, kind) {
+  const manual = sheet.review?.[category]?.[kind]?.trim();
+  if (manual) return { text: manual, basis: 'manual' };
+  const text = sheet.source?.type === 'photo' ? sheet.source.transcription?.review?.[category]?.[kind]?.trim() : '';
+  return text ? { text, basis: 'transcription' } : { text: '', basis: 'unknown' };
+}
 export function parseObjectionBlocks(text) {
   const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n'), numbered = line => /^\s*(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))/.test(line);
   if (!lines.some(numbered)) return lines.join('\n').split(/\n\s*\n/).map(block => block.trim()).filter(Boolean);
@@ -47,6 +80,7 @@ export function getDonorSummary(sheet) {
   const flags = (sheet.donorObjections || []).filter(note => parseObjectionBlocks(sheet.objections).includes(note));
   if (cases.length || Array.isArray(sheet.donorObjections)) return { count: donorCases.length + new Set(flags.map(noteIdentity).filter(note => !caseNotes.has(note))).size, basis: 'cases' };
   if (hasValues(sheet, 'rehash')) return { count: getTotals(sheet).rehash, basis: 'rehash' };
+  if (sheet.source?.type === 'photo' && sheet.source.transcription) return Number.isInteger(sheet.source.transcription.totals.rehash) ? { count: sheet.source.transcription.totals.rehash, basis: 'transcription' } : { count: null, basis: 'unknown' };
   if (sheet.source?.type === 'photo' && Number.isInteger(sheet.source.donorCount)) return { count: sheet.source.donorCount, basis: 'photo' };
   return { count: null, basis: 'unknown' };
 }
@@ -102,6 +136,6 @@ export function normalizeSheet(sheet) {
   const result = validateSheet(sheet);
   if (!result.valid) { const error = new Error(result.errors[0].message); error.errors = result.errors; throw error; }
   // Copy only the documented fields; imported JSON cannot add prototype keys or executable content.
-  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])), ...(row.donorCases === undefined ? {} : { donorCases: row.donorCases.map(item => ({ id: item.id, donor: item.donor, counts: Object.fromEntries(CASE_METRICS.map(key => [key, item.counts[key]])), note: item.note })) }) })), objections: sheet.objections, ...(sheet.donorObjections === undefined ? {} : { donorObjections: [...sheet.donorObjections] }), review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt, ...(sheet.source === undefined ? {} : { source: Object.fromEntries(['type', 'imageDataUrl', 'filename', 'notes', 'duplicateCount', 'dateBasis', ...(sheet.source.donorCount === undefined ? [] : ['donorCount'])].map(key => [key, sheet.source[key]])) }) };
+  return { version: 1, id: sheet.id, date: sheet.date, meta: Object.fromEntries(['name', 'location', 'team', 'weather', 'theme'].map(k => [k, sheet.meta[k]])), processGoals: Object.fromEntries(METRICS.slice(0, 4).map(k => [k, sheet.processGoals[k]])), goals: Object.fromEntries(METRICS.map(k => [k, sheet.goals[k]])), rows: sheet.rows.map(row => ({ id: row.id, time: row.time, endTime: row.endTime, ...Object.fromEntries(METRICS.map(k => [k, row[k]])), ...(row.donorCases === undefined ? {} : { donorCases: row.donorCases.map(item => ({ id: item.id, donor: item.donor, counts: Object.fromEntries(CASE_METRICS.map(key => [key, item.counts[key]])), note: item.note })) }) })), objections: sheet.objections, ...(sheet.donorObjections === undefined ? {} : { donorObjections: [...sheet.donorObjections] }), review: Object.fromEntries(['loa', 'pitch', 'attitude'].map(k => [k, { good: sheet.review[k].good, bad: sheet.review[k].bad }])), createdAt: sheet.createdAt, updatedAt: sheet.updatedAt, ...(sheet.source === undefined ? {} : { source: { ...Object.fromEntries(['type', 'imageDataUrl', 'filename', 'notes', 'duplicateCount', 'dateBasis', ...(sheet.source.donorCount === undefined ? [] : ['donorCount'])].map(key => [key, sheet.source[key]])), ...(sheet.source.transcription === undefined ? {} : { transcription: normalizeTranscription(sheet.source.transcription) }) } }) };
 }
 export function formatDate(date) { return date.replaceAll('-', '. '); }

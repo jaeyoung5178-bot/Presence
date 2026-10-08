@@ -179,6 +179,52 @@ try {
     const remoteDeletedCount = await countCloud.saveSheet(cloudCountInput, { importOriginal: true });
     check(remoteDeletedCount.deleted && remote.get(alice.uid + '/' + cloudCountInput.id).deleted, 'synced imported photos can be deleted and count reimport does not resurrect them');
 
+    // Repeat OCR imports fill only empty metadata, including across server races.
+    const transcript = () => ({ version: 1, status: 'partial', totals: { contact: 31, stop: 17, presentation: 13, close: 13, rehash: 0 }, goals: { contact: 50, stop: 25, presentation: 16, close: 16, rehash: 3 }, review: { loa: { good: '전환율 좋음', bad: '' }, pitch: { good: '', bad: '질문 후 경청하기' }, attitude: { good: '밝게 인사함', bad: '' } }, notes: '검수된 구간만 포함' });
+    identity = guest;
+    const textStore = createSheetStorage({ ...options, dbName: dbName + '-photo-text' });
+    const textPhoto = copy(photo); textPhoto.id = 'photo-text-local';
+    let textSaved = await textStore.saveSheet(textPhoto, { importOriginal: true });
+    textSaved.sheet.rows[0].contact = 62; textSaved.sheet.review.pitch.bad = '직접 입력한 개선점';
+    await textStore.saveSheet(textSaved.sheet);
+    const incomingText = copy(textPhoto); incomingText.source.transcription = transcript(); incomingText.source.donorCount = 4;
+    const textFilled = await textStore.saveSheet(incomingText, { importOriginal: true });
+    check(textFilled.metadataFilled && textFilled.sheet.source.transcription.totals.rehash === 0 && textFilled.sheet.rows[0].contact === 62 && textFilled.sheet.review.pitch.bad === '직접 입력한 개선점' && (await textStore.loadSheets()).length === 1, 'OCR enrichment preserves manual rows and review while adding verified zero without duplicates');
+    const textAgain = copy(incomingText); textAgain.source.transcription.totals.rehash = 8; textAgain.source.transcription.review.pitch.bad = '가져온 다른 문장'; textAgain.source.donorCount = 9;
+    const unchangedText = await textStore.saveSheet(textAgain, { importOriginal: true });
+    check(unchangedText.skipped && unchangedText.sheet.source.transcription.totals.rehash === 0 && unchangedText.sheet.source.transcription.review.pitch.bad === '질문 후 경청하기' && unchangedText.sheet.source.donorCount === 4, 'repeat OCR preserves known zero, existing transcription text and donor metadata');
+    textAgain.source.transcription.review.loa.bad = '빈 칸에 추가 검수 내용';
+    const completedText = await textStore.saveSheet(textAgain, { importOriginal: true });
+    check(completedText.metadataFilled && completedText.sheet.source.transcription.review.loa.bad === '빈 칸에 추가 검수 내용' && completedText.sheet.source.transcription.status === 'partial' && completedText.sheet.source.transcription.notes === '검수된 구간만 포함', 'incremental OCR fills missing review only without upgrading its existing verification status');
+    await textStore.deleteSheet(textPhoto.id);
+    check((await textStore.saveSheet(incomingText, { importOriginal: true })).deleted && (await textStore.loadSheets()).length === 0, 'OCR cannot resurrect a deleted local photo');
+
+    identity = alice;
+    const textCloud = createSheetStorage({ ...options, dbName: dbName + '-cloud-photo-text' });
+    const remoteTextInput = remoteCountPhoto('t'); delete remoteTextInput.source.donorCount;
+    const existingText = transcript(); existingText.totals.contact = 0; existingText.totals.stop = null; existingText.review.pitch.bad = '서버에서 검수한 문장'; existingText.review.attitude.good = '';
+    remote.get(alice.uid + '/' + remoteTextInput.id).sheet.source.transcription = existingText;
+    remoteTextInput.source.transcription = transcript();
+    const cloudTextFilled = await textCloud.saveSheet(remoteTextInput, { importOriginal: true });
+    check(cloudTextFilled.cloudSaved && cloudTextFilled.metadataFilled && cloudTextFilled.sheet.source.transcription.totals.contact === 0 && cloudTextFilled.sheet.source.transcription.totals.stop === 17 && cloudTextFilled.sheet.source.transcription.review.pitch.bad === '서버에서 검수한 문장' && cloudTextFilled.sheet.source.transcription.review.attitude.good === '밝게 인사함' && cloudTextFilled.sheet.rows[0].contact === 72 && cloudTextFilled.sheet.review.loa.good === '서버에서 작성한 내용', 'remote OCR merge fills null cells but preserves remote known zeros, review and editable fields');
+    const raceTextInput = remoteCountPhoto('u'); delete raceTextInput.source.donorCount; raceTextInput.source.transcription = transcript();
+    beforeWrite = async () => { const latest = copy(remote.get(alice.uid + '/' + raceTextInput.id)); latest.revision = crypto.randomUUID(); latest.sheet.source.transcription = transcript(); latest.sheet.source.transcription.totals.contact = 0; latest.sheet.source.transcription.totals.stop = null; latest.sheet.source.transcription.review.pitch.bad = '동시 검수한 문장'; latest.sheet.rows[0].close = 87; remote.set(alice.uid + '/' + raceTextInput.id, latest); };
+    const racedText = await textCloud.saveSheet(raceTextInput, { importOriginal: true });
+    check(racedText.cloudSaved && !racedText.conflict && racedText.sheet.source.transcription.totals.contact === 0 && racedText.sheet.source.transcription.totals.stop === 17 && racedText.sheet.source.transcription.review.pitch.bad === '동시 검수한 문장' && racedText.sheet.rows[0].close === 87 && (await textCloud.loadSheets()).filter(s => s.id === raceTextInput.id).length === 1, 'ETag retry preserves concurrent OCR edits and fills only still-missing values without a fork');
+    const deletedTextInput = remoteCountPhoto('v'); deletedTextInput.source.transcription = transcript();
+    beforeWrite = async () => { remote.set(alice.uid + '/' + deletedTextInput.id, { version: 1, revision: crypto.randomUUID(), deleted: true, updatedAt: new Date().toISOString() }); };
+    const deletedTextResult = await textCloud.saveSheet(deletedTextInput, { importOriginal: true });
+    check(deletedTextResult.deleted && !deletedTextResult.conflict && !(await textCloud.loadSheets()).some(s => s.id === deletedTextInput.id), 'a concurrent server deletion cancels OCR enrichment without resurrection');
+    const pendingTextInput = remoteCountPhoto('w'); delete pendingTextInput.source.donorCount;
+    const pendingTextSaved = await textCloud.saveSheet(pendingTextInput, { importOriginal: true });
+    pendingTextSaved.sheet.rows[0].close = 86; pendingTextSaved.sheet.review.attitude.bad = '동기화 대기 중 직접 작성';
+    await textCloud.saveSheet(pendingTextSaved.sheet, { deferSync: true });
+    pendingTextInput.source.transcription = transcript();
+    await textCloud.saveSheet(pendingTextInput, { importOriginal: true, deferSync: true });
+    await textCloud.syncSheets();
+    const pendingTextRemote = remote.get(alice.uid + '/' + pendingTextInput.id).sheet;
+    check(pendingTextRemote.rows[0].close === 86 && pendingTextRemote.review.attitude.bad === '동기화 대기 중 직접 작성' && pendingTextRemote.source.transcription.totals.contact === 31 && (await textCloud.loadSheets()).filter(s => s.id === pendingTextInput.id).length === 1, 'OCR enrichment rebases safely while retaining already-pending manual edits');
+
     // Exercise cloud auth and RTDB's actual wire format without sending network requests.
     identity = alice;
     const calls = [], wire = new Map(); let authReady = false, anonymousSignins = 0;

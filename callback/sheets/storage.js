@@ -1,5 +1,5 @@
-import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261008-callback3';
-import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261008-callback3';
+import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261009-transcription1';
+import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261009-transcription1';
 
 const DB_NAME = 'presence-paper-sheets-v1';
 const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(id);
@@ -8,13 +8,39 @@ const recordKey = (namespace, id) => `${namespace}\u0000${id}`;
 const nextDate = previous => new Date(Math.max(Date.now(), (Date.parse(previous) || 0) + 1)).toISOString();
 const samePhotoOriginal = (a, b) => a?.source?.type === 'photo' && b?.source?.type === 'photo'
   && a.source.imageDataUrl === b.source.imageDataUrl && a.source.filename === b.source.filename;
-function fillPhotoDonorCount(existing, incoming) {
-  const value = incoming?.source?.donorCount;
-  if (!samePhotoOriginal(existing, incoming) || existing.source.donorCount != null
-    || !Number.isInteger(value) || value < 0 || value > 99999) return null;
-  const sheet = copy(existing);
-  sheet.source.donorCount = value;
-  return sheet;
+// Import metadata can complete empty cells, but never reinterpret an existing value or
+// touch the editable rows/review. In particular, zero is a value rather than an empty cell.
+function fillPhotoMetadata(existing, incoming) {
+  if (!samePhotoOriginal(existing, incoming)) return null;
+  const sheet = copy(existing), target = sheet.source, source = incoming.source;
+  const number = value => Number.isInteger(value) && value >= 0 && value <= 99999;
+  if (target.donorCount == null && number(source.donorCount)) target.donorCount = source.donorCount;
+  if (source.transcription) {
+    if (!target.transcription) target.transcription = copy(source.transcription);
+    else {
+      const result = target.transcription, incomingText = source.transcription;
+      for (const group of ['totals', 'goals']) {
+        if (!incomingText[group]) continue;
+        if (!result[group]) result[group] = copy(incomingText[group]);
+        else for (const key of ['contact', 'stop', 'presentation', 'close', 'rehash']) {
+          if (result[group][key] == null && number(incomingText[group][key])) result[group][key] = incomingText[group][key];
+        }
+      }
+      for (const category of ['loa', 'pitch', 'attitude']) for (const kind of ['good', 'bad']) {
+        if (!result.review[category][kind].trim() && incomingText.review[category][kind].trim()) result.review[category][kind] = incomingText.review[category][kind];
+      }
+      if (!result.notes?.trim() && incomingText.notes?.trim()) result.notes = incomingText.notes;
+    }
+  }
+  return JSON.stringify(target) === JSON.stringify(existing.source) ? null : sheet;
+}
+// Read the previous donor-only queue flags as well, so an app update cannot strand an
+// offline metadata import made by the previous release.
+const hasMetadataFill = row => !!row.photoMetadataFill || row.donorCountFill !== undefined;
+const metadataFillOnly = row => !!row.photoMetadataFillOnly || !!row.donorCountFillOnly;
+function clearMetadataFill(row) {
+  delete row.photoMetadataFill; delete row.photoMetadataFillOnly;
+  delete row.donorCountFill; delete row.donorCountFillOnly;
 }
 class PhotoImportConflictError extends Error {
   constructor() { super('이미 있는 원본 사진 ID에 다른 사진 파일이 연결되어 있어 가져오지 않았어요. 기존 기록은 유지돼요.'); this.name = 'PhotoImportConflictError'; }
@@ -138,8 +164,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
           latest.pending = false;
           latest.baseRevision = submitted.document.revision;
           latest.originalImport = false;
-          delete latest.donorCountFill;
-          delete latest.donorCountFillOnly;
+          clearMetadataFill(latest);
           records.put(latest);
         } else if (latest.baseRevision === submitted.baseRevision) {
           // Another tab edited while this request was in flight. Its edit remains pending, based on
@@ -175,18 +200,17 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       records.get(submitted.key).onsuccess = guard(event => {
         const latest = event.target.result;
         if (!latest || latest.document.revision !== submitted.document.revision) { done(false); return; }
-        if (submitted.donorCountFill !== undefined && !submitted.donorCountFillOnly && !submitted.originalImport) {
+        if (hasMetadataFill(submitted) && !metadataFillOnly(submitted) && !submitted.originalImport) {
           // Preserve edits already waiting locally when metadata import began. Rebase only if
           // our metadata write was the sole intervening server change; real edit conflicts remain.
           if (!remote.deleted && latest.baseRevision === previousRemoteRevision) latest.baseRevision = remote.revision;
           if (!remote.deleted && Number.isInteger(remote.sheet.source?.donorCount)) latest.document.sheet.source.donorCount = remote.sheet.source.donorCount;
-          delete latest.donorCountFill;
-          delete latest.donorCountFillOnly;
+          if (!remote.deleted && remote.sheet.source?.transcription) latest.document.sheet.source.transcription = copy(remote.sheet.source.transcription);
+          clearMetadataFill(latest);
           records.put(latest);
         } else {
           const accepted = { ...latest, document: copy(remote), pending: false, originalImport: false, baseRevision: remote.revision };
-          delete accepted.donorCountFill;
-          delete accepted.donorCountFillOnly;
+          clearMetadataFill(accepted);
           records.put(accepted);
         }
         done(true);
@@ -199,7 +223,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       if (!remote.data) return false;
       if (!validDocument(remote.data, submitted.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
       if (!remote.data.deleted && !samePhotoOriginal(submitted.document.sheet, remote.data.sheet)) throw new PhotoImportConflictError();
-      const filled = remote.data.deleted ? null : fillPhotoDonorCount(remote.data.sheet, submitted.document.sheet);
+      const filled = remote.data.deleted ? null : fillPhotoMetadata(remote.data.sheet, submitted.document.sheet);
       const previousRevision = remote.data.revision;
       let resolved = remote.data;
       if (filled) {
@@ -208,18 +232,18 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         const response = await cloud.write(submitted.id, resolved, remote.etag, ctx);
         assertIdentity(ctx);
         if (!response.ok) {
-          if (response.status !== 412) throw new Error('사진의 후원자 수 저장을 확인하지 못했어요. 다시 동기화해 주세요.');
+          if (response.status !== 412) throw new Error('사진에서 읽은 기록의 저장을 확인하지 못했어요. 다시 동기화해 주세요.');
           remote = await cloud.read(submitted.id, ctx);
           assertIdentity(ctx);
           continue;
         }
       }
       if (await acceptExistingOriginal(ctx, submitted, resolved, previousRevision)) {
-        if (submitted.originalImport || submitted.donorCountFillOnly) skippedOriginals.set(submitted.id, { ...resolved, metadataFilled: !!filled });
+        if (submitted.originalImport || metadataFillOnly(submitted)) skippedOriginals.set(submitted.id, { ...resolved, metadataFilled: !!filled });
       }
       return true;
     }
-    throw new Error('사진 기록이 다른 곳에서 계속 변경되어 후원자 수를 아직 반영하지 않았어요. 기존 기록은 유지돼요.');
+    throw new Error('사진 기록이 다른 곳에서 계속 변경되어 추가 정보를 아직 반영하지 않았어요. 기존 기록은 유지돼요.');
   }
   async function mergeRemote(ctx, remote) {
     if (!remote || typeof remote !== 'object' || Array.isArray(remote)) throw new Error('서버 기록 형식이 올바르지 않아 병합하지 않았어요.');
@@ -271,7 +295,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
           assertIdentity(ctx);
           if (remote.data && !validDocument(remote.data, row.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
           if (remote.data?.revision === row.document.revision) { await acknowledge(ctx, row); continue; }
-          if (!row.document.deleted && (row.originalImport || row.donorCountFill !== undefined) && remote.data
+          if (!row.document.deleted && (row.originalImport || hasMetadataFill(row)) && remote.data
             && await resolvePhotoOriginal(ctx, row, remote, skippedOriginals)) continue;
           if ((remote.data?.revision || null) === row.baseRevision) {
             const response = await cloud.write(row.id, row.document, remote.etag, ctx);
@@ -282,7 +306,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
             assertIdentity(ctx);
             if (remote.data && !validDocument(remote.data, row.id)) throw new Error('서버 기록 형식이 달라 덮어쓰지 않았어요.');
             if (remote.data?.revision === row.document.revision) { await acknowledge(ctx, row); continue; }
-            if (!row.document.deleted && (row.originalImport || row.donorCountFill !== undefined) && remote.data
+            if (!row.document.deleted && (row.originalImport || hasMetadataFill(row)) && remote.data
               && await resolvePhotoOriginal(ctx, row, remote, skippedOriginals)) continue;
           }
           const fork = await preserveConflict(ctx, row, remote.data);
@@ -336,13 +360,13 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
               if (previous && !validDocument(previous.document, previous.id)) throw new Error('기존 기록을 읽을 수 없어 덮어쓰지 않았어요.');
               if (options.importOriginal && input.source?.type === 'photo' && previous) {
                 if (!previous.document.deleted && !samePhotoOriginal(input, previous.document.sheet)) throw new PhotoImportConflictError();
-                const filled = previous.document.deleted ? null : fillPhotoDonorCount(previous.document.sheet, input);
+                const filled = previous.document.deleted ? null : fillPhotoMetadata(previous.document.sheet, input);
                 if (filled) {
                   filled.updatedAt = nextDate(previous.document.updatedAt);
                   const record = makeRecord(ctx, filled, previous);
                   record.originalImport = !!previous.originalImport;
-                  record.donorCountFill = input.source.donorCount;
-                  record.donorCountFillOnly = !previous.pending || !!previous.donorCountFillOnly || !!previous.originalImport;
+                  record.photoMetadataFill = true;
+                  record.photoMetadataFillOnly = !previous.pending || metadataFillOnly(previous) || !!previous.originalImport;
                   records.put(record);
                   metadataFilled = true;
                   done(filled);

@@ -1,4 +1,4 @@
-import { METRICS, getTotals, hasValues, parseObjectionBlocks } from './sheet-model.js?v=20261008-callback3';
+import { METRICS, getTotals, hasValues, parseObjectionBlocks } from './sheet-model.js?v=20261009-transcription1';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';

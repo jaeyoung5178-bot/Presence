@@ -1,4 +1,4 @@
-import { getDonorSummary } from '../sheets/sheet-model.js?v=20261008-callback3';
+import { getDonorSummary, getMetricReading, getReviewReading, hasValues } from '../sheets/sheet-model.js?v=20261009-transcription1';
 export const PERIODS = [{ id: 'week', label: '1주', days: 7 }, { id: 'month', label: '1개월', months: 1 }, { id: 'quarter', label: '3개월', months: 3 }, { id: 'half', label: '6개월', months: 6 }, { id: 'year', label: '1년', months: 12 }];
 export const METRICS = [{ id: 'contact', label: 'Contact' }, { id: 'stop', label: 'Stop' }, { id: 'presentation', label: 'Presentation' }, { id: 'close', label: 'Close' }, { id: 'donors', label: '후원자' }];
 const DAY = 86400000;
@@ -21,8 +21,7 @@ function donorValue(sheet) {
 }
 export function metricValue(sheet, metric) {
   if (metric === 'donors') return donorValue(sheet).value;
-  const values = (sheet.rows || []).map(row => row[metric]).filter(value => Number.isInteger(value) && value >= 0);
-  return values.length ? values.reduce((a, b) => a + b, 0) : null;
+  return getMetricReading(sheet, metric).value;
 }
 export function uniqueRecords(records) {
   const ids = new Set(), photos = new Set();
@@ -33,14 +32,16 @@ function aggregate(records) {
   const metrics = Object.fromEntries(METRICS.map(({ id }) => {
     const known = records.map(record => ({ record, value: metricValue(record, id) })).filter(item => item.value !== null);
     const total = known.reduce((sum, item) => sum + item.value, 0), knownDays = new Set(known.map(item => item.record.date)).size;
-    return [id, { total: known.length ? total : null, knownRecords: known.length, missingRecords: records.length - known.length, knownDays, perDay: knownDays ? total / knownDays : null }];
+    const transcriptionRecords = known.filter(({ record }) => id === 'donors' ? donorValue(record).basis === 'transcription' : getMetricReading(record, id).basis === 'transcription').length;
+    return [id, { total: known.length ? total : null, knownRecords: known.length, missingRecords: records.length - known.length, knownDays, perDay: knownDays ? total / knownDays : null, transcriptionRecords }];
   }));
   const rates = [['contact', 'stop'], ['stop', 'presentation'], ['presentation', 'close']].map(([from, to]) => {
     const matched = records.flatMap(record => (record.rows || []).filter(row => Number.isInteger(row[from]) && Number.isInteger(row[to]) && row[from] >= 0 && row[to] >= 0));
-    const numerator = matched.reduce((sum, row) => sum + row[to], 0), denominator = matched.reduce((sum, row) => sum + row[from], 0);
-    return { from, to, rows: matched.length, numerator, denominator, percent: denominator > 0 ? numerator / denominator * 100 : null, exceeds: numerator > denominator };
+    const photos = records.filter(record => !hasValues(record, from) && !hasValues(record, to) && getMetricReading(record, from).basis === 'transcription' && getMetricReading(record, to).basis === 'transcription');
+    const numerator = matched.reduce((sum, row) => sum + row[to], 0) + photos.reduce((sum, record) => sum + metricValue(record, to), 0), denominator = matched.reduce((sum, row) => sum + row[from], 0) + photos.reduce((sum, record) => sum + metricValue(record, from), 0);
+    return { from, to, rows: matched.length, photoRecords: photos.length, numerator, denominator, percent: denominator > 0 ? numerator / denominator * 100 : null, exceeds: numerator > denominator };
   });
-  return { records: records.length, days, metrics, rates, photoRecords: records.filter(record => record.source?.type === 'photo').length, donorBasis: records.reduce((result, record) => { result[donorValue(record).basis]++; return result; }, { cases: 0, rehash: 0, photo: 0, unknown: 0 }) };
+  return { records: records.length, days, metrics, rates, photoRecords: records.filter(record => record.source?.type === 'photo').length, transcriptionRecords: records.filter(record => record.source?.transcription).length, partialTranscriptionRecords: records.filter(record => record.source?.transcription?.status === 'partial').length, donorBasis: records.reduce((result, record) => { result[donorValue(record).basis]++; return result; }, { cases: 0, rehash: 0, photo: 0, transcription: 0, unknown: 0 }) };
 }
 const THEMES = {
   pitch: [
@@ -55,9 +56,9 @@ const THEMES = {
   ],
 };
 function reviewAnalysis(records, category) {
-  const entries = records.flatMap(record => ['good', 'bad'].map(kind => ({ id: record.id, date: record.date, kind, text: record.review?.[category]?.[kind]?.trim() || '' })).filter(item => item.text));
+  const entries = records.flatMap(record => ['good', 'bad'].map(kind => ({ id: record.id, date: record.date, kind, ...getReviewReading(record, category, kind) })).filter(item => item.text));
   const themes = THEMES[category].map(theme => { const evidence = entries.filter(item => theme.pattern.test(item.text)); return { label: theme.label, action: theme.action, count: new Set(evidence.map(item => item.id)).size, improvementCount: new Set(evidence.filter(item => item.kind === 'bad').map(item => item.id)).size, evidence: evidence.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2) }; }).filter(theme => theme.count).sort((a, b) => b.improvementCount - a.improvementCount || b.count - a.count);
-  return { coverage: new Set(entries.map(item => item.id)).size, good: entries.filter(item => item.kind === 'good').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), bad: entries.filter(item => item.kind === 'bad').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), themes, suggestions: themes.filter(theme => theme.improvementCount).slice(0, 2) };
+  return { coverage: new Set(entries.map(item => item.id)).size, transcriptionCoverage: new Set(entries.filter(item => item.basis === 'transcription').map(item => item.id)).size, good: entries.filter(item => item.kind === 'good').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), bad: entries.filter(item => item.kind === 'bad').sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), themes, suggestions: themes.filter(theme => theme.improvementCount).slice(0, 2) };
 }
 export function analyze(records, anchor = localToday(), period = 'month') {
   const all = uniqueRecords(records), range = periodRange(anchor, period);
