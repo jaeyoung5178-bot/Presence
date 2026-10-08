@@ -6,12 +6,11 @@
    ============================================================ */
 (function(){
   'use strict';
-  /* 콜백싯은 같은 GitHub origin에 저장된 마지막 개인 실행 URL을 사용한다.
-     따라서 허브에서 열거나 홈 화면으로 복사해도 관리자/팀원 본인 연결이 유지된다. */
+  /* 허브의 콜백싯은 종이 기록 작성기를 연다.
+     계정 연결은 작성기에서 기존 개인 연결 정보를 읽어 유지한다. */
   try{
-    var callbackMenu=document.querySelector('a[href="callback/index.html"]');
-    var personalCallback=localStorage.getItem('fcos_personal_launch');
-    if(callbackMenu&&personalCallback&&/^https:\/\/(hub\.presence\.co\.kr|jaeyoung5178-bot\.github\.io\/Presence)\/callback\//.test(personalCallback))callbackMenu.href=personalCallback;
+    var callbackMenu=document.querySelector('a[data-paper-callback], a[href="callback/index.html"]');
+    if(callbackMenu)callbackMenu.href='callback/sheets/index.html';
   }catch(e){}
   var FB    = 'https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app/hub_photos';
   var PASS  = '0001';                    // 관리자 비밀번호

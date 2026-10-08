@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111b1c">
+  <meta name="description" content="오늘의 필드를 손글씨 콜백싯으로 기록하고, 날짜별로 모아 보세요.">
+  <title>콜백싯 · Presence Hub</title>
+  <link rel="icon" href="../../icon-32.png">
+  <link rel="preload" href="fonts/NanumPenScript-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../../index.html" aria-label="Presence 홈"><span class="brand-mark" aria-hidden="true">p.</span><span>PRESENCE</span></a>
+    <nav class="breadcrumb" aria-label="현재 위치"><a href="../../index.html">허브</a><span aria-hidden="true">/</span><span>콜백싯</span></nav>
+    <a class="private-badge" href="../index.html">실시간 필드 카운터 ↗</a>
+  </header>
+  <main>
+    <div class="workspace-heading">
+      <div><p class="eyebrow">A LITTLE BETTER, EVERY DAY</p><h1>오늘의 필드, 한 장의 기록.</h1><p class="heading-copy">숫자는 바를 정자로, 경험은 내일의 배움으로.</p></div>
+      <div class="workspace-actions"><button id="open-archive" class="button secondary"><span aria-hidden="true">▤</span> 내 콜백싯 <span id="archive-count" class="count">0</span></button><button id="new-sheet" class="button secondary"><span aria-hidden="true">＋</span> 새 기록</button></div>
+    </div>
+    <div class="workspace-status"><span id="save-status" role="status" aria-live="polite">기록을 불러오는 중…</span><span id="storage-status"></span></div>
+    <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    <div class="mobile-view-switch" role="tablist" aria-label="콜백싯 보기"><button role="tab" id="edit-tab" aria-controls="editor-panel" aria-selected="true" data-view="edit">기록 작성</button><button role="tab" id="preview-tab" aria-controls="preview-panel" aria-selected="false" data-view="preview">종이 미리보기</button></div>
+    <div class="workspace" data-active-view="edit">
+      <section id="editor-panel" class="editor-panel" aria-label="콜백싯 기록 창">
+        <form id="sheet-form" novalidate>
+          <section class="editor-section"><div class="section-heading"><span class="step">01</span><div><h2>오늘의 필드</h2><p>이름, 장소와 오늘의 테마를 적어 주세요.</p></div></div>
+            <div class="field-grid">
+              <label class="field">이름 <span>Name</span><input id="sheet-name" data-field="meta.name" maxlength="500" autocomplete="name" placeholder="이름"></label>
+              <label class="field">날짜 <span>Date</span><input id="sheet-date" type="date" data-field="date" required></label>
+              <label class="field">장소 <span>Location</span><input data-field="meta.location" maxlength="500" placeholder="오늘의 필드 장소"></label>
+              <label class="field">팀 <span>Team</span><input data-field="meta.team" maxlength="500" placeholder="함께한 팀원"></label>
+              <label class="field">날씨 <span>Weather</span><input data-field="meta.weather" maxlength="500" placeholder="날씨와 현장 분위기"></label>
+              <label class="field">테마 <span>Theme</span><input data-field="meta.theme" maxlength="500" placeholder="오늘 집중할 한 가지"></label>
+            </div>
+          </section>
+          <section class="editor-section"><div class="section-heading"><span class="step">02</span><div><h2>시간별 기록</h2><p>숫자를 넣으면 종이에 正가 한 획씩 채워져요.</p></div></div>
+            <details class="process-details"><summary>과정목표 <span>시간당 목표 · 자유롭게 입력</span></summary><div id="process-goals" class="field-grid"></div></details>
+            <p class="input-guide"><span class="ink-sample" aria-hidden="true">正</span> 5회 = 正 &nbsp;·&nbsp; 0회 = — &nbsp;·&nbsp; 빈칸 = 미기록</p>
+            <div id="time-rows"></div>
+            <button type="button" id="add-row" class="button add-button">＋ 시간 추가</button>
+            <label class="field notes-field" for="objections">오브젝션 & 핸들링 사유 <span>Time & Why</span><textarea id="objections" data-field="objections" maxlength="12000" rows="6" placeholder="시간과 함께 어떤 대화가 있었는지 적어 주세요.&#10;기억할 반응, 거절 사유, 다음에 시도할 방법…"></textarea></label>
+          </section>
+          <section class="editor-section"><div class="section-heading"><span class="step">03</span><div><h2>오늘의 목표 & 결과</h2><p>목표를 적으면 시간별 기록의 합계와 나란히 보여요.</p></div></div><div id="daily-goals" class="daily-goals"></div><p class="subtle">결과는 위의 시간별 숫자만 자동 합산해요. Rehash는 시간별 추가 기록에 입력하세요.</p></section>
+          <section class="editor-section"><div class="section-heading"><span class="step">04</span><div><h2>내일을 위한 회고</h2><p>잘한 점은 이어 가고, 아쉬운 점은 다음 시도로.</p></div></div><div id="review-fields"></div></section>
+        </form>
+      </section>
+      <section id="preview-panel" class="preview-panel" aria-label="손글씨 콜백싯 미리보기">
+        <div class="preview-heading"><div><span class="preview-dot"></span><strong>MY CALL BACK SHEET</strong></div><span>실시간 미리보기</span></div>
+        <div class="paper-wrap"><canvas id="paper-preview" aria-label="입력한 기록을 손글씨와 바를 정자로 표현한 콜백싯. 같은 내용은 기록 작성 화면에서도 확인할 수 있습니다."></canvas><p id="preview-loading">종이를 준비하고 있어요…</p></div>
+        <p class="preview-caption">한 획씩 쌓이는 오늘의 노력.<br>사진으로 저장하면 이 종이 그대로 담겨요.</p>
+      </section>
+    </div>
+  </main>
+  <footer class="actionbar"><div class="actionbar-note"><span class="status-dot"></span><span id="footer-status">작성 내용은 임시 저장돼요</span></div><div class="actionbar-buttons"><button id="export-image" class="button secondary"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="8" cy="10" r="1.5"/><path d="m4 18 5-5 4 4 3-3 5 5"/></svg>사진으로 저장</button><button id="save-sheet" class="button primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>콜백싯 저장</button></div></footer>
+  <dialog id="archive-dialog" class="archive-dialog" aria-labelledby="archive-title"><div class="dialog-shell"><header class="dialog-heading"><div><p class="eyebrow">YOUR FIELD JOURNAL</p><h2 id="archive-title">내 콜백싯</h2><p>하루하루 쌓인 나의 현장 기록</p></div><button class="icon-button" data-close-dialog="archive-dialog" aria-label="콜백싯 보관함 닫기">×</button></header><div class="archive-tools"><label class="field">기록 검색<input id="archive-search" type="search" placeholder="이름, 장소, 테마 검색"></label><label class="field">월별 보기<input id="archive-month" type="month"></label></div><div id="archive-list" class="archive-list"></div><footer class="archive-footer"><button id="backup-export" class="button secondary">전체 백업</button><button id="backup-import" class="button secondary">백업 가져오기</button><button id="archive-new" class="button primary">＋ 새 기록</button><input id="import-file" type="file" accept="application/json,.json" hidden></footer></div></dialog>
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><form method="dialog"><h2 id="confirm-title"></h2><p id="confirm-copy"></p><div class="confirm-actions"><button class="button secondary" value="cancel">돌아가기</button><button id="confirm-accept" class="button primary" value="confirm">계속</button></div></form></dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-labelledby="image-title"><div class="dialog-shell"><header class="dialog-heading"><div><p class="eyebrow">READY TO SHARE</p><h2 id="image-title">한 장에 담긴 오늘</h2><p id="image-size"></p></div><button class="icon-button" data-close-dialog="image-dialog" aria-label="사진 창 닫기">×</button></header><div class="export-preview"><img id="export-preview-image" alt="공유용 손글씨 콜백싯"></div><p class="subtle">휴대폰에서는 이미지를 길게 눌러 사진에 저장할 수도 있어요.</p><footer class="image-actions"><a id="image-download" class="button primary" download>PNG 다운로드</a><button id="image-share" class="button secondary" hidden>사진 공유</button></footer></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

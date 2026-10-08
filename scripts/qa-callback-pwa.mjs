@@ -81,9 +81,11 @@ assert.equal("start_url" in manifest, false, "install must inherit the personali
 assert.equal("id" in manifest, false, "app id must not force a generic URL");
 
 const sw = fs.readFileSync(new URL("callback/sw.js", root), "utf8");
-assert.match(sw, /fcos-v20/);
+assert.match(sw, /fcos-v21/);
 assert.match(sw, /e\.request\.mode === "navigate"/);
-assert.match(sw, /caches\.match\("\.\/index\.html"\)/);
+assert.match(sw, /url\.pathname\.endsWith\("\/"\) \? url\.pathname \+ "index\.html" : url\.pathname/);
+assert.match(sw, /caches\.match\(cacheKey\)/, "offline navigation must use only the matching document shell");
+assert.doesNotMatch(sw, /caches\.match\("\.\/index\.html"\)/, "paper sheets must never use the field counter shell");
 
 const app = fs.readFileSync(new URL("callback/script.js", root), "utf8");
 assert.match(app, /if \(this\.isAdmin\(\)\) return orig\(\)/, "verified admin badge must open the picker without another password prompt");

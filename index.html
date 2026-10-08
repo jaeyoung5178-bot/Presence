@@ -288,7 +288,7 @@
       </div>
       <nav class="menu" id="menu">
         <a href="presence-record.html"><span class="m-tag">RECORD</span>개인 세일즈 기록</a>
-                <a href="callback/index.html"><span class="m-tag">FIELD</span>콜백싯 · Call Back Sheet</a>
+                <a href="callback/sheets/index.html" data-paper-callback><span class="m-tag">FIELD</span>콜백싯 · Call Back Sheet</a>
         <button id="topicsBtn"><span class="m-tag">EDU</span>에듀케이션</button>
         <a href="recaps.html"><span class="m-tag">RECAP</span>팀 리캡 아카이브</a>
         <a href="site-operations.html"><span class="m-tag">SITES</span>사이트운영</a>
@@ -859,7 +859,7 @@ function ap(t){h.classList.toggle("pth-light",t==="light");b.textContent=t==="li
 var t="night";try{t=localStorage.getItem(K)||"night"}catch(e){}ap(t);
 b.addEventListener("click",function(){t=(t==="light")?"night":"light";try{localStorage.setItem(K,t)}catch(e){}ap(t);});})();
 </script>
-<script src="hub-patch.js?v=20260929-soft3"></script>
+<script src="hub-patch.js?v=20261008-paper-sheets"></script>
 <script src="assets/hub/hub-soft-v1.js?v=20260929-soft3"></script>
 <script src="assets/hub/hub-roster-v1.js?v=20260928-ko1"></script>
 

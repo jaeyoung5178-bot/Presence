@@ -1,7 +1,7 @@
 /* Field Callback OS — Service Worker
    v2: 네트워크 우선(코어 파일) — 업데이트가 즉시 반영되고, 오프라인일 때만 캐시 사용.
    (기존 캐시 우선 방식은 수정해도 아이폰 PWA에 옛 버전이 계속 뜨던 원인) */
-const CACHE = "fcos-v20"; /* v20: iOS 홈 화면 개인 연결 복구 + 개인 URL 비캐시 */
+const CACHE = "fcos-v21"; /* v21: 필드 카운터와 종이 콜백싯 문서 캐시 분리 */
 const ASSETS = [
   "./",
   "./index.html",
@@ -36,18 +36,21 @@ self.addEventListener("fetch", (e) => {
   /* Firebase 동기화 요청은 절대 캐시하지 않음 */
   if (url.hostname.includes("firebasedatabase.app")) return;
 
-  /* 네트워크 우선, 실패 시 캐시 (오프라인 대비).
-     개인 링크의 u/n/k가 캐시 키에 남지 않도록 문서 응답은 공용 셸로만 저장한다. */
+  /* 문서는 경로별 공용 셸로 저장한다. 개인 링크의 u/n/k는 캐시 키에 남기지 않고,
+     /callback/과 /callback/index.html은 같은 셸로 정규화한다. */
+  const cacheKey = e.request.mode === "navigate"
+    ? (url.pathname.endsWith("/") ? url.pathname + "index.html" : url.pathname)
+    : e.request;
+  /* 네트워크 우선, 실패 시 같은 경로의 캐시만 사용한다. */
   e.respondWith(
     fetch(e.request)
-      .then((res) => {
+      .then(async (res) => {
         if (res.ok) {
-          const clone = res.clone();
-          if (e.request.mode === "navigate") caches.open(CACHE).then((c) => c.put("./index.html", clone));
-          else caches.open(CACHE).then((c) => c.put(e.request, clone));
+          try { await (await caches.open(CACHE)).put(cacheKey, res.clone()); }
+          catch (_) { /* 캐시 공간 부족이 온라인 문서 열기를 막지 않게 한다. */ }
         }
         return res;
       })
-      .catch(() => e.request.mode === "navigate" ? caches.match("./index.html") : caches.match(e.request))
+      .catch(() => caches.match(cacheKey))
   );
 });
