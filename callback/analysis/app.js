@@ -1,4 +1,4 @@
-import { analyze, METRICS, localToday, authorKey, authorLabel, defaultAuthor, filterAuthor } from './analysis-model.js?v=20261009-analysisindex1';
+import { analyze, METRICS, localToday, authorKey, authorLabel, defaultAuthor, filterAuthor } from './analysis-model.js?v=20261009-loa1';
 import { createCloudClient, readAccountIdentity } from '../sheets/cloud.js?v=20261009-analysisindex1';
 import { mergeAnalysisProjections, readLocalAnalysisProjections } from './analysis-sources.js?v=20261009-analysisindex1';
 
@@ -42,6 +42,7 @@ async function load() {
   $('#analysis-account').textContent = identity.uid ? `${identity.name || '연결된 계정'} · 나의 콜백싯` : '계정 연결 전 · 이 브라우저의 기록';
   $('#connection-message').textContent = identity.uid ? '다른 기기에 저장한 기록도 확인하고 있어요.' : '서버 기록을 보려면 워크북에서 Profit → 콜백싯 → 내 콜백싯 열기를 눌러 주세요.';
   $('#connect-workbook').hidden = !!identity.uid;
+  delete $('#account-status').dataset.source;
   $('#account-status').dataset.state = 'loading';
   try {
     const localRequest = readLocalAnalysisProjections(identity).then(rows => {
@@ -60,11 +61,12 @@ async function load() {
     if (merged.invalid) loadError = `${loadError ? loadError + ' ' : ''}형식을 확인할 수 없는 기록 ${merged.invalid}개는 분석에서 제외했어요.`;
     displayRecords(merged.records, true);
     const connected = !!identity.uid && remoteResult.status === 'fulfilled' && !loadError;
+    $('#account-status').dataset.source = remote?.source || 'local';
     $('#account-status').dataset.state = connected ? 'connected' : identity.uid ? 'error' : 'local';
     $('#connect-workbook').hidden = connected;
     $('#load-status').textContent = connected ? `서버 기록 ${merged.remoteRecords}개 확인 · 분석 가능한 기록 ${records.length}개` : identity.uid ? '서버 확인 미완료 · 이 브라우저의 기록 기준' : '이 브라우저에 저장된 기록 기준';
     $('#connection-message').textContent = connected ? `다른 기기의 저장 기록을 불러왔어요.${merged.pending ? ` 이 브라우저에 동기화 대기 ${merged.pending}개가 있어요. 보관함에서 동기화할 수 있어요.` : ''}` : identity.uid ? '연결을 다시 확인하려면 워크북에서 Profit → 콜백싯 → 내 콜백싯 열기를 눌러 주세요. 기존 로컬 기록은 유지돼요.' : '워크북에서 본인 전용 콜백 링크를 열면 이 기기에서도 서버 기록을 볼 수 있어요.';
-  } catch (error) { if (version === request) { loadError = error.message; $('#error').textContent = loadError; $('#error').hidden = false; $('#load-status').textContent = '기록 읽기 실패'; $('#account-status').dataset.state = 'error'; $('#connect-workbook').hidden = false; } }
+  } catch (error) { if (version === request) { loadError = error.message; $('#error').textContent = loadError; $('#error').hidden = false; $('#load-status').textContent = '기록 읽기 실패'; $('#account-status').dataset.state = 'error'; $('#account-status').dataset.source = 'local'; $('#connect-workbook').hidden = false; } }
   finally { if (version === request) { $('#refresh').disabled = false; $('#report').setAttribute('aria-busy', 'false'); } }
 }
 function compare(now, before) {
@@ -97,7 +99,7 @@ function render() {
   $('#rates').innerHTML = current.rates.map(rate => `<article class="rate"><h3>${rate.from === 'contact' ? 'Contact → Stop' : rate.from === 'stop' ? 'Stop → Presentation' : 'Presentation → Close'}</h3><strong>${rate.percent === null ? '—' : number(rate.percent) + '%'}</strong><p>${number(rate.numerator)} / ${number(rate.denominator)} · 시간별 입력 ${rate.rows}행 · 사진 합계 ${rate.photoRecords}개${rate.exceeds ? '<br>뒷 단계가 더 많아요. 입력 기준을 확인해 주세요.' : ''}</p></article>`).join('');
   $('#source-detail').textContent = `이번 기간 후원자 근거: 체크된 케이스·특이사항 ${current.donorBasis.cases}개 기록 · 입력 Rehash ${current.donorBasis.rehash}개 · 사진 확인값 ${current.donorBasis.photo}개 · 사진 전사 Rehash ${current.donorBasis.transcription}개 · 미확인 ${current.donorBasis.unknown}개. 자동 기록 도구의 세션은 이 분석에 아직 합산하지 않아요. 서버 기록은 현재 연결 계정으로 읽으며, 이 화면에서 원본 콜백싯을 업로드하거나 수정하지 않아요.`;
   if (currentDates) $('#source-detail').textContent += ` 날짜 근거: ${currentDates}을 포함해요. 해당 사진은 실제 기록일을 확인해야 하며, 원본 숫자와 정렬 날짜는 그대로 사용했어요.`;
-  renderChart(); renderReview('pitch', 'Pitch · Skill', '설명과 대화에서 발견한 것'); renderReview('attitude', 'Attitude · Mental', '필드에 임하는 나의 태도');
+  renderChart(); renderReview('loa', 'LOA · Process', '과정 목표와 현장 운영'); renderReview('pitch', 'Pitch · Skill', '설명과 대화에서 발견한 것'); renderReview('attitude', 'Attitude · Mental', '필드에 임하는 나의 태도');
 }
 function renderChart() {
   if (!report) return;

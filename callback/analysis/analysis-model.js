@@ -1,5 +1,6 @@
 import { getDonorSummary, getMetricReading, getReviewReading, hasValues } from '../sheets/sheet-model.js?v=20261009-transcription1';
 import { validImageDigest } from './analysis-projection.js?v=20261009-analysisindex1';
+import { LOA_THEMES } from './loa-themes.js?v=20261009-loa1';
 export const PERIODS = [{ id: 'week', label: '1주', days: 7 }, { id: 'month', label: '1개월', months: 1 }, { id: 'quarter', label: '3개월', months: 3 }, { id: 'half', label: '6개월', months: 6 }, { id: 'year', label: '1년', months: 12 }];
 export const METRICS = [{ id: 'contact', label: 'Contact' }, { id: 'stop', label: 'Stop' }, { id: 'presentation', label: 'Presentation' }, { id: 'close', label: 'Close' }, { id: 'donors', label: '후원자' }];
 // Only this alias pair has been confirmed by the owner. Never infer other surnames.
@@ -59,6 +60,7 @@ function aggregate(records) {
   return { records: records.length, days, metrics, rates, dateBasis: dateBasisCounts(records), photoRecords: records.filter(record => record.source?.type === 'photo').length, transcriptionRecords: records.filter(record => record.source?.transcription).length, partialTranscriptionRecords: records.filter(record => record.source?.transcription?.status === 'partial').length, donorBasis: records.reduce((result, record) => { result[donorValue(record).basis]++; return result; }, { cases: 0, rehash: 0, photo: 0, transcription: 0, unknown: 0 }) };
 }
 const THEMES = {
+  loa: LOA_THEMES,
   pitch: [
     { label: '경청과 질문', pattern: /경청|질문|듣|기다|말.*길|말.*짧/, action: '다음 필드에서 질문 하나를 한 뒤 답이 끝날 때까지 기다려 보세요. 회고에 상대의 답과 달라진 설명을 한 줄씩 남겨요.' },
     { label: '설명과 핵심 전달', pattern: /설명|핵심|피치|피칭|멘트|스토리|3\s*step|T\.?O\.?V/i, action: '가장 중요한 설명을 두 문장으로 준비해 보세요. 사용한 문장과 상대의 반응을 다음 콜백싯에 함께 적어요.' },
@@ -84,5 +86,5 @@ export function analyze(records, anchor = localToday(), period = 'month') {
     const day = iso(new Date(stamp)), records = currentRecords.filter(record => record.date === day);
     trend.push({ date: day, records: records.length, dateBasis: dateBasisCounts(records), ...Object.fromEntries(METRICS.map(({ id }) => { const values = records.map(record => metricValue(record, id)).filter(value => value !== null); return [id, values.length ? values.reduce((a, b) => a + b, 0) : null]; })), missing: Object.fromEntries(METRICS.map(({ id }) => [id, records.filter(record => metricValue(record, id) === null).length])) });
   }
-  return { range, current, previous, trend, latest: all.map(record => record.date).sort().at(-1) || null, totalRecords: all.length, reviews: { pitch: reviewAnalysis(currentRecords, 'pitch'), attitude: reviewAnalysis(currentRecords, 'attitude') } };
+  return { range, current, previous, trend, latest: all.map(record => record.date).sort().at(-1) || null, totalRecords: all.length, reviews: { loa: reviewAnalysis(currentRecords, 'loa'), pitch: reviewAnalysis(currentRecords, 'pitch'), attitude: reviewAnalysis(currentRecords, 'attitude') } };
 }
