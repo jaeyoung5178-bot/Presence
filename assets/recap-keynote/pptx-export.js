@@ -92,11 +92,10 @@ function weekly(slide,d,v,pptx) {
   if(!weeks.length)return empty(slide,'주차 기록이 없습니다.');
   // A native chart includes an editable embedded workbook, not an image of bars.
   slide.addChart(pptx.ChartType.bar,[{name:'팀 세일즈',labels:weeks.map((_,i)=>`W${i+1}`),values:values.map(value=>n(value))}],
-    {x:.75,y:1.54,w:4.0,h:3.25,barDir:'col',catAxisLabelFontFace:FONT,catAxisLabelFontSize:12,valAxisLabelFontSize:10,
+    {x:.75,y:1.54,w:4.0,h:4.85,barDir:'col',catAxisLabelFontFace:FONT,catAxisLabelFontSize:12,valAxisLabelFontSize:10,
       showLegend:false,showTitle:false,showValue:true,dataLabelPosition:'outEnd',dataLabelFormatCode:'0',dataLabelBkgrdColor:C.paper,
       chartColors:[C.blue],showBorder:false,valGridLine:{color:C.line,width:.4},catAxisLineShow:false,
       valAxisLineShow:false,catAxisLabelColor:C.ink,valAxisLabelColor:C.muted,showCatName:false});
-  weeks.forEach((w,i)=>box(slide,`W${i+1}  필드 ${w.start} ~ ${w.end}\n       지급 ${w.pay}`,.82,4.95+i*.38,4.1,.32,10,{color:C.muted}));
   const rows=v.items||d.members,widths=[1.15,...weeks.map(()=>.9),.9];
   table(slide,['팀원',...weeks.map((_,i)=>`W${i+1}`),'합계'],rows.map(m=>[m.name,...weeks.map((_,i)=>fmt(m.scores?.[i])),fmt(M.memberMetric(m).sales)]),5.15,1.58,widths,{fontSize:12,rowH:.43,footer:['팀 합계',...values.map(fmt),fmt(totals.sales)]});
 }
@@ -109,7 +108,7 @@ function income(slide,d,v) {
   rows.forEach((m,i)=>{const a=M.memberMetric(m),y=2.77+i*.4;box(slide,String((v.part||0)*9+i+1).padStart(2,'0'),.75,y,.48,.25,13,{color:C.blue,bold:true});
     box(slide,m.name,1.36,y,1.25,.25,15,{bold:true,color:a.alert?C.red:C.ink});box(slide,m.role,2.63,y,.65,.25,11,{color:C.muted});
     bar(slide,a.income,max,3.42,y+.05,6.62,.14,i? '7C9CF6':C.blue);box(slide,money(a.income)+(a.incomeComplete?'':' *'),10.27,y,2.28,.27,15,{align:'right',bold:true});});
-  box(slide,`급여일 ${d.weeks[0]?.pay||'미확인'} ~ ${d.weeks.at(-1)?.pay||'미확인'}${t.incomeComplete?'':' · 미입력 급여는 0원으로 확정하지 않습니다.'}`,.7,6.65,11.9,.23,10,{color:C.muted});
+  if(!t.incomeComplete)box(slide,'미입력 급여는 0원으로 확정하지 않습니다.',.7,6.65,11.9,.23,10,{color:C.muted});
 }
 function recruit(slide,d,v,rank=false) {
   const r=M.recruitingSummary(d.recruiting);
@@ -120,7 +119,7 @@ function recruit(slide,d,v,rank=false) {
   box(slide,'쇼업 → 스타터',6.7,4.92,5.3,.3,18,{color:C.muted});box(slide,pct(M.ratio(r.starter,r.showup)),6.7,5.42,5.3,.55,35,{bold:true,color:C.blue});
 }
 function qc(slide,d,v) {
-  const events=d.events||[],ins=events.filter(e=>e.type==='In').length,outs=events.length-ins,start=n(d.qc?.startCount);
+  const events=d.events||[],ins=n(d.qc?.inCount)??events.filter(e=>e.type==='In').length,outs=n(d.qc?.outCount)??events.filter(e=>e.type!=='In').length,start=n(d.qc?.startCount);
   kpis(slide,[['월초 인원',fmt(start)],['In',fmt(ins)],['Out',fmt(outs)],['월말 인원',start==null?'—':fmt(start+ins-outs)]]);
   const rows=v.items||events;if(!rows.length)return box(slide,'이달의 In · Out 기록이 없습니다.',.7,3.8,11.9,.8,22,{align:'center',color:C.muted});
   table(slide,['팀원','일자','구분','사유 · 후속 액션','담당자'],rows.map(e=>[e.name,e.date||'미입력',e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.2,1.35,1.35,6.62,1.41],{fontSize:11.5,rowH:.51});
@@ -137,10 +136,10 @@ function callback(slide,d,v) {
   const all=d.members.map(m=>({...m,submitted:n(d.callbacks?.[m.id])})),days=total(all.map(m=>m.days)),submitted=total(all.map(m=>m.submitted)),missing=all.filter(m=>m.days>0&&m.submitted==null).length;
   kpis(slide,[['팀 전체 제출률',missing?'입력 중':pct(M.ratio(submitted,days))],['콜백싯 제출',`${fmt(submitted)}회`],['총 필드일수',`${fmt(days)}일`],['미입력',`${missing}명`]]);
   const groups=v.items||[];if(!groups.length)return box(slide,'콜백 기록이 없습니다.',.7,4,11.9,.6,22,{align:'center'});
-  groups.forEach((group,i)=>{const x=.7+i*6.06,w=5.87,people=group.all||group.rows||[],sumDays=total(people.map(m=>m.days)),sumSub=total(people.map(m=>m.submitted)),miss=people.filter(m=>m.days>0&&m.submitted==null).length;
+  groups.forEach((group,i)=>{const columns=Math.min(3,groups.length),w=(11.93-(columns-1)*.18)/columns,x=.7+i*(w+.18),people=group.all||group.rows||[],sumDays=total(people.map(m=>m.days)),sumSub=total(people.map(m=>m.submitted)),miss=people.filter(m=>m.days>0&&m.submitted==null).length;
     box(slide,group.name+(group.totalParts>1?` · ${group.part+1}/${group.totalParts}`:''),x,2.87,w,.35,22,{bold:true});
     box(slide,`제출 ${fmt(sumSub)}회 / 필드 ${fmt(sumDays)}일 · ${miss?'입력 중':pct(M.ratio(sumSub,sumDays))}`,x,3.35,w,.26,13,{color:C.muted});
-    table(slide,['팀원','필드일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted),!m.days?'해당 없음':m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[1.8,1.07,1.2,1.8],{fontSize:12,rowH:.36});});
+    table(slide,['팀원','필드일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted),!m.days?'해당 없음':m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[w*.28,w*.2,w*.24,w*.28],{fontSize:groups.length>2?10.5:12,rowH:.36});});
   box(slide,'빈칸과 0회는 다릅니다. 제출률은 총 제출 횟수 ÷ 총 필드일수입니다.',.7,6.7,11.9,.2,10,{color:C.muted});
 }
 function learning(slide,d,v) {
@@ -151,14 +150,14 @@ function learning(slide,d,v) {
     box(slide,[row.owner,row.due,row.status].filter(Boolean).join(' · ')||'담당자 · 일정 미입력',x+.2,6.23,w-.4,.25,10,{color:C.muted});});
 }
 function ic(slide,d,v) {
-  const m=v.items?.[0];if(!m)return empty(slide,'IC 성장 플랜이 없습니다.');const p=d.icPlans?.[m.id]||{},days=(m.firstFive||[]).slice(0,5),known=days.filter(row=>n(row.sales)!=null),sales=known.length?total(known.map(row=>row.sales)):null;
+  const m=v.items?.[0];if(!m)return empty(slide,'IC 성장 플랜이 없습니다.');const p=d.icPlans?.[m.id]||{},days=(m.firstFive?.length?m.firstFive:(p.firstDays||[]).map(sales=>({date:'',sales}))).slice(0,5),known=days.filter(row=>n(row.sales)!=null),sales=known.length?total(known.map(row=>row.sales)):null;
   rect(slide,.7,1.53,4.0,5.17,C.ink);box(slide,m.name,.95,1.88,3.5,.55,31,{bold:true,color:C.paper});box(slide,[m.team||'팀 미지정',m.role||'IC'].join(' · '),.95,2.55,3.5,.3,16,{color:'C4D1E6'});
   box(slide,'실제 첫 5일 기록',.95,3.16,3.5,.26,13,{color:C.paper,bold:true});
   for(let i=0;i<5;i++){const x=.95+i*.69;box(slide,`D${i+1}\n${days[i]?.date?.slice(5)||'—'}`,x,3.58,.64,.5,10,{align:'center',color:'C4D1E6'});box(slide,fmt(days[i]?.sales),x,4.18,.64,.38,22,{bold:true,align:'center',color:C.paper});}
   box(slide,`첫 5일 확인 성과   ${fmt(sales)}건\n확인 일수 AVG   ${avg(known.length?sales/known.length:null)}\n확인 ${known.length} / 5일`,.95,5.08,3.5,1.0,16,{color:C.paper});
   const monthly=d.members.find(row=>row.id===m.id);box(slide,monthly?`월간 세일즈 ${fmt(M.memberMetric(monthly).sales)}건 · 필드 ${fmt(monthly.days)}일`:'이달 성과 집계에 포함되지 않은 팀원',.95,6.3,3.5,.2,9,{color:'C4D1E6'});
   box(slide,'다섯 가지 역량',5.07,1.65,7.1,.4,23,{bold:true});
-  ABILITIES.forEach(([key,label],i)=>{const y=2.28+i*.52;box(slide,label,5.07,y,2.25,.27,14,{bold:true});bar(slide,n(p[key]),5,7.56,y+.07,3.2,.14);box(slide,n(p[key])==null?'평가 대기':`${fmt(p[key])}/5`,11.0,y,1.36,.27,13,{align:'right',color:n(p[key])==null?C.muted:C.blue});});
+  ABILITIES.forEach(([key,label],i)=>{const y=2.28+i*.52;box(slide,label,5.07,y,2.25,.27,14,{bold:true});bar(slide,n(p[key]),5,7.56,y+.07,3.2,.14);box(slide,n(p[key])==null?'평가 대기':p.scorePercent?`${fmt(p[key]*20)}%`:`${fmt(p[key])}/5`,11.0,y,1.36,.27,13,{align:'right',color:n(p[key])==null?C.muted:C.blue});});
   box(slide,'피치 능력: Tone of Voice · Body Language',5.07,4.96,7.1,.23,10,{color:C.muted});
   box(slide,'집중 역량',5.07,5.37,1.2,.24,11,{bold:true,color:C.blue});box(slide,p.focus?.length>80?'구체적인 집중 역량은 이어지는 계획 페이지에서 확인합니다.':p.focus||'아직 설정하지 않았습니다.',6.37,5.32,5.95,.46,13);
   for(let i=1;i<=3;i++){const x=5.07+(i-1)*2.49;box(slide,`DAY ${i}`,x,6.0,2.26,.2,10,{color:C.blue,bold:true});const value=p[`day${i}`];box(slide,value?.length>70?'상세 계획은 이어지는 페이지에서 확인합니다.':value||'계획 미입력',x,6.3,2.26,.36,12,{valign:'top'});}
