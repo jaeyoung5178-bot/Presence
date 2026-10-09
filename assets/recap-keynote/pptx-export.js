@@ -164,7 +164,7 @@ function ic(slide,d,v) {
   for(let i=1;i<=3;i++){const x=5.07+(i-1)*2.49;box(slide,`DAY ${i}`,x,6.0,2.26,.2,10,{color:C.blue,bold:true});const value=p[`day${i}`];box(slide,value?.length>70?'상세 계획은 이어지는 페이지에서 확인합니다.':value||'계획 미입력',x,6.3,2.26,.36,12,{valign:'top'});}
 }
 function tree(slide,d,v,pptx,index) {
-  const nodes=d.tree||[];if(!nodes.length)return empty(slide,'저장된 팀 관계가 없습니다.');
+  const nodes=v.items||d.tree||[];if(!nodes.length)return empty(slide,'저장된 팀 관계가 없습니다.');
   if(v.treeRows){const rows=v.items||nodes;return table(slide,['팀원','역할','직접 리더','이끄는 팀','구분'],rows.map(node=>[node.name,node.role,nodes.find(p=>p.id===node.parent)?.name||'최상위',node.team||'—',node.planned?'추가 예정':'기존 팀원']),.7,1.64,[2.5,1.1,2.5,4.4,1.43],{fontSize:14,rowH:.52});}
   const map=new Map(nodes.map(node=>[node.id,node])),children=id=>nodes.filter(node=>node.parent===id),roots=nodes.filter(node=>!map.has(node.parent));
   const weights=new Map(),depths=new Map();let maxDepth=0;
@@ -176,10 +176,10 @@ function tree(slide,d,v,pptx,index) {
   const teamColor=node=>{let top=node;const seen=new Set();while(map.get(top.parent)?.parent&&!seen.has(top.id)){seen.add(top.id);top=map.get(top.parent);}const first=roots.flatMap(r=>children(r.id));return ['2460D8','8954C8','16856F'][Math.max(0,first.findIndex(n=>n.id===top.id))%3];};
   const nodeNames=new Map(nodes.map((node,i)=>[node.id,`org-node-${i}`]));
   nodes.forEach((node,i)=>{if(!map.has(node.parent))return;const from=positions.get(node.parent),to=positions.get(node.id),a=from.x+from.w/2,b=to.x+to.w/2;
-    const edgeName=`org-edge-${i}`;slide.addShape('bentConnector3',{x:Math.min(a,b),y:from.y+from.h,w:Math.max(.001,Math.abs(a-b)),h:Math.max(.001,to.y-from.y-from.h),flipH:b<a,line:{color:'7B94BF',width:1.2},objectName:edgeName});
+    const edgeName=`org-edge-${i}`;slide.addShape('bentConnector3',{x:Math.min(a,b),y:from.y+from.h,w:Math.max(.001,Math.abs(a-b)),h:Math.max(.001,to.y-from.y-from.h),flipH:b<a,line:{color:'7B94BF',width:1.2,dashType:node.planned?'dash':'solid'},objectName:edgeName});
     pptx._recapConnections.push({slide:index+1,name:edgeName,parent:nodeNames.get(node.parent),child:nodeNames.get(node.id)});});
   nodes.forEach(node=>{const p=positions.get(node.id),root=!map.has(node.parent),fill=root?C.ink:node.planned?C.paper:C.pale;
-    slide.addText([{text:node.name,options:{bold:true,breakLine:true,fontSize:14}},{text:(node.role||'')+(node.planned?' · 예정':''),options:{fontSize:10,breakLine:!!node.team}},...(node.team?[{text:node.team,options:{fontSize:10}}]:[])],
+    slide.addText([{text:node.name,options:{bold:true,breakLine:true,fontSize:14}},{text:(node.role||'')+(node.targetRole?' → '+node.targetRole:'')+(node.planned?' · 예정':''),options:{fontSize:10,breakLine:!!node.team}},...(node.team?[{text:node.team,options:{fontSize:10}}]:[])],
       {...p,shape:'roundRect',fontFace:FONT,color:root?C.paper:C.ink,align:'center',valign:'mid',margin:.055,fit:'shrink',fill:{color:fill},line:{color:node.planned?C.blue:root?C.ink:teamColor(node),width:2,dashType:node.planned?'dash':'solid'},objectName:nodeNames.get(node.id)});});
   box(slide,`${nodes.filter(node=>!node.planned).length}명${nodes.some(node=>node.planned)?` · 추가 예정 ${nodes.filter(node=>node.planned).length}명`:''}`,.7,6.65,11.9,.23,10,{color:C.muted});
 }
