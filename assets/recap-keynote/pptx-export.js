@@ -126,12 +126,23 @@ function qc(slide,d,v) {
   table(slide,['팀원','일자','구분','사유 · 후속 액션','담당자'],rows.map(e=>[e.name,e.date||'미입력',e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.2,1.35,1.35,6.62,1.41],{fontSize:11.5,rowH:.51});
 }
 function stories(slide,d,v) {
-  const rows=v.items||[],win=v.id==='wins';if(!rows.length)return empty(slide);const columns=Math.min(3,rows.length),w=(11.93-(columns-1)*.18)/columns;
-  rows.forEach((row,i)=>{const x=.7+i*(w+.18);rect(slide,x,1.58,w,5.12,C.soft);box(slide,`${win?'WIN':'ACTION'} ${String((v.part||0)*3+i+1).padStart(2,'0')}`,x+.2,1.78,w-.4,.22,11,{color:C.blue,bold:true});
-    box(slide,row.title||'제목 없음',x+.2,2.17,w-.4,.68,columns===3?20:24,{bold:true});
-    const fields=win?[['WIN',row.win],['HOW',row.how],...(row.next?[['NEXT',row.next]]:[])]:[['CAUSE',row.cause],['ACTION',row.action],['RESULT',row.result]];
-    box(slide,fields.map(([label,value])=>`${label}\n${value||'아직 기록하지 않았습니다.'}`).join('\n\n'),x+.2,2.99,w-.4,3.25,columns===3?15:17,{valign:'top'});
-    if(!win)box(slide,[row.owner,row.due,row.status].filter(Boolean).join(' · '),x+.2,6.35,w-.4,.2,9,{color:C.muted});});
+  const rows=v.items||[],win=v.id==='wins';if(!rows.length)return empty(slide);
+  slide.background={color:'EEF7FF'};
+  const widths=[5.01,3.29,3.29],gap=.17,xs=[.7,5.88,9.34],h=1.56;
+  rows.forEach((row,i)=>{
+    const y=1.57+i*1.73;
+    widths.forEach((w,j)=>slide.addShape('roundRect',{x:xs[j],y,w,h,rectRadius:.13,fill:{color:C.paper},line:{color:C.paper,width:0}}));
+    rect(slide,xs[0]+.17,y+.13,.7,.31,'1475D1');
+    box(slide,String((v.part||0)*3+i+1).padStart(2,'0'),xs[0]+.17,y+.13,.7,.31,14,{bold:true,color:C.paper,align:'center'});
+    box(slide,row.title||'제목 없음',xs[0]+.24,y+(win?.58:.52),widths[0]-.48,win?.66:.38,19,{bold:true,align:'center'});
+    if(!win)box(slide,row.cause||'아직 기록하지 않았습니다.',xs[0]+.27,y+.97,widths[0]-.54,.44,13,{align:'center'});
+    box(slide,win?'WIN':'Sol.',xs[1]+.19,y+.15,widths[1]-.38,.3,18,{bold:true,color:'1475D1'});
+    box(slide,(win?row.win:row.action)||'아직 기록하지 않았습니다.',xs[1]+.19,y+.61,widths[1]-.38,.8,14.5);
+    box(slide,win?'HOW':'Res. 목표',xs[2]+.19,y+.15,widths[2]-.38,.3,18,{bold:true,color:'1475D1'});
+    const value=win?[row.how,row.next&&'NEXT\n'+row.next].filter(Boolean).join('\n\n'):row.result;
+    box(slide,value||'아직 기록하지 않았습니다.',xs[2]+.19,y+.61,widths[2]-.38,win?.8:.61,14.5);
+    if(!win)box(slide,[row.owner&&'담당 · '+row.owner,row.due,row.status].filter(Boolean).join(' · '),xs[2]+.19,y+1.31,widths[2]-.38,.16,9,{color:C.muted});
+  });
 }
 function callback(slide,d,v) {
   const all=d.members.map(m=>({...m,days:M.callbackDays(d,m),submitted:n(d.callbacks?.[m.id])})),days=total(all.map(m=>m.days)),submitted=total(all.map(m=>m.submitted)),missing=all.filter(m=>m.days>0&&m.submitted==null).length;
