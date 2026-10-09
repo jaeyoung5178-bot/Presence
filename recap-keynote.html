@@ -20,9 +20,39 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 .presenting .slide{aspect-ratio:auto;height:auto;min-height:0}.presenting .slide-head,.presenting .slide-content,.presenting .slide-foot{flex-shrink:0}
 @media(min-width:761px){body.presenting{overflow:hidden}.presenting .workspace{height:100dvh;min-height:0;overflow:hidden}.presenting .main-stage{height:100dvh;min-height:0;padding:18px 22px 90px;display:block;position:relative;overflow:hidden}.presenting .canvas{position:absolute;margin:0;left:50%;top:18px;max-width:none;transform-origin:top center}.presenting .slide{padding:28px 36px 22px}.presenting .slide-head{margin-bottom:18px}.presenting .slide-kicker{margin-bottom:10px}.presenting .slide-sub{margin-top:10px}.presenting .kpis{margin-bottom:18px}.presenting .kpi{padding:14px 18px}.presenting .kpi b{font-size:28px;margin-top:8px}.presenting .kpi small{margin-top:7px}.presenting .data-table td{padding-top:10px;padding-bottom:10px}.presenting .slide-foot{margin-top:16px;padding-top:12px}.presenting .split{grid-template-columns:1.15fr 1fr}}
 @media(max-width:760px){.presenting .slide{min-height:calc(100dvh - 105px)}.presenting .canvas{transform:none!important;position:static;width:100%!important}}
+
+/* Callback presentation: parallel teams keep the monthly comparison wide and legible. */
+@media(min-width:761px){
+.presenting .slide:has(.callback-teams){padding:22px 28px 18px}
+.presenting .slide:has(.callback-teams) .slide-head{margin-bottom:12px}
+.presenting .slide:has(.callback-teams) .kpis{gap:12px;margin-bottom:14px}
+.presenting .slide:has(.callback-teams) .kpi{padding:11px 15px}
+.presenting .slide:has(.callback-teams) .kpi b{font-size:26px;margin-top:6px}
+.presenting .slide:has(.callback-teams) .kpi small{margin-top:5px}
+.presenting .callback-teams{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.presenting .team-callback-header{padding:9px 12px;gap:12px}
+.presenting .team-callback-header h3{font-size:13px}
+.presenting .team-callback-header .team-gauge{min-width:100px;max-width:170px;gap:9px;flex:1}
+.presenting .team-callback-header strong{font-size:16px}
+.presenting .team-callback .data-table{min-width:0;table-layout:fixed;font-size:12px}
+.presenting .team-callback .data-table th{white-space:normal;font-size:11px;line-height:1.4}
+.presenting .team-callback .data-table td,.presenting .team-callback .data-table th{padding:7px 9px}
+.presenting .team-callback .data-table th:nth-child(1){width:28%}
+.presenting .team-callback .data-table th:nth-child(2){width:18%}
+.presenting .team-callback .data-table th:nth-child(3){width:24%}
+.presenting .team-callback .data-table th:nth-child(4){width:30%}
+.presenting .team-callback .callback-input{min-height:28px;height:28px;width:58px;max-width:100%;padding:3px;font-size:12px}
+.presenting .team-callback .callback-output{min-width:80px;gap:8px}
+.presenting .team-callback .callback-output b{min-width:0;white-space:nowrap;font-size:12px}
+.presenting .team-callback .callback-output .bar-track{min-width:20px}
+.presenting .slide:has(.callback-teams) .table-note{margin-top:10px}
+.presenting .slide:has(.callback-teams) .slide-foot{margin-top:12px;padding-top:10px}
+}
+
+@media(max-width:760px){.present-controls button[data-action=prev],.present-controls button[data-action=next]{min-width:44px;flex-shrink:0}.present-controls #presentCount{display:none}}
 </style></head><body>
 <div id="login" class="login-screen"><div class="login-card"><a class="brand" href="index.html"><span class="brand-mark">P</span> Presence <small>WORKSPACE</small></a><div class="login-orbit" aria-hidden="true"><span>↗</span><i></i><i></i></div><p class="eyebrow">YOUR TEAM. NEXT CHAPTER.</p><h1>한 달의 기록이,<br>다음 성장의 시작.</h1><p class="muted">팀 리캡 · 편집과 발표를 한 곳에서</p><form id="loginForm"><label>아이디<input id="loginId" autocomplete="username" required></label><label>비밀번호<input id="loginPw" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">팀 리캡 열기 <span>→</span></button></form><p id="loginMsg" class="hint" role="status">저장된 로그인 확인 중…</p><a href="recaps.html" class="text-link">리캡 아카이브</a></div></div>
 <div id="app" hidden><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">P</span><span>Presence <small>TEAM RECAP</small></span></a><div class="document-title"><span id="docName">Team recap</span><small id="saveStatus" role="status"></small></div><div class="toolbar"><label class="month-control"><span class="sr-only">리캡 월</span><input id="month" type="month"></label><button data-action="save" title="저장 · ⌘S">저장</button><button data-action="present" class="primary">▶ 발표</button><button data-action="menu" aria-label="문서 메뉴" aria-expanded="false">•••</button></div><div id="docMenu" class="doc-menu" hidden><button data-action="publish">발표본 게시</button><button data-action="refresh">워크북 수치 새로 불러오기</button><button data-action="export">리캡 JSON 내보내기</button><button data-action="import">리캡 JSON 가져오기</button><button data-action="logout">로그아웃</button></div></header>
 <div class="workspace"><aside class="chapter-rail" aria-label="리캡 챕터"><div class="rail-label">MONTHLY CHAPTERS <span>09</span></div><nav id="chapters"></nav><a class="archive-link" href="recaps.html">↗ 리캡 아카이브</a><div class="rail-footer">RECORD. LEARN. GROW.</div></aside><main class="main-stage"><div class="stage-toolbar"><div><span class="eyebrow" id="chapterLabel"></span><div id="subnav" class="subnav" aria-label="챕터 페이지"></div></div><button data-action="edit" class="edit-toggle" aria-expanded="false">✎ 편집</button></div><div id="notice" class="notice" hidden></div><div id="canvas" class="canvas" aria-live="polite"></div><footer class="stage-footer"><span id="pageCount"></span><span>숫자를 기록하고, 성장의 방법을 남기세요.</span><div><button data-action="prev" aria-label="이전 페이지">←</button><button data-action="next" aria-label="다음 페이지">→</button></div></footer></main><aside id="inspector" class="inspector" aria-label="슬라이드 편집"><div class="inspector-top"><div><span class="eyebrow">SLIDE SETTINGS</span><h2>내용 편집</h2></div><button data-action="close-edit" aria-label="편집 닫기">×</button></div><div id="editor"></div></aside></div>
 <div id="presentControls" class="present-controls" hidden><button data-action="exit-present">✕ 발표 종료</button><span id="presentCount"></span><button data-action="prev" aria-label="이전 슬라이드">←</button><button data-action="next" aria-label="다음 슬라이드">→</button></div></div>
-<dialog id="dialog"><div class="dialog-head"><h2 id="dialogTitle"></h2><button data-action="close-dialog" aria-label="닫기">×</button></div><form id="dialogForm"><div id="dialogBody"></div><footer><button type="button" data-action="close-dialog">취소</button><button type="submit" class="primary">적용</button></footer></form></dialog><input id="importFile" type="file" accept="application/json,.json" hidden><div id="toast" class="toast" role="status"></div><script type="module" src="assets/recap-keynote/app.js?v=20261009-fit-1"></script></body></html>
+<dialog id="dialog"><div class="dialog-head"><h2 id="dialogTitle"></h2><button data-action="close-dialog" aria-label="닫기">×</button></div><form id="dialogForm"><div id="dialogBody"></div><footer><button type="button" data-action="close-dialog">취소</button><button type="submit" class="primary">적용</button></footer></form></dialog><input id="importFile" type="file" accept="application/json,.json" hidden><div id="toast" class="toast" role="status"></div><script type="module" src="assets/recap-keynote/app.js?v=20261009-final-4"></script></body></html>

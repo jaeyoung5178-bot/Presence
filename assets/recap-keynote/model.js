@@ -74,6 +74,21 @@ function byName(source, name) {
   const key = nk(name);
   return source?.[key] ?? source?.[name] ?? Object.entries(source || {}).find(([k]) => nk(k) === key)?.[1] ?? {};
 }
+export function inheritTeams(people = [], tree = people) {
+  const nodes = new Map(arr(tree).map(node => [node.id,node]));
+  return arr(people).map(person => {
+    if (String(person.team || '').trim() || person.teamManual) return {...person};
+    const seen = new Set([person.id]);
+    let parent = nodes.get(person.parent), team = '';
+    while (parent && !seen.has(parent.id)) {
+      seen.add(parent.id);
+      if (String(parent.team || '').trim()) {team = parent.team;break;}
+      if (parent.teamManual) break;
+      parent = nodes.get(parent.parent);
+    }
+    return {...person,team};
+  });
+}
 export function rosterFrom(state = {}) {
   const map = new Map();
   const testNames = new Set(['testbot1','testbot2','testbot3','test1','test2','test3','테스터','테스트','tester']);
@@ -97,7 +112,7 @@ export function rosterFrom(state = {}) {
       removed:removed.has(nk(m.name)) || ['retired','removed','inactive'].includes(m.status)};
   });
   const ids = new Map(roster.map(m => [nk(m.name), m.id]));
-  return roster.map(m => ({...m, parent:ids.get(nk(m.upline)) || ''})).sort((a,b) =>
+  return inheritTeams(roster.map(m => ({...m, parent:ids.get(nk(m.upline)) || ''}))).sort((a,b) =>
     (a.join || '9999').localeCompare(b.join || '9999') || a.name.localeCompare(b.name, 'ko'));
 }
 

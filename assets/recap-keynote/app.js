@@ -1,4 +1,4 @@
-import * as M from './model.js?v=20261009-views-1';
+import * as M from './model.js?v=20261009-team-4';
 import {gateway, allowed} from './cloud.js?v=20261009-data-3';
 
 const $ = s => document.querySelector(s);
