@@ -196,7 +196,7 @@ function overview(slide,d) {
   const values=[['AVG',avg(t.avg),`필드 ${fmt(t.days)}일`],[t.incomeComplete?'TEAM INCOME':'확인된 인컴',money(t.incomeComplete?t.income:t.knownIncome),'입력 급여 주차 합계'],['REJECTION',pct(t.rate),'리섭 차감 후 기준'],['RECRUITING',`${fmt(r.starter)}명`,`부킹 ${fmt(r.booking)} · 쇼업 ${fmt(r.showup)}`],['CALLBACK',missing?'입력 중':pct(M.ratio(cbSub,cbDays)),`${cbSub}회 / ${cbDays}일 · 미입력 ${missing}명`],['LEARNING',`${(d.learning||[]).length}개`,'회고와 다음 달 계획']];
   values.forEach(([label,value,note],i)=>{const x=.7+(i%3)*4.03,y=3.07+Math.floor(i/3)*1.15;box(slide,label,x,y,3.78,.24,11,{color:C.muted,bold:true});box(slide,value,x,y+.36,3.78,.43,26,{bold:true});box(slide,note,x,y+.87,3.78,.19,10,{color:C.muted});});
   rect(slide,.7,5.68,11.93,.94,C.soft);box(slide,'NEXT GOAL',.93,5.95,1.6,.28,13,{color:C.blue,bold:true});
-  box(slide,`세일즈 ${fmt(g.sales)} · AVG ${avg(g.avg)} · 스타터 ${fmt(g.recruit)}명 · 콜백 ${pct(g.callback)}`,2.72,5.93,9.55,.36,17,{bold:true});
+  box(slide,`세일즈 ${fmt(g.sales)}${g.income?' · 인컴 '+money(g.income):''}${g.headcount?' · HC '+fmt(g.headcount)+'명':''}\nAVG ${avg(g.avg)} · 스타터 ${fmt(g.recruit)}명 · 콜백 ${pct(g.callback)}`,2.72,5.82,9.55,.65,14,{bold:true});
 }
 
 export function buildPptx({draft,views,month},PptxGenJS) {
