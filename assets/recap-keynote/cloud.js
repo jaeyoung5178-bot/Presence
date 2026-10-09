@@ -1,4 +1,4 @@
-import {clone, validate, recruitingSummary} from './model.js';
+import {clone, validate, recruitingSummary} from './model.js?v=20261009-views-1';
 
 const CFG = {
   apiKey:'AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0',
@@ -110,6 +110,29 @@ export function gateway() {
       if (!allowed(user)) throw error('recap/forbidden','리캡은 활성 관리자·TL·AOP·OP 계정만 사용할 수 있습니다.');
       current = user;
       return clone(user);
+    },
+    async read(month,published = false) {
+      checkMonth(month);
+      await requireAllowed();
+      const token = generation, path = `recaps/${published ? 'published' : 'keynote'}/${month}`;
+      const snapshot = await rawGet(path);
+      if (token !== generation || !allowed(current)) throw error('recap/superseded','세션이 변경되어 열람을 취소했습니다.');
+      // A saved reader never fetches the workbook or reconciles live source values.
+      return {state:{},saved:published ? null : snapshot,published:published ? snapshot : null,legacy:null,warnings:[]};
+    },
+    async list() {
+      await requireAllowed();
+      const token = generation;
+      const paths = ['recaps/keynote','recaps/published'];
+      const results = await Promise.allSettled(paths.map(rawGet));
+      if (token !== generation || !allowed(current)) throw error('recap/superseded','세션이 변경되어 목록 불러오기를 취소했습니다.');
+      const values = [], warnings = [];
+      results.forEach((result,i) => {
+        if (result.status === 'fulfilled') values[i] = result.value || {};
+        else {values[i] = null;warnings.push(`${paths[i]} 목록을 불러오지 못했습니다. 다시 시도해 주세요.`);}
+      });
+      if (values.every(v => v === null)) throw error('recap/load',warnings.join('\n'));
+      return {saved:values[0],published:values[1],warnings};
     },
     async load(month) {
       checkMonth(month);

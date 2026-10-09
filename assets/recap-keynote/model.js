@@ -76,10 +76,13 @@ function byName(source, name) {
 }
 export function rosterFrom(state = {}) {
   const map = new Map();
+  const testNames = new Set(['testbot1','testbot2','testbot3','test1','test2','test3','테스터','테스트','tester']);
+  const testName = value => testNames.has(String(value || '').toLowerCase().replace(/\s/g,''));
   for (const [key, user] of Object.entries(state.users || {})) {
     if (!user?.name || user.status === 'pending') continue;
     const memberId = String(user.uid || key);
-    map.set(nk(user.name), {id:memberId, uid:memberId, name:user.name, role:user.role || 'IC', status:user.status || ''});
+    map.set(nk(user.name), {id:memberId, uid:memberId, name:user.name, role:user.role || 'IC', status:user.status || '',
+      test:user.test === true || testName(user.name) || testName(user.id)});
   }
   for (const [key, info] of Object.entries(state.memberInfo || {})) {
     if (!info || typeof info !== 'object') continue;
@@ -87,7 +90,7 @@ export function rosterFrom(state = {}) {
     if (!map.has(nameKey)) map.set(nameKey, {id:`name_${nameKey}`, uid:'', name, role:info.role || 'IC', status:''});
   }
   const removed = new Set(arr(state.removedMembers).map(n => nk(typeof n === 'string' ? n : n?.name)));
-  const roster = [...map.values()].filter(m => m.name !== '관리자' && !/^test|테스터/i.test(m.name)).map(m => {
+  const roster = [...map.values()].filter(m => m.name !== '관리자' && !m.test && !testName(m.name)).map(m => {
     const info = byName(state.memberInfo, m.name), dossier = byName(state.dossier, m.name);
     return {...m, team:dossier.teamName || '', upline:dossier.upline || '',
       join:dateOnly(info.join || info.registeredAt), left:dateOnly(info.left || info.leftAt),
