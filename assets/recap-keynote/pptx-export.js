@@ -45,18 +45,19 @@ function kpis(slide,values,y=1.5) {
     box(slide,value,x+.16,y+.34,w-.3,.36,26,{bold:true,color:i===0?C.paper:C.ink});
     if(note)box(slide,note,x+.16,y+.78,w-.3,.14,9,{color:i===0?'CAD5E8':C.muted});});
 }
-function header(slide,view,draft,index,count) {
+function header(slide,view,draft,index,count,logoData) {
   slide.background={color:C.paper};
+  if(logoData)slide.addImage({data:logoData,x:11.58,y:.25,w:1.04,h:1.04*198/310,altText:'Presence'});
   if(view.id!=='cover'){
     const title=view.kind==='note'?view.noteTitle:view.title;
     box(slide,view.c>=0?`${String(view.c+1).padStart(2,'0')}  ${CHAPTERS[view.c]?.[0]||''}`:'CONTENTS',.7,.32,8,.25,10,{bold:true,color:C.blue});
     box(slide,title||'',.7,.7,10.6,.45,29,{bold:true});
-    if(view.parts>1&&!['wins','challenges'].includes(view.id))box(slide,`${(view.part||0)+1} / ${view.parts}`,11.3,.78,1.3,.25,12,{align:'right',color:C.muted});
+    if(view.parts>1&&!['wins','challenges'].includes(view.id))box(slide,`${(view.part||0)+1} / ${view.parts}`,11.3,1.03,1.3,.2,12,{align:'right',color:C.muted});
     line(slide,.7,1.29,11.93,0,C.line);
   }
   if(['wins','challenges'].includes(view.id))return;
   line(slide,.7,7.01,11.93,0,C.line);
-  box(slide,[draft.teamName||'Presence',monthTitle(draft.month),draft.leader].filter(Boolean).join(' · '),.7,7.12,10,.15,8.5,{color:C.muted});
+  box(slide,view.id==='cover'?`Presence · ${draft.leader||'임재영'} ${(draft.members||[]).find(m=>m.name===draft.leader)?.role||'AOP'}`:[draft.teamName||'Presence',monthTitle(draft.month),draft.leader].filter(Boolean).join(' · '),.7,7.12,10,.15,8.5,{color:C.muted});
   box(slide,`${String(index+1).padStart(2,'0')} / ${count}`,11.4,7.1,1.2,.19,9,{align:'right',color:C.muted});
 }
 function cover(slide,d) {
@@ -65,9 +66,9 @@ function cover(slide,d) {
   box(slide,'PRESENCE · TEAM RECAP',.85,.75,7,.3,13,{bold:true,color:C.blue});
   box(slide,d.month.slice(0,4),.85,1.64,7,.4,24,{color:C.muted});
   box(slide,`${Number(d.month.slice(5))}월 리캡`,.85,2.2,8,1.05,62,{bold:true});
-  box(slide,`필드   ${range(first.start,last.end)}\n지급   ${range(first.pay,last.pay)}`,.88,3.6,7.4,.8,19,{breakLine:false,lineSpacingMultiple:1.2});
-  box(slide,[d.teamName||'Presence',d.leader||''].join('\n'),.88,5.52,6,.72,20,{bold:true});
-  rect(slide,9.6,.75,2.9,5.95,C.blue);box(slide,d.month.slice(5),9.8,2.35,2.5,1.5,93,{bold:true,align:'center',color:C.paper});
+  box(slide,`필드   ${range(first.start,last.end)}`,.88,3.6,7.4,.8,19,{breakLine:false,lineSpacingMultiple:1.2});
+
+  rect(slide,9.6,1.2,2.9,5.5,C.blue);box(slide,d.month.slice(5),9.8,2.35,2.5,1.5,93,{bold:true,align:'center',color:C.paper});
   box(slide,'MONTHLY\nRECAP',9.95,4.25,2.25,.8,19,{bold:true,color:C.paper,align:'center'});
 }
 function contents(slide) {
@@ -214,7 +215,7 @@ function overview(slide,d) {
   box(slide,`세일즈 ${fmt(g.sales)}${g.income?' · 인컴 '+money(g.income):''}${g.headcount?' · HC '+fmt(g.headcount)+'명':''}\nAVG ${avg(g.avg)} · 스타터 ${fmt(g.recruit)}명 · 콜백 ${pct(g.callback)}`,2.72,5.82,9.55,.65,14,{bold:true});
 }
 
-export function buildPptx({draft,views,month},PptxGenJS) {
+export function buildPptx({draft,views,month,logoData},PptxGenJS) {
   if(typeof PptxGenJS!=='function')throw new Error('PPTX 생성기를 불러오지 못했습니다.');
   const errors=M.validate(draft);if(errors.length)throw new Error(errors.join('\n'));
   if(month&&month!==draft.month)throw new Error('선택 월과 리캡 월이 다릅니다.');
@@ -223,7 +224,7 @@ export function buildPptx({draft,views,month},PptxGenJS) {
   pptx.layout='LAYOUT_WIDE';pptx.author=d.leader||'Presence';pptx.subject='저장된 월별 Team Recap';pptx.title=`${monthTitle(d.month)} ${d.teamName||'Presence'} Recap`;
   pptx.company=d.teamName||'Presence';pptx.lang='ko-KR';pptx.theme={headFontFace:FONT,bodyFontFace:FONT,lang:'ko-KR'};
   pptx._recapConnections=[];
-  pages.forEach((v,index)=>{const slide=pptx.addSlide();header(slide,v,d,index,pages.length);
+  pages.forEach((v,index)=>{const slide=pptx.addSlide();header(slide,v,d,index,pages.length,logoData);
     slide.addNotes(`Presence Team Recap · ${d.month}\n원본 페이지 ${index+1}/${pages.length}: ${v.noteTitle||v.title}\n저장 버전 ${d.revision||0}\n모든 수치는 전달된 리캡 스냅샷 기준입니다. 빈값은 미확인 상태입니다.`);
     if(v.kind==='goals'){goalPage(slide,d);return;}
     if(v.kind==='note'){box(slide,v.items||v.noteText||'기록된 내용이 없습니다.',.85,1.75,11.63,4.8,24,{valign:'top',breakLine:false});return;}
@@ -259,8 +260,10 @@ function loadBundle(){
     script.onerror=()=>{clearTimeout(timer);script.remove();reject(new Error('PPTX 생성기를 불러오지 못했습니다. 연결을 확인해 주세요.'));};document.head.append(script);
   }).catch(error=>{bundlePromise=null;throw error;});return bundlePromise;
 }
+let brandPromise;
+function loadBrand(){if(!brandPromise)brandPromise=new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{const canvas=document.createElement('canvas');canvas.width=310;canvas.height=198;const ctx=canvas.getContext('2d');ctx.drawImage(image,3,0,310,198,0,0,310,198);ctx.globalCompositeOperation='source-in';ctx.fillStyle='#142139';ctx.fillRect(0,0,310,198);resolve(canvas.toDataURL('image/png'));};image.onerror=()=>reject(new Error('Presence 로고를 불러오지 못했습니다.'));image.src=new URL('./presence-brand-original.png',import.meta.url).href;}).catch(error=>{brandPromise=null;throw error;});return brandPromise;}
 export async function exportPptx(payload) {
-  const Constructor=await loadBundle(),pptx=buildPptx(payload,Constructor),bytes=await editablePptxBytes(pptx);
+  const [Constructor,logoData]=await Promise.all([loadBundle(),loadBrand()]),pptx=buildPptx({...payload,logoData},Constructor),bytes=await editablePptxBytes(pptx);
   const fileName=`Presence-Team-Recap-${payload.draft.month}.pptx`,blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'}),url=URL.createObjectURL(blob);
   const anchor=document.createElement('a');anchor.href=url;anchor.download=fileName;document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   return {fileName,slides:payload.views.length};
