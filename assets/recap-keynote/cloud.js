@@ -77,6 +77,18 @@ export function gateway() {
     const errors = validate(draft);
     if (errors.length) throw Object.assign(error('recap/validation',errors.join('\n')),{errors});
   };
+  const pinSnapshot = async (reference,label) => {
+    const f = await firebase();
+    let unsubscribe = () => {};
+    try {
+      const snapshot = await readWithin(new Promise((resolve,reject) => {
+        // Keep an active view for the whole transaction. get() alone does not retain
+        // an RTDB transaction cache; a fresh page may otherwise start with null.
+        unsubscribe = f.db.onValue(reference,resolve,reject);
+      }),label);
+      return {snapshot,release:() => unsubscribe()};
+    } catch (cause) {unsubscribe();throw cause;}
+  };
 
   return {
     async restore() {
@@ -172,17 +184,18 @@ export function gateway() {
       const expected = Number(revision);
       if (!Number.isInteger(expected) || expected < 0) throw error('recap/validation','저장 버전을 확인해 주세요.');
       const f = await firebase(), reference = f.db.ref(f.database,`recaps/keynote/${draft.month}`);
-      // Seed the transaction cache, and detect a conflict before a possible local-null callback.
-      const existing = await readWithin(f.db.get(reference),'리캡 버전');
-      if (Number(existing.val()?.revision || 0) !== expected) throw error('recap/conflict','다른 창에서 이 달의 리캡이 변경되었습니다. 현재 내용을 복사한 뒤 다시 불러와 주세요.');
-      const next = {...clone(draft),version:1,revision:expected + 1,updatedAt:Date.now(),updatedBy:user.uid};
-      const result = await f.db.runTransaction(reference,remote => {
-        if (generation !== token || !allowed(current) || Number(remote?.revision || 0) !== expected) return undefined;
-        return next;
-      },{applyLocally:false});
-      if (!result.committed) throw error('recap/conflict','저장 중 다른 변경이 감지되었습니다. 다시 불러온 뒤 저장해 주세요.');
-      // Return the full submitted shape; Firebase omits null object fields and empty arrays.
-      return clone(next);
+      const pinned = await pinSnapshot(reference,'리캡 버전');
+      try {
+        if (Number(pinned.snapshot.val()?.revision || 0) !== expected) throw error('recap/conflict','다른 창에서 이 달의 리캡이 변경되었습니다. 현재 내용을 복사한 뒤 다시 불러와 주세요.');
+        const next = {...clone(draft),version:1,revision:expected + 1,updatedAt:Date.now(),updatedBy:user.uid};
+        const result = await f.db.runTransaction(reference,remote => {
+          if (generation !== token || !allowed(current) || Number(remote?.revision || 0) !== expected) return undefined;
+          return next;
+        },{applyLocally:false});
+        if (!result.committed) throw error('recap/conflict','저장 중 다른 변경이 감지되었습니다. 다시 불러온 뒤 저장해 주세요.');
+        // Return the full submitted shape; Firebase omits null object fields and empty arrays.
+        return clone(next);
+      } finally {pinned.release();}
     },
     async publish(draft) {
       checkDraft(draft);
@@ -191,18 +204,20 @@ export function gateway() {
       const live = await rawGet(`recaps/keynote/${draft.month}`);
       if (!live || Number(live.revision || 0) !== Number(draft.revision || 0)) throw error('recap/conflict','현재 버전을 먼저 저장한 뒤 발행해 주세요.');
       const reference = f.db.ref(f.database,`recaps/published/${draft.month}`);
-      await readWithin(f.db.get(reference),'발행 리캡');
-      const snapshot = clone(draft), publishedAt = Date.now(), recruiting = recruitingSummary(draft.recruiting);
-      const result = await f.db.runTransaction(reference,previous => {
-        if (generation !== token || !allowed(current)) return undefined;
-        // Preserve old monthly archive fields while attaching the new frozen keynote snapshot.
-        return {...(previous || {}),month:draft.month,teamName:draft.teamName || 'Presence',leader:draft.leader || '',
-          headline:draft.headline || '',weeks:draft.weeks,members:draft.members,
-          interviews:recruiting.booking,showups:recruiting.showup,starters:recruiting.starter,
-          updatedAt:publishedAt,publishedAt,publishedBy:user.uid,keynote:snapshot};
-      },{applyLocally:false});
-      if (!result.committed) throw error('recap/conflict','세션이 변경되어 발행을 취소했습니다.');
-      return result.snapshot.val();
+      const pinned = await pinSnapshot(reference,'발행 리캡');
+      try {
+        const snapshot = clone(draft), publishedAt = Date.now(), recruiting = recruitingSummary(draft.recruiting);
+        const result = await f.db.runTransaction(reference,previous => {
+          if (generation !== token || !allowed(current)) return undefined;
+          // Preserve old monthly archive fields while attaching the new frozen keynote snapshot.
+          return {...(previous || {}),month:draft.month,teamName:draft.teamName || 'Presence',leader:draft.leader || '',
+            headline:draft.headline || '',weeks:draft.weeks,members:draft.members,
+            interviews:recruiting.booking,showups:recruiting.showup,starters:recruiting.starter,
+            updatedAt:publishedAt,publishedAt,publishedBy:user.uid,keynote:snapshot};
+        },{applyLocally:false});
+        if (!result.committed) throw error('recap/conflict','세션이 변경되어 발행을 취소했습니다.');
+        return result.snapshot.val();
+      } finally {pinned.release();}
     },
     async logout() {
       current = null; generation++;
