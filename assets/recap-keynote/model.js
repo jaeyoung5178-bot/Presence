@@ -176,13 +176,16 @@ function callbackAggregate(rows) {
     rate:missing ? null : ratio(knownSubmitted, days), missing, complete:missing === 0,
     knownRate:ratio(knownSubmitted, sum(applicable.filter(r => r.submitted != null), r => r.days))};
 }
+export function callbackDays(draft, member) {
+  return num(draft?.callbackDays?.[member.id]) ?? num(member.days) ?? 0;
+}
 export function callbackGroups(draft = {}) {
   const members = arr(draft.members), ids = new Set(members.map(m => m.id));
   const people = [...members,...arr(draft.roster).filter(m => !ids.has(m.id)).map(m => ({...m,days:0}))];
   const rows = people.map(m => {
-    const submitted = num(draft.callbacks?.[m.id]);
-    return {id:m.id, name:m.name, team:m.team || '미지정', days:num(m.days) ?? 0, submitted,
-      rate:ratio(submitted,m.days), missing:num(m.days) > 0 && submitted == null};
+    const submitted = num(draft.callbacks?.[m.id]), days = callbackDays(draft,m);
+    return {id:m.id, name:m.name, team:m.team || '미지정', days, submitted,
+      rate:ratio(submitted,days), missing:days > 0 && submitted == null};
   });
   const names = [...new Set(rows.map(r => r.team))];
   return {...callbackAggregate(rows), teams:names.map(name => ({name,...callbackAggregate(rows.filter(r => r.team === name))}))};
@@ -346,7 +349,7 @@ export function makeDraft(state = {}, month, legacy = null) {
   const live = buildLive(state,month,saved);
   const treeAudit = workbookTreeAudit(state);
   const base = {version:1,month,teamName:'Presence',headline:'',leader:'',...live,
-    callbacks:{},qc:{retentionWin:'',trainingHow:'',startCount:null},wins:[],challenges:[],learning:[],icPlans:{},
+    callbacks:{},callbackDays:{},qc:{retentionWin:'',trainingHow:'',startCount:null},wins:[],challenges:[],learning:[],icPlans:{},
     tree:workbookTree(state),treeSource:{status:treeAudit.status,source:treeAudit.source,sourceAt:treeAudit.sourceAt,warnings:[...treeAudit.warnings,...treeAudit.errors]},promotions:[],goals:{sales:null,avg:null,recruit:null,callback:100,focus:'',actions:''},
     notes:{recruit:'',sales:''},revision:0,updatedAt:0,sourceAt:state.sourceAt || Date.now()};
   base.icEvidence = icEvidenceFrom(state,base.tree);
@@ -359,6 +362,7 @@ export function makeDraft(state = {}, month, legacy = null) {
     for (const key of ['wins','challenges','learning','events','promotions','tree']) result[key] = arr(saved[key]);
     result.treeSource = clone(saved.treeSource || {status:'saved',source:'saved-snapshot',sourceAt:saved.sourceAt || 0});
     result.callbacks = saved.callbacks || {};
+    result.callbackDays = clone(saved.callbackDays || {});
     result.icPlans = saved.icPlans || {};
     result.icEvidence = clone(saved.icEvidence || {});
     result.qc = {...base.qc,...saved.qc}; result.goals = {...base.goals,...saved.goals}; result.notes = {...base.notes,...saved.notes};
@@ -454,12 +458,14 @@ export function validate(draft) {
     if (!Number.isInteger(num(m.days)) || num(m.days) < 0) errors.push(`${m.name}: 필드일을 확인해 주세요.`);
     const submitted = num(draft.callbacks?.[m.id]);
     if (draft.callbacks?.[m.id] != null && draft.callbacks[m.id] !== '' && submitted == null) errors.push(`${m.name}: 콜백 제출일은 숫자여야 합니다.`);
-    if (submitted != null && (!Number.isInteger(submitted) || submitted < 0 || submitted > num(m.days))) errors.push(`${m.name}: 콜백 제출일은 0–${m.days}일의 정수여야 합니다.`);
+    if (submitted != null && (!Number.isInteger(submitted) || submitted < 0 || submitted > callbackDays(draft,m))) errors.push(`${m.name}: 콜백 제출횟수는 0–${callbackDays(draft,m)} 사이의 정수여야 합니다.`);
     for (const field of ['scores','incomeWeeks','rejectWeeks']) if (arr(m[field]).length !== weeks.length) errors.push(`${m.name}: ${field} 주차 수가 맞지 않습니다.`);
     for (const value of [...arr(m.scores),...arr(m.incomeWeeks),m.bond,m.bep]) if (value != null && (num(value) == null || num(value) < 0)) errors.push(`${m.name}: 음수 또는 유효하지 않은 숫자가 있습니다.`);
     for (const row of arr(m.rejectWeeks)) if (row) for (const k of [...rejectKeys,'rawTotal','resubTotal']) if (row[k] != null && (!Number.isInteger(num(row[k])) || num(row[k]) < 0)) errors.push(`${m.name}: Reject 건수는 0 이상의 정수여야 합니다.`);
   }
-  for (const row of callbackGroups(draft).rows) if (row.submitted != null && (!Number.isInteger(row.submitted) || row.submitted < 0 || row.submitted > row.days)) errors.push(`${row.name}: 콜백 제출일은 필드일 이하여야 합니다.`);
+  if (draft.callbackDays != null && (typeof draft.callbackDays !== 'object' || Array.isArray(draft.callbackDays))) errors.push('콜백 기준일수 형식을 확인해 주세요.');
+  for (const value of Object.values(draft.callbackDays || {})) if (value != null && value !== '' && (!Number.isInteger(num(value)) || num(value) < 0)) errors.push('콜백 기준일수는 0 이상의 정수여야 합니다.');
+  for (const row of callbackGroups(draft).rows) if (row.submitted != null && (!Number.isInteger(row.submitted) || row.submitted < 0 || row.submitted > row.days)) errors.push(`${row.name}: 콜백 제출횟수는 콜백 기준일수 이하여야 합니다.`);
   const tree = arr(draft.tree), nodeIds = new Set();
   for (const node of tree) {
     if (!node.id || nodeIds.has(node.id)) errors.push('조직도 ID가 누락되었거나 중복되었습니다.');

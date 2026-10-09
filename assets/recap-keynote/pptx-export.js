@@ -1,4 +1,4 @@
-import * as M from './model.js?v=20261009-tree-5';
+import * as M from './model.js?v=20261009-callback-1';
 
 // All content is drawn as editable PowerPoint text, tables, shapes and charts.
 // The only runtime dependency is the same-origin, locally vendored bundle.
@@ -134,14 +134,14 @@ function stories(slide,d,v) {
     if(!win)box(slide,[row.owner,row.due,row.status].filter(Boolean).join(' · '),x+.2,6.35,w-.4,.2,9,{color:C.muted});});
 }
 function callback(slide,d,v) {
-  const all=d.members.map(m=>({...m,submitted:n(d.callbacks?.[m.id])})),days=total(all.map(m=>m.days)),submitted=total(all.map(m=>m.submitted)),missing=all.filter(m=>m.days>0&&m.submitted==null).length;
-  kpis(slide,[['팀 전체 제출률',missing?'입력 중':pct(M.ratio(submitted,days))],['콜백싯 제출',`${fmt(submitted)}회`],['총 필드일수',`${fmt(days)}일`],['미입력',`${missing}명`]]);
+  const all=d.members.map(m=>({...m,days:M.callbackDays(d,m),submitted:n(d.callbacks?.[m.id])})),days=total(all.map(m=>m.days)),submitted=total(all.map(m=>m.submitted)),missing=all.filter(m=>m.days>0&&m.submitted==null).length;
+  kpis(slide,[['팀 전체 제출률',missing?'입력 중':pct(M.ratio(submitted,days))],['콜백싯 제출',`${fmt(submitted)}회`],['콜백 기준일수',`${fmt(days)}일`],['미입력',`${missing}명`]]);
   const groups=v.items||[];if(!groups.length)return box(slide,'콜백 기록이 없습니다.',.7,4,11.9,.6,22,{align:'center'});
   groups.forEach((group,i)=>{const columns=Math.min(3,groups.length),w=(11.93-(columns-1)*.18)/columns,x=.7+i*(w+.18),people=group.all||group.rows||[],sumDays=total(people.map(m=>m.days)),sumSub=total(people.map(m=>m.submitted)),miss=people.filter(m=>m.days>0&&m.submitted==null).length;
     box(slide,group.name+(group.totalParts>1?` · ${group.part+1}/${group.totalParts}`:''),x,2.87,w,.35,22,{bold:true});
-    box(slide,`제출 ${fmt(sumSub)}회 / 필드 ${fmt(sumDays)}일 · ${miss?'입력 중':pct(M.ratio(sumSub,sumDays))}`,x,3.35,w,.26,13,{color:C.muted});
-    table(slide,['팀원','필드일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted),!m.days?'해당 없음':m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[w*.28,w*.2,w*.24,w*.28],{fontSize:groups.length>2?10.5:12,rowH:.36});});
-  box(slide,'빈칸과 0회는 다릅니다. 제출률은 총 제출 횟수 ÷ 총 필드일수입니다.',.7,6.7,11.9,.2,10,{color:C.muted});
+    box(slide,`제출 ${fmt(sumSub)}회 / 기준 ${fmt(sumDays)}일 · ${miss?'입력 중':pct(M.ratio(sumSub,sumDays))}`,x,3.35,w,.26,13,{color:C.muted});
+    table(slide,['팀원','기준일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted),!m.days?'해당 없음':m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[w*.28,w*.2,w*.24,w*.28],{fontSize:groups.length>2?10.5:12,rowH:.36});});
+  box(slide,'빈칸과 0회는 다릅니다. 제출률은 총 제출 횟수 ÷ 콜백 기준일수입니다.',.7,6.7,11.9,.2,10,{color:C.muted});
 }
 function learning(slide,d,v) {
   const rows=v.items||[];if(!rows.length)return empty(slide);
@@ -183,7 +183,8 @@ function tree(slide,d,v,pptx,index) {
       {...p,shape:'roundRect',fontFace:FONT,color:root?C.paper:C.ink,align:'center',valign:'mid',margin:.055,fit:'shrink',fill:{color:fill},line:{color:node.planned?C.blue:root?C.ink:teamColor(node),width:2,dashType:node.planned?'dash':'solid'},objectName:nodeNames.get(node.id)});});
   box(slide,`${nodes.filter(node=>!node.planned).length}명${nodes.some(node=>node.planned)?` · 추가 예정 ${nodes.filter(node=>node.planned).length}명`:''}`,.7,6.65,11.9,.23,10,{color:C.muted});
 }
-function promotion(slide,d,v) {
+function promotion(slide,d,v,pptx,index) {
+  if(v.kind==='tree')return tree(slide,d,v,pptx,index);
   const rows=v.items||d.promotions||[];if(!rows.length)return empty(slide,'등록된 프로모션 골이 없습니다.');
   rows.forEach((row,i)=>{const x=.7+i*6.06,w=5.87,person=[...d.members,...d.roster,...d.tree].find(m=>m.id===row.memberId);rect(slide,x,1.58,w,5.1,C.soft);
     box(slide,person?.name||row.name||'팀원 확인 필요',x+.23,1.88,w-.46,.4,27,{bold:true});box(slide,`${person?.role||'현재 역할 미확인'} → ${row.targetRole||'목표 역할 미입력'}`,x+.23,2.48,w-.46,.3,17,{color:C.blue,bold:true});
@@ -215,7 +216,7 @@ export function buildPptx({draft,views,month},PptxGenJS) {
     slide.addNotes(`Presence Team Recap · ${d.month}\n원본 페이지 ${index+1}/${pages.length}: ${v.noteTitle||v.title}\n저장 버전 ${d.revision||0}\n모든 수치는 전달된 리캡 스냅샷 기준입니다. 빈값은 미확인 상태입니다.`);
     if(v.kind==='goals'){goalPage(slide,d);return;}
     if(v.kind==='note'){box(slide,v.items||v.noteText||'기록된 내용이 없습니다.',.85,1.75,11.63,4.8,24,{valign:'top',breakLine:false});return;}
-    switch(v.id){case'cover':cover(slide,d);break;case'contents':contents(slide);break;case'sales':sales(slide,d,v);break;case'weekly':weekly(slide,d,v,pptx);break;case'income':income(slide,d,v);break;case'recruit':recruit(slide,d,v);break;case'rank':recruit(slide,d,v,true);break;case'qc':qc(slide,d,v);break;case'wins':case'challenges':stories(slide,d,v);break;case'callback':callback(slide,d,v);break;case'learning':learning(slide,d,v);break;case'ic':ic(slide,d,v);break;case'tree':tree(slide,d,v,pptx,index);break;case'promotion':promotion(slide,d,v);break;case'overview':overview(slide,d);break;default:throw new Error(`지원하지 않는 리캡 페이지: ${v.id}`);}
+    switch(v.id){case'cover':cover(slide,d);break;case'contents':contents(slide);break;case'sales':sales(slide,d,v);break;case'weekly':weekly(slide,d,v,pptx);break;case'income':income(slide,d,v);break;case'recruit':recruit(slide,d,v);break;case'rank':recruit(slide,d,v,true);break;case'qc':qc(slide,d,v);break;case'wins':case'challenges':stories(slide,d,v);break;case'callback':callback(slide,d,v);break;case'learning':learning(slide,d,v);break;case'ic':ic(slide,d,v);break;case'tree':tree(slide,d,v,pptx,index);break;case'promotion':promotion(slide,d,v,pptx,index);break;case'overview':overview(slide,d);break;default:throw new Error(`지원하지 않는 리캡 페이지: ${v.id}`);}
   });
   if(pptx._slides.length!==pages.length)throw new Error('PPTX 페이지 수를 확인해 주세요.');
   return pptx;
