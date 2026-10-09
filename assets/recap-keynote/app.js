@@ -46,7 +46,7 @@ const tag = (text,cls='') => text ? `<span class="tag ${cls}">${esc(text)}</span
 const textBox = (title,text) => `<div class="text-box"><h3>${esc(title)}</h3><p>${esc(text||'아직 기록하지 않았습니다.')}</p></div>`;
 const table = (heads,rows,foot='') => `<div class="table-wrap"><table class="data-table"><thead><tr>${heads.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>${foot?`<tfoot>${foot}</tfoot>`:''}</table></div>`;
 const person = m => `<b class="${metrics(m).alert?'danger':''}">${esc(m.name)}</b><span class="role">${esc(m.role||'')}</span>`;
-const desc = {callback:'제출률 = 콜백싯 제출 횟수 ÷ 필드일수 · 팀 합계 기준'};
+const desc = {callback:'제출률 = 콜백싯 제출 횟수 ÷ 콜백 기준일수 · 팀 합계 기준'};
 
 
 const INTRO=[{id:'cover',c:-1,title:'표지',key:'cover'},{id:'contents',c:-1,title:'목차',key:'contents'}];
