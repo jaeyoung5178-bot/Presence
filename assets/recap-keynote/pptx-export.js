@@ -158,7 +158,7 @@ function ic(slide,d,v) {
   box(slide,`첫 5일 확인 성과   ${fmt(sales)}건\n확인 일수 AVG   ${avg(known.length?sales/known.length:null)}\n확인 ${known.length} / 5일`,.95,5.08,3.5,1.0,16,{color:C.paper});
   const monthly=d.members.find(row=>row.id===m.id);box(slide,monthly?`월간 세일즈 ${fmt(M.memberMetric(monthly).sales)}건 · 필드 ${fmt(monthly.days)}일`:'이달 성과 집계에 포함되지 않은 팀원',.95,6.3,3.5,.2,9,{color:'C4D1E6'});
   box(slide,'다섯 가지 역량',5.07,1.65,7.1,.4,23,{bold:true});
-  ABILITIES.forEach(([key,label],i)=>{const y=2.28+i*.52;box(slide,label,5.07,y,2.25,.27,14,{bold:true});bar(slide,n(p[key]),5,7.56,y+.07,3.2,.14);box(slide,n(p[key])==null?'평가 대기':p.scorePercent?`${fmt(p[key]*20)}%`:`${fmt(p[key])}/5`,11.0,y,1.36,.27,13,{align:'right',color:n(p[key])==null?C.muted:C.blue});});
+  ABILITIES.forEach(([key,label],i)=>{const y=2.28+i*.52;box(slide,label,5.07,y,2.25,.27,14,{bold:true});bar(slide,n(p[key]),5,7.56,y+.07,3.2,.14);box(slide,n(p[key])==null?'평가 대기':p.scoreScale===10?`${fmt(p[key]*2)}/10`:p.scorePercent?`${fmt(p[key]*20)}%`:`${fmt(p[key])}/5`,11.0,y,1.36,.27,13,{align:'right',color:n(p[key])==null?C.muted:C.blue});});
   box(slide,'피치 능력: Tone of Voice · Body Language',5.07,4.96,7.1,.23,10,{color:C.muted});
   box(slide,'집중 역량',5.07,5.37,1.2,.24,11,{bold:true,color:C.blue});box(slide,p.focus||'아직 설정하지 않았습니다.',6.37,5.23,5.95,.72,12);
   for(let i=1;i<=3;i++){const x=5.07+(i-1)*2.49;box(slide,`DAY ${i}`,x,6.0,2.26,.2,10,{color:C.blue,bold:true});const value=p[`day${i}`];box(slide,value?.length>70?'상세 계획은 이어지는 페이지에서 확인합니다.':value||'계획 미입력',x,6.3,2.26,.36,12,{valign:'top'});}
