@@ -1,4 +1,4 @@
-import {clone, validate, recruitingSummary} from './model.js?v=20261009-views-1';
+import {clone, validate, recruitingSummary, workbookTreeAudit} from './model.js?v=20261009-tree-5';
 
 const CFG = {
   apiKey:'AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0',
@@ -8,6 +8,13 @@ const CFG = {
   appId:'1:1056684483470:web:1f50113d410b53458d3adf',
 };
 const VERSION = '10.12.0';
+const treeFields = {users:'users',dossier:'dossier',removedMembers:'removedMembers',extraMembers:'extraMembers',
+  allowedMembers:'privateConfig/allowedMembers',founderName:'privateConfig/founder/name'};
+const sourceValue = (key,value) => {
+  // Match the workbook DB listeners, including Firebase's sparse-array object form.
+  if (['extraMembers','removedMembers'].includes(key)) return Array.isArray(value) ? value : value ? Object.values(value) : [];
+  return value ?? (key === 'allowedMembers' ? null : key === 'founderName' ? '' : {});
+};
 const validMonth = month => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(month || ''));
 const error = (code,message) => Object.assign(new Error(message),{code});
 const proofOf = password => {
@@ -146,13 +153,30 @@ export function gateway() {
       if (values.every(v => v === null)) throw error('recap/load',warnings.join('\n'));
       return {saved:values[0],published:values[1],warnings};
     },
+    async auditTree() {
+      await requireAllowed();
+      const token = generation, entries = Object.entries(treeFields);
+      const results = await Promise.allSettled(entries.map(([,path]) => rawGet(path)));
+      if (token !== generation || !allowed(current)) throw error('recap/superseded','세션이 변경되어 팀 트리 대조를 취소했습니다.');
+      const state = {sourceAt:Date.now()}, warnings = [];
+      results.forEach((result,i) => {
+        const [key,path] = entries[i];
+        if (result.status === 'fulfilled') state[key] = sourceValue(key,result.value);
+        else {state[key] = null;warnings.push(`${path}: 팀 트리 원본을 불러오지 못했습니다. 저장된 트리는 유지됩니다.`);}
+      });
+      const audit = workbookTreeAudit(state);
+      warnings.push(...audit.errors,...audit.warnings);
+      state.sourceWarnings = [...new Set(warnings)];
+      return {state,warnings:state.sourceWarnings};
+    },
     async load(month) {
       checkMonth(month);
       await requireAllowed();
       const token = generation;
       // Never read all recaps: each month stays independent and sensitive sources are least-scope.
-      const keys = ['users','sales','memberInfo','dossier','removedMembers','weeklyProfitRecaps','profitMonthlyBep','recruit'];
-      const tasks = [...keys,`recaps/keynote/${month}`,`recaps/monthly/${month}`,`recaps/published/${month}`];
+      const fields = {...treeFields,sales:'sales',memberInfo:'memberInfo',weeklyProfitRecaps:'weeklyProfitRecaps',profitMonthlyBep:'profitMonthlyBep',recruit:'recruit'};
+      const sourceKeys = new Map(Object.entries(fields).map(([key,path]) => [path,key]));
+      const tasks = [...sourceKeys.keys(),`recaps/keynote/${month}`,`recaps/monthly/${month}`,`recaps/published/${month}`];
       const settled = await Promise.allSettled(tasks.map(rawGet));
       if (token !== generation || !allowed(current)) throw error('recap/superseded','세션이 변경되어 불러오기를 취소했습니다.');
       const warnings = [], state = {}, documents = {};
@@ -166,17 +190,19 @@ export function gateway() {
             ? `${path}: 급여 리캡 읽기 권한 또는 연결을 확인해 주세요. 미확인 수치는 —로 표시됩니다.`
             : `${path}: 원본을 불러오지 못했습니다. 해당 항목을 확인해 주세요.`;
           warnings.push(message);
-          if (keys.includes(path)) state[path] = null;
+          if (sourceKeys.has(path)) state[sourceKeys.get(path)] = null;
           else documents[path] = null;
-        } else if (keys.includes(path)) state[path] = result.value ?? {};
+        } else if (sourceKeys.has(path)) state[sourceKeys.get(path)] = sourceValue(sourceKeys.get(path),result.value);
         else documents[path] = result.value;
       }
       state.sourceAt = Date.now();
-      state.sourceWarnings = warnings;
+      const treeAudit = workbookTreeAudit(state);
+      warnings.push(...treeAudit.errors,...treeAudit.warnings);
+      state.sourceWarnings = [...new Set(warnings)];
       state.current = clone(current);
       return {state,saved:documents[`recaps/keynote/${month}`] || null,
         legacy:documents[`recaps/monthly/${month}`] || null,
-        published:documents[`recaps/published/${month}`] || null,warnings};
+        published:documents[`recaps/published/${month}`] || null,warnings:state.sourceWarnings};
     },
     async save(draft,revision = draft?.revision ?? 0) {
       checkDraft(draft);

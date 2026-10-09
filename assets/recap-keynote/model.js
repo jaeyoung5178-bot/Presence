@@ -140,6 +140,18 @@ export function flatSales(raw) {
 }
 const isField = row => !row.na && !row.rally && !row.excluded && num(row.count) != null && num(row.count) >= 0;
 
+// IC evidence is independent of monthly financial membership and editable ratings.
+export function icEvidenceFrom(state = {}, people = []) {
+  const sourceAt = num(state.sourceAt) || Date.now();
+  const throughDate = dateString(new Date(sourceAt + 9 * 60 * 60 * 1000));
+  const records = flatSales(state.sales).filter(row => isField(row) && row.date <= throughDate);
+  return Object.fromEntries(arr(people).filter(person => person.id && !person.planned).map(person => {
+    const info = byName(state.memberInfo,person.name), join = dateOnly(info.join || person.join);
+    const firstFive = join ? records.filter(row => nk(row.name) === nk(person.name) && row.date >= join).slice(0,5).map(row => ({date:row.date,sales:num(row.count)})) : [];
+    return [person.id,{name:person.name,join,firstFive,sourceAt,throughDate}];
+  }));
+}
+
 export function memberMetric(member = {}) {
   const scores = arr(member.scores), incomes = arr(member.incomeWeeks), rejects = arr(member.rejectWeeks);
   const sales = totalKnown(scores), days = num(member.days), income = incomes.length === scores.length ? totalKnown(incomes) : null;
@@ -252,18 +264,73 @@ export function buildLive(state = {}, month, saved = null) {
   return {weeks,members,roster,events,recruiting:recruitingFrom(state,month,roster)};
 }
 
-function snapshotTree(roster) {
-  const tree = roster.map(m => ({id:m.id,name:m.name,role:m.role || 'IC',team:m.team || '',parent:m.parent || '',planned:false}));
-  for (const node of tree) if (!validParent(tree,node.id,node.parent)) node.parent = '';
-  return tree;
+// The workbook Team Tree uses allMembers(), not its active user/field roster.
+// Its Firebase name key preserves internal spaces; keep this separate from recap IDs.
+const workbookKey = name => String(name || '').trim().replace(/[.#$\/\[\]]/g,'_');
+const workbookIdentity = name => String(name || '').replace(/\s/g,'');
+export const treeSourcePaths = ['privateConfig/allowedMembers','extraMembers','removedMembers','dossier','users','privateConfig/founder/name'];
+export function workbookTreeAudit(state = {}, savedTree = []) {
+  const warnings = [], errors = [], sourceAt = num(state.sourceAt) || 0;
+  const lists = ['allowedMembers','extraMembers','removedMembers'];
+  for (const key of lists) if (!Array.isArray(state[key])) errors.push(`${key}: 워크북 팀 트리 명단을 확인하지 못했습니다.`);
+  for (const key of ['users','dossier']) if (!state[key] || typeof state[key] !== 'object' || Array.isArray(state[key])) errors.push(`${key}: 워크북 팀 트리 원본을 확인하지 못했습니다.`);
+  if (typeof state.founderName !== 'string') errors.push('founderName: 워크북 관리자 이름을 확인하지 못했습니다.');
+  const available = errors.length === 0;
+  const base = {available,canApply:false,status:'unavailable',source:'workbook/orgBuildTree',sourceAt,sourcePaths:[...treeSourcePaths],
+    nodes:[],roots:[],warnings,errors,changes:[]};
+  if (!available) return base;
+  const tests = new Set(['testbot1','testbot2','testbot3','test1','test2','test3','테스터','테스트','tester']);
+  const removed = new Set(state.removedMembers.map(workbookIdentity)), seen = new Set(), names = [];
+  for (const name of [...state.allowedMembers,...state.extraMembers]) {
+    if (typeof name !== 'string') {errors.push('워크북 명단에 이름이 아닌 값이 있습니다.');continue;}
+    const identity = workbookIdentity(name);
+    if (!identity || seen.has(identity) || removed.has(identity)) continue;
+    seen.add(identity);
+    if (tests.has(identity.toLowerCase()) || ['관리자','테스터'].includes(workbookKey(name))) continue;
+    names.push(name);
+  }
+  const byKey = new Map(), ids = new Set(), users = Object.entries(state.users);
+  const savedByName = new Map(arr(savedTree).filter(node => !node.planned).map(node => [workbookKey(node.name),node]));
+  for (const name of names) {
+    const key = workbookKey(name);
+    if (byKey.has(key)) errors.push(`${name}: 워크북 이름 키가 중복됩니다.`);
+    const entry = users.find(([,user]) => user?.name === name);
+    const sourceId = entry ? String(entry[1].uid || entry[0]) : `name_${key}`;
+    const nodeId = savedByName.get(key)?.id || sourceId;
+    if (ids.has(nodeId)) errors.push(`${name}: 계정 ID가 중복됩니다.`);
+    ids.add(nodeId);
+    const founder = workbookIdentity(state.founderName), identity = workbookIdentity(name);
+    const role = (founder && identity === founder) || identity === '관리자' || identity.toLowerCase() === 'admin' ? 'AOP' : entry?.[1]?.role || 'IC';
+    const dossier = state.dossier[key] || {};
+    byKey.set(key,{id:nodeId,name,role,team:dossier.teamName || '',parent:'',planned:false,sourceId,sourceUpline:String(dossier.upline || '').trim()});
+  }
+  const nodes = [...byKey.values()];
+  for (const node of nodes) {
+    const parent = byKey.get(workbookKey(node.sourceUpline));
+    if (node.sourceUpline && parent && parent.id !== node.id) node.parent = parent.id;
+    else if (node.sourceUpline) warnings.push(`${node.name}: ${parent ? '자기 자신을 가리키는 리더' : `명단에 없는 리더 ${node.sourceUpline}`} — 워크북과 같이 최상위에 표시합니다.`);
+  }
+  const roles = ['IC','LR','TL','AOP','OP','O'];
+  const compare = (a,b) => Math.max(0,roles.indexOf(b.role)) - Math.max(0,roles.indexOf(a.role)) || a.name.localeCompare(b.name,'ko');
+  nodes.sort(compare);
+  for (const node of nodes) if (!validParent(nodes,node.id,node.parent)) errors.push(`${node.name}: 원본 리더 연결이 순환합니다. 원본을 확인한 뒤 적용해 주세요.`);
+  const describe = (node,tree) => node ? {name:node.name,role:node.role || 'IC',team:node.team || '',parent:tree.find(n => n.id === node.parent)?.name || ''} : null;
+  const oldByName = new Map(arr(savedTree).map(n => [workbookKey(n.name),n]));
+  const changes = [];
+  for (const node of nodes) {
+    const old = oldByName.get(workbookKey(node.name)), before = describe(old,arr(savedTree)), after = describe(node,nodes);
+    if (!old) changes.push({type:'added',name:node.name,before:null,after});
+    else if (JSON.stringify(before) !== JSON.stringify(after)) changes.push({type:'changed',name:node.name,before,after});
+    oldByName.delete(workbookKey(node.name));
+  }
+  for (const node of oldByName.values()) changes.push({type:'removed',name:node.name,before:describe(node,arr(savedTree)),after:null});
+  return {...base,canApply:errors.length === 0,status:errors.length ? 'invalid' : 'verified',nodes,
+    roots:nodes.filter(n => !n.parent).map(n => n.id),changes};
 }
-export function workbookTree(state = {}, fallbackRoster = []) {
-  const hasSource = Object.keys(state.users || {}).length > 0 || Object.keys(state.memberInfo || {}).length > 0;
-  if (!hasSource) return snapshotTree(fallbackRoster);
-  const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
-  const today = ['year','month','day'].map(key => parts.find(p => p.type === key).value).join('-');
-  const current = rosterFrom(state).filter(m => !m.removed && (!m.left || m.left > today) && (!m.join || m.join <= today));
-  return snapshotTree(current);
+export function workbookTree(state = {}, savedTree = []) {
+  const audit = workbookTreeAudit(state,savedTree);
+  // Never invent canonical membership from users, sales, join dates, or saved monthly roster.
+  return audit.canApply ? clone(audit.nodes) : clone(arr(savedTree));
 }
 function normalizeMember(member, weeks, roster) {
   const source = roster.find(r => r.id === member.id || nk(r.name) === nk(member.name)) || {};
@@ -277,10 +344,12 @@ export function makeDraft(state = {}, month, legacy = null) {
   const old = legacy?.keynote || legacy;
   const saved = old?.version === 1 && old.month === month ? old : null;
   const live = buildLive(state,month,saved);
+  const treeAudit = workbookTreeAudit(state);
   const base = {version:1,month,teamName:'Presence',headline:'',leader:'',...live,
     callbacks:{},qc:{retentionWin:'',trainingHow:'',startCount:null},wins:[],challenges:[],learning:[],icPlans:{},
-    tree:workbookTree(state,live.roster),promotions:[],goals:{sales:null,avg:null,recruit:null,callback:100,focus:'',actions:''},
+    tree:workbookTree(state),treeSource:{status:treeAudit.status,source:treeAudit.source,sourceAt:treeAudit.sourceAt,warnings:[...treeAudit.warnings,...treeAudit.errors]},promotions:[],goals:{sales:null,avg:null,recruit:null,callback:100,focus:'',actions:''},
     notes:{recruit:'',sales:''},revision:0,updatedAt:0,sourceAt:state.sourceAt || Date.now()};
+  base.icEvidence = icEvidenceFrom(state,base.tree);
   if (saved) {
     const result = {...base,...clone(saved),month,version:1};
     // Roster and tree are independent snapshots: refreshing either never rebuilds the other.
@@ -288,8 +357,10 @@ export function makeDraft(state = {}, month, legacy = null) {
     result.weeks = schedule(month);
     result.members = arr(saved.members).map(m => normalizeMember(m,result.weeks,result.roster));
     for (const key of ['wins','challenges','learning','events','promotions','tree']) result[key] = arr(saved[key]);
+    result.treeSource = clone(saved.treeSource || {status:'saved',source:'saved-snapshot',sourceAt:saved.sourceAt || 0});
     result.callbacks = saved.callbacks || {};
     result.icPlans = saved.icPlans || {};
+    result.icEvidence = clone(saved.icEvidence || {});
     result.qc = {...base.qc,...saved.qc}; result.goals = {...base.goals,...saved.goals}; result.notes = {...base.notes,...saved.notes};
     result.recruiting = recruitingSummary(saved.recruiting);
     return result;
@@ -315,7 +386,8 @@ export function makeDraft(state = {}, month, legacy = null) {
         bond:source.bond ?? num(m.bond),bep:source.bep ?? num(m.bep)},base.weeks,base.roster);
     });
     base.roster = base.members.map(m => ({...base.roster.find(r => r.id === m.id),id:m.id,uid:m.uid || '',name:m.name,role:m.role,team:m.team,parent:m.parent || '',join:m.join || '',left:m.left || ''}));
-    base.tree = workbookTree(state,base.roster);
+    base.tree = workbookTree(state,arr(old.tree));
+    if (!treeAudit.canApply && arr(old.tree).length) base.treeSource = {status:'saved',source:'legacy-snapshot',sourceAt:old.sourceAt || 0,warnings:[...treeAudit.warnings,...treeAudit.errors]};
   }
   base.migratedFrom = 'recaps/monthly';
   return base;
@@ -340,7 +412,7 @@ export function importLegacyConfirmed(data, state = {}, month) {
   draft.members = imported;
   const rosterNames = new Set(draft.roster.map(m => nk(m.name)));
   for (const member of imported) if (!rosterNames.has(nk(member.name))) draft.roster.push({id:member.id,name:member.name,role:member.role,team:member.team,parent:'',join:'',left:''});
-  draft.tree = workbookTree(state,draft.roster);
+  draft.tree = workbookTree(state);
   draft.recruiting = recruitingSummary({rows:arr(data.recruiting?.recruiters).map(row => ({...row,id:liveByName.get(nk(row.name))?.id || `name_${nk(row.name)}`,booking:num(row.booked),showup:num(row.showup),starter:num(row.starters ?? row.starter)})),source:'확정본 파일'});
   draft.qc.startCount = num(data.headcount?.monthStart);
   const eventDate = value => dateOnly(value) || dateOnly(`${month.slice(0,4)}-${String(value || '').replace('.', '-')}`);
@@ -404,5 +476,13 @@ export function validate(draft) {
   for (const [key,value] of Object.entries(draft.goals || {})) if (['sales','avg','recruit','callback'].includes(key) && value != null && value !== '' && (num(value) == null || num(value) < 0 || (key === 'callback' && num(value) > 100))) errors.push('다음 달 목표 숫자를 확인해 주세요.');
   if (draft.qc?.startCount != null && (!Number.isInteger(num(draft.qc.startCount)) || num(draft.qc.startCount) < 0)) errors.push('월초 인원을 확인해 주세요.');
   for (const plan of Object.values(draft.icPlans || {})) for (const key of ['relate','booth','pitch','objection','agreement']) if (plan[key] != null && (num(plan[key]) == null || num(plan[key]) < 0 || num(plan[key]) > 5)) errors.push('IC 스킬 평가는 0–5 범위로 입력해 주세요.');
+  if (draft.icEvidence != null) {
+    if (typeof draft.icEvidence !== 'object' || Array.isArray(draft.icEvidence)) errors.push('IC 첫 필드 근거 형식을 확인해 주세요.');
+    else for (const evidence of Object.values(draft.icEvidence)) {
+      if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence) || (evidence.firstFive != null && !Array.isArray(evidence.firstFive))) {errors.push('IC 첫 필드 근거 형식을 확인해 주세요.');continue;}
+      const rows = arr(evidence.firstFive);
+      if (rows.length > 5 || rows.some(row => !row || !dateOnly(row.date) || num(row.sales) == null || num(row.sales) < 0)) errors.push('IC 첫 5일의 실제 날짜와 실적을 확인해 주세요.');
+    }
+  }
   return [...new Set(errors)];
 }

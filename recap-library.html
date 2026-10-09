@@ -50,7 +50,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #a8c7ff;outline-offset:4p
   <section class="grid" id="cards" aria-live="polite"></section>
 </main>
 <script type="module">
-import {gateway} from './assets/recap-keynote/cloud.js?v=20261009-data-3';
+import {gateway} from './assets/recap-keynote/cloud.js?v=20261009-tree-5';
 const api=gateway(),$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const FILE_RECAPS={'2026-07':{slides:15,cover:'리캡/2026-07/slides/slide-1.png'},'2026-05':{slides:18,cover:'리캡/2026-05/slides/slide-1.png'},'2026-04':{slides:15,cover:'리캡/2026-04/slides/slide-1.png'}};
 let saved={},published={},activeYear='ALL',warnings=[];
