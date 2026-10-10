@@ -473,7 +473,7 @@ export function validate(draft) {
     if (!node.name?.trim()) errors.push('조직도 이름을 입력해 주세요.');
     if (!validParent(tree,node.id,node.parent)) errors.push(`${node.name}: 조직도의 상위 리더 연결을 확인해 주세요.`);
   }
-  for (const event of arr(draft.events)) if (!['In','Quit','Cut','Out · 확인 필요'].includes(event.type)) errors.push('입퇴사 유형을 확인해 주세요.');
+  for (const event of arr(draft.events)) if (!['In','OUT','Retain','Quit','Cut','Out · 확인 필요'].includes(event.type)) errors.push('입퇴사 유형을 확인해 주세요.');
   for (const row of recruitingSummary(draft.recruiting).rows) {
     for (const key of ['booking','showup','starter']) if (row[key] != null && (!Number.isInteger(row[key]) || row[key] < 0)) errors.push(`${row.name}: 리쿠르팅 실적은 0 이상의 정수여야 합니다.`);
     if (row.booking != null && row.showup != null && row.showup > row.booking) errors.push(`${row.name}: 쇼업이 부킹보다 큽니다.`);

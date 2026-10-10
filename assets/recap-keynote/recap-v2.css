@@ -323,3 +323,41 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 @media(max-width:760px){.recap-brand-mark{right:18px;top:20px;width:70px}.slide-head>div:first-child{padding-right:80px}.slide[data-view="cover"] .recap-brand-mark{right:25px;top:25px;width:88px}.slide[data-view="cover"] .cover-slide{padding-top:112px}.slide[data-view="cover"] .cover-byline{font-size:16px;line-height:24px}}
 .toolbar .pptx-save{white-space:nowrap;background:#243c60;border-color:#456794;color:#f2f7ff}
 @media(max-width:760px){.toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center}.toolbar .month-control{grid-column:1/-1;width:100%;min-width:0}.toolbar .pptx-save{grid-column:1/3;grid-row:3}.toolbar [data-action="menu"]{grid-column:3;grid-row:3;min-width:44px}.toolbar [data-action="save"],.toolbar [data-action="present"]{min-width:68px}.toolbar #editorLink{max-width:none!important;justify-content:center}.doc-menu{top:calc(100% - 8px)}}
+
+/* 2026-10 · September recap deck alignment */
+.cover-owner{margin-top:44px!important;font-size:24px!important;line-height:34px!important;font-weight:700;color:#fff!important}
+.story-row p{white-space:pre-line}
+.story-title-cell .story-row-meta{justify-content:center;margin-top:8px}
+.goal-v2{gap:26px}
+.goal-v2 .goal-targets-dark{grid-template-columns:repeat(3,1fr)}
+.goal-v2 .goal-targets-dark section{background:#142139;padding:22px 28px}
+.goal-v2 .goal-targets-dark strong{color:#fff;margin:0;font-size:46px}
+.goal-v2 .goal-targets-dark span{color:#bbcbe3;font-size:17px;margin-top:4px}
+.goal-columns{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.goal-columns section{min-width:0}
+.goal-columns h3{font-size:20px;letter-spacing:.06em;color:#2459d8;padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid #dce6f5}
+.goal-columns p{font-size:19px;line-height:1.5;margin:0 0 14px;color:#24364f;white-space:pre-line}
+.goal-columns p.goal-strong{font-weight:700;color:#142139}
+.goal-track{margin-bottom:14px}
+.goal-track b{display:block;font-size:14px;letter-spacing:.08em;color:#657d9e;margin-bottom:4px}
+.goal-track p{margin:0 0 2px}
+.goal-reward{display:flex;gap:18px;align-items:center;padding:12px 18px;background:#f1f5fb;border-radius:10px;font-size:18px}
+.goal-reward b{font-size:14px;letter-spacing:.08em;color:#2459d8}
+.promotion-note{white-space:pre-line;text-align:right;font-size:15px!important;line-height:1.45!important;color:#54759d;margin:0}
+@media(max-width:760px){.goal-v2 .goal-targets-dark,.goal-columns{grid-template-columns:1fr}.goal-v2 .goal-targets-dark strong{font-size:36px}.goal-columns p{font-size:16px}.cover-owner{font-size:18px!important;line-height:26px!important;margin-top:26px!important}}
+.recruit-conversions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:6px 0 18px}
+.recruit-conversions>div{padding:4px 6px}
+.recruit-conversions span{display:block;font-size:18px;color:#75849a}
+.recruit-conversions b{display:block;font-size:46px;line-height:1.2;letter-spacing:-.03em;color:#245aff;margin:8px 0 6px}
+.recruit-conversions p{font-size:14px;color:#8a98ad;margin:0}
+@media(max-width:760px){.recruit-conversions{grid-template-columns:1fr 1fr;gap:12px}.recruit-conversions b{font-size:32px}.recruit-conversions span{font-size:14px}}
+/* deck-style org tree (team tree & promotion plan) */
+.slide .org-deck .org-person{background:var(--org-accent,#4a6690);border:0!important;border-top:0!important;box-shadow:none;border-radius:10px}
+.slide .org-deck .org-person h3,.slide .org-deck .org-person .org-team,.slide .org-deck .org-person>small{color:#fff!important;opacity:1}
+.slide .org-deck .org-person h3{font-weight:700}
+.slide .org-deck .org-role-inline{font-weight:800;margin-left:6px;color:inherit}
+.slide .org-deck .org-person[data-depth="0"]{background:#1b2a44}
+.slide .org-deck .org-person.planned,.slide .org-deck .org-branch.planned>.org-person{background:#fff;border:2px dashed var(--org-accent,#4a6690)!important}
+.slide .org-deck .org-person.planned h3,.slide .org-deck .org-person.planned>small{color:var(--org-accent,#4a6690)!important}
+.slide .tree-board .deck-summary{background:transparent;border:0;padding:0 4px;min-height:0;justify-content:flex-end;color:#6b7f9c;font-size:20px}
+.slide .tree-board .deck-summary .promotion-note{font-size:16px!important;line-height:1.5!important}

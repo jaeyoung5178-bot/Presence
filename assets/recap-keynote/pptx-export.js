@@ -1,4 +1,4 @@
-import * as M from './model.js?v=20261009-callback-1';
+import * as M from './model.js?v=20261010-recap09';
 
 // All content is drawn as editable PowerPoint text, tables, shapes and charts.
 // The only runtime dependency is the same-origin, locally vendored bundle.
@@ -66,7 +66,10 @@ function cover(slide,d) {
   box(slide,'PRESENCE · TEAM RECAP',.85,.75,7,.3,13,{bold:true,color:C.blue});
   box(slide,d.month.slice(0,4),.85,1.64,7,.4,24,{color:C.muted});
   box(slide,`${Number(d.month.slice(5))}월 리캡`,.85,2.2,8,1.05,62,{bold:true});
-  box(slide,`필드   ${range(first.start,last.end)}`,.88,3.6,7.4,.8,19,{breakLine:false,lineSpacingMultiple:1.2});
+  box(slide,`필드   ${range(first.start,last.end)}
+지급   ${range(first.pay,last.pay)}`,.88,3.6,7.4,.8,19,{breakLine:false,lineSpacingMultiple:1.2});
+  box(slide,`${d.teamName||'Presence'}
+${d.leader||'임재영'}`,.88,4.9,5,.8,17,{bold:true});
 
   rect(slide,9.6,1.2,2.9,5.5,C.blue);box(slide,d.month.slice(5),9.8,2.35,2.5,1.5,93,{bold:true,align:'center',color:C.paper});
   box(slide,'MONTHLY\nRECAP',9.95,4.25,2.25,.8,19,{bold:true,color:C.paper,align:'center'});
@@ -121,10 +124,11 @@ function recruit(slide,d,v,rank=false) {
   box(slide,'쇼업 → 스타터',6.7,4.92,5.3,.3,18,{color:C.muted});box(slide,pct(M.ratio(r.starter,r.showup)),6.7,5.42,5.3,.55,35,{bold:true,color:C.blue});
 }
 function qc(slide,d,v) {
-  const events=d.events||[],ins=n(d.qc?.inCount)??events.filter(e=>e.type==='In').length,outs=n(d.qc?.outCount)??events.filter(e=>e.type!=='In').length,start=n(d.qc?.startCount);
+  const events=d.events||[],ins=n(d.qc?.inCount)??events.filter(e=>e.type==='In').length,outs=n(d.qc?.outCount)??events.filter(e=>!['In','Retain'].includes(e.type)).length,start=n(d.qc?.startCount);
   kpis(slide,[['월초 인원',fmt(start)],['In',fmt(ins)],['Out',fmt(outs)],['월말 인원',start==null?'—':fmt(start+ins-outs)]]);
   const rows=v.items||events;if(!rows.length)return box(slide,'이달의 In · Out 기록이 없습니다.',.7,3.8,11.9,.8,22,{align:'center',color:C.muted});
-  table(slide,['팀원','일자','구분','사유 · 후속 액션','담당자'],rows.map(e=>[e.name,e.date||'미입력',e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.2,1.35,1.35,6.62,1.41],{fontSize:11.5,rowH:.51});
+  const md=v=>{const m=String(v||'').match(/^(?:\d{4}-)?(\d{2})-(\d{2})$/);return m?Number(m[1])+'/'+Number(m[2]):(v||'미입력');};
+  table(slide,['팀원','일자','구분','사유 · 후속 액션','상위리더'],rows.map(e=>[e.name,md(e.date),e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.2,1.0,1.1,7.22,1.41],{fontSize:10.5,rowH:rows.length>8?.36:.51});
 }
 function stories(slide,d,v) {
   const rows=v.items||[],win=v.id==='wins';if(!rows.length)return empty(slide);
@@ -136,24 +140,24 @@ function stories(slide,d,v) {
     rect(slide,xs[0]+.17,y+.13,.7,.31,'1475D1');
     box(slide,String((v.part||0)*3+i+1).padStart(2,'0'),xs[0]+.17,y+.13,.7,.31,14,{bold:true,color:C.paper,align:'center'});
     box(slide,row.title||'제목 없음',xs[0]+.24,y+(win?.58:.52),widths[0]-.48,win?.66:.38,19,{bold:true,align:'center'});
-    if(!win)box(slide,row.cause||'아직 기록하지 않았습니다.',xs[0]+.27,y+.97,widths[0]-.54,.44,13,{align:'center'});
+    if(!win)box(slide,row.cause||'아직 기록하지 않았습니다.',xs[0]+.27,y+.92,widths[0]-.54,.4,12,{align:'center'});
+    if(!win)box(slide,[row.owner,row.due,row.status].filter(Boolean).join(' · '),xs[0]+.27,y+1.32,widths[0]-.54,.16,9,{align:'center',color:C.muted});
     box(slide,win?'WIN':'Sol.',xs[1]+.19,y+.15,widths[1]-.38,.3,18,{bold:true,color:'1475D1'});
     box(slide,(win?row.win:row.action)||'아직 기록하지 않았습니다.',xs[1]+.19,y+.61,widths[1]-.38,.8,14.5);
     box(slide,win?'HOW':'Res. 목표',xs[2]+.19,y+.15,widths[2]-.38,.3,18,{bold:true,color:'1475D1'});
     const value=win?[row.how,row.next&&'NEXT\n'+row.next].filter(Boolean).join('\n\n'):row.result;
     box(slide,value||'아직 기록하지 않았습니다.',xs[2]+.19,y+.61,widths[2]-.38,win?.8:.61,14.5);
-    if(!win)box(slide,[row.owner&&'담당 · '+row.owner,row.due,row.status].filter(Boolean).join(' · '),xs[2]+.19,y+1.31,widths[2]-.38,.16,9,{color:C.muted});
   });
 }
 function callback(slide,d,v) {
   const all=d.members.map(m=>({...m,days:M.callbackDays(d,m),submitted:n(d.callbacks?.[m.id])})),days=total(all.map(m=>m.days)),submitted=total(all.map(m=>m.submitted)),missing=all.filter(m=>m.days>0&&m.submitted==null).length;
-  kpis(slide,[['팀 전체 제출률',missing?'입력 중':pct(M.ratio(submitted,days))],['콜백싯 제출',`${fmt(submitted)}회`],['콜백 기준일수',`${fmt(days)}일`],['미입력',`${missing}명`]]);
+  kpis(slide,[['팀 전체 제출률',missing?'입력 중':pct(M.ratio(submitted,days))],['콜백싯 제출',`${fmt(submitted)}회`],['콜백싯 대상일',`${fmt(days)}일`],['미입력',`${missing}명`]]);
   const groups=v.items||[];if(!groups.length)return box(slide,'콜백 기록이 없습니다.',.7,4,11.9,.6,22,{align:'center'});
   groups.forEach((group,i)=>{const columns=Math.min(3,groups.length),w=(11.93-(columns-1)*.18)/columns,x=.7+i*(w+.18),people=group.all||group.rows||[],sumDays=total(people.map(m=>m.days)),sumSub=total(people.map(m=>m.submitted)),miss=people.filter(m=>m.days>0&&m.submitted==null).length;
     box(slide,group.name+(group.totalParts>1?` · ${group.part+1}/${group.totalParts}`:''),x,2.87,w,.35,22,{bold:true});
-    box(slide,`제출 ${fmt(sumSub)}회 / 기준 ${fmt(sumDays)}일 · ${miss?'입력 중':pct(M.ratio(sumSub,sumDays))}`,x,3.35,w,.26,13,{color:C.muted});
-    table(slide,['팀원','기준일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted),!m.days?'해당 없음':m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[w*.28,w*.2,w*.24,w*.28],{fontSize:groups.length>2?10.5:12,rowH:.36});});
-  box(slide,'빈칸과 0회는 다릅니다. 제출률은 총 제출 횟수 ÷ 콜백 기준일수입니다.',.7,6.7,11.9,.2,10,{color:C.muted});
+    box(slide,`${fmt(sumSub)}회 / ${fmt(sumDays)}일 · ${miss?'입력 중':pct(M.ratio(sumSub,sumDays))}`,x,3.35,w,.26,13,{color:C.muted});
+    table(slide,['팀원','대상일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted),!m.days?'해당 없음':m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[w*.28,w*.2,w*.24,w*.28],{fontSize:groups.length>2?10.5:12,rowH:.36});});
+  box(slide,'제출률 = 제출 횟수 ÷ 콜백싯 대상일 · 세일즈 필드일수와 별도 집계',.7,6.7,11.9,.2,10,{color:C.muted});
 }
 function learning(slide,d,v) {
   const rows=v.items||[];if(!rows.length)return empty(slide);
@@ -168,9 +172,9 @@ function ic(slide,d,v) {
   box(slide,'실제 첫 5일 기록',.95,3.16,3.5,.26,13,{color:C.paper,bold:true});
   for(let i=0;i<5;i++){const x=.95+i*.69;box(slide,`D${i+1}\n${days[i]?.date?.slice(5)||'—'}`,x,3.58,.64,.5,10,{align:'center',color:'C4D1E6'});box(slide,fmt(days[i]?.sales),x,4.18,.64,.38,22,{bold:true,align:'center',color:C.paper});}
   box(slide,`첫 5일 확인 성과   ${fmt(sales)}건\n확인 일수 AVG   ${avg(known.length?sales/known.length:null)}\n확인 ${known.length} / 5일`,.95,5.08,3.5,1.0,16,{color:C.paper});
-  const monthly=d.members.find(row=>row.id===m.id);box(slide,monthly?`월간 세일즈 ${fmt(M.memberMetric(monthly).sales)}건 · 필드 ${fmt(monthly.days)}일`:'이달 성과 집계에 포함되지 않은 팀원',.95,6.3,3.5,.2,9,{color:'C4D1E6'});
+  const monthly=d.members.find(row=>row.id===m.id);box(slide,monthly?`월간 세일즈 ${fmt(M.memberMetric(monthly).sales)}건 · 필드 ${fmt(monthly.days)}일`:'',.95,6.3,3.5,.2,9,{color:'C4D1E6'});
   box(slide,'다섯 가지 역량',5.07,1.65,7.1,.4,23,{bold:true});
-  ABILITIES.forEach(([key,label],i)=>{const y=2.28+i*.52;box(slide,label,5.07,y,2.25,.27,14,{bold:true});bar(slide,n(p[key]),5,7.56,y+.07,3.2,.14);box(slide,n(p[key])==null?'평가 대기':p.scoreScale===10?`${fmt(p[key]*2)}/10`:p.scorePercent?`${fmt(p[key]*20)}%`:`${fmt(p[key])}/5`,11.0,y,1.36,.27,13,{align:'right',color:n(p[key])==null?C.muted:C.blue});});
+  ABILITIES.forEach(([key,label],i)=>{const y=2.28+i*.52;box(slide,label,5.07,y,2.25,.27,14,{bold:true});bar(slide,n(p[key]),5,7.56,y+.07,3.2,.14);box(slide,n(p[key])==null?'평가 대기':p.scoreScale===100?`${fmt(p[key]*20)}/100`:p.scoreScale===10?`${fmt(p[key]*2)}/10`:p.scorePercent?`${fmt(p[key]*20)}%`:`${fmt(p[key])}/5`,11.0,y,1.36,.27,13,{align:'right',color:n(p[key])==null?C.muted:C.blue});});
   box(slide,'피치 능력: Tone of Voice · Body Language',5.07,4.96,7.1,.23,10,{color:C.muted});
   box(slide,'집중 역량',5.07,5.37,1.2,.24,11,{bold:true,color:C.blue});box(slide,p.focus||'아직 설정하지 않았습니다.',6.37,5.23,5.95,.72,12);
   for(let i=1;i<=3;i++){const x=5.07+(i-1)*2.49;box(slide,`DAY ${i}`,x,6.0,2.26,.2,10,{color:C.blue,bold:true});const value=p[`day${i}`];box(slide,value?.length>70?'상세 계획은 이어지는 페이지에서 확인합니다.':value||'계획 미입력',x,6.3,2.26,.36,12,{valign:'top'});}
@@ -185,15 +189,17 @@ function tree(slide,d,v,pptx,index) {
   const positions=new Map(),leafCount=roots.reduce((sum,node)=>sum+weights.get(node.id),0),span=11.65/Math.max(1,leafCount),cardW=Math.min(2.5,span*.91),cardH=.79,step=Math.min(1.25,4.32/Math.max(1,maxDepth));
   function place(node,start){const width=weights.get(node.id)*span,depth=depths.get(node.id);positions.set(node.id,{x:.84+start+width/2-cardW/2,y:1.71+depth*step,w:cardW,h:cardH});let cursor=start;children(node.id).forEach(child=>{place(child,cursor);cursor+=weights.get(child.id)*span;});}
   let cursor=0;roots.forEach(node=>{place(node,cursor);cursor+=weights.get(node.id)*span;});
-  const teamColor=node=>{let top=node;const seen=new Set();while(map.get(top.parent)?.parent&&!seen.has(top.id)){seen.add(top.id);top=map.get(top.parent);}const first=roots.flatMap(r=>children(r.id));return ['2460D8','8954C8','16856F'][Math.max(0,first.findIndex(n=>n.id===top.id))%3];};
+  const teamColor=node=>{let top=node;const seen=new Set();while(map.get(top.parent)?.parent&&!seen.has(top.id)){seen.add(top.id);top=map.get(top.parent);}const first=roots.flatMap(r=>children(r.id)),named={'fuse':'1F62DC','young wave':'23866F','lumo in':'7A52B8'}[String(top.team||'').trim().toLowerCase()];return named||(children(top.id).length?['1F62DC','23866F','7A52B8'][Math.max(0,first.findIndex(n=>n.id===top.id))%3]:'4A6690');};
   const nodeNames=new Map(nodes.map((node,i)=>[node.id,`org-node-${i}`]));
   nodes.forEach((node,i)=>{if(!map.has(node.parent))return;const from=positions.get(node.parent),to=positions.get(node.id),a=from.x+from.w/2,b=to.x+to.w/2;
     const edgeName=`org-edge-${i}`;slide.addShape('bentConnector3',{x:Math.min(a,b),y:from.y+from.h,w:Math.max(.001,Math.abs(a-b)),h:Math.max(.001,to.y-from.y-from.h),flipH:b<a,line:{color:'7B94BF',width:1.2,dashType:node.planned?'dash':'solid'},objectName:edgeName});
     pptx._recapConnections.push({slide:index+1,name:edgeName,parent:nodeNames.get(node.parent),child:nodeNames.get(node.id)});});
   nodes.forEach(node=>{const p=positions.get(node.id),root=!map.has(node.parent),fill=root?C.ink:node.planned?C.paper:C.pale;
-    slide.addText([{text:node.name,options:{bold:true,breakLine:true,fontSize:14}},{text:(node.role||'')+(node.targetRole?' → '+node.targetRole:'')+(node.planned?' · 예정':''),options:{fontSize:10,breakLine:!!node.team}},...(node.team?[{text:node.team,options:{fontSize:10}}]:[])],
-      {...p,shape:'roundRect',fontFace:FONT,color:root?C.paper:C.ink,align:'center',valign:'mid',margin:.055,fit:'shrink',fill:{color:fill},line:{color:node.planned?C.blue:root?C.ink:teamColor(node),width:2,dashType:node.planned?'dash':'solid'},objectName:nodeNames.get(node.id)});});
+    const role=node.planned?'추가 예정':v.id==='promotion'&&node.targetRole?node.targetRole+(node.targetGoal?' 목표':''):(node.role||''),depth=depths.get(node.id),tc=root?C.ink:teamColor(node);
+    slide.addText([{text:node.name+(!node.planned&&depth<=1?'  '+role:''),options:{bold:true,breakLine:true,fontSize:14}},...(!node.planned&&depth<=1?[]:[{text:role,options:{fontSize:10,breakLine:depth<=1&&!!node.team}}]),...(depth<=1&&node.team?[{text:node.team,options:{fontSize:10}}]:[])],
+      {...p,shape:'roundRect',fontFace:FONT,color:node.planned?tc:C.paper,align:'center',valign:'mid',margin:.055,fit:'shrink',fill:{color:node.planned?C.paper:tc},line:{color:tc,width:node.planned?2:0,dashType:node.planned?'dash':'solid'},objectName:nodeNames.get(node.id)});});
   box(slide,`${nodes.filter(node=>!node.planned).length}명${nodes.some(node=>node.planned)?` · 추가 예정 ${nodes.filter(node=>node.planned).length}명`:''}`,.7,6.65,11.9,.23,10,{color:C.muted});
+  if(v.id==='promotion'&&d.promotionNote)box(slide,d.promotionNote,9.0,1.0,3.6,.95,9,{align:'right',color:C.muted,valign:'top'});
 }
 function promotion(slide,d,v,pptx,index) {
   if(v.kind==='tree')return tree(slide,d,v,pptx,index);
@@ -204,15 +210,19 @@ function promotion(slide,d,v,pptx,index) {
     box(slide,(row.checks||[]).map(check=>`${check.done?'☑':'☐'} ${check.text}`).join('\n'),x+.23,4.56,w-.46,1.45,14,{valign:'top'});
     box(slide,[row.due||'기한 미정',row.status||'계획'].join(' · '),x+.23,6.26,w-.46,.23,11,{color:C.muted});});
 }
-function goalPage(slide,d){const g=d.goals||{};[['SALES',fmt(g.sales)+'+'],['INCOME',money(g.income)],['SCORING HC',fmt(g.headcount)+'명']].forEach(([label,value],i)=>{const x=.7+i*4.03;rect(slide,x,1.6,3.85,1.45,C.pale);box(slide,label,x+.2,1.82,3.45,.25,13,{color:C.blue,bold:true});box(slide,value,x+.2,2.26,3.45,.52,i===1?27:40,{bold:true,color:C.ink});});box(slide,'집중 목표',.8,3.4,5.5,.35,22,{bold:true});box(slide,g.focus||'미입력',.8,3.91,5.45,1.55,21,{valign:'top'});box(slide,'실행 계획',6.8,3.4,5.6,.35,22,{bold:true});box(slide,g.actions||'미입력',6.8,3.91,5.65,1.75,18,{valign:'top'});box(slide,'LEARNING',.8,6.05,1.5,.24,13,{bold:true,color:C.blue});box(slide,(d.learning||[]).map(x=>x.title).join(' · '),2.4,6.0,10,.55,17,{valign:'top'});}
+function goalPage(slide,d){const g=d.goals||{},lines=v=>String(v||'').split(/\n+/).map(x=>x.trim()).filter(Boolean),tracks=[];for(const x of d.learning||[]){const key=x.track||'LEARNING';let t=tracks.find(t=>t.key===key);if(!t)tracks.push(t={key,items:[]});t.items.push(x);}
+  [[g.sales==null?'—':fmt(g.sales)+'+','세일즈 · PCS'],[g.income==null?'—':Math.round(n(g.income)).toLocaleString('ko-KR'),'목표 인컴 · 원'],[g.headcount==null?'—':fmt(g.headcount)+'명','스코어링 HC']].forEach(([value,label],i)=>{const x=.7+i*4.03;rect(slide,x,1.5,3.85,1.3,C.ink);box(slide,value,x+.25,1.66,3.4,.6,34,{bold:true,color:C.paper});box(slide,label,x+.25,2.36,3.4,.25,11,{color:'BBCBE3'});});
+  const cols=[['GOAL',lines(g.focus).join('\n\n')],['ACTION',lines(g.actions).join('\n\n')],['LEARNING PLAN',tracks.map(t=>[t.key,...t.items.flatMap(x=>[x.title,x.action].filter(Boolean))].join('\n')).join('\n\n')]];
+  cols.forEach(([title,body],i)=>{const x=.7+i*4.03;box(slide,title,x,3.1,3.8,.3,15,{bold:true,color:C.blue});line(slide,x,3.48,3.8,0);box(slide,body||'미입력',x,3.6,3.8,2.6,13,{valign:'top',bold:i===0});});
+  if(g.reward){rect(slide,.7,6.35,11.93,.32,C.soft);box(slide,`REWARD   ${g.reward}`,.85,6.39,11.6,.24,11,{bold:true});}}
 function overview(slide,d) {
   const t=M.totals(d),r=M.recruitingSummary(d.recruiting),rows=d.members.map(m=>({...m,days:M.callbackDays(d,m),submitted:n(d.callbacks?.[m.id])})),cbDays=total(rows.map(m=>m.days)),cbSub=total(rows.map(m=>m.submitted)),missing=rows.filter(m=>m.days>0&&m.submitted==null).length,g=d.goals||{};
   rect(slide,.7,1.52,11.93,1.3,C.blue);box(slide,`${Number(d.month.slice(5))}월 팀 성과 요약`,.97,1.85,8.6,.54,29,{bold:true,color:C.paper});box(slide,fmt(t.sales),10.3,1.81,2.0,.64,44,{bold:true,color:C.paper,align:'right'});
-  if(d.wins?.[0]?.title)box(slide,d.wins[0].title,.97,2.47,8.8,.22,12,{color:C.paper});
+  if(d.headline||d.wins?.[0]?.title)box(slide,d.headline||d.wins[0].title,.97,2.47,8.8,.22,12,{color:C.paper});
   const values=[['AVG',avg(t.avg),`필드 ${fmt(t.days)}일`],[t.incomeComplete?'TEAM INCOME':'확인된 인컴',money(t.incomeComplete?t.income:t.knownIncome),'입력 급여 주차 합계'],['REJECTION',pct(t.rate),'리섭 차감 후 기준'],['RECRUITING',`${fmt(r.starter)}명`,`부킹 ${fmt(r.booking)} · 쇼업 ${fmt(r.showup)}`],['CALLBACK',missing?'입력 중':pct(M.ratio(cbSub,cbDays)),`${cbSub}회 / ${cbDays}일 · 미입력 ${missing}명`],['LEARNING',`${(d.learning||[]).length}개`,'회고와 다음 달 계획']];
   values.forEach(([label,value,note],i)=>{const x=.7+(i%3)*4.03,y=3.07+Math.floor(i/3)*1.15;box(slide,label,x,y,3.78,.24,11,{color:C.muted,bold:true});box(slide,value,x,y+.36,3.78,.43,26,{bold:true});box(slide,note,x,y+.87,3.78,.19,10,{color:C.muted});});
   rect(slide,.7,5.68,11.93,.94,C.soft);box(slide,'NEXT GOAL',.93,5.95,1.6,.28,13,{color:C.blue,bold:true});
-  box(slide,`세일즈 ${fmt(g.sales)}${g.income?' · 인컴 '+money(g.income):''}${g.headcount?' · HC '+fmt(g.headcount)+'명':''}\nAVG ${avg(g.avg)} · 스타터 ${fmt(g.recruit)}명 · 콜백 ${pct(g.callback)}`,2.72,5.82,9.55,.65,14,{bold:true});
+  box(slide,[g.sales!=null&&g.sales!==''&&'세일즈 '+fmt(g.sales)+'+',g.income&&'인컴 '+money(g.income),g.avg!=null&&g.avg!==''&&'AVG '+avg(g.avg),g.recruit!=null&&g.recruit!==''&&'스타터 '+fmt(g.recruit)+'명',g.callback!=null&&g.callback!==''&&'콜백 '+fmt(g.callback)+'%'].filter(Boolean).join(' · ')||'다음 달 목표 미입력',2.72,5.82,9.55,.65,14,{bold:true});
 }
 
 export function buildPptx({draft,views,month,logoData},PptxGenJS) {
