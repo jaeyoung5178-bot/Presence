@@ -361,3 +361,15 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 .slide .org-deck .org-person.planned h3,.slide .org-deck .org-person.planned>small{color:var(--org-accent,#4a6690)!important}
 .slide .tree-board .deck-summary{background:transparent;border:0;padding:0 4px;min-height:0;justify-content:flex-end;color:#6b7f9c;font-size:20px}
 .slide .tree-board .deck-summary .promotion-note{font-size:16px!important;line-height:1.5!important}
+/* cover · field-weeks design (2026-10) */
+.slide[data-view=cover] .cover-slide:before,.slide[data-view=cover] .cover-slide:after,.slide[data-view=cover] .cover-orbit,.slide[data-view=cover] .cover-geometry>i{display:none!important}
+.slide[data-view=cover] .cover-slide{background:radial-gradient(120% 90% at 100% 0%,#173a7a 0,#0c1e3b 55%)}
+.slide[data-view=cover] .cover-period{right:96px;top:170px;width:440px;align-items:flex-start}
+.slide[data-view=cover] .cover-period small{letter-spacing:.32em;color:#8fb2ec;font-size:20px}
+.slide[data-view=cover] .cover-period strong{font-size:230px;line-height:220px;color:#fff;letter-spacing:-.06em}
+.slide[data-view=cover] .cover-period span{color:#cfe0ff;font-weight:700;letter-spacing:.22em;font-size:18px;margin-top:10px}
+.cover-weeks{display:flex;gap:10px;width:100%;margin-top:34px}
+.cover-weeks i{flex:1;height:6px;border-radius:3px;background:#3676f3;opacity:calc(1 - var(--w) * .2);transform-origin:left;animation:cover-week-in .6s cubic-bezier(0,0,.3,1) both;animation-delay:calc(.25s + var(--w) * .12s)}
+.cover-weeks-label{font-style:normal;margin-top:14px;font-size:15px;letter-spacing:.12em;color:#8fb2ec}
+@keyframes cover-week-in{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){.cover-weeks i{animation:none}}

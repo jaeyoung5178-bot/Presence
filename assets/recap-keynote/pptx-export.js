@@ -66,8 +66,7 @@ function cover(slide,d) {
   box(slide,'PRESENCE · TEAM RECAP',.85,.75,7,.3,13,{bold:true,color:C.blue});
   box(slide,d.month.slice(0,4),.85,1.64,7,.4,24,{color:C.muted});
   box(slide,`${Number(d.month.slice(5))}월 리캡`,.85,2.2,8,1.05,62,{bold:true});
-  box(slide,`필드   ${range(first.start,last.end)}
-지급   ${range(first.pay,last.pay)}`,.88,3.6,7.4,.8,19,{breakLine:false,lineSpacingMultiple:1.2});
+  box(slide,`기간   ${range(first.start,last.end)}`,.88,3.6,7.4,.8,19,{breakLine:false,lineSpacingMultiple:1.2});
   box(slide,`${d.teamName||'Presence'}
 ${d.leader||'임재영'}`,.88,4.9,5,.8,17,{bold:true});
 
