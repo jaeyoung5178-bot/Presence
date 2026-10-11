@@ -274,6 +274,16 @@ export function gateway() {
 export function shareReader() {
   return {
     async read(token) {
+      if (String(token || '').startsWith('z.')) {
+        try {
+          const b64 = token.slice(2).replace(/-/g,'+').replace(/_/g,'/'), bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+          const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+          const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+          const keynote = JSON.parse(await new Response(stream).text());
+          if (!keynote || !validMonth(keynote.month)) throw new Error('invalid');
+          return {month:keynote.month,teamName:keynote.teamName || 'Presence',keynote};
+        } catch (cause) { throw error('recap/share','공유 링크가 잘렸거나 올바르지 않습니다. 받은 링크 전체를 다시 열어 주세요.'); }
+      }
       if (!/^[A-Za-z0-9_-]{20,64}$/.test(String(token || ''))) throw error('recap/share','공유 링크가 올바르지 않습니다. 링크 전체를 다시 확인해 주세요.');
       const f = await firebase();
       if (f.session.authStateReady) await readWithin(f.session.authStateReady(),'인증');
