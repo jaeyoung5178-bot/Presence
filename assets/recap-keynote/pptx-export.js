@@ -1,4 +1,4 @@
-import * as M from './model.js?v=20261010-recap09';
+import * as M from './model.js?v=20261011-direct';
 
 // All content is drawn as editable PowerPoint text, tables, shapes and charts.
 // The only runtime dependency is the same-origin, locally vendored bundle.

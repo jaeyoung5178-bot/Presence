@@ -1,4 +1,4 @@
-import {clone, validate, recruitingSummary, workbookTreeAudit} from './model.js?v=20261010-recap09';
+import {clone, validate, recruitingSummary, workbookTreeAudit} from './model.js?v=20261011-direct';
 
 const CFG = {
   apiKey:'AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0',
@@ -245,6 +245,20 @@ export function gateway() {
         return result.snapshot.val();
       } finally {pinned.release();}
     },
+    async createShare(draft,token) {
+      checkDraft(draft);
+      if (!/^[A-Za-z0-9_-]{20,64}$/.test(String(token || ''))) throw error('recap/validation','공유 링크 형식을 확인해 주세요.');
+      const user = await requireAllowed(), f = await firebase();
+      await f.db.set(f.db.ref(f.database,`recapShares/${token}`),{month:draft.month,teamName:draft.teamName || 'Presence',
+        createdAt:Date.now(),createdBy:user.uid,keynote:clone(draft)});
+      return token;
+    },
+    async removeShare(token) {
+      if (!/^[A-Za-z0-9_-]{20,64}$/.test(String(token || ''))) return;
+      await requireAllowed();
+      const f = await firebase();
+      await f.db.set(f.db.ref(f.database,`recapShares/${token}`),null);
+    },
     async logout() {
       current = null; generation++;
       const f = await firebase(), anonymous = f.session.currentUser;
@@ -252,6 +266,23 @@ export function gateway() {
       try {if (anonymous) await readWithin(f.db.set(f.db.ref(f.database,`authSessions/${anonymous.uid}`),null),'로그아웃 세션',3000);}
       catch (_) { /* Local sign-out must complete even when the network cannot remove the old anonymous session. */ }
       finally {await f.auth.signOut(f.session);}
+    },
+  };
+}
+
+// Public, login-free reader for one shared recap snapshot. It never touches workbook sources.
+export function shareReader() {
+  return {
+    async read(token) {
+      if (!/^[A-Za-z0-9_-]{20,64}$/.test(String(token || ''))) throw error('recap/share','공유 링크가 올바르지 않습니다. 링크 전체를 다시 확인해 주세요.');
+      const f = await firebase();
+      if (f.session.authStateReady) await readWithin(f.session.authStateReady(),'인증');
+      if (!f.session.currentUser) await readWithin(f.auth.signInAnonymously(f.session),'인증');
+      let value;
+      try { value = await readWithin(f.db.get(f.db.ref(f.database,`recapShares/${token}`)).then(s => s.val()),'공유 리캡'); }
+      catch (cause) { throw error('recap/share','공유 리캡을 열 수 없습니다. 링크가 해제되었거나 아직 공유 설정이 되지 않았습니다.'); }
+      if (!value?.keynote || !validMonth(value.month)) throw error('recap/share','공유가 해제되었거나 없는 링크입니다.');
+      return value;
     },
   };
 }

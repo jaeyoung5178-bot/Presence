@@ -373,3 +373,17 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 .cover-weeks-label{font-style:normal;margin-top:14px;font-size:15px;letter-spacing:.12em;color:#8fb2ec}
 @keyframes cover-week-in{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @media(prefers-reduced-motion:reduce){.cover-weeks i{animation:none}}
+/* direct (PowerPoint-like) editing */
+.direct-edit #canvas .slide{cursor:default;outline:2px dashed #9db8ec;outline-offset:6px}
+.direct-edit #canvas .slide *{cursor:pointer}
+.direct-edit #canvas .le-selected{outline:2px solid #245aff!important;outline-offset:3px;border-radius:3px;cursor:move!important;position:relative;z-index:5}
+.direct-edit #canvas [contenteditable]{cursor:text!important;outline:2px solid #12a36b!important;background:#ffffffe8;color:#142139!important;-webkit-text-fill-color:#142139}
+.le-bar{position:fixed;z-index:1000;display:flex;gap:4px;padding:5px;background:#142139;border-radius:10px;box-shadow:0 10px 30px #0006}
+.le-bar button{min-height:34px;padding:4px 10px;font-size:13px;color:#fff;background:#24365a;border:0;border-radius:7px;white-space:nowrap}
+.le-bar button:hover{background:#245aff}.le-bar button:disabled{opacity:.4}
+.direct-help button{margin-top:10px}
+.share-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.share-row input{flex:1;min-width:220px;font-size:14px}
+/* share page: only this recap, no hub navigation */
+.share-mode .brand{pointer-events:none}
+.share-mode .stage-toolbar .edit-toggle,.share-mode #saveStatus,.share-mode .archive-link{display:none!important}
