@@ -464,3 +464,4 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 .rt-body p.rt-empty{color:#9aabc4;font-size:15px}
 .direct-edit #canvas .rt-empty{border:1.5px dashed #9db8ec;border-radius:6px;padding:4px 8px}
 @media(max-width:760px){.rank-layout{grid-template-columns:1fr;height:auto}.rt-body{grid-template-columns:1fr}.rt-body section+section{border-left:0;border-top:1px solid #e0e9f6}}
+.rt-body p.rt-auto{font-size:17px;line-height:1.6;color:#142139;font-variant-numeric:tabular-nums}
