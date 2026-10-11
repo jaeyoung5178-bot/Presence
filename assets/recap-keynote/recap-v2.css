@@ -414,3 +414,4 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 .le-bar .le-sw.auto:hover{background:linear-gradient(135deg,#fff 45%,#c93232 45% 55%,#fff 55%)}
 /* numbers that drive totals/graphs: hint while editing */
 .direct-edit #canvas [data-num]{text-decoration:underline dotted #7fa2e0;text-underline-offset:4px}
+.story-row h3,.story-row h4{white-space:pre-line}
