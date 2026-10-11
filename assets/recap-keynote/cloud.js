@@ -247,14 +247,14 @@ export function gateway() {
     },
     async createShare(draft,token) {
       checkDraft(draft);
-      if (!/^[A-Za-z0-9_-]{20,64}$/.test(String(token || ''))) throw error('recap/validation','공유 링크 형식을 확인해 주세요.');
+      if (!/^[A-Za-z0-9_-]{10,64}$/.test(String(token || ''))) throw error('recap/validation','공유 링크 형식을 확인해 주세요.');
       const user = await requireAllowed(), f = await firebase();
       await f.db.set(f.db.ref(f.database,`recapShares/${token}`),{month:draft.month,teamName:draft.teamName || 'Presence',
         createdAt:Date.now(),createdBy:user.uid,keynote:clone(draft)});
       return token;
     },
     async removeShare(token) {
-      if (!/^[A-Za-z0-9_-]{20,64}$/.test(String(token || ''))) return;
+      if (!/^[A-Za-z0-9_-]{10,64}$/.test(String(token || ''))) return;
       await requireAllowed();
       const f = await firebase();
       await f.db.set(f.db.ref(f.database,`recapShares/${token}`),null);
@@ -284,7 +284,7 @@ export function shareReader() {
           return {month:keynote.month,teamName:keynote.teamName || 'Presence',keynote};
         } catch (cause) { throw error('recap/share','공유 링크가 잘렸거나 올바르지 않습니다. 받은 링크 전체를 다시 열어 주세요.'); }
       }
-      if (!/^[A-Za-z0-9_-]{20,64}$/.test(String(token || ''))) throw error('recap/share','공유 링크가 올바르지 않습니다. 링크 전체를 다시 확인해 주세요.');
+      if (!/^[A-Za-z0-9_-]{10,64}$/.test(String(token || ''))) throw error('recap/share','공유 링크가 올바르지 않습니다. 링크 전체를 다시 확인해 주세요.');
       const f = await firebase();
       if (f.session.authStateReady) await readWithin(f.session.authStateReady(),'인증');
       if (!f.session.currentUser) await readWithin(f.auth.signInAnonymously(f.session),'인증');

@@ -387,3 +387,7 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 /* share page: only this recap, no hub navigation */
 .share-mode .brand{pointer-events:none}
 .share-mode .stage-toolbar .edit-toggle,.share-mode #saveStatus,.share-mode .archive-link{display:none!important}
+/* share page = presentation only: slide + arrows */
+.share-mode .chapter-rail,.share-mode .stage-toolbar,.share-mode .inspector{display:none!important}
+.share-mode .workspace,.share-mode.editing .workspace{display:block!important}
+.share-mode .main-stage{max-width:1600px;margin:0 auto}
