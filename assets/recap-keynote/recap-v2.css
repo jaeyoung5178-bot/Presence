@@ -395,3 +395,12 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 .direct-edit #canvas [data-le-empty]{display:inline-block;min-width:120px;min-height:1.2em;border:1.5px dashed #9db8ec;border-radius:6px}
 .direct-edit #canvas [data-le-empty]:empty::before{content:'빈 칸 · 더블클릭해 입력';color:#7d93b8;font-size:14px;font-weight:500;letter-spacing:0}
 .le-list small{color:#8fa2bd;font-size:11px;margin-left:4px}
+/* text colour palette in the edit bar */
+.le-bar{flex-wrap:wrap;max-width:min(560px,calc(100vw - 16px))}
+.le-colors{display:flex;align-items:center;gap:6px;width:100%;padding:4px 4px 2px;border-top:1px solid #2c4069;margin-top:2px}
+.le-colors span{font-size:12px;color:#9fb4d8;margin-right:4px;white-space:nowrap}
+.le-bar .le-sw{min-height:0;width:22px;height:22px;padding:0;border-radius:50%;background:var(--sw);border:2px solid #ffffff55}
+.le-bar .le-sw.auto{background:linear-gradient(135deg,#fff 45%,#c93232 45% 55%,#fff 55%)}
+.le-bar .le-sw.on{outline:2px solid #fff;outline-offset:2px}
+.le-custom{display:inline-flex;width:26px;height:26px;border-radius:50%;overflow:hidden;border:2px solid #ffffff55;background:conic-gradient(#f44,#fd4,#4d4,#4df,#44f,#f4f,#f44);cursor:pointer}
+.le-custom input{opacity:0;width:100%;height:100%;cursor:pointer;padding:0;border:0}
