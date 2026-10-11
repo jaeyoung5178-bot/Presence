@@ -415,3 +415,52 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 /* numbers that drive totals/graphs: hint while editing */
 .direct-edit #canvas [data-num]{text-decoration:underline dotted #7fa2e0;text-underline-offset:4px}
 .story-row h3,.story-row h4{white-space:pre-line}
+/* In·Out page: readable one-page layout */
+@media(min-width:761px){
+.slide[data-view=qc] .flow-line{gap:14px;margin-bottom:18px}
+.slide[data-view=qc] .flow-line>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:16px 26px;border-radius:14px;min-height:0}
+.slide[data-view=qc] .flow-line small{font-size:17px;color:#5f7391;font-weight:600}
+.slide[data-view=qc] .flow-line b{font-size:40px;line-height:1;margin:0;color:#142139}
+.slide[data-view=qc] .flow-line>div:last-child{background:#245aff}
+.slide[data-view=qc] .flow-line>div:last-child small,.slide[data-view=qc] .flow-line>div:last-child b{color:#fff}
+.slide[data-view=qc] .flow-line>span{font-size:24px;color:#8aa0c2}
+.slide[data-view=qc] .table-wrap{border-radius:14px}
+.slide[data-view=qc] .data-table{table-layout:fixed;font-size:19px}
+.slide[data-view=qc] .data-table th{font-size:15px;padding:11px 16px;color:#5f7391;text-align:center}
+.slide[data-view=qc] .data-table td{padding:9px 16px;text-align:center;line-height:1.35;vertical-align:middle}
+.slide[data-view=qc] .data-table th:nth-child(1),.slide[data-view=qc] .data-table td:nth-child(1){width:13%;text-align:left}
+.slide[data-view=qc] .data-table th:nth-child(2),.slide[data-view=qc] .data-table td:nth-child(2){width:10%}
+.slide[data-view=qc] .data-table th:nth-child(3),.slide[data-view=qc] .data-table td:nth-child(3){width:11%}
+.slide[data-view=qc] .data-table th:nth-child(4),.slide[data-view=qc] .data-table td:nth-child(4){text-align:left}
+.slide[data-view=qc] .data-table th:nth-child(5),.slide[data-view=qc] .data-table td:nth-child(5){width:13%}
+.slide[data-view=qc] .data-table td:first-child b{font-size:19px}
+.slide[data-view=qc] .qc-detail{color:#34465b;word-break:keep-all}
+.slide[data-view=qc] .qc-detail small{display:block;font-size:15px;color:#75849a;margin-top:2px}
+.slide[data-view=qc] .data-table .tag{font-size:14px;padding:5px 12px;border-radius:999px;font-weight:700}
+}
+/* recruiting ranking + two Win & How stories */
+.rank-layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr);gap:18px;align-items:stretch;height:100%}
+.rank-layout .rank-table .data-table{font-size:18px}
+.rank-layout .rank-table .data-table td,.rank-layout .rank-table .data-table th{padding:12px 14px}
+.rt-cards{display:grid;grid-template-rows:1fr 1fr;gap:14px;min-width:0}
+.rt-card{display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:#f4f7fd;border:1px solid #e0e9f6;min-height:0}
+.rt-card header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 20px;background:linear-gradient(120deg,#142139,#24407a);color:#fff}
+.rt-card:nth-child(2) header{background:linear-gradient(120deg,#0f4f43,#23866f)}
+.rt-badge{display:block;font-size:13px;font-weight:700;color:#ffd978;letter-spacing:.02em}
+.rt-card:nth-child(2) .rt-badge{color:#bff3e1}
+.rt-card h3{font-size:26px;line-height:1.2;margin:2px 0;color:#fff}
+.rt-card header small{display:block;font-size:13px;color:#c7d6ee}
+.rt-stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;text-align:center}
+.rt-stats span{font-size:12px;color:#c7d6ee}
+.rt-stats b{display:block;font-size:24px;line-height:1.1;color:#fff}
+.rt-stats i{font-style:normal;color:#8fb0e6}
+.rt-stats em{flex-basis:100%;font-style:normal;font-size:13px;color:#ffd978;text-align:right}
+.rt-card:nth-child(2) .rt-stats em{color:#bff3e1}
+.rt-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:0;flex:1;min-height:0}
+.rt-body section{padding:14px 20px;min-width:0}
+.rt-body section+section{border-left:1px solid #e0e9f6}
+.rt-body h4{font-size:16px;font-weight:800;color:#1475d1;margin:0 0 6px}
+.rt-body p{font-size:17px;line-height:1.5;color:#34465b;white-space:pre-line;margin:0;word-break:keep-all}
+.rt-body p.rt-empty{color:#9aabc4;font-size:15px}
+.direct-edit #canvas .rt-empty{border:1.5px dashed #9db8ec;border-radius:6px;padding:4px 8px}
+@media(max-width:760px){.rank-layout{grid-template-columns:1fr;height:auto}.rt-body{grid-template-columns:1fr}.rt-body section+section{border-left:0;border-top:1px solid #e0e9f6}}
