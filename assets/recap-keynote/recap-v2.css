@@ -391,3 +391,7 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 .share-mode .chapter-rail,.share-mode .stage-toolbar,.share-mode .inspector{display:none!important}
 .share-mode .workspace,.share-mode.editing .workspace{display:block!important}
 .share-mode .main-stage{max-width:1600px;margin:0 auto}
+/* emptied text stays clickable while editing */
+.direct-edit #canvas [data-le-empty]{display:inline-block;min-width:120px;min-height:1.2em;border:1.5px dashed #9db8ec;border-radius:6px}
+.direct-edit #canvas [data-le-empty]:empty::before{content:'빈 칸 · 더블클릭해 입력';color:#7d93b8;font-size:14px;font-weight:500;letter-spacing:0}
+.le-list small{color:#8fa2bd;font-size:11px;margin-left:4px}
