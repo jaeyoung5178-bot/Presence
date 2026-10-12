@@ -46,12 +46,16 @@
     @media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.footage,.f2f,.vs{grid-template-columns:1fr}.pairs{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.why-grid{grid-template-columns:1fr 1fr}.only{grid-template-columns:1fr}.tl.big{grid-template-columns:1fr}}
     @media(max-width:620px){.timeline,.why-grid{grid-template-columns:1fr}.stat{padding:22px 18px}.bridge{grid-template-columns:1fr}.bridge .arrow{transform:rotate(90deg);animation:none}.cinema{height:220vh}.cinema-stick{top:58px;height:calc(100vh - 58px)}}
     @media(prefers-reduced-motion:reduce){.grain{display:none}.rv{opacity:1;transform:none}}
+
+    body{word-break:keep-all;overflow-wrap:break-word}h1,h2,h3,h4,h5,.band-title,.cinema-line,.finale-copy h2{text-wrap:balance}.band-lead,.finale-copy p,.why-card p,.tl p,.only p,.reason p{text-wrap:pretty}
+    .stop-hud{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-radius:999px;background:rgba(13,15,14,.78);border:1px solid var(--line);backdrop-filter:blur(12px);font-size:11px;color:#bdbab2;letter-spacing:.06em;opacity:.55;transition:opacity .3s}.stop-hud:hover,.stop-hud.flash{opacity:1}.stop-hud b{color:#fff;font-variant-numeric:tabular-nums}.stop-hud button{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#1b1d1b;color:#fff;cursor:pointer}.stop-hud button:hover{background:var(--ink);color:#111}
+    body.modal-open .stop-hud{display:none}
   </style>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
   <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><b>기억의 사진 아카이브</b></div><div class="top-note">사진을 누르면 확대 · 아래 출처를 누르면 원문으로 이동</div></header>
-  <section class="opening" aria-label="1950년 서울과 2023년 가자지구 비교 사진">
+  <section class="opening" data-stop aria-label="1950년 서울과 2023년 가자지구 비교 사진">
     <img class="opening-composite" src="hero/korea-gaza-decalcomania.jpg" alt="1950년 서울과 2023년 가자지구의 폐허가 한 장면처럼 이어진 비교 사진">
     <div class="opening-half left"><img src="hero/seoul-1950.jpg" alt="1950년 서울, 폐허 속에서 살림을 찾는 가족"></div>
     <div class="opening-half right"><img src="hero/gaza-2023.jpg" alt="2023년 가자지구, 폐허 속에서 물건을 찾는 가족"></div>
@@ -59,9 +63,9 @@
     <div class="opening-label korea">1950 · SEOUL</div><div class="opening-label gaza">2023 · GAZA</div>
     <div class="opening-bottom"><p class="opening-credit">사진: 대한민국 국가기록원 DTC0000011 · Public Domain &nbsp; / &nbsp; WAFA·APAimages · CC BY-SA 3.0</p><div class="opening-actions"><a class="opening-action" href="hero/korea-gaza-decalcomania.jpg" download>오버랩 사진 저장 ↓</a><a class="opening-action" href="#archive-intro">기록 보기 ↓</a></div></div>
   </section>
-  <section class="hero" id="archive-intro"><div><p class="eyebrow">KOREA 1950–1953 · GAZA 2023–</p><h1>전쟁이 남긴<br><span>두 시대의 풍경</span></h1></div><div><p class="hero-copy">설명보다 먼저, 실제 기록을 봅니다. 한국전쟁 당시의 피란과 폐허, 그리고 오늘 가자지구의 파괴와 삶을 한 화면에 모았습니다.</p><p class="hero-hint">각 사진의 촬영 정보와 저작자·라이선스는 원문 기록을 기준으로 정리했습니다.</p></div></section>
+  <section class="hero" id="archive-intro" data-stop><div><p class="eyebrow">KOREA 1950–1953 · GAZA 2023–</p><h1>전쟁이 남긴<br><span>두 시대의 풍경</span></h1></div><div><p class="hero-copy">설명보다 먼저, 실제 기록을 봅니다. 한국전쟁 당시의 피란과 폐허, 그리고 오늘 가자지구의 파괴와 삶을 한 화면에 모았습니다.</p><p class="hero-hint">각 사진의 촬영 정보와 저작자·라이선스는 원문 기록을 기준으로 정리했습니다.</p></div></section>
 
-  <section class="band" id="numbers" aria-labelledby="numbersTitle">
+  <section class="band" id="numbers" data-stop aria-labelledby="numbersTitle">
     <p class="band-kicker rv">GAZA · 2023.10 – 2026</p>
     <h2 class="band-title rv d1" id="numbersTitle">숫자로는 다 담기지 않는<br><em>오늘의 가자</em></h2>
     <p class="band-lead rv d2">서울의 4분의 3 남짓한 땅에 약 210만 명이 살던 곳. 2년이 넘는 전쟁이 지나간 뒤, 유엔이 집계한 가자의 오늘입니다.</p>
@@ -77,7 +81,7 @@
     </div>
     <p class="src-note">출처: <a href="https://www.un.org/unispal/document/ocha-reported-impact-snapshot-gaza-strip-15-july-2026/" target="_blank" rel="noopener">OCHA, Reported Impact Snapshot – Gaza Strip (2026. 7. 15.)</a> · <a href="https://aljazeera.com/news/2025/8/22/what-has-led-to-a-famine-being-confirmed-in-gaza" target="_blank" rel="noopener">IPC 기근 확인 보도 (2025. 8. 22.)</a>. 사상자 수는 가자 보건부 집계이며 유엔이 출처를 밝혀 인용한 수치입니다.</p>
   </section>
-  <section class="cinema" id="cinema" aria-label="하늘에서 본 가자">
+  <section class="cinema" id="cinema" data-stop data-steps="0,.42,.8" aria-label="하늘에서 본 가자">
     <div class="cinema-stick">
       <img class="cinema-img" src="hero/gaza-aerial.jpg" alt="해 질 녘 폐허가 끝없이 이어진 가자 시내와 그 사이 길을 걷는 사람들">
       <div class="cinema-shade"></div><span class="cinema-tag">AERIAL · GAZA</span>
@@ -86,7 +90,7 @@
       <p class="cinema-line" data-at=".67">그래도 사람들은<br>이 길을 걸어 집으로 돌아갑니다.<small>1950년 겨울, 폐허가 된 서울로 돌아오던 우리의 할머니·할아버지처럼.</small></p>
     </div>
   </section>
-  <section class="band">
+  <section class="band" data-stop>
     <div class="footage">
       <div class="phone-reel rv" aria-label="무너진 가자 거리를 담은 현장 영상 장면"><img src="hero/gaza-street.jpg" alt="연기가 피어오르는 무너진 건물과 잔해로 뒤덮인 가자 거리"><span class="smoke"></span><span class="rec">LIVE FOOTAGE</span><span class="time" id="reelTime">00:00</span></div>
       <div>
@@ -101,18 +105,18 @@
       </div>
     </div>
   </section>
-  <section class="band" aria-labelledby="pairTitle">
+  <section class="band" aria-labelledby="pairTitle" data-stop>
     <p class="band-kicker rv">THEN &amp; NOW</p>
     <h2 class="band-title rv d1" id="pairTitle">70년의 시차,<br><em>같은 장면</em></h2>
     <p class="band-lead rv d2">가운데 손잡이를 좌우로 밀어 보세요. 왼쪽은 1950년대 한국, 오른쪽은 지금의 가자입니다.</p>
     <div class="pairs"><figure class="pair rv"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/%EC%9D%B8%EC%B2%9C%EC%9D%98%20%ED%8F%90%ED%97%88%20%EC%86%8D%EC%9D%98%20%EC%A0%84%EC%9F%81%EA%B3%A0%EC%95%84%EB%93%A4.jpg?width=1280" alt="1950 인천" loading="lazy"><img class="after" src="https://commons.wikimedia.org/wiki/Special:FilePath/Displaced%20children%20sit%20on%20the%20rubble%20of%20their%20destroyed%20home%20in%20Nuseirat%20camp%2C%20Gaza%20Strip.jpg?width=1280" alt="2025 누세이라트" loading="lazy"><span class="bar" aria-hidden="true"></span><span class="lab l">1950 인천</span><span class="lab r">2025 누세이라트</span><figcaption>폐허 위에 남겨진 아이들<small>국가기록원 · Public Domain / Ashraf Amra · UNRWA · CC BY-SA 3.0 IGO</small></figcaption><input type="range" min="0" max="100" value="50" aria-label="폐허 위에 남겨진 아이들 비교 슬라이더"></figure><figure class="pair rv"><img src="%ED%95%9C%EA%B5%AD%EC%A0%84%EC%9F%81/025_Refugees_streaming_across_the_frozen_Han_River_on_the_ice_as_they_flee_southward_before_th.jpg" alt="1951 한강" loading="lazy"><img class="after" src="https://commons.wikimedia.org/wiki/Special:FilePath/Palestine%20refugees%20enforced%20to%20flee%20Hamad%20quarter%20in%20Khan%20Younis%2C%20southern%20Gaza%20Strip%2C%20after%20receiving%20an%20evacuation%20warning%20from%20Israeli%20army.jpg?width=1280" alt="2024 칸유니스" loading="lazy"><span class="bar" aria-hidden="true"></span><span class="lab l">1951 한강</span><span class="lab r">2024 칸유니스</span><figcaption>짐을 지고 길 위로 내몰린 사람들<small>NARA · Public Domain / Ashraf Amra · UNRWA · CC BY-SA 3.0 IGO</small></figcaption><input type="range" min="0" max="100" value="50" aria-label="짐을 지고 길 위로 내몰린 사람들 비교 슬라이더"></figure><figure class="pair rv"><img src="%ED%95%9C%EA%B5%AD%EC%A0%84%EC%9F%81/034_1950_11_1_%EC%84%9C%EC%9A%B8%EC%8B%9C_%ED%8F%90%ED%97%88_7445971428.jpg" alt="1950 서울" loading="lazy"><img class="after" src="https://commons.wikimedia.org/wiki/Special:FilePath/Destruction%20caused%20by%20Israeli%20bombing%20of%20Jabalia%20camp%2C%20Gaza%20Strip%20%28cropped%29.jpg?width=1280" alt="2024 자발리아" loading="lazy"><span class="bar" aria-hidden="true"></span><span class="lab l">1950 서울</span><span class="lab r">2024 자발리아</span><figcaption>하루아침에 사라진 동네<small>대한민국 국군 · CC BY-SA 2.0 / Hussein Jaber · UNRWA · CC BY 4.0</small></figcaption><input type="range" min="0" max="100" value="50" aria-label="하루아침에 사라진 동네 비교 슬라이더"></figure><figure class="pair rv"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/%EC%A4%91%EC%95%99%20%EC%B9%B4%ED%86%A8%EB%A6%AD%20%EA%B3%A0%EC%95%84%EC%9B%90%EC%97%90%EC%84%9C%20%EC%A0%90%EC%8B%AC%EC%9D%84%20%EB%A8%B9%EA%B3%A0%20%EC%9E%88%EB%8A%94%20%EC%95%84%EC%9D%B4%EB%93%A4.jpg?width=1280" alt="1950년대 서울" loading="lazy"><img class="after" src="https://commons.wikimedia.org/wiki/Special:FilePath/Displaced%20Palestinians%20gather%20to%20receive%20food%20from%20a%20charity%20in%20Deir%20el-Balah%2C%20Gaza%20Strip%202.jpg?width=1280" alt="2024 데이르알발라" loading="lazy"><span class="bar" aria-hidden="true"></span><span class="lab l">1950년대 서울</span><span class="lab r">2024 데이르알발라</span><figcaption>구호의 손길로 버틴 한 끼<small>촬영자 미상 · Public Domain / Ashraf Amra · UNRWA · CC BY-SA 3.0 IGO</small></figcaption><input type="range" min="0" max="100" value="50" aria-label="구호의 손길로 버틴 한 끼 비교 슬라이더"></figure></div>
   </section>
-  <div class="archive-wrap">
+  <div class="archive-wrap" data-stop data-skip>
   <div class="controls-wrap"><nav class="controls" aria-label="사진 분류"><button class="filter active" type="button" data-filter="all">전체 사진 <span class="count" id="allCount">0</span></button><button class="filter" type="button" data-filter="korea">한국전쟁 당시 <span class="count" id="koreaCount">0</span></button><button class="filter" type="button" data-filter="gaza">가자지구 <span class="count" id="gazaCount">0</span></button><span class="gallery-status" id="galleryStatus" aria-live="polite"></span></nav></div>
   <main><div class="section-head"><h2 class="section-title" id="sectionTitle">전체 기록</h2><p class="section-description">사진 클릭: 전체보기 · ← →: 이전/다음 · ESC: 닫기</p></div><div class="gallery" id="gallery"></div><footer class="archive-note"><div><strong>사진 출처</strong><br>Wikimedia Commons에 공개된 미국 국립문서기록관리청(NARA), 대한민국 국가기록원·국군·한국저작권위원회, WAFA·APAimages 및 개별 사진가의 기록을 사용했습니다.</div><div><strong>사용 전 확인</strong><br>각 카드의 ‘원문·라이선스 보기’를 눌러 최신 권리표시와 크레딧 문구를 다시 확인하세요. 사진 자체의 맥락을 바꾸는 합성·왜곡은 피하는 것을 권합니다.</div></footer></main>
   </div>
 
-  <section class="band" id="korea-link" aria-labelledby="linkTitle">
+  <section class="band" id="korea-link" data-stop aria-labelledby="linkTitle">
     <p class="band-kicker rv" style="color:var(--accent)">1950 → 2026</p>
     <h2 class="band-title rv d1" id="linkTitle">우리도 한때,<br><em style="color:var(--accent)">가자의 아이들이었습니다</em></h2>
     <p class="band-lead rv d2">1950년의 한국은 전쟁고아와 피란민으로 가득한 세계 최빈국이었습니다. 그때 한국 아이들을 먹이고 가르친 것은 지구 반대편 누군가가 <b>매달 보내 준 후원금</b>이었습니다. 지금 우리가 아는 국제구호단체 상당수가 바로 한국전쟁을 계기로 시작되었습니다.</p>
@@ -128,7 +132,7 @@
     <div class="bridge rv"><figure><img src="https://commons.wikimedia.org/wiki/Special:FilePath/%EC%A4%91%EC%95%99%20%EC%B9%B4%ED%86%A8%EB%A6%AD%20%EA%B3%A0%EC%95%84%EC%9B%90%EC%97%90%EC%84%9C%20%EC%A0%90%EC%8B%AC%EC%9D%84%20%EB%A8%B9%EA%B3%A0%20%EC%9E%88%EB%8A%94%20%EC%95%84%EC%9D%B4%EB%93%A4.jpg?width=1280" alt="1950년대 고아원에서 구호 점심을 먹는 한국 아이들" loading="lazy"><figcaption>1950년대 서울 · 후원으로 먹은 한 끼</figcaption></figure><span class="arrow" aria-hidden="true">→</span><figure><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Displaced%20Palestinians%20gather%20to%20receive%20food%20from%20a%20charity%20in%20Deir%20el-Balah%2C%20Gaza%20Strip%202.jpg?width=1280" alt="2024년 가자에서 무료 급식을 기다리는 아이들" loading="lazy"><figcaption>2024년 가자 · 그 한 끼를 기다리는 아이들</figcaption></figure></div>
     <p class="src-note">참고: <a href="https://sgsg.hankyung.com/article/2017041495651" target="_blank" rel="noopener">한국경제, “한국은 해외에 100억달러 넘게 원조했죠”</a> · 각 단체 공식 연혁.</p>
   </section>
-  <section class="why"><div class="band" aria-labelledby="whyTitle">
+  <section class="why" data-stop><div class="band" aria-labelledby="whyTitle">
     <p class="band-kicker rv" style="color:var(--accent)">WHY PEACE MAKER</p>
     <h2 class="band-title rv d1" id="whyTitle">NGO가 <em style="color:var(--accent)">우리와 함께하는</em> 이유</h2>
     <p class="band-lead rv d2">구호단체가 현장에서 할 수 있는 일의 크기는 결국 ‘매달 꾸준히 들어오는 후원’의 크기로 정해집니다. 우리는 그 정기후원자를 거리에서, 한 사람씩, 대화로 만나는 사람들입니다.</p>
@@ -139,7 +143,7 @@
       <div class="why-card rv d3"><span class="n">04</span><h4>단체의 얼굴로<br>훈련받은 사람들</h4><p>단체의 가치·윤리·사업을 배우고 거리에 섭니다. 시민이 처음 만나는 그 단체의 얼굴이 바로 우리입니다.</p></div>
     </div>
   </div></section>
-  <section class="band" aria-labelledby="regTitle">
+  <section class="band" aria-labelledby="regTitle" data-stop>
     <p class="band-kicker rv" style="color:var(--accent)">ONLY WITH MONTHLY DONORS</p>
     <h2 class="band-title rv d1" id="regTitle">정기후원자가 있어야만<br><em style="color:var(--accent)">할 수 있는 일</em></h2>
     <div class="vs">
@@ -155,7 +159,7 @@
       <div class="rv d2"><b>📢</b><h5>목소리 내기(옹호)</h5><p>현장의 진실을 세상에 알리고 제도를 바꾸는 일은 몇 년의 꾸준함이 필요합니다.</p></div>
     </div>
   </section>
-  <section class="band" aria-labelledby="f2fTitle">
+  <section class="band" aria-labelledby="f2fTitle" data-stop>
     <p class="band-kicker rv" style="color:var(--accent)">WHY F2F</p>
     <h2 class="band-title rv d1" id="f2fTitle">그리고 그 정기후원은<br><em style="color:var(--accent)">얼굴을 마주할 때</em> 시작됩니다</h2>
     <p class="band-lead rv d2">대면 모금(F2F)은 1997년 그린피스가 영국의 한 음악 페스티벌에서 처음 시도한 뒤, 전 세계 국제구호단체가 정기후원자를 만나는 핵심 채널이 되었습니다.</p>
@@ -175,12 +179,13 @@
     </div>
     <p class="src-note">참고: <a href="https://www.rescue.org/kr/face-face-fundraising" target="_blank" rel="noopener">IRC 한국, 대면 모금(F2F) 소개</a></p>
   </section>
-  <section class="finale" aria-label="마무리 메시지"><div class="finale-bg"></div><div class="finale-glow"></div><div class="finale-copy">
+  <section class="finale" data-stop aria-label="마무리 메시지"><div class="finale-bg"></div><div class="finale-glow"></div><div class="finale-copy">
     <p class="rv">1950년, 누군가 한 번도 본 적 없는 한국의 아이를 위해 매달 후원금을 보냈습니다.</p>
-    <h2 class="rv d1">이제, <em>우리가 그 손</em>이 될 차례입니다.</h2>
+    <h2 class="rv d1">이제, <em>우리가</em><br><em>그 손</em>이 될 차례입니다.</h2>
     <p class="rv d2">오늘 거리에서 나누는 5분의 대화가<br>가자의 한 아이에게 다음 달의 한 끼가 됩니다.</p>
     <p class="rv d3" style="color:var(--accent);font-weight:800;letter-spacing:.2em;font-size:13px">WE ARE PEACE MAKERS</p>
   </div></section>
+  <div class="stop-hud" aria-hidden="true"><span>장면 <b id="stopNow">1</b> / <b id="stopAll">1</b></span><button type="button" id="stopPrev" tabindex="-1" aria-label="이전 장면">↑</button><button type="button" id="stopNext" tabindex="-1" aria-label="다음 장면">↓</button></div>
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="사진 전체보기" aria-hidden="true"><button class="fullscreen" id="fullscreenBtn" type="button">전체 화면</button><button class="close" id="closeBtn" type="button" aria-label="닫기">닫기 ×</button><div class="lightbox-media" id="lightboxMedia"><button class="nav prev" id="prevBtn" type="button" aria-label="이전 사진">‹</button><img id="lightboxImage" alt=""><button class="nav next" id="nextBtn" type="button" aria-label="다음 사진">›</button></div><aside class="lightbox-info"><p class="modal-counter" id="modalCounter"></p><p class="modal-kicker" id="modalKicker"></p><h3 class="modal-title" id="modalTitle"></h3><p class="modal-credit" id="modalCredit"></p><div class="modal-source"><a class="source-link" id="modalSource" href="#" target="_blank" rel="noopener">원문·라이선스 보기 ↗</a></div></aside></div>
   <script>
     const K="korea",G="gaza";
@@ -267,6 +272,29 @@
       document.querySelectorAll(".pair").forEach(f=>{const i=f.querySelector("input");i.addEventListener("input",()=>{f.style.setProperty("--x",i.value+"%");f.dataset.touched=1});
         new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){o.disconnect();let t0=null;const sw=n=>{if(f.dataset.touched)return;t0??=n;const k=(n-t0)/2600;if(k>1){f.style.setProperty("--x","50%");return}const x=50+Math.sin(k*Math.PI*2)*38;f.style.setProperty("--x",x+"%");i.value=x;requestAnimationFrame(sw)};requestAnimationFrame(sw)}},{threshold:.5}).observe(f)});
       const rt=document.getElementById("reelTime");if(rt){let s=0;setInterval(()=>{s=(s+1)%3600;rt.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},1000)}
+    })();
+
+    // ===== presenter remote: big steps between sections =====
+    (()=>{
+      const head=()=>document.querySelector(".topbar").offsetHeight;
+      function stops(){const out=[];document.querySelectorAll("[data-stop]").forEach(el=>{const top=el.getBoundingClientRect().top+scrollY-(el.classList.contains("opening")?999:head());const st=(el.dataset.steps||"0").split(",").map(Number);
+        st.forEach(k=>out.push({el,y:Math.max(0,Math.round(top+k*Math.max(0,el.offsetHeight-innerHeight))),skip:"skip" in el.dataset}))});const mx=document.documentElement.scrollHeight-innerHeight;out.forEach(s=>s.y=Math.min(s.y,mx));return out.sort((a,b)=>a.y-b.y)}
+      function curIndex(list){let i=0;list.forEach((s,k)=>{if(s.y<=scrollY+8)i=k});return i}
+      function go(dir){const list=stops(),i=curIndex(list),s=list[i];
+        if(dir>0){const bottom=s.el.getBoundingClientRect().bottom+scrollY,next=list[i+1];
+          if(!s.skip&&!s.el.dataset.steps&&bottom>scrollY+innerHeight*1.3&&(!next||next.y>scrollY+innerHeight*.9)){scrollTo({top:Math.min(scrollY+innerHeight*.8,bottom-innerHeight),behavior:"smooth"});return}
+          if(next)scrollTo({top:next.y,behavior:"smooth"})}
+        else{if(scrollY>s.y+8&&!s.el.dataset.steps){scrollTo({top:Math.max(s.y,scrollY-innerHeight*.8),behavior:"smooth"});return}const prev=list[Math.max(0,i-1)];scrollTo({top:prev.y,behavior:"smooth"})}}
+      const lb=document.getElementById("lightbox");
+      document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
+        if(lb.classList.contains("open")){if(k==="PageDown"){e.preventDefault();document.getElementById("nextBtn").click()}if(k==="PageUp"){e.preventDefault();document.getElementById("prevBtn").click()}return}
+        const fwd=["PageDown","ArrowRight","ArrowDown"," ","Enter"].includes(k),back=["PageUp","ArrowLeft","ArrowUp","Backspace"].includes(k);if(!fwd&&!back)return;
+        const a=document.activeElement;if(a&&a.matches('button,a')&&(k===" "||k==="Enter"))return;if(a&&a.matches("input[type=range]"))a.blur();
+        e.preventDefault();go(fwd?1:-1)});
+      document.getElementById("stopNext").onclick=()=>go(1);document.getElementById("stopPrev").onclick=()=>go(-1);
+      const hud=document.querySelector(".stop-hud");let t;
+      function upd(){const list=stops();document.getElementById("stopAll").textContent=list.length;document.getElementById("stopNow").textContent=curIndex(list)+1;hud.classList.add("flash");clearTimeout(t);t=setTimeout(()=>hud.classList.remove("flash"),900)}
+      addEventListener("scroll",()=>{clearTimeout(upd.t);upd.t=setTimeout(upd,120)},{passive:true});upd();
     })();
   </script>
 </body>
