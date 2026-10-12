@@ -182,6 +182,28 @@ dialog{background:#192019;color:var(--ink);border:1px solid #5b6758;border-radiu
 @keyframes quote-stamp{0%{opacity:0;transform:scale(2.4) rotate(-12deg)}100%{opacity:1;transform:scale(1) rotate(-4deg)}}
 @media(max-width:760px){.skill-quote{left:auto;right:0;top:-18px;transform:none;font-size:18px;padding:10px 14px;border-radius:16px}.skill-item.is-lit .skill-quote{animation:none;transform:none}}
 @media(prefers-reduced-motion:reduce){.skill-item.is-lit .skill-quote,.skill-item.is-lit .skill-quote b{animation:none;transform:translate(-50%,0)}}
+
+/* smile action collage */
+.smile-slide{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);align-items:center;gap:3.5%}
+.smile-copy h2{line-height:1.14;margin-bottom:26px}.smile-copy h2 em{color:var(--peach);font-style:normal}
+.smile-ticket{display:flex;align-items:center;gap:14px;width:max-content;max-width:100%;padding:13px 22px;margin:0 0 12px;border-radius:999px;background:#f0c39418;border:1px solid #f0c39466;font-size:clamp(18px,1.6vw,26px);font-weight:800}
+.smile-ticket .st-name{color:var(--peach)}.smile-ticket .st-dash{width:34px;height:2px;border-radius:2px;background:currentColor;opacity:.55}
+.smile-ticket.is-blank{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted)}.smile-ticket.is-blank .st-name{color:var(--ink)}.smile-ticket.is-blank .st-act{letter-spacing:1px;opacity:.6}
+.smile-copy .aside{margin-top:16px}
+.smile-collage{position:relative;width:100%;aspect-ratio:16/10.4;max-height:calc(100vh - 230px)}
+.pol{position:absolute;left:var(--x);top:var(--y);width:var(--w);margin:0;padding:3.2% 3.2% 9%;padding:max(6px,.55vw) max(6px,.55vw) max(20px,1.7vw);background:#fbfaf3;border-radius:4px;box-shadow:0 14px 34px #0008,0 2px 6px #0005;transform:rotate(var(--r));transition:transform .35s cubic-bezier(.2,.9,.3,1.3),box-shadow .35s;z-index:1}
+.pol img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:2px}.pol-P img{aspect-ratio:3/4}
+.pol:hover{transform:rotate(0) scale(1.12);z-index:5;box-shadow:0 24px 50px #000a}
+.smile-slide.active .pol{animation:polIn .7s cubic-bezier(.2,.9,.3,1.35) var(--d) backwards,polBob 6s ease-in-out calc(var(--d) + .8s) infinite alternate}
+@keyframes polIn{0%{opacity:0;transform:translateY(40px) rotate(calc(var(--r) * -2)) scale(.6)}100%{opacity:1;transform:rotate(var(--r))}}
+@keyframes polBob{0%{transform:rotate(var(--r)) translateY(0)}100%{transform:rotate(calc(var(--r) * .6)) translateY(-6px)}}
+.smile-sticker{position:absolute;right:1%;bottom:-2%;z-index:6;padding:10px 16px;border-radius:12px;background:var(--peach);color:#1b1a14;font-size:11px;letter-spacing:1.4px;line-height:1.35;font-weight:700;transform:rotate(-6deg);box-shadow:0 10px 24px #0007}
+.smile-sticker b{font-size:15px;letter-spacing:.5px}
+.smile-slide.active .smile-sticker{animation:stickerIn .55s cubic-bezier(.2,.9,.3,1.5) 1.15s backwards}
+@keyframes stickerIn{0%{opacity:0;transform:rotate(-30deg) scale(2)}100%{opacity:1;transform:rotate(-6deg) scale(1)}}
+@media(max-width:1100px){.smile-slide{grid-template-columns:1fr;gap:20px}.smile-collage{max-height:none}}
+@media(max-width:700px){.smile-copy h2 br{display:none}.smile-collage{aspect-ratio:auto;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 12px;padding-bottom:34px}.pol{position:relative;left:auto;top:auto;width:auto}.pol img,.pol-P img{aspect-ratio:1}.smile-sticker{bottom:0}}
+@media(prefers-reduced-motion:reduce){.smile-slide.active .pol,.smile-slide.active .smile-sticker{animation:none}}
 </style>
 </head>
 <body>
@@ -214,6 +236,11 @@ dialog{background:#192019;color:var(--ink);border:1px solid #5b6758;border-radiu
 </div>
 <div class="mood-scene quote-scene" id="quoteScene" hidden><div id="quoteCopy"><blockquote class="quote-line"><span>“니 자신을 못 믿겠으면,</span><span><em style="color:var(--purple)">닐 선택한 날 믿으라.</em>”</span></blockquote><p class="quote-credit">드라마 「스물다섯 스물하나」</p><p class="switch-line">당신의 긍정 무드, 스위치 <span class="switch-pill">ON!</span></p><div class="quote-transport"><button id="quotePlay">▶ 장면 재생</button><button id="quoteStop">■ 정지</button><button id="showMusic">음악으로</button></div></div><div class="media-view"><div class="video-shell"><div id="quotePlayer"></div><div class="video-poster" id="quotePoster"><img src="https://i.ytimg.com/vi/gb0OTB1zmR4/hqdefault.jpg" alt="스물다섯 스물하나 명대사 장면" width="480" height="360" loading="lazy"><span class="play-disc" aria-hidden="true">▶</span></div></div><div class="video-footer"><a href="https://www.youtube.com/shorts/gb0OTB1zmR4" target="_blank" rel="noopener">YouTube에서 장면 보기 ↗</a><button id="quoteCompact">■ 멈추고 작게 보기</button><span id="quoteStatus" class="sr" aria-live="polite"></span></div></div></div>
 <template class="note">무드는 저절로 생기기를 기다리지 말고 직접 켭니다. 다음 버튼으로 첫 곡, 두 번째 곡, 세 번째 곡을 재생합니다. 새 곡이 시작되기 전에 이전 곡은 멈춥니다. 그대로 두면 세 곡이 순서대로 이어집니다. 세 번째 곡 다음에는 명대사 장면을 크게 재생합니다. 한 번 더 넘기면 장면이 멈추고 작아지며 긍정 무드 스위치가 켜집니다. 음악이든 좋아하는 영화나 드라마의 대사든, 자신에게 힘을 주는 방법으로 무드를 만들고 지킵니다.</template>
+</section>
+<section class="slide smile-slide" data-title="나를 미소짓게 만드는 액션을 선택하라" data-chapter="3STEP" hidden>
+<div class="smile-copy"><p class="eyebrow">SMILE TRIGGER</p><h2>나를 <em>미소짓게</em> <br>만드는 액션을 <br>선택하라!</h2><div class="smile-ticket"><span class="st-name">재영</span><span class="st-dash" aria-hidden="true"></span><span class="st-act">맛난거 먹기 <span aria-hidden="true">😋</span></span></div><div class="smile-ticket is-blank"><span class="st-name">나</span><span class="st-dash" aria-hidden="true"></span><span class="st-act">______________</span></div><p class="aside">웃게 만드는 걸 알면, 미소는 언제든 꺼내 쓸 수 있다.</p></div>
+<div class="smile-collage" role="img" aria-label="맛있는 걸 먹으며 웃고 있는 재영의 사진 여덟 장 콜라주"><figure class="pol pol-L" style="--x:0%;--y:5%;--w:34%;--r:-6deg;--d:0.00s"><img src="media/smile-1.jpg" alt="커피 들고 웃는 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:31%;--y:0%;--w:21%;--r:4deg;--d:0.11s"><img src="media/smile-3.jpg" alt="붕어빵 먹는 재영" loading="lazy"></figure><figure class="pol pol-L" style="--x:53%;--y:3%;--w:33%;--r:-3deg;--d:0.22s"><img src="media/smile-6.jpg" alt="음료를 든 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:79%;--y:9%;--w:21%;--r:6deg;--d:0.33s"><img src="media/smile-4.jpg" alt="간식 들고 웃는 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:1%;--y:50%;--w:19%;--r:5deg;--d:0.44s"><img src="media/smile-2.jpg" alt="바나나 들고 웃는 재영" loading="lazy"></figure><figure class="pol pol-L" style="--x:21%;--y:53%;--w:32%;--r:-4deg;--d:0.55s"><img src="media/smile-7.jpg" alt="맛있는 고기 한 상" loading="lazy"></figure><figure class="pol pol-P" style="--x:53%;--y:45%;--w:21%;--r:-7deg;--d:0.66s"><img src="media/smile-5.jpg" alt="빵 상자를 든 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:76%;--y:50%;--w:21%;--r:4deg;--d:0.77s"><img src="media/smile-8.jpg" alt="꽃다발을 든 재영" loading="lazy"></figure><span class="smile-sticker" aria-hidden="true">JAEYOUNG’S<br><b>SMILE ACTION</b></span></div>
+<template class="note">음악이나 명대사처럼, 나를 미소짓게 만드는 액션이 하나씩은 있습니다. 재영에게는 맛난거 먹기입니다. 커피 한 잔, 붕어빵, 간식 하나만 있어도 표정이 저절로 풀립니다. 이제 여러분 차례입니다. 나를 미소짓게 만드는 액션 하나를 골라 “이름 — 액션” 형태로 말해 봅니다. 현장에 나가기 전, 표정이 굳을 때 그 액션을 꺼내 무드를 다시 켭니다.</template>
 </section>
 <section class="slide talk-slide" data-title="피치도 결국 대화다" data-chapter="5STEP" hidden>
 <div><p class="eyebrow">KEEP IT A CONVERSATION</p><h2>피치도 결국, <em>대화다.</em></h2><p class="lead">말하고. 듣고. 이어가고.</p></div><figure class="conversation-art"><img src="media/conversation.png" alt="서로 마주 보며 즐겁게 대화하는 두 말풍선" width="1168" height="880"><div class="language-orbit" aria-hidden="true"><span class="orbit-word" style="--delay:-0s;--word-index:0">Hello</span><span class="orbit-word" style="--delay:-5s;--word-index:1">안녕</span><span class="orbit-word" style="--delay:-10s;--word-index:2">Hola</span><span class="orbit-word" style="--delay:-15s;--word-index:3">Bonjour</span><span class="orbit-word" style="--delay:-20s;--word-index:4">こんにちは</span><span class="orbit-word" style="--delay:-25s;--word-index:5">Ciao</span><span class="orbit-word" style="--delay:-30s;--word-index:6">Hallo</span></div></figure>
@@ -302,9 +329,9 @@ function renderBuild(play=false,update=true,syncMedia=true){
  if(current===3){$('#musicScene').hidden=build>=4;$('#quoteScene').hidden=build<4;$('#quoteCopy').inert=build===4;
    if(syncMedia){stopAll();if(build>=1&&build<=3){track=build-1;playlistEnded=false;renderTransport();if(play)playMusic();}if(play&&build===4)playQuote();}
  }
- if(current===7)s.querySelectorAll('.pitch-panel').forEach((p,i)=>p.hidden=i!==build);
- if(current===8)s.querySelectorAll('[data-rehash-photo]').forEach((p,i)=>p.hidden=i!==build);
- if(current===9){s.querySelectorAll('[data-why-panel]').forEach((p,i)=>p.hidden=i!==build);stage.scrollTop=0;$('#chapter').textContent=build===1?'IT’S YOU':'WHY';if(build===0){$('#next').setAttribute('aria-label','마지막 메시지 보기');$('#next').title='마지막 메시지 보기';}}
+ if(current===8)s.querySelectorAll('.pitch-panel').forEach((p,i)=>p.hidden=i!==build);
+ if(current===9)s.querySelectorAll('[data-rehash-photo]').forEach((p,i)=>p.hidden=i!==build);
+ if(current===10){s.querySelectorAll('[data-why-panel]').forEach((p,i)=>p.hidden=i!==build);stage.scrollTop=0;$('#chapter').textContent=build===1?'IT’S YOU':'WHY';if(build===0){$('#next').setAttribute('aria-label','마지막 메시지 보기');$('#next').title='마지막 메시지 보기';}}
  if(update)locationSync();
 }
 function setBuild(b,play=false){
