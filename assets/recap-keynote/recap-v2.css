@@ -468,3 +468,6 @@ dialog{border:1px solid #435068;background:#1b2330;color:#eef4ff;border-radius:1
 /* phones: desktop slide scaled to the screen, big touch controls */
 .force-desktop .present-controls{bottom:10px}
 .force-desktop.presenting-root body,.force-desktop body.presenting{overscroll-behavior:none}
+/* clicker "black screen" (. or B) */
+body.blackout{background:#000}
+body.blackout #canvas,body.blackout .present-controls{visibility:hidden}
