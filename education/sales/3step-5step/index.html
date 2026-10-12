@@ -204,6 +204,45 @@ dialog{background:#192019;color:var(--ink);border:1px solid #5b6758;border-radiu
 @media(max-width:1100px){.smile-slide{grid-template-columns:1fr;gap:20px}.smile-collage{max-height:none}}
 @media(max-width:700px){.smile-copy h2 br{display:none}.smile-collage{aspect-ratio:auto;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 12px;padding-bottom:34px}.pol{position:relative;left:auto;top:auto;width:auto}.pol img,.pol-P img{aspect-ratio:1}.smile-sticker{bottom:0}}
 @media(prefers-reduced-motion:reduce){.smile-slide.active .pol,.smile-slide.active .smile-sticker{animation:none}}
+
+/* right people */
+.right-slide{align-items:center;text-align:center}
+.right-head h2 em{color:var(--green);font-style:normal}.right-head .lead strong{color:var(--peach)}
+.right-podium{display:flex;align-items:flex-end;justify-content:center;gap:clamp(14px,2.4vw,36px);margin-top:clamp(18px,3vh,40px);width:100%}
+.rp-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;width:clamp(180px,20vw,270px);padding:22px 16px 0;border-radius:28px 28px 0 0;background:linear-gradient(180deg,#eef4da12,#eef4da05);border:1px solid var(--line);border-bottom:0}
+.rp-rank{font-size:clamp(30px,2.6vw,42px);font-weight:900;color:var(--muted);line-height:1}.rp-rank small{font-size:.45em;margin-left:2px}
+.rp-1 .rp-rank{color:#f6d36b}.rp-2 .rp-rank{color:#d8dde4}.rp-3 .rp-rank{color:var(--peach)}
+.rp-avatar{position:relative;display:grid;place-items:center;width:clamp(78px,7vw,108px);aspect-ratio:1;border-radius:50%;background:linear-gradient(145deg,#4a4f66,#2a2d3c);font-size:clamp(32px,3vw,46px);font-weight:800;color:#fff}
+.rp-1 .rp-avatar{width:clamp(96px,8.6vw,130px);background:linear-gradient(145deg,#d4ed9b,#637844);color:#101512}
+.rp-ring{position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--green);opacity:0}
+.rp-name{font-size:clamp(20px,1.8vw,28px);font-weight:800}.rp-name small{display:block;font-size:.55em;color:var(--muted);font-weight:600;margin-top:2px}
+.rp-count{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#d4ed9b1f;color:var(--green);font-size:14px;font-weight:700}.rp-count svg{width:15px;fill:currentColor}.rp-count b{font-size:18px}
+.rp-step{width:calc(100% + 32px);margin-top:12px;border-radius:14px 14px 0 0;background:linear-gradient(180deg,#d4ed9b33,#d4ed9b0a)}
+.rp-1 .rp-step{height:clamp(90px,15vh,150px)}.rp-2 .rp-step{height:clamp(56px,9vh,96px)}.rp-3 .rp-step{height:clamp(30px,5vh,56px)}
+.right-slide.active .rp-card{animation:rpUp .8s cubic-bezier(.2,.9,.3,1.2) var(--d) backwards}
+.right-slide.active .rp-1 .rp-ring{animation:rpRing 1.6s ease-out 1.4s infinite}
+@keyframes rpUp{0%{opacity:0;transform:translateY(80px)}100%{opacity:1;transform:none}}
+@keyframes rpRing{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.35)}}
+@media(max-width:700px){.right-podium{gap:8px}.rp-card{width:32%;padding:14px 6px 0;border-radius:18px 18px 0 0}.rp-count{font-size:11px;padding:4px 8px}.rp-count b{font-size:14px}.rp-step{width:calc(100% + 12px)}}
+@media(prefers-reduced-motion:reduce){.right-slide.active .rp-card,.right-slide.active .rp-ring{animation:none}}
+.right-who{margin-top:14px;font-size:clamp(16px,1.35vw,21px);color:var(--muted)}.right-who b{color:var(--ink)}
+.right-mates{align-items:stretch}.rp-mate{border-radius:28px;border-bottom:1px solid var(--line);padding:26px 16px 24px;width:clamp(150px,15vw,220px)}
+.rp-mate .rp-avatar{background:linear-gradient(145deg,#d4ed9b,#637844);color:#101512}
+.right-slide.active .rp-mate .rp-ring{animation:rpRing 1.8s ease-out calc(var(--d) + 1s) infinite}
+@media(max-width:700px){.right-mates{flex-wrap:wrap}.rp-mate{width:44%}}
+.right-slide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4%;align-items:center;text-align:left}
+.right-slide .right-head h2{white-space:nowrap}.right-slide .right-mates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px;justify-content:start}
+.right-slide .rp-mate{width:auto;flex-direction:row;justify-content:flex-start;gap:14px;padding:12px 16px;border-radius:18px}
+.right-slide .rp-mate .rp-avatar{width:54px;font-size:24px}.right-slide .rp-mate .rp-name{font-size:clamp(18px,1.5vw,23px)}
+.chat-collage{position:relative;width:100%;aspect-ratio:1/1;max-height:calc(100vh - 210px);max-width:calc(100vh - 210px);justify-self:center}
+.chat{position:absolute;left:var(--x);top:var(--y);width:var(--w);border-radius:14px;box-shadow:0 16px 36px #000b,0 0 0 1px #ffffff14;transform:rotate(var(--r));transition:transform .3s,z-index 0s}
+.chat:hover{transform:rotate(0) scale(1.18);z-index:9}
+.right-slide.active .chat{animation:chatIn .6s cubic-bezier(.2,.9,.3,1.3) var(--d) backwards}
+@keyframes chatIn{0%{opacity:0;transform:translateY(30px) scale(.85) rotate(var(--r))}100%{opacity:1;transform:rotate(var(--r))}}
+.chat-tag{position:absolute;right:-2%;top:-4%;z-index:8;padding:9px 14px;border-radius:999px;background:#fee500;color:#191600;font-size:13px;font-weight:800;transform:rotate(4deg);box-shadow:0 8px 20px #0007}
+@media(max-width:1100px){.right-slide{grid-template-columns:1fr}.chat-collage{max-width:600px}}
+@media(max-width:700px){.right-slide .right-head h2{white-space:normal}.chat-collage{max-height:none}}
+@media(prefers-reduced-motion:reduce){.right-slide.active .chat{animation:none}}
 </style>
 </head>
 <body>
@@ -241,6 +280,13 @@ dialog{background:#192019;color:var(--ink);border:1px solid #5b6758;border-radiu
 <div class="smile-copy"><p class="eyebrow">SMILE TRIGGER</p><h2>나를 <em>미소짓게</em> <br>만드는 액션을 <br>선택하라!</h2><div class="smile-ticket"><span class="st-name">재영</span><span class="st-dash" aria-hidden="true"></span><span class="st-act">맛난거 먹기 <span aria-hidden="true">😋</span></span></div><div class="smile-ticket is-blank"><span class="st-name">나</span><span class="st-dash" aria-hidden="true"></span><span class="st-act">______________</span></div><p class="aside">웃게 만드는 걸 알면, 미소는 언제든 꺼내 쓸 수 있다.</p></div>
 <div class="smile-collage" role="img" aria-label="맛있는 걸 먹으며 웃고 있는 재영의 사진 여덟 장 콜라주"><figure class="pol pol-L" style="--x:0%;--y:5%;--w:34%;--r:-6deg;--d:0.00s"><img src="media/smile-1.jpg" alt="커피 들고 웃는 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:31%;--y:0%;--w:21%;--r:4deg;--d:0.11s"><img src="media/smile-3.jpg" alt="붕어빵 먹는 재영" loading="lazy"></figure><figure class="pol pol-L" style="--x:53%;--y:3%;--w:33%;--r:-3deg;--d:0.22s"><img src="media/smile-6.jpg" alt="음료를 든 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:79%;--y:9%;--w:21%;--r:6deg;--d:0.33s"><img src="media/smile-4.jpg" alt="간식 들고 웃는 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:1%;--y:50%;--w:19%;--r:5deg;--d:0.44s"><img src="media/smile-2.jpg" alt="바나나 들고 웃는 재영" loading="lazy"></figure><figure class="pol pol-L" style="--x:21%;--y:53%;--w:32%;--r:-4deg;--d:0.55s"><img src="media/smile-7.jpg" alt="맛있는 고기 한 상" loading="lazy"></figure><figure class="pol pol-P" style="--x:53%;--y:45%;--w:21%;--r:-7deg;--d:0.66s"><img src="media/smile-5.jpg" alt="빵 상자를 든 재영" loading="lazy"></figure><figure class="pol pol-P" style="--x:76%;--y:50%;--w:21%;--r:4deg;--d:0.77s"><img src="media/smile-8.jpg" alt="꽃다발을 든 재영" loading="lazy"></figure><span class="smile-sticker" aria-hidden="true">JAEYOUNG’S<br><b>SMILE ACTION</b></span></div>
 <template class="note">음악이나 명대사처럼, 나를 미소짓게 만드는 액션이 하나씩은 있습니다. 재영에게는 맛난거 먹기입니다. 커피 한 잔, 붕어빵, 간식 하나만 있어도 표정이 저절로 풀립니다. 이제 여러분 차례입니다. 나를 미소짓게 만드는 액션 하나를 골라 “이름 — 액션” 형태로 말해 봅니다. 현장에 나가기 전, 표정이 굳을 때 그 액션을 꺼내 무드를 다시 켭니다.</template>
+</section>
+<section class="slide right-slide" data-title="Get With Right People" data-chapter="3STEP" hidden>
+<div class="right-left"><div class="right-head"><p class="eyebrow">좋은 사람들과의 소통과 어울림</p><h2>Get With <em>Right People</em></h2><p class="lead">나를 일으켜 세워주는 <strong>옳은 사람</strong>과 연락하기</p></div>
+<p class="right-who">가장 많이 소통하는 사람 — <b>상위 리더와 TL 이상</b>, 함께 조직을 이끌어가는 <b>매니지먼트 동료들</b></p>
+<div class="right-podium right-mates"><div class="rp-card rp-mate" style="--d:0.00s"><span class="rp-avatar">이<i class="rp-ring"></i></span><span class="rp-name">이예승</span></div><div class="rp-card rp-mate" style="--d:0.18s"><span class="rp-avatar">고<i class="rp-ring"></i></span><span class="rp-name">고윤경</span></div><div class="rp-card rp-mate" style="--d:0.36s"><span class="rp-avatar">윤<i class="rp-ring"></i></span><span class="rp-name">윤채영</span></div><div class="rp-card rp-mate" style="--d:0.54s"><span class="rp-avatar">유<i class="rp-ring"></i></span><span class="rp-name">유영진</span></div></div></div>
+<div class="chat-collage" role="img" aria-label="동료들과 주고받은 따뜻한 카카오톡 대화 다섯 장"><img class="chat chat-1" src="media/talk-1.jpg" alt="예승 리더의 피드백 대화" style="--x:0%;--y:0%;--w:54%;--r:-3deg;--d:0.50s" loading="lazy"><img class="chat chat-3" src="media/talk-3.jpg" alt="웃음이 끊이지 않는 대화" style="--x:52%;--y:2%;--w:40%;--r:3deg;--d:0.68s" loading="lazy"><img class="chat chat-2" src="media/talk-2.jpg" alt="성장을 응원하는 대화" style="--x:3%;--y:40%;--w:40%;--r:2deg;--d:0.86s" loading="lazy"><img class="chat chat-4" src="media/talk-4.jpg" alt="미팅 후 감사 메시지" style="--x:44%;--y:50%;--w:56%;--r:-2deg;--d:1.04s" loading="lazy"><img class="chat chat-5" src="media/talk-5.jpg" alt="믿고 함께하자는 메시지" style="--x:0%;--y:77%;--w:46%;--r:-2deg;--d:1.22s" loading="lazy"><span class="chat-tag">💬 좋은 대화가 오고 간 순간들</span></div>
+<template class="note">좋은 사람들과의 소통과 어울림이 무드를 지켜 줍니다. 제가 가장 많이 소통하는 사람은 상위 리더와 TL 이상, 함께 조직을 이끌어가는 매니지먼트 동료들입니다. 이예승, 고윤경, 윤채영, 유영진. 힘이 빠질 때 나를 다시 일으켜 세워주는 옳은 사람과 자주 연락합니다. 오른쪽은 실제로 주고받은 대화들입니다. 피드백을 구하면 진심으로 답해 주고, 함께 웃고, 성장을 응원하고, 서로에게 감사를 전합니다. 이런 대화가 오가는 사람들과 어울릴 때 나도 다시 일어설 수 있습니다. 여러분에게는 누가 그런 사람인가요?</template>
 </section>
 <section class="slide talk-slide" data-title="피치도 결국 대화다" data-chapter="5STEP" hidden>
 <div><p class="eyebrow">KEEP IT A CONVERSATION</p><h2>피치도 결국, <em>대화다.</em></h2><p class="lead">말하고. 듣고. 이어가고.</p></div><figure class="conversation-art"><img src="media/conversation.png" alt="서로 마주 보며 즐겁게 대화하는 두 말풍선" width="1168" height="880"><div class="language-orbit" aria-hidden="true"><span class="orbit-word" style="--delay:-0s;--word-index:0">Hello</span><span class="orbit-word" style="--delay:-5s;--word-index:1">안녕</span><span class="orbit-word" style="--delay:-10s;--word-index:2">Hola</span><span class="orbit-word" style="--delay:-15s;--word-index:3">Bonjour</span><span class="orbit-word" style="--delay:-20s;--word-index:4">こんにちは</span><span class="orbit-word" style="--delay:-25s;--word-index:5">Ciao</span><span class="orbit-word" style="--delay:-30s;--word-index:6">Hallo</span></div></figure>
@@ -329,9 +375,9 @@ function renderBuild(play=false,update=true,syncMedia=true){
  if(current===3){$('#musicScene').hidden=build>=4;$('#quoteScene').hidden=build<4;$('#quoteCopy').inert=build===4;
    if(syncMedia){stopAll();if(build>=1&&build<=3){track=build-1;playlistEnded=false;renderTransport();if(play)playMusic();}if(play&&build===4)playQuote();}
  }
- if(current===8)s.querySelectorAll('.pitch-panel').forEach((p,i)=>p.hidden=i!==build);
- if(current===9)s.querySelectorAll('[data-rehash-photo]').forEach((p,i)=>p.hidden=i!==build);
- if(current===10){s.querySelectorAll('[data-why-panel]').forEach((p,i)=>p.hidden=i!==build);stage.scrollTop=0;$('#chapter').textContent=build===1?'IT’S YOU':'WHY';if(build===0){$('#next').setAttribute('aria-label','마지막 메시지 보기');$('#next').title='마지막 메시지 보기';}}
+ if(current===9)s.querySelectorAll('.pitch-panel').forEach((p,i)=>p.hidden=i!==build);
+ if(current===10)s.querySelectorAll('[data-rehash-photo]').forEach((p,i)=>p.hidden=i!==build);
+ if(current===11){s.querySelectorAll('[data-why-panel]').forEach((p,i)=>p.hidden=i!==build);stage.scrollTop=0;$('#chapter').textContent=build===1?'IT’S YOU':'WHY';if(build===0){$('#next').setAttribute('aria-label','마지막 메시지 보기');$('#next').title='마지막 메시지 보기';}}
  if(update)locationSync();
 }
 function setBuild(b,play=false){
