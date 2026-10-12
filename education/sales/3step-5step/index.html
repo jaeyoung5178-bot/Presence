@@ -123,6 +123,65 @@ dialog{background:#192019;color:var(--ink);border:1px solid #5b6758;border-radiu
 @media(max-width:700px){.why-ending{padding:52px 0}.why-slide .ending-equation{display:grid;grid-template-columns:auto auto auto;gap:18px 14px;font-size:42px;letter-spacing:-1.8px}.ending-equation .ending-equals{grid-column:1/-1;font-size:30px;line-height:1}.ending-equation .ending-you{grid-column:1/-1;font-size:74px;letter-spacing:-3px}.why-slide .ending-message{font-size:17px;white-space:nowrap;margin-top:32px;letter-spacing:-.8px}}
 #announcement{top:0;left:0}
 .skill-sphere circle{stroke:#ffffff32;stroke-width:1}.triad-bond{fill:none;stroke:#dce7c938;stroke-width:1.5}.hero.active .journey-scene{animation:arrive .45s ease both}
+
+/* 3step / 5step motifs */
+.principle .motif{position:absolute;top:18px;right:20px;width:min(44%,250px);height:auto;pointer-events:none;overflow:visible}
+.motif *{animation-play-state:paused}
+.principle.is-lit .motif *{animation-play-state:running}
+.m3-tag{font-size:13px;font-weight:700;fill:#b2baae;letter-spacing:1px;opacity:0;animation:m3tag 6s ease-in-out infinite}
+.m3-tag.t1{animation-delay:.2s}.m3-tag.t2{animation-delay:1.6s}.m3-tag.t3{animation-delay:3s;fill:#f0c394}
+@keyframes m3tag{0%,8%{opacity:0;transform:translateY(4px)}16%,80%{opacity:1;transform:none}92%,100%{opacity:0}}
+.m3-pupil,.m3-pupil-shine{animation:m3look 6s ease-in-out infinite}
+@keyframes m3look{0%,6%{transform:translateX(-4px)}14%,22%{transform:translateX(4px)}30%,100%{transform:none}}
+.m3-eye{transform-box:fill-box;transform-origin:center;animation:m3blink 6s ease-in-out infinite}
+@keyframes m3blink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.1)}}
+.m3-smile{stroke-dasharray:1;stroke-dashoffset:1;animation:m3smile 6s ease-in-out infinite}
+@keyframes m3smile{0%,22%{stroke-dashoffset:1}36%,92%{stroke-dashoffset:0}100%{stroke-dashoffset:1}}
+.m3-cheek{opacity:0;animation:m3cheek 6s ease-in-out infinite}
+@keyframes m3cheek{0%,30%{opacity:0}40%,90%{opacity:.75}100%{opacity:0}}
+.m3-flame{transform-box:fill-box;transform-origin:50% 100%;opacity:0;animation:m3flamein 6s ease-out infinite,m3flicker .45s ease-in-out infinite alternate}
+@keyframes m3flamein{0%,44%{opacity:0;scale:.2}56%{opacity:1;scale:1.12}62%,94%{opacity:1;scale:1}100%{opacity:0;scale:.6}}
+@keyframes m3flicker{from{transform:skewX(-4deg) scaleY(.96)}to{transform:skewX(4deg) scaleY(1.05)}}
+.m3-spark{opacity:0;animation:m3spark 1.6s ease-out infinite}
+.m3-spark.s2{animation-delay:.5s}.m3-spark.s3{animation-delay:1s}
+@keyframes m3spark{0%{opacity:0;transform:translateY(8px)}30%{opacity:1}100%{opacity:0;transform:translateY(-22px)}}
+.m5-label{font-size:13px;font-weight:700;letter-spacing:1px;fill:#b2baae;text-anchor:middle}
+.m5-me{transform-box:fill-box;transform-origin:center;animation:m5idle 2.4s ease-in-out infinite}
+@keyframes m5idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.m5-you{animation:m5come 7s cubic-bezier(.45,0,.3,1) infinite}
+@keyframes m5come{0%,6%{transform:translate(212px,46px) scale(.4);opacity:.45}14%,18%{transform:translate(190px,60px) scale(.5);opacity:.6}26%,30%{transform:translate(169px,72px) scale(.61);opacity:.72}38%,42%{transform:translate(148px,84px) scale(.73);opacity:.84}50%,54%{transform:translate(127px,94px) scale(.86);opacity:.94}62%,92%{transform:translate(104px,99px) scale(1);opacity:1}100%{transform:translate(212px,46px) scale(.4);opacity:0}}
+.m5-dot{fill:#3a3548;animation:m5dot 7s step-end infinite}
+.m5-dot.d1{animation-name:m5d1}.m5-dot.d2{animation-name:m5d2}.m5-dot.d3{animation-name:m5d3}.m5-dot.d4{animation-name:m5d4}.m5-dot.d5{animation-name:m5d5}
+@keyframes m5d1{0%,10%{fill:#3a3548}10%,96%{fill:#c9b9f1}}
+@keyframes m5d2{0%,22%{fill:#3a3548}22%,96%{fill:#c9b9f1}}
+@keyframes m5d3{0%,34%{fill:#3a3548}34%,96%{fill:#c9b9f1}}
+@keyframes m5d4{0%,46%{fill:#3a3548}46%,96%{fill:#c9b9f1}}
+@keyframes m5d5{0%,58%{fill:#3a3548}58%,96%{fill:#c9b9f1}}
+.m5-you-body{animation:m5warm 7s ease-in-out infinite}
+@keyframes m5warm{0%,30%{stroke:#6f6a80;fill:#22232a}60%,92%{stroke:#c9b9f1;fill:#2a2338}100%{stroke:#6f6a80;fill:#22232a}}
+.m5-you-smile{opacity:0;animation:m5smile 7s ease-in-out infinite}.m5-you-mouth{animation:m5mouth 7s ease-in-out infinite}
+@keyframes m5smile{0%,52%{opacity:0}60%,92%{opacity:1}100%{opacity:0}}
+@keyframes m5mouth{0%,52%{opacity:1}60%,92%{opacity:0}100%{opacity:1}}
+.m5-heart{transform-box:fill-box;transform-origin:center;opacity:0;animation:m5heart 7s ease-out infinite}
+@keyframes m5heart{0%,62%{opacity:0;transform:scale(.2) translateY(14px)}70%{opacity:1;transform:scale(1.15)}76%,90%{opacity:1;transform:scale(1)}96%,100%{opacity:0;transform:scale(.9) translateY(-8px)}}
+.m5-glow{opacity:.2;animation:m5glow 7s ease-in-out infinite}
+@keyframes m5glow{0%,55%{opacity:.15}70%,90%{opacity:1}100%{opacity:.15}}
+@media(max-width:760px){.principle .motif{width:42%;top:12px;right:10px}}
+@media(prefers-reduced-motion:reduce){.motif *{animation:none!important}.m3-flame,.m3-cheek,.m5-heart{opacity:1}.m3-smile{stroke-dashoffset:0}}
+
+/* 3step speech bubbles: only the lit skill talks */
+.skill-quote{position:absolute;left:50%;top:-4%;z-index:3;width:max-content;max-width:120%;padding:16px 26px;border-radius:26px;background:#f2f3e9;color:#101512;font-size:clamp(24px,2.3vw,40px);line-height:1.25;font-weight:800;letter-spacing:-.04em;text-align:center;word-break:keep-all;box-shadow:0 18px 50px -18px #000c;pointer-events:none;opacity:0;transform:translate(-50%,14px) scale(.7) rotate(-3deg);transition:opacity .25s,transform .25s}
+.skill-quote:after{content:"";position:absolute;left:50%;bottom:-13px;width:26px;height:26px;background:inherit;border-radius:4px;transform:translateX(-50%) rotate(45deg);z-index:-1}
+.skill-quote.q-smile{background:var(--green)}
+.skill-quote.q-fire{background:var(--peach)}
+.skill-quote.q-fire b{display:inline-block;font-size:1.35em;letter-spacing:.06em;color:#7a1f0b}
+.skill-item.is-lit .skill-quote{opacity:1;animation:quote-pop .7s cubic-bezier(.2,1.6,.4,1) both,quote-float 2.6s ease-in-out .8s infinite}
+.skill-item.is-lit .skill-quote.q-fire b{animation:quote-stamp .5s cubic-bezier(.2,1.8,.4,1) .55s both}
+@keyframes quote-pop{0%{opacity:0;transform:translate(-50%,24px) scale(.5) rotate(-6deg)}100%{opacity:1;transform:translate(-50%,0) scale(1) rotate(-2deg)}}
+@keyframes quote-float{0%,100%{transform:translate(-50%,0) scale(1) rotate(-2deg)}50%{transform:translate(-50%,-6px) scale(1.02) rotate(1deg)}}
+@keyframes quote-stamp{0%{opacity:0;transform:scale(2.4) rotate(-12deg)}100%{opacity:1;transform:scale(1) rotate(-4deg)}}
+@media(max-width:760px){.skill-quote{left:auto;right:0;top:-18px;transform:none;font-size:18px;padding:10px 14px;border-radius:16px}.skill-item.is-lit .skill-quote{animation:none;transform:none}}
+@media(prefers-reduced-motion:reduce){.skill-item.is-lit .skill-quote,.skill-item.is-lit .skill-quote b{animation:none;transform:translate(-50%,0)}}
 </style>
 </head>
 <body>
@@ -137,13 +196,13 @@ dialog{background:#192019;color:var(--ink);border:1px solid #5b6758;border-radiu
 </section>
 <section class="slide compare" data-title="3step은 자세, 5step은 대화" data-chapter="INTRO" data-build-count="2" hidden>
 <p class="eyebrow">두 가지 스킬, 하나의 세일즈</p><h2>세일즈의 기본, <em>자세와 대화</em></h2>
-<div class="skill-pair"><button class="principle is-lit" data-build-to="0" aria-pressed="true"><span class="principle-content"><span class="big-number">3<small>step</small></span><span class="skill-type">PASSIVE SKILL</span><span class="skill-heading">고객을 대하는 자세</span><span class="effect">시선·미소·열정으로 신뢰를 쌓고 경계심을 낮춘다.</span></span></button><button class="principle" data-build-to="1" aria-pressed="false"><span class="principle-content"><span class="big-number">5<small>step</small></span><span class="skill-type">ACTIVE SKILL</span><span class="skill-heading">고객과 대화하는 방법</span><span class="effect">문제와 해결책을 설명하고 지금 할 행동을 제안한다.</span></span></button></div>
+<div class="skill-pair"><button class="principle is-lit" data-build-to="0" aria-pressed="true"><span class="principle-content"><span class="big-number">3<small>step</small></span><svg class="motif motif-three" viewBox="0 0 240 150" aria-hidden="true"><defs><radialGradient id="m3glow" cx="50%" cy="55%" r="55%"><stop offset="0" stop-color="#d4ed9b" stop-opacity=".22"/><stop offset="1" stop-color="#d4ed9b" stop-opacity="0"/></radialGradient><linearGradient id="m3flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#f0c394"/><stop offset=".6" stop-color="#f6a35c"/><stop offset="1" stop-color="#ffe7a8"/></linearGradient></defs><circle cx="120" cy="88" r="70" fill="url(#m3glow)"/><g class="m3-flame"><path d="M120 6c9 14 22 22 22 38a22 22 0 0 1-44 0c0-9 5-15 10-20 0 8 4 12 8 12-3-10 0-20 4-30Z" fill="url(#m3flame)"/><path class="m3-core" d="M120 30c5 8 10 12 10 19a10 10 0 0 1-20 0c0-6 5-10 10-19Z" fill="#fff6d6"/></g><circle class="m3-spark s1" cx="100" cy="36" r="2.4" fill="#f0c394"/><circle class="m3-spark s2" cx="141" cy="30" r="2" fill="#ffe7a8"/><circle class="m3-spark s3" cx="128" cy="20" r="1.6" fill="#f0c394"/><circle class="m3-face" cx="120" cy="96" r="44" fill="#1d2a1a" stroke="#d4ed9b" stroke-width="3"/><g class="m3-eyes"><g class="m3-eye"><ellipse cx="103" cy="90" rx="9" ry="10" fill="#f2f3e9"/><circle class="m3-pupil" cx="103" cy="91" r="5" fill="#101512"/><circle class="m3-pupil-shine" cx="105" cy="88.5" r="1.6" fill="#fff"/></g><g class="m3-eye"><ellipse cx="137" cy="90" rx="9" ry="10" fill="#f2f3e9"/><circle class="m3-pupil" cx="137" cy="91" r="5" fill="#101512"/><circle class="m3-pupil-shine" cx="139" cy="88.5" r="1.6" fill="#fff"/></g></g><ellipse class="m3-cheek" cx="94" cy="108" rx="7" ry="4" fill="#f0c394"/><ellipse class="m3-cheek" cx="146" cy="108" rx="7" ry="4" fill="#f0c394"/><path class="m3-smile" d="M104 110q16 16 32 0" fill="none" stroke="#d4ed9b" stroke-width="4" stroke-linecap="round" pathLength="1"/><text class="m3-tag t1" x="34" y="92">시선</text><text class="m3-tag t2" x="34" y="122">미소</text><text class="m3-tag t3" x="170" y="40">열정</text></svg><span class="skill-type">PASSIVE SKILL</span><span class="skill-heading">고객을 대하는 자세</span><span class="effect">시선·미소·열정으로 신뢰를 쌓고 경계심을 낮춘다.</span></span></button><button class="principle" data-build-to="1" aria-pressed="false"><span class="principle-content"><span class="big-number">5<small>step</small></span><svg class="motif motif-five" viewBox="0 0 260 150" aria-hidden="true"><defs><radialGradient id="m5glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#c9b9f1" stop-opacity=".3"/><stop offset="1" stop-color="#c9b9f1" stop-opacity="0"/></radialGradient></defs><path class="m5-road" d="M44 128L112 128L232 52" fill="none" stroke="#c9b9f1" stroke-opacity=".18" stroke-width="2" stroke-dasharray="3 6"/><circle class="m5-glow" cx="80" cy="96" r="56" fill="url(#m5glow)"/><g class="m5-steps"><circle class="m5-dot d1" cx="190" cy="74" r="2.6"/><circle class="m5-dot d2" cx="169" cy="86" r="3"/><circle class="m5-dot d3" cx="148" cy="99" r="3.4"/><circle class="m5-dot d4" cx="127" cy="112" r="3.8"/><circle class="m5-dot d5" cx="108" cy="124" r="4.2"/></g><g class="m5-me"><circle cx="56" cy="96" r="18" fill="#2a2338" stroke="#c9b9f1" stroke-width="3"/><circle cx="56" cy="93" r="2.3" fill="#f2f3e9"/><circle cx="65" cy="93" r="2.3" fill="#f2f3e9"/><path d="M55 101q6 5 12 0" fill="none" stroke="#f2f3e9" stroke-width="2" stroke-linecap="round"/></g><g class="m5-you"><circle class="m5-you-body" r="18" fill="#22232a" stroke="#6f6a80" stroke-width="3"/><circle cx="-8" cy="-3" r="2.3" fill="#f2f3e9"/><circle cx="1" cy="-3" r="2.3" fill="#f2f3e9"/><path class="m5-you-mouth" d="M-9 6h11" fill="none" stroke="#f2f3e9" stroke-width="2" stroke-linecap="round"/><path class="m5-you-smile" d="M-10 5q6 5 12 0" fill="none" stroke="#f2f3e9" stroke-width="2" stroke-linecap="round"/></g><g transform="translate(-50 -10)"><path class="m5-heart" d="M130 66c-6-9-20-6-18 4 1 7 11 12 18 18 7-6 17-11 18-18 2-10-12-13-18-4Z" fill="#c9b9f1"/></g><text class="m5-label" x="206" y="26">마음의 거리</text></svg><span class="skill-type">ACTIVE SKILL</span><span class="skill-heading">고객과 대화하는 방법</span><span class="effect">문제와 해결책을 설명하고 지금 할 행동을 제안한다.</span></span></button></div>
 <p class="aside"><span>3step은 대화 내내. 5step은 필요한 상황에 맞게.</span><span class="build-dots" aria-hidden="true"><i class="on"></i><i></i></span></p>
 <template class="note">첫 화면에서는 3step 쪽만 조명이 켜집니다. 3step은 고객을 대하는 자세입니다. 눈을 마주쳐 신뢰를 쌓고, 밝은 미소로 경계심을 낮추고, 진심 어린 열정으로 호기심을 불러일으킵니다. 다음 버튼을 한 번 누르면 5step으로 조명이 옮겨갑니다. 5step은 고객과 대화하는 방법입니다. 문제를 이해하고 해결책에 관심을 갖고 실제 행동으로 옮기도록 흐름을 연결합니다. 다음 버튼을 다시 누르면 다음 장으로 갑니다.</template>
 </section>
 <section class="slide three-slide" data-title="Eye Contact, Smile, Enthusiasm" data-chapter="3STEP" data-build-count="3" hidden>
 <p class="eyebrow">3STEP / 항상 켜두는 기본값</p><h2>시선. 미소. <em style="color:var(--peach)">열정.</em></h2>
-<div class="skill-scenes"><button class="skill-item is-lit" data-build-to="0" aria-pressed="true"><span class="skill-art"><img src="media/three-skills.png" alt="눈 모양" width="1168" height="880"></span><span class="skill-name">Eye Contact</span><span class="skill-caption">눈을 피하지 않고 마주 보며 <strong>신뢰를 쌓는다.</strong></span></button><button class="skill-item" data-build-to="1" aria-pressed="false"><span class="skill-art"><img src="media/three-skills.png" alt="웃는 얼굴" width="1168" height="880"></span><span class="skill-name">Smile</span><span class="skill-caption">밝고 환한 미소로 <strong>상대의 경계심을 낮춘다.</strong></span></button><button class="skill-item" data-build-to="2" aria-pressed="false"><span class="skill-art"><img src="media/three-skills.png" alt="열정의 불꽃" width="1168" height="880"></span><span class="skill-name">Enthusiasm</span><span class="skill-caption">수상할 만큼 진심인 열정으로 <strong>호기심을 불러일으킨다.</strong></span></button></div>
+<div class="skill-scenes"><button class="skill-item is-lit" data-build-to="0" aria-pressed="true"><span class="skill-art"><img src="media/three-skills.png" alt="눈 모양" width="1168" height="880"></span><span class="skill-quote q-eye" aria-hidden="true">맞아요 ~<br>당신에게 말하고 있어요</span><span class="skill-name">Eye Contact</span><span class="skill-caption">눈을 피하지 않고 마주 보며 <strong>신뢰를 쌓는다.</strong></span></button><button class="skill-item" data-build-to="1" aria-pressed="false"><span class="skill-art"><img src="media/three-skills.png" alt="웃는 얼굴" width="1168" height="880"></span><span class="skill-quote q-smile" aria-hidden="true">ㅎㅎ<br>해치지 않아요~</span><span class="skill-name">Smile</span><span class="skill-caption">밝고 환한 미소로 <strong>상대의 경계심을 낮춘다.</strong></span></button><button class="skill-item" data-build-to="2" aria-pressed="false"><span class="skill-art"><img src="media/three-skills.png" alt="열정의 불꽃" width="1168" height="880"></span><span class="skill-quote q-fire" aria-hidden="true">시켜서 하는일 절대 아님<br><b>진.심.임</b></span><span class="skill-name">Enthusiasm</span><span class="skill-caption">수상할 만큼 진심인 열정으로 <strong>호기심을 불러일으킨다.</strong></span></button></div>
 <p class="aside"><span>하나씩 느끼고, 대화 내내 함께.</span><span class="build-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span></p>
 <template class="note">다음 버튼을 누를 때마다 Eye Contact → Smile → Enthusiasm 순서로 하나씩 밝아지고 조금 커집니다. 아이컨택의 목적은 신뢰입니다. 눈을 피하지 않고 상대와 눈을 마주 보며 내 말의 진정성을 전하고 신뢰를 쌓습니다. 미소의 목적은 경계심을 낮추는 것입니다. 밝고 환한 미소로 상대가 편안하게 이야기를 들을 수 있는 분위기를 만듭니다. 열정의 목적은 호기심입니다. 수상할 만큼 진심을 다하는 태도로 ‘왜 저렇게까지 진심이지?’라는 궁금증을 불러일으킵니다. 신뢰를 쌓고, 경계심을 낮추고, 호기심을 만드는 것. 세 가지를 하는 이유를 기억하며 대화 내내 유지합니다.</template>
 </section>
@@ -320,5 +379,6 @@ const [initial,phase]=route();show(initial,false,phase);renderTimer();renderTran
 })();
 
 </script>
-</body>
+<script>/* restart the 3step / 5step motif from the beginning whenever its card lights up */
+(function(){document.querySelectorAll('.principle').forEach(function(card){var lit=card.classList.contains('is-lit');new MutationObserver(function(){var now=card.classList.contains('is-lit');if(now&&!lit){var m=card.querySelector('.motif');if(m&&m.getAnimations)m.getAnimations({subtree:true}).forEach(function(a){a.currentTime=0;});}lit=now;}).observe(card,{attributes:true,attributeFilter:['class']});});})();</script></body>
 </html>
