@@ -1,5 +1,5 @@
-import { createSheet, createRow, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261009-transcription1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261009-transcription1';
+import { createSheet, fillHourlyTimes, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261018-hours1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261018-hours1';
 import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-sync1';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -20,10 +20,16 @@ function caseFields(row, i) {
   return `<details class="sales-cases" ${cases.length ? 'open' : ''}><summary>세일즈 케이스 <span>${cases.length ? `${cases.length}건` : '후원자 · 특이사항'}</span></summary><p class="case-guide">위 시간별 합계에 포함된 케이스예요. 케이스 숫자는 합계에 다시 더하지 않아요. 후원자를 체크하면 이 케이스의 획과 특이사항만 빨간색으로 표시돼요.</p>${cases.map((item, j) => `<div class="sales-case ${item.donor ? 'is-donor' : ''}" data-case="${i}:${j}"><div class="case-heading"><span>CASE ${j + 1}</span><label class="donor-toggle"><input type="checkbox" data-field="rows.${i}.donorCases.${j}.donor" aria-label="${i + 1}행 ${j + 1}번 케이스 후원자" ${item.donor ? 'checked' : ''}>후원자</label><button type="button" class="icon-button" data-remove-case="${i}:${j}" aria-label="${i + 1}행 ${j + 1}번 케이스 삭제">×</button></div><div class="row-numbers">${CASE_METRICS.map(key => numberField(`rows.${i}.donorCases.${j}.counts.${key}`, LABELS[key], item.counts[key], `${i + 1}행 ${j + 1}번 케이스 ${LABELS[key]}`)).join('')}</div><label class="field case-note"><span data-case-note-label>${item.donor ? '후원자 특이사항' : '특이사항'}</span><textarea data-field="rows.${i}.donorCases.${j}.note" maxlength="12000" rows="3" aria-label="${i + 1}행 ${j + 1}번 케이스 특이사항" placeholder="시리얼, 기본정보, 오브젝션 핸들링 사유">${esc(item.note)}</textarea></label></div>`).join('')}<button type="button" class="button add-button" data-add-case="${i}" ${cases.length >= 100 ? 'disabled' : ''}>＋ 케이스 추가</button></details>`;
 }
 function renderRows() {
-  $('#time-rows').innerHTML = sheet.rows.map((row, i) => `<div class="time-row" data-row-index="${i}"><div class="row-header"><span class="row-index">${String(i + 1).padStart(2, '0')}</span><div class="time-fields"><label>시작<input type="time" data-field="rows.${i}.time" value="${row.time}" aria-label="${i + 1}행 시작 시간"></label><label>종료 · 선택<input type="time" data-field="rows.${i}.endTime" value="${row.endTime}" aria-label="${i + 1}행 종료 시간"></label></div><button type="button" class="icon-button remove-row" data-remove-row="${i}" aria-label="${i + 1}행 삭제" ${sheet.rows.length === 1 ? 'disabled' : ''}>−</button></div><div class="row-numbers">${METRICS.slice(0, 4).map(key => numberField(`rows.${i}.${key}`, LABELS[key], row[key], `${i + 1}행 ${LABELS[key]}`)).join('')}</div><label class="rehash-field">Rehash <span>추가 기록</span><input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-field="rows.${i}.rehash" value="${row.rehash ?? ''}" aria-label="${i + 1}행 Rehash" placeholder="—"></label></div>`).join('');
+  $('#time-rows').innerHTML = sheet.rows.map((row, i) => `<div class="time-row" data-row-index="${i}"><div class="row-header"><span class="row-index">${String(i + 1).padStart(2, '0')}</span><div class="time-fields"><label>${i === 0 ? '첫 시작 · 아래 자동' : '시작'}<input type="time" data-field="rows.${i}.time" value="${row.time}" aria-label="${i + 1}행 시작 시간"></label><label>종료 · 선택<input type="time" data-field="rows.${i}.endTime" value="${row.endTime}" aria-label="${i + 1}행 종료 시간"></label></div><button type="button" class="icon-button remove-row" data-remove-row="${i}" aria-label="${i + 1}행 삭제" ${sheet.rows.length === 1 ? 'disabled' : ''}>−</button></div><p class="time-duration">실제 필드 <output data-field-minutes="${i}">${fieldMinutes(row) === null ? '—' : `${fieldMinutes(row)}분`}</output></p><div class="row-numbers">${METRICS.slice(0, 4).map(key => numberField(`rows.${i}.${key}`, LABELS[key], row[key], `${i + 1}행 ${LABELS[key]}`)).join('')}</div><label class="rehash-field">Rehash <span>추가 기록</span><input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-field="rows.${i}.rehash" value="${row.rehash ?? ''}" aria-label="${i + 1}행 Rehash" placeholder="—"></label></div>`).join('');
   $$('.time-row').forEach((element, i) => element.insertAdjacentHTML('beforeend', caseFields(sheet.rows[i], i)));
   $('#add-row').disabled = sheet.rows.length >= MAX_ROWS;
   $('#add-row').textContent = sheet.rows.length >= MAX_ROWS ? `시간 기록 최대 ${MAX_ROWS}개` : '＋ 시간 추가';
+}
+function updateTimeFields() {
+  sheet.rows.forEach((row, index) => {
+    for (const key of ['time', 'endTime']) $(`[data-field="rows.${index}.${key}"]`).value = row[key];
+    const minutes = fieldMinutes(row); $(`[data-field-minutes="${index}"]`).textContent = minutes === null ? '—' : `${minutes}분`;
+  });
 }
 function setupFields() {
   $('#process-goals').innerHTML = METRICS.slice(0, 4).map(key => `<label class="field">${LABELS[key]}<input data-field="processGoals.${key}" maxlength="300" placeholder="예: 5–7"></label>`).join('');
@@ -275,6 +281,8 @@ $('#sheet-form').addEventListener('input', event => {
     invalid.set(path, message); input.setCustomValidity(message); input.setAttribute('aria-invalid', 'true'); error(message); changed(); return;
   }
   invalid.delete(path); input.setCustomValidity(''); input.removeAttribute('aria-invalid'); set(path, isNumeric(path) ? value === '' ? (path.includes('.counts.') ? 0 : null) : Number(value) : value);
+  if (path === 'rows.0.time' && value) fillHourlyTimes(sheet.rows, value);
+  if (/^rows\.\d+\.(time|endTime)$/.test(path)) updateTimeFields();
   if (path === 'objections') { if (sheet.donorObjections) sheet.donorObjections = sheet.donorObjections.filter(note => parseObjectionBlocks(sheet.objections).includes(note)); renderObjectionFlags(); }
   if (!invalid.size) error(); changed();
 });
@@ -293,7 +301,7 @@ $('#time-rows').addEventListener('click', async event => {
   if ((row.time || row.endTime || row.donorCases?.length || METRICS.some(key => row[key] !== null)) && !await confirmAction('시간 기록을 삭제할까요?', `${i + 1}번째 시간 기록과 숫자, 세일즈 케이스가 삭제돼요.`, '시간 기록 삭제')) return;
   sheet.rows.splice(i, 1); renderRows(); changed();
 });
-$('#add-row').addEventListener('click', () => { if (!checkValid() || sheet.rows.length >= MAX_ROWS) return; sheet.rows.push(createRow()); renderRows(); changed(); $(`[data-field="rows.${sheet.rows.length - 1}.time"]`).focus(); });
+$('#add-row').addEventListener('click', () => { if (!checkValid() || sheet.rows.length >= MAX_ROWS) return; sheet.rows.push(createNextHourlyRow(sheet.rows.at(-1))); renderRows(); changed(); $(`[data-field="rows.${sheet.rows.length - 1}.time"]`).focus(); });
 $$('[data-view]').forEach(button => button.addEventListener('click', () => view(button.dataset.view)));
 $('#save-sheet').addEventListener('click', saveCurrent); $('#export-image').addEventListener('click', exportImage);
 $('#open-archive').addEventListener('click', openArchive); $('#new-sheet').addEventListener('click', newSheet); $('#archive-new').addEventListener('click', newSheet);

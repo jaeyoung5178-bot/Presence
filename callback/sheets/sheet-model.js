@@ -50,6 +50,30 @@ export function validatePhotoSource(source) {
 export function makeId() { return globalThis.crypto?.randomUUID?.() || `sheet-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
 export function localDate(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
 export function createRow() { return { id: makeId(), time: '', endTime: '', ...Object.fromEntries(METRICS.map(key => [key, null])) }; }
+function clockMinutes(value) {
+  if (typeof value !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) return null;
+  const [hour, minute] = value.split(':').map(Number); return hour * 60 + minute;
+}
+function clockTime(minutes) { const dayMinute = ((minutes % 1440) + 1440) % 1440; return `${String(Math.floor(dayMinute / 60)).padStart(2, '0')}:${String(dayMinute % 60).padStart(2, '0')}`; }
+export function fieldMinutes(row) {
+  const start = clockMinutes(row.time), end = clockMinutes(row.endTime);
+  // Missing historical end times remain unknown; midnight wraps to the next day.
+  return start === null || end === null ? null : (end - start + 1440) % 1440;
+}
+export function fillHourlyTimes(rows, firstTime) {
+  const start = clockMinutes(firstTime); if (start === null) return false;
+  const nextHour = Math.floor(start / 60) * 60 + 60;
+  rows.slice(0, MAX_ROWS).forEach((row, index) => {
+    row.time = index === 0 ? firstTime : clockTime(nextHour + (index - 1) * 60);
+    row.endTime = clockTime(nextHour + index * 60);
+  });
+  return true;
+}
+export function createNextHourlyRow(previous) {
+  const row = createRow(), start = clockMinutes(previous?.time);
+  if (start !== null) { const nextHour = Math.floor(start / 60) * 60 + 60; row.time = clockTime(nextHour); row.endTime = clockTime(nextHour + 60); }
+  return row;
+}
 export function createSheet(now = new Date()) {
   return { version: 1, id: makeId(), date: localDate(now), meta: { name: '', location: '', team: '', weather: '', theme: '' }, processGoals: { contact: '', stop: '', presentation: '', close: '' }, goals: Object.fromEntries(METRICS.map(key => [key, null])), rows: Array.from({ length: 10 }, createRow), objections: '', review: { loa: { good: '', bad: '' }, pitch: { good: '', bad: '' }, attitude: { good: '', bad: '' } }, createdAt: now.toISOString(), updatedAt: now.toISOString() };
 }

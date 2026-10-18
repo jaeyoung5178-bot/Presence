@@ -1,4 +1,4 @@
-import { METRICS, getTotals, hasValues, parseObjectionBlocks } from './sheet-model.js?v=20261009-transcription1';
+import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks } from './sheet-model.js?v=20261018-hours1';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';
@@ -122,7 +122,7 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
     const h = p.rowHeights[index]; x = MARGIN;
     p.cols.slice(0, 5).forEach((w, i) => { box(ctx, x, y, w, h); if (i) drawTally(ctx, row[METRICS[i - 1]], x, y, w, h, index * 5 + i, tallyInk(row, METRICS[i - 1])); else {
       const baseline = y + Math.min(29, h / 2 + 8);
-      pen(ctx, 22); ctx.fillText(row.time, x + 10, baseline); if (row.endTime) ctx.fillText(row.endTime, x + 91, baseline);
+      pen(ctx, 22); ctx.fillText(row.time, x + 10, baseline); const minutes = fieldMinutes(row); if (minutes !== null) ctx.fillText(String(minutes), x + 96, baseline);
       print(ctx, 27, 750); centered(ctx, '/', x + 81, baseline + 1);
     } x += w; }); y += h;
   });
