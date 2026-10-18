@@ -1,4 +1,4 @@
-import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks } from './sheet-model.js?v=20261018-hours1';
+import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks, getPaperNotes } from './sheet-model.js?v=20261018-paper1';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';
@@ -74,17 +74,12 @@ function plan(ctx, sheet) {
   const goalHeight = Math.max(34, ...processLines.map(lines => lines.length * 23 + 10));
   const rowHeights = sheet.rows.map(row => Math.max(43, ...METRICS.slice(0, 4).map((key, i) => tallyHeight(row[key], cols[i + 1]))));
   pen(ctx, 23);
-  const notes = parseObjectionBlocks(sheet.objections).map(block => ({ lines: wrap(ctx, block, cols[5] - 24), color: sheet.donorObjections?.includes(block) ? DONOR_INK : INK }));
-  let caseNumber = 0;
-  sheet.rows.forEach(row => (row.donorCases || []).forEach(item => {
-    caseNumber++;
-    if (item.note) notes.push({ lines: wrap(ctx, `${caseNumber <= 20 ? String.fromCodePoint(0x245f + caseNumber) : `${caseNumber}.`} ${item.note}`, cols[5] - 20), color: item.donor ? DONOR_INK : INK });
-  }));
+  const notes = getPaperNotes(sheet).map(note => ({ ...note, lines: wrap(ctx, note.text, cols[5] - 24), color: note.donor ? DONOR_INK : INK }));
   print(ctx, 12);
   const exampleLines = PRINTED_EXAMPLES.flatMap(text => wrap(ctx, text, cols[5] - 18));
   const exampleHeight = exampleLines.length * 21 + 15;
   const rowTotal = rowHeights.reduce((a, b) => a + b, 0);
-  const tableBodyHeight = Math.max(rowTotal, exampleHeight + notes.reduce((sum, note) => sum + note.lines.length * 23 + 7, 0) + 16);
+  const tableBodyHeight = Math.max(rowTotal, exampleHeight + notes.reduce((sum, note) => sum + Math.max(43, note.lines.length * 23 + 7), 0) + 16);
   if (tableBodyHeight > rowTotal) rowHeights[rowHeights.length - 1] += tableBodyHeight - rowTotal;
   const summaryY = tableY + 32 + goalHeight + tableBodyHeight + 23;
   const reviewY = summaryY + 102;
@@ -116,11 +111,12 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
   const notesX = MARGIN + p.cols.slice(0, 5).reduce((a, b) => a + b, 0);
   box(ctx, notesX, y, p.cols[5], p.tableBodyHeight);
   print(ctx, 12); p.exampleLines.forEach((text, index) => ctx.fillText(text, notesX + 9, y + 25 + index * 21));
+  const cells = [], notes = [];
   let noteY = y + p.exampleHeight + 19;
-  p.notes.forEach(note => { handLines(ctx, note.lines, notesX + 10, noteY, 23, 23, note.color); noteY += note.lines.length * 23 + 7; });
+  p.notes.forEach(note => { const height = Math.max(43, note.lines.length * 23 + 7); handLines(ctx, note.lines, notesX + 10, noteY, 23, 23, note.color); notes.push({ ...note, x: notesX, y: noteY - 24, width: p.cols[5], height }); noteY += height; });
   sheet.rows.forEach((row, index) => {
     const h = p.rowHeights[index]; x = MARGIN;
-    p.cols.slice(0, 5).forEach((w, i) => { box(ctx, x, y, w, h); if (i) drawTally(ctx, row[METRICS[i - 1]], x, y, w, h, index * 5 + i, tallyInk(row, METRICS[i - 1])); else {
+    p.cols.slice(0, 5).forEach((w, i) => { box(ctx, x, y, w, h); if (i) { cells.push({ rowId: row.id, rowIndex: index, metric: METRICS[i - 1], x, y, width: w, height: h }); drawTally(ctx, row[METRICS[i - 1]], x, y, w, h, index * 5 + i, tallyInk(row, METRICS[i - 1])); } else {
       const baseline = y + Math.min(29, h / 2 + 8);
       pen(ctx, 22); ctx.fillText(row.time, x + 10, baseline); const minutes = fieldMinutes(row); if (minutes !== null) ctx.fillText(String(minutes), x + 96, baseline);
       print(ctx, 27, 750); centered(ctx, '/', x + 81, baseline + 1);
@@ -146,7 +142,7 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
       handLines(ctx, review[key], x + 13, top + (key === 'good' ? 53 : 47), 25, 24);
     }
   });
-  return { width: canvas.width, height: canvas.height, logicalHeight: p.height };
+  return { width: canvas.width, height: canvas.height, logicalWidth: WIDTH, logicalHeight: p.height, cells, notes };
 }
 export async function exportSheetPNG(sheet) {
   const canvas = document.createElement('canvas');

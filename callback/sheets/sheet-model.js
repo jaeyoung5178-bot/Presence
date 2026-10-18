@@ -93,11 +93,71 @@ export function getReviewReading(sheet, category, kind) {
 export function parseObjectionBlocks(text) {
   const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n'), numbered = line => /^\s*(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))/.test(line);
   if (!lines.some(numbered)) return lines.join('\n').split(/\n\s*\n/).map(block => block.trim()).filter(Boolean);
-  const blocks = []; let current = [];
-  for (const line of lines) { if (numbered(line) && current.length) { const block = current.join('\n').trim(); if (block) blocks.push(block); current = []; } current.push(line); }
+  const blocks = []; let current = [], hasNumberedBlock = false;
+  for (const line of lines) {
+    if (numbered(line)) {
+      const block = current.join('\n').trim();
+      if (block) blocks.push(...(hasNumberedBlock ? [block] : block.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean)));
+      current = []; hasNumberedBlock = true;
+    }
+    current.push(line);
+  }
   const last = current.join('\n').trim(); if (last) blocks.push(last); return blocks;
 }
 function noteIdentity(text) { return text.replace(/^\s*(?:\d{1,3}[.)]\s*|[①-⑳]\s*|\(\d{1,3}\)\s*)/, '').replace(/\s+/g, ' ').trim(); }
+function noteNumber(block) {
+  const match = block.match(/^\s*(?:(\d{1,3})[.)](?!\d)|\((\d{1,3})\)|([①-⑳]))/);
+  return match ? Number(match[1] || match[2] || match[3].codePointAt(0) - 0x245f) : null;
+}
+export function getPaperNotes(sheet) {
+  const blocks = parseObjectionBlocks(sheet.objections), used = new Set(blocks.map(noteNumber).filter(Number.isInteger));
+  const notes = blocks.map((block, blockIndex) => ({ kind: 'objection', blockIndex, block, text: block, donor: !!sheet.donorObjections?.includes(block) }));
+  let number = 1;
+  sheet.rows.forEach(row => (row.donorCases || []).forEach(item => {
+    if (!item.note) return;
+    while (used.has(number)) number++;
+    used.add(number);
+    notes.push({ kind: 'case', rowId: row.id, caseId: item.id, text: `${number}. ${item.note}`, donor: item.donor }); number++;
+  }));
+  return notes;
+}
+export function incrementPaperMetric(sheet, rowId, metric) {
+  const row = sheet.rows.find(item => item.id === rowId);
+  if (!row || !CASE_METRICS.includes(metric)) throw new Error('이 시간의 숫자 칸을 찾지 못했어요.');
+  const previous = row[metric], next = (previous ?? 0) + 1;
+  if (next > 999) throw new Error('한 칸에는 999회까지 기록할 수 있어요.');
+  const beforeObjections = sheet.objections;
+  let note = null, afterObjections = beforeObjections;
+  if (metric === 'close') {
+    const notes = getPaperNotes(sheet);
+    if (notes.length >= 500) throw new Error('메모가 500개예요. 기존 메모를 정리한 뒤 다시 기록해 주세요.');
+    const number = Math.max(0, ...notes.map(item => noteNumber(item.text) || 0), notes.length) + 1;
+    if (number > 999) throw new Error('메모 번호는 999번까지 기록할 수 있어요.');
+    note = `${number}.`; afterObjections += `${beforeObjections.trim() ? '\n\n' : ''}${note}`;
+  }
+  const candidate = { ...sheet, objections: afterObjections, rows: sheet.rows.map(item => item === row ? { ...item, [metric]: next } : item) };
+  const result = validateSheet(candidate); if (!result.valid) throw new Error(result.errors[0].message);
+  row[metric] = next; sheet.objections = afterObjections;
+  return { sheetId: sheet.id, rowId, metric, previous, next, note, beforeObjections, afterObjections, beforeFlags: sheet.donorObjections === undefined ? undefined : [...sheet.donorObjections] };
+}
+export function replaceObjectionNote(sheet, block, body, donor, blockIndex) {
+  const blocks = parseObjectionBlocks(sheet.objections), index = blockIndex ?? blocks.indexOf(block);
+  if (index < 0 || blocks[index] !== block) throw new Error('이 메모가 바뀌었어요. 다시 열어 주세요.');
+  // A note editor changes one numbered block; embedded new headings must not create extra blocks.
+  const prefix = block.match(/^(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))\s*/)?.[0]?.trim() || '';
+  const replacement = `${prefix}${prefix && body.trim() ? ' ' : ''}${body}`.trim();
+  if (!replacement) throw new Error('메모 내용을 입력해 주세요.');
+  if (parseObjectionBlocks(replacement).length !== 1) throw new Error('여러 번호는 각각의 메모에서 적어 주세요.');
+  blocks[index] = replacement;
+  const objections = blocks.join('\n\n'), keepOriginalFlag = blocks.some((note, i) => i !== index && note === block);
+  const flags = new Set((sheet.donorObjections || []).filter(note => note !== block || keepOriginalFlag));
+  if (donor) flags.add(replacement);
+  const result = validateSheet({ ...sheet, objections, donorObjections: [...flags] });
+  if (!result.valid) throw new Error(result.errors[0].message);
+  sheet.objections = objections;
+  if (sheet.donorObjections !== undefined || donor) sheet.donorObjections = [...flags];
+  return replacement;
+}
 export function getDonorSummary(sheet) {
   const cases = sheet.rows.flatMap(row => row.donorCases || []);
   const donorCases = cases.filter(item => item.donor), caseNotes = new Set(donorCases.map(item => noteIdentity(item.note)).filter(Boolean));

@@ -1,5 +1,6 @@
-import { createSheet, fillHourlyTimes, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261018-hours1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261018-hours1';
+import { createSheet, fillHourlyTimes, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261018-paper1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261018-paper1';
+import { createPaperInteraction } from './paper-interaction.js?v=20261018-paper1';
 import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-sync1';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -8,6 +9,7 @@ let sheet = createSheet(), records = [], owner = getStorageStatus().namespace, d
 let backupURLs = [];
 let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', selectedDate = '';
 const invalid = new Map();
+let paperEditor;
 function error(message = '') { $('#error-banner').textContent = message; $('#error-banner').hidden = !message; }
 function toast(message) { clearTimeout(toastTimer); $('#toast').textContent = message; $('#toast').hidden = false; toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 4500); }
 function status(message) { $('#save-status').textContent = message; $('#footer-status').textContent = message; }
@@ -37,7 +39,7 @@ function setupFields() {
   $('#review-fields').innerHTML = [['loa', 'Number'], ['pitch', 'Pitch(Skill)'], ['attitude', 'Attitude(Mental)']].map(([key, label]) => `<div class="review-group"><h3>${label}</h3><div class="field-grid"><label class="field">잘한 점 (+)<textarea rows="4" maxlength="12000" data-field="review.${key}.good" aria-label="${label} 잘한 점" placeholder="오늘 잘한 것, 이어 가고 싶은 것"></textarea></label><label class="field">개선할 점 (−)<textarea rows="4" maxlength="12000" data-field="review.${key}.bad" aria-label="${label} 개선할 점" placeholder="내일 다르게 해 보고 싶은 것"></textarea></label></div></div>`).join('');
 }
 function hydrate() {
-  invalid.clear(); renderRows();
+  invalid.clear(); paperEditor?.reset(); renderRows();
   $$('[data-field]').forEach(input => { if (input.type === 'checkbox') input.checked = !!get(input.dataset.field); else input.value = get(input.dataset.field) ?? ''; input.removeAttribute('aria-invalid'); input.setCustomValidity(''); });
   renderObjectionFlags(); updateTotals(); updateSourceBanner(); schedulePreview();
 }
@@ -110,7 +112,17 @@ async function editRecord(record) {
   return true;
 }
 function updateTotals() { const totals = getTotals(sheet); METRICS.forEach(key => { $(`#total-${key}`).textContent = hasValues(sheet, key) ? totals[key].toLocaleString() : '—'; }); }
-function schedulePreview() { clearTimeout(renderTimer); renderTimer = setTimeout(async () => { try { await renderSheet($('#paper-preview'), structuredClone(sheet)); $('#preview-loading').hidden = true; } catch (e) { $('#preview-loading').hidden = false; $('#preview-loading').textContent = e.message; } }, 90); }
+function schedulePreview() {
+  clearTimeout(renderTimer); const revision = editVersion;
+  renderTimer = setTimeout(async () => {
+    const snapshot = structuredClone(sheet);
+    try {
+      const geometry = await renderSheet($('#paper-preview'), snapshot);
+      if (snapshot.id !== sheet.id || revision !== editVersion) return;
+      paperEditor?.setGeometry(snapshot.id, geometry); $('#preview-loading').hidden = true;
+    } catch (e) { if (snapshot.id === sheet.id && revision === editVersion) { paperEditor?.reset(); $('#preview-loading').hidden = false; $('#preview-loading').textContent = e.message; } }
+  }, 90);
+}
 async function persistDraft() {
   if (!ready || invalid.size || !validateSheet(sheet).valid) return;
   const thisOwner = owner, revision = editVersion, snapshot = structuredClone(sheet);
@@ -257,7 +269,7 @@ async function importBackup(file) {
   finally { $('#import-file').value = ''; }
 }
 async function loadNamespace() {
-  const epoch = ++loadEpoch; ready = false; clearTimeout(draftTimer); owner = getStorageStatus().namespace; invalid.clear(); dirty = false; archiveMonth = ''; archiveMonthChosen = false; selectedDate = '';
+  const epoch = ++loadEpoch; ready = false; paperEditor?.reset(); clearTimeout(draftTimer); owner = getStorageStatus().namespace; invalid.clear(); dirty = false; archiveMonth = ''; archiveMonthChosen = false; selectedDate = '';
   try {
     const draft = await loadDraft(); if (epoch !== loadEpoch) return;
     sheet = draft ? normalizeSheet(draft) : createSheet(); editVersion++; persistedDraftVersion = editVersion; hydrate(); await refreshRecords(); if (epoch !== loadEpoch) return;
@@ -271,9 +283,10 @@ function storageStatusChanged(value = getStorageStatus()) {
 }
 
 setupFields();
+paperEditor = createPaperInteraction({ getSheet: () => sheet, isReady: () => ready, checkValid: () => { if (invalid.size || !validateSheet(sheet).valid) view('edit'); return checkValid(); }, onChange: () => { renderRows(); $('#objections').value = sheet.objections; renderObjectionFlags(); changed(); }, onError: message => { error(message); toast(message); } });
 $('#sheet-form').addEventListener('submit', event => event.preventDefault());
 $('#sheet-form').addEventListener('input', event => {
-  const input = event.target, path = input.dataset.field; if (!path) return;
+  const input = event.target, path = input.dataset.field; if (!path) return; paperEditor?.clearUndo();
   if (input.type === 'checkbox') { set(path, input.checked); const card = input.closest('.sales-case'); if (card) { card.classList.toggle('is-donor', input.checked); card.querySelector('[data-case-note-label]').textContent = input.checked ? '후원자 특이사항' : '특이사항'; } changed(); return; }
   const value = input.value;
   if (isNumeric(path) && value !== '' && (!/^\d+$/.test(value) || Number(value) > 999)) {
@@ -287,13 +300,14 @@ $('#sheet-form').addEventListener('input', event => {
   if (!invalid.size) error(); changed();
 });
 $('#objection-donor-list').addEventListener('change', event => {
-  const input = event.target.closest('[data-objection-donor]'); if (!input) return;
+  const input = event.target.closest('[data-objection-donor]'); if (!input) return; paperEditor?.clearUndo();
   const block = parseObjectionBlocks(sheet.objections)[Number(input.dataset.objectionDonor)]; if (!block) return;
   const flags = new Set(sheet.donorObjections || []); if (input.checked) flags.add(block); else flags.delete(block);
   sheet.donorObjections = [...flags]; changed();
 });
 $('#time-rows').addEventListener('click', async event => {
   const addCase = event.target.closest('[data-add-case]'), removeCase = event.target.closest('[data-remove-case]');
+  if (addCase || removeCase || event.target.closest('[data-remove-row]')) paperEditor?.clearUndo();
   if (addCase) { if (!checkValid()) return; const i = Number(addCase.dataset.addCase), row = sheet.rows[i]; if ((row.donorCases?.length || 0) >= 100) return; (row.donorCases ||= []).push(createDonorCase(row)); renderRows(); changed(); $(`[data-field="rows.${i}.donorCases.${row.donorCases.length - 1}.donor"]`).focus(); return; }
   if (removeCase) { if (invalid.size) { checkValid(); return; } const [i, j] = removeCase.dataset.removeCase.split(':').map(Number), item = sheet.rows[i].donorCases[j]; if ((item.note || item.donor) && !await confirmAction('이 케이스를 삭제할까요?', '케이스의 색상 표시와 특이사항이 삭제돼요. 시간별 합계는 그대로예요.', '케이스 삭제')) return; sheet.rows[i].donorCases.splice(j, 1); renderRows(); changed(); return; }
   const button = event.target.closest('[data-remove-row]'); if (!button || !checkValid()) return;
@@ -301,7 +315,7 @@ $('#time-rows').addEventListener('click', async event => {
   if ((row.time || row.endTime || row.donorCases?.length || METRICS.some(key => row[key] !== null)) && !await confirmAction('시간 기록을 삭제할까요?', `${i + 1}번째 시간 기록과 숫자, 세일즈 케이스가 삭제돼요.`, '시간 기록 삭제')) return;
   sheet.rows.splice(i, 1); renderRows(); changed();
 });
-$('#add-row').addEventListener('click', () => { if (!checkValid() || sheet.rows.length >= MAX_ROWS) return; sheet.rows.push(createNextHourlyRow(sheet.rows.at(-1))); renderRows(); changed(); $(`[data-field="rows.${sheet.rows.length - 1}.time"]`).focus(); });
+$('#add-row').addEventListener('click', () => { paperEditor?.clearUndo(); if (!checkValid() || sheet.rows.length >= MAX_ROWS) return; sheet.rows.push(createNextHourlyRow(sheet.rows.at(-1))); renderRows(); changed(); $(`[data-field="rows.${sheet.rows.length - 1}.time"]`).focus(); });
 $$('[data-view]').forEach(button => button.addEventListener('click', () => view(button.dataset.view)));
 $('#save-sheet').addEventListener('click', saveCurrent); $('#export-image').addEventListener('click', exportImage);
 $('#open-archive').addEventListener('click', openArchive); $('#new-sheet').addEventListener('click', newSheet); $('#archive-new').addEventListener('click', newSheet);
