@@ -1,5 +1,5 @@
 import { createSheet, fillHourlyTimes, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261018-case1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261018-case1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261018-firstminutes1';
 import { createPaperInteraction } from './paper-interaction.js?v=20261018-case1';
 import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-sync1';
 
