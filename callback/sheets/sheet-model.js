@@ -93,15 +93,8 @@ export function getReviewReading(sheet, category, kind) {
 export function parseObjectionBlocks(text) {
   const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n'), numbered = line => /^\s*(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))/.test(line);
   if (!lines.some(numbered)) return lines.join('\n').split(/\n\s*\n/).map(block => block.trim()).filter(Boolean);
-  const blocks = []; let current = [], hasNumberedBlock = false;
-  for (const line of lines) {
-    if (numbered(line)) {
-      const block = current.join('\n').trim();
-      if (block) blocks.push(...(hasNumberedBlock ? [block] : block.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean)));
-      current = []; hasNumberedBlock = true;
-    }
-    current.push(line);
-  }
+  const blocks = []; let current = [];
+  for (const line of lines) { if (numbered(line) && current.length) { const block = current.join('\n').trim(); if (block) blocks.push(block); current = []; } current.push(line); }
   const last = current.join('\n').trim(); if (last) blocks.push(last); return blocks;
 }
 function noteIdentity(text) { return text.replace(/^\s*(?:\d{1,3}[.)]\s*|[①-⑳]\s*|\(\d{1,3}\)\s*)/, '').replace(/\s+/g, ' ').trim(); }
@@ -126,19 +119,29 @@ export function incrementPaperMetric(sheet, rowId, metric) {
   if (!row || !CASE_METRICS.includes(metric)) throw new Error('이 시간의 숫자 칸을 찾지 못했어요.');
   const previous = row[metric], next = (previous ?? 0) + 1;
   if (next > 999) throw new Error('한 칸에는 999회까지 기록할 수 있어요.');
-  const beforeObjections = sheet.objections;
-  let note = null, afterObjections = beforeObjections;
+  const beforeObjections = sheet.objections, beforeFlags = sheet.donorObjections === undefined ? undefined : [...sheet.donorObjections];
+  let note = null, afterObjections = beforeObjections, afterFlags = beforeFlags;
   if (metric === 'close') {
     const notes = getPaperNotes(sheet);
     if (notes.length >= 500) throw new Error('메모가 500개예요. 기존 메모를 정리한 뒤 다시 기록해 주세요.');
-    const number = Math.max(0, ...notes.map(item => noteNumber(item.text) || 0), notes.length) + 1;
+    const blocks = parseObjectionBlocks(beforeObjections), used = new Set(notes.filter(item => item.kind === 'case').map(item => noteNumber(item.text)));
+    // Keep the legacy parser contract: number each existing plain block only when
+    // the first numbered entry is explicitly created, preserving its body and flag.
+    if (blocks.length && !blocks.some(block => noteNumber(block) !== null)) {
+      let nextNumber = 1;
+      const promoted = blocks.map(block => { while (used.has(nextNumber)) nextNumber++; const numbered = `${nextNumber++}. ${block}`; used.add(nextNumber - 1); return { block, numbered }; });
+      afterObjections = promoted.map(item => item.numbered).join('\n\n');
+      if (beforeFlags !== undefined) afterFlags = promoted.filter(item => beforeFlags.includes(item.block)).map(item => item.numbered);
+    }
+    const numberedNotes = getPaperNotes({ ...sheet, objections: afterObjections });
+    const number = Math.max(0, ...numberedNotes.map(item => noteNumber(item.text) || 0), numberedNotes.length) + 1;
     if (number > 999) throw new Error('메모 번호는 999번까지 기록할 수 있어요.');
-    note = `${number}.`; afterObjections += `${beforeObjections.trim() ? '\n\n' : ''}${note}`;
+    note = `${number}.`; afterObjections += `${afterObjections.trim() ? '\n\n' : ''}${note}`;
   }
-  const candidate = { ...sheet, objections: afterObjections, rows: sheet.rows.map(item => item === row ? { ...item, [metric]: next } : item) };
+  const candidate = { ...sheet, objections: afterObjections, ...(afterFlags === undefined ? {} : { donorObjections: afterFlags }), rows: sheet.rows.map(item => item === row ? { ...item, [metric]: next } : item) };
   const result = validateSheet(candidate); if (!result.valid) throw new Error(result.errors[0].message);
-  row[metric] = next; sheet.objections = afterObjections;
-  return { sheetId: sheet.id, rowId, metric, previous, next, note, beforeObjections, afterObjections, beforeFlags: sheet.donorObjections === undefined ? undefined : [...sheet.donorObjections] };
+  row[metric] = next; sheet.objections = afterObjections; if (afterFlags !== undefined) sheet.donorObjections = afterFlags;
+  return { sheetId: sheet.id, rowId, metric, previous, next, note, beforeObjections, afterObjections, beforeFlags };
 }
 export function replaceObjectionNote(sheet, block, body, donor, blockIndex) {
   const blocks = parseObjectionBlocks(sheet.objections), index = blockIndex ?? blocks.indexOf(block);
