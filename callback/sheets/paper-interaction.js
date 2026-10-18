@@ -1,4 +1,4 @@
-import { LABELS, incrementPaperMetric, parseObjectionBlocks, replaceObjectionNote, validateSheet } from './sheet-model.js?v=20261018-paper2';
+import { LABELS, incrementPaperMetric, parseObjectionBlocks, replaceObjectionNote, validateSheet } from './sheet-model.js?v=20261018-case1';
 
 export function createPaperInteraction({ getSheet, isReady, checkValid, onChange, onError }) {
   const $ = selector => document.querySelector(selector), layer = $('#paper-hit-layer'), scroll = $('#paper-scroll'), toggle = $('#paper-edit-toggle'), undoButton = $('#paper-undo'), dialog = $('#paper-note-dialog');
@@ -6,7 +6,7 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
   let expanded = false, geometrySheetId = null, undo = null, editing = null;
   const buttons = new Map();
   function clearUndo() { undo = null; undoButton.disabled = true; }
-  function reset() { clearUndo(); geometrySheetId = null; buttons.clear(); layer.replaceChildren(); editing = null; if (dialog.open) dialog.close(); $('#paper-note-body').value = ''; $('#paper-note-donor').checked = false; $('#paper-note-error').textContent = ''; $('#paper-note-error').hidden = true; $('#paper-announcement').textContent = ''; }
+  function reset() { clearUndo(); geometrySheetId = null; buttons.clear(); layer.replaceChildren(); editing = null; if (dialog.open) dialog.close(); $('#paper-note-body').value = ''; $('#paper-note-donor').checked = false; $('#paper-note-existing').textContent = ''; $('#paper-note-existing').hidden = true; $('#paper-note-error').textContent = ''; $('#paper-note-error').hidden = true; $('#paper-announcement').textContent = ''; }
   function updateMode() {
     scroll.classList.toggle('is-editing', expanded); layer.hidden = !expanded && !desktop.matches;
     toggle.setAttribute('aria-pressed', String(expanded)); toggle.textContent = expanded ? '전체 종이 보기' : '확대해서 기록';
@@ -16,7 +16,7 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
   function setGeometry(sheetId, value) {
     if (getSheet().id !== sheetId) return;
     geometrySheetId = sheetId; const active = new Set();
-    const targets = [...value.cells.map(cell => ({ ...cell, kind: 'metric', key: `metric:${cell.rowId}:${cell.metric}` })), ...value.notes.map((note, index) => ({ ...note, key: note.kind === 'case' ? `case:${note.rowId}:${note.caseId}` : `objection:${note.blockIndex}` }))];
+    const targets = [...value.cells.map(cell => ({ ...cell, kind: 'metric', key: `metric:${cell.rowId}:${cell.metric}` })), ...value.notes.map((note, index) => ({ ...note, key: note.kind === 'case' ? `case:${note.rowId}:${note.caseId}:${note.slot ?? "extra"}` : note.virtual ? `virtual:${note.slot}` : `objection:${note.blockIndex}` }))];
     targets.forEach(target => {
       active.add(target.key); let button = buttons.get(target.key);
       if (!button) { button = document.createElement('button'); button.type = 'button'; button.className = 'paper-hit'; button.dataset.paperKey = target.key; layer.append(button); buttons.set(target.key, button); }
@@ -62,9 +62,10 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
       const item = sheet.rows.find(row => row.id === target.rowId)?.donorCases?.find(item => item.id === target.caseId);
       if (!item) return; body = item.note; donor = item.donor;
     } else {
-      block = parseObjectionBlocks(sheet.objections)[target.blockIndex]; if (block !== target.block) return;
+      block = target.virtual ? target.block : parseObjectionBlocks(sheet.objections)[target.blockIndex]; if (block !== target.block) return;
       body = block.replace(/^(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))\s*/, ''); donor = !!sheet.donorObjections?.includes(block);
     }
+    $('#paper-note-existing').textContent = target.commonText ? `함께 기록된 내용 (그대로 보존돼요)\n${target.commonText}` : ''; $('#paper-note-existing').hidden = !target.commonText;
     editing = { ...target, block }; $('#paper-note-title').textContent = target.kind === 'case' ? '세일즈 케이스 메모' : `${block.match(/^(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))/)?.[0] || ''} 오브젝션 메모`.trim();
     $('#paper-note-body').value = body; $('#paper-note-donor').checked = donor; $('#paper-note-error').hidden = true;
     dialog.showModal(); $('#paper-note-body').focus();
@@ -80,7 +81,12 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
         const result = validateSheet(sheet); if (!result.valid) { Object.assign(item, before); throw new Error(result.errors[0].message); }
         clearUndo();
       } else {
-        const replacement = replaceObjectionNote(sheet, editing.block, body, donor, editing.blockIndex);
+        let replacement;
+        if (editing.virtual) {
+          const candidate = { ...sheet, objections: sheet.objections + (sheet.objections.trim() ? '\n\n' : '') + editing.block };
+          replacement = replaceObjectionNote(candidate, editing.block, body, donor, parseObjectionBlocks(candidate.objections).length - 1);
+          sheet.objections = candidate.objections; if (candidate.donorObjections !== undefined) sheet.donorObjections = candidate.donorObjections;
+        } else replacement = replaceObjectionNote(sheet, editing.block, body, donor, editing.blockIndex);
         if (undo?.note === editing.block) { undo.note = replacement; undo.afterObjections = sheet.objections; } else clearUndo();
       }
       dialog.close(); onChange();

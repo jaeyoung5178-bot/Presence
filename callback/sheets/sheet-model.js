@@ -103,16 +103,27 @@ function noteNumber(block) {
   return match ? Number(match[1] || match[2] || match[3].codePointAt(0) - 0x245f) : null;
 }
 export function getPaperNotes(sheet) {
-  const blocks = parseObjectionBlocks(sheet.objections), used = new Set(blocks.map(noteNumber).filter(Number.isInteger));
-  const notes = blocks.map((block, blockIndex) => ({ kind: 'objection', blockIndex, block, text: block, donor: !!sheet.donorObjections?.includes(block) }));
-  let number = 1;
-  sheet.rows.forEach(row => (row.donorCases || []).forEach(item => {
-    if (!item.note) return;
-    while (used.has(number)) number++;
-    used.add(number);
-    notes.push({ kind: 'case', rowId: row.id, caseId: item.id, text: `${number}. ${item.note}`, donor: item.donor }); number++;
-  }));
-  return notes;
+  const common = parseObjectionBlocks(sheet.objections).map((block, blockIndex) => ({ kind: 'objection', blockIndex, block, text: block, slot: noteNumber(block), donor: !!sheet.donorObjections?.includes(block) }));
+  const linked = new Map(), extras = []; let offset = 0;
+  sheet.rows.forEach(row => {
+    let ordinal = 0;
+    (row.donorCases || []).forEach(item => {
+      const count = item.counts.close;
+      if (count > 0) for (let i = 0; i < count; i++) { const slot = offset + ++ordinal; linked.set(slot, { kind: 'case', rowId: row.id, caseId: item.id, slot, text: `${slot}. ${item.note}`, donor: item.donor, caseDonor: item.donor }); }
+      else if (item.note) extras.push({ kind: 'case', rowId: row.id, caseId: item.id, text: item.note, donor: item.donor });
+    });
+    offset += row.close ?? 0;
+  });
+  const slots = new Set([...Array.from({ length: Math.min(offset, 500) }, (_, i) => i + 1), ...common.map(note => note.slot).filter(Number.isInteger), ...linked.keys()]);
+  const notes = [...slots].sort((a, b) => a - b).map(slot => {
+    const existing = common.filter(note => note.slot === slot), item = linked.get(slot);
+    if (item) {
+      const bodies = existing.map(note => noteIdentity(note.text)).filter(body => body && body !== noteIdentity(item.text));
+      return { ...item, commonText: bodies.join('\n'), text: item.text + (bodies.length ? `\n${bodies.join('\n')}` : ''), donor: item.donor || existing.some(note => note.donor) };
+    }
+    return existing.length ? existing : { kind: 'objection', slot, virtual: true, block: `${slot}.`, text: `${slot}.`, donor: false };
+  });
+  return [...notes.flat(), ...common.filter(note => note.slot === null), ...extras];
 }
 export function incrementPaperMetric(sheet, rowId, metric) {
   const row = sheet.rows.find(item => item.id === rowId);
@@ -164,7 +175,8 @@ export function replaceObjectionNote(sheet, block, body, donor, blockIndex) {
 export function getDonorSummary(sheet) {
   const cases = sheet.rows.flatMap(row => row.donorCases || []);
   const donorCases = cases.filter(item => item.donor), caseNotes = new Set(donorCases.map(item => noteIdentity(item.note)).filter(Boolean));
-  const flags = (sheet.donorObjections || []).filter(note => parseObjectionBlocks(sheet.objections).includes(note));
+  const donorSlots = donorCases.length && sheet.donorObjections?.length ? new Set(getPaperNotes(sheet).filter(note => note.kind === 'case' && note.caseDonor).map(note => note.slot)) : new Set();
+  const flags = (sheet.donorObjections || []).filter(note => parseObjectionBlocks(sheet.objections).includes(note) && !donorSlots.has(noteNumber(note)));
   if (cases.length || Array.isArray(sheet.donorObjections)) return { count: donorCases.length + new Set(flags.map(noteIdentity).filter(note => !caseNotes.has(note))).size, basis: 'cases' };
   if (hasValues(sheet, 'rehash')) return { count: getTotals(sheet).rehash, basis: 'rehash' };
   if (sheet.source?.type === 'photo' && sheet.source.transcription) return Number.isInteger(sheet.source.transcription.totals.rehash) ? { count: sheet.source.transcription.totals.rehash, basis: 'transcription' } : { count: null, basis: 'unknown' };
