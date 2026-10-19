@@ -1,0 +1,1 @@
+window.PHOTOS=["assets/field-00.jpg", "assets/field-01.jpg", "assets/field-02.jpg", "assets/field-03.jpg", "assets/field-04.jpg", "assets/field-05.jpg", "assets/field-06.jpg", "assets/field-07.jpg", "assets/field-08.jpg", "assets/field-09.jpg", "assets/field-10.jpg", "assets/field-11.jpg", "assets/field-12.jpg", "assets/field-13.jpg"];
