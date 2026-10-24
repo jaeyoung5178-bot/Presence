@@ -1,0 +1,87 @@
+{
+  "$managerUid": {
+    ".read": "auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() == $managerUid && root.child('users').child($managerUid).child('status').val() == 'active' && ($managerUid == 'admin' || root.child('users').child($managerUid).child('role').val().matches(/^(TL|AOP|OP|O|OWNER)$/))",
+    ".write": "auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() == $managerUid && root.child('users').child($managerUid).child('status').val() == 'active' && ($managerUid == 'admin' || root.child('users').child($managerUid).child('role').val().matches(/^(TL|AOP|OP|O|OWNER)$/)) && newData.exists()",
+    ".validate": "newData.hasChildren(['version','revision','updatedAt','updatedBy'])",
+    "version": {
+      ".validate": "newData.val() == 1"
+    },
+    "revision": {
+      ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 1 && newData.val() == (data.exists() ? data.val() + 1 : 1)"
+    },
+    "updatedAt": {
+      ".validate": "newData.isNumber() && newData.val() <= now + 10000 && newData.val() >= now - 300000"
+    },
+    "updatedBy": {
+      ".validate": "newData.val() == $managerUid"
+    },
+    "records": {
+      "$icId": {
+        ".validate": "newData.hasChildren(['id','name','team','archived','archiveReason','focus','days','updatedAt']) && newData.child('id').val() == $icId",
+        "id": {
+          ".validate": "newData.isString() && newData.val().length <= 160"
+        },
+        "name": {
+          ".validate": "newData.isString() && newData.val().length <= 120"
+        },
+        "team": {
+          ".validate": "newData.isString() && newData.val().length <= 120"
+        },
+        "archived": {
+          ".validate": "newData.isBoolean()"
+        },
+        "archiveReason": {
+          ".validate": "newData.isString() && (newData.val() == '' || newData.val().matches(/^(manual|departed|role_changed)$/))"
+        },
+        "archiveOverride": {
+          ".validate": "newData.val() == '' || newData.val() == 'restored'"
+        },
+        "focus": {
+          ".validate": "newData.isString() && newData.val().length <= 4000"
+        },
+        "days": {
+          "day1": {
+            ".validate": "newData.isString() && newData.val().length <= 4000"
+          },
+          "day2": {
+            ".validate": "newData.isString() && newData.val().length <= 4000"
+          },
+          "day3": {
+            ".validate": "newData.isString() && newData.val().length <= 4000"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "scores": {
+          "$score": {
+            ".validate": "$score.matches(/^(relate|booth|pitch|objection|agreement)$/) && newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
+          }
+        },
+        "first5": {
+          "$index": {
+            ".validate": "$index.matches(/^[0-4]$/) && newData.hasChild('date')",
+            "date": {
+              ".validate": "newData.isString() && newData.val().length <= 10"
+            },
+            "sales": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "$other": {
+      ".validate": false
+    }
+  }
+}

@@ -28,6 +28,7 @@
   menu.setAttribute('aria-label','프레젠스 바로가기');menu.inert=true;
   const items=Array.from(menu.children),sections=[['daily','기록과 실행'],['learn','배움과 아카이브'],['connect','우리의 연결'],['manage','공간 관리']];
   const specs={RECORD:['daily',0,'개인 세일즈 기록','나의 필드와 성장'],FIELD:['daily',1,'콜백싯','오늘의 실행을 기록해요'],SITES:['daily',4,'사이트 운영','필드와 활동 장소'],SCORE:['daily',5,'스코어방 결과','함께 만든 성과'],MEMO:['daily',9,'메모와 액션플랜','생각을 다음 행동으로'],EDU:['learn',2,'에듀케이션','우리의 배움 라이브러리'],RECAP:['learn',3,'팀 리캡','지나온 배움 돌아보기'],LIBRARY:['learn',10,'재영의 서재','읽고 나누는 생각'],WORK:['connect',6,'프레젠스 워크북','함께 자라는 공간'],BRAND:['connect',7,'맛도사','일상 속 맛있는 발견'],NOTION:['connect',8,'인천 HC50','팀 노션 바로가기'],PHOTO:['manage',11,'사진 올리기','새로운 순간을 필름에'],TEAM:['manage',12,'팀원 사진 공간','함께 나누는 순간'],LOCK:['manage',13,'관리자 잠금','공간을 안전하게']};
+  specs.IC=['daily',4,'IC Manager','우리 팀 IC 성장과 코칭'];
   const menuContent=document.createDocumentFragment();
   const menuHead=document.createElement('div');menuHead.className='hub-menu-head';menuHead.innerHTML='<div><p>YOUR NEXT CHAPTER</p><h2>어디로 가볼까요?</h2></div><button class="hub-menu-close" type="button" aria-label="둘러보기 메뉴 닫기">'+icon('close')+'</button>';menuContent.append(menuHead);
   const grids={};sections.forEach(([key,title])=>{const section=document.createElement('section');section.className='hub-menu-section';section.dataset.group=key;section.innerHTML='<h3>'+title+'</h3><div class="hub-menu-grid"></div>';grids[key]=section.lastElementChild;menuContent.append(section);});
