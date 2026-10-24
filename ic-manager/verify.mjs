@@ -17,6 +17,12 @@ vm.runInContext(js+'\n globalThis.test={allowed,promoted,currentRoster,departed,
 context.test.set({user:{uid:'leader',name:'팀리더',role:'TL',status:'active'},source:state});
 assert.deepEqual(Array.from(context.test.get().people,p=>p.name).sort(),['김테스트','중간리더'].sort(),'No-account descendant remains an IC; promoted LR excluded');
 const evidence=model.icEvidenceFrom(state,context.test.get().people);
+const modern={users:{owner:{uid:'spoofed-owner',name:'대표',role:'AOP',status:'active'},tl:{name:'리더',role:'TL',status:'active'},one:{uid:'spoofed-member',name:'가람',role:'IC',status:'active'},two:{name:'나래',role:'IC',status:'active'},three:{name:'다온',role:'IC',status:'active'},waiting:{name:'승인대기',role:'IC',status:'pending'},bot:{name:'테스트봇',role:'IC',status:'active',test:true}},dossier:{리더:{upline:'대표'},가람:{upline:'리더'},나래:{upline:'리더'},다온:{upline:'리더'},승인대기:{upline:'리더'},테스트봇:{upline:'리더'}},allowedMembers:[],extraMembers:[],removedMembers:[],departedMembers:[],memberInfo:{},founderName:'대표'};
+context.test.set({user:{uid:'owner',name:'대표',role:'AOP',status:'active'},source:modern});
+assert.deepEqual(Array.from(context.test.get().people,p=>p.id).sort(),['one','three','two'],'Active registered three absent old signup allow-list remain current; DB keys override embedded UID');
+modern.allowedMembers.push('승인대기');context.test.set({user:{uid:'owner',name:'대표',role:'AOP',status:'active'},source:modern});assert.equal(context.test.get().people.length,4,'Pending account only enters explicit signup fallback');
+modern.users.two.role='LR';context.test.set({user:{uid:'owner',name:'대표',role:'AOP',status:'active'},source:modern});assert.equal(context.test.get().people.some(p=>p.id==='two'),false,'Promoted active registered role excluded');
+context.test.set({user:{uid:'leader',name:'팀리더',role:'TL',status:'active'},source:state});
 assert.equal(evidence.a.firstFive.length,2);assert.equal(evidence.a.firstFive[0].sales,0,'Confirmed zero remains zero');
 const record=context.test.empty({id:'a',name:'김테스트',team:'Presence North'});record.first5=[{date:'2026-10-02',sales:0},{date:'2026-10-03',sales:4},{date:'',sales:null},{date:'',sales:null},{date:'',sales:null}];record.scores.relate=0;
 context.test.set({user:{uid:'leader',name:'팀리더',role:'TL'},source:state,records:{a:record}});
@@ -50,7 +56,7 @@ assert.equal(context.test.get().records.a.name,'김테스트','Source identity w
 assert.equal(context.test.get().records.a.team,'','Source team wins stale draft');
 assert.equal(context.test.get().records.a.archived,false,'Pending approval is not departure; old false archive repairs');
 assert.match(context.test.detail(),/계정 승인 대기/);
-local.clear();state.users.a.status='retired';await context.test.load();assert.equal(context.test.get().records.a.archived,true,'Explicit retired target archives');
+local.clear();remoteDocument={version:1,revision:1,updatedAt:Date.now(),updatedBy:'leader',records:{a:context.test.get().records.a}};state.users.a.status='retired';await context.test.load();assert.equal(context.test.get().records.a.archived,true,'Previously saved retired target archives');
 state.users.a.status='active';state.allowedMembers.pop();delete state.users.b;delete state.dossier.추가멤버;context.confirm=()=>false;
 context.test.set({user:fixtureUser,source:state,records:{a:record}});
 const html=await fs.readFile(new URL('index.html',base),'utf8');
