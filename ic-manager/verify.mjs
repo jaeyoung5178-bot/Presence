@@ -52,4 +52,17 @@ for(const [width,height] of [[390,844],[1024,768],[1440,900]]){
  assert.deepEqual(tiny,[],`${width}px touch targets`);assert.deepEqual(errors,[]);
  await page.screenshot({path:fileURLToPath(new URL(`ic-manager-${width}.png`,out)),fullPage:true});await page.close();
 }
+const interactive=await browser.newPage({viewport:{width:390,height:844}});
+await interactive.setContent('<div id="app"></div><div id="toast" hidden></div>');
+await interactive.addScriptTag({content:modelSource.replaceAll('export ','')+'\n'+js+'\n user='+JSON.stringify(fixtureUser)+'; source='+JSON.stringify(state)+'; people=currentRoster(source); records={a:'+JSON.stringify(record)+'};selected="a";render();'});
+await interactive.evaluate(()=>{sdk=Promise.resolve({auth:{currentUser:{uid:'auth'}},db:{},d:{ref:(_,p)=>p,get:async p=>({val:()=>p.startsWith('authSessions')?{userUid:'leader'}:{role:'TL',status:'active'}}),onValue:(_,resolve)=>{queueMicrotask(()=>resolve({val:()=>null}));return ()=>{};},runTransaction:async(_,fn)=>({committed:!!fn(null)})}});});
+await interactive.locator('[data-score="relate"]').fill('8');
+await interactive.locator('#save').click();
+await interactive.waitForFunction(()=>revision===1&&!dirty);
+assert.equal(await interactive.locator('[data-score="relate"]').inputValue(),'8','Blur to Save click commits first time');
+await interactive.locator('[data-field-sales="0"]').fill('2');await interactive.locator('#save').click();
+assert.equal(await interactive.locator('.stats strong').nth(1).innerText(),'6','Sales blur updates summary without losing click');
+await interactive.locator('[data-clear="relate"]').focus();assert.equal(await interactive.locator('[data-clear="relate"]').evaluate(el=>el===document.activeElement),true);
+await interactive.locator('[data-clear="relate"]').press('Enter');assert.equal(await interactive.locator('[data-score="relate"]').inputValue(),'');
+await interactive.close();
 await browser.close();console.log('PASS: source graph, promoted role exclusion, no-account IC, zero vs null, confirmed-day average, 390/1024/1440 geometry and screenshots.');
