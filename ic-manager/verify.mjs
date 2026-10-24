@@ -39,6 +39,19 @@ context.test.bind();element('#archive').onclick();assert.equal(record.archived,t
 record.archived=true;record.archiveReason='departed';context.test.bind();element('#archive').onclick();assert.equal(record.archiveOverride,'restored');assert.equal(record.archived,false);
 remoteDocument={version:1,revision:1,updatedAt:Date.now(),updatedBy:'leader',records:{a:record}};
 remoteData.removedMembers=['김테스트'];await context.test.load();assert.equal(context.test.get().records.a.archived,false,'Restored departed survives source reconciliation');remoteData.removedMembers=[];
+state.users.a.status='pending';state.users.b={name:'추가멤버',role:'IC',status:'pending'};state.allowedMembers.push('추가멤버');state.dossier.추가멤버={upline:'팀리더',teamName:'Current Team'};
+remoteDocument=null;context.confirm=()=>true;
+const stale=context.test.empty({id:'a',name:'오래된이름',team:'Stale Team'});stale.focus='보존할 코칭';stale.archived=true;stale.archiveReason='departed';
+local.set('presence.icManager.draft.leader',JSON.stringify({records:{a:stale},revision:0,at:Date.now()}));
+await context.test.load();
+assert.equal(Object.keys(context.test.get().records).length,3,'Partial one-member draft merges into current three-member source');
+assert.equal(context.test.get().records.a.focus,'보존할 코칭','Draft coaching preserved');
+assert.equal(context.test.get().records.a.name,'김테스트','Source identity wins stale draft');
+assert.equal(context.test.get().records.a.team,'','Source team wins stale draft');
+assert.equal(context.test.get().records.a.archived,false,'Pending approval is not departure; old false archive repairs');
+assert.match(context.test.detail(),/계정 승인 대기/);
+local.clear();state.users.a.status='retired';await context.test.load();assert.equal(context.test.get().records.a.archived,true,'Explicit retired target archives');
+state.users.a.status='active';state.allowedMembers.pop();delete state.users.b;delete state.dossier.추가멤버;context.confirm=()=>false;
 context.test.set({user:fixtureUser,source:state,records:{a:record}});
 const html=await fs.readFile(new URL('index.html',base),'utf8');
 const style=html.match(/<style>([\s\S]*?)<\/style>/)[1];
@@ -53,9 +66,10 @@ for(const [width,height] of [[390,844],[1024,768],[1440,900]]){
  await page.screenshot({path:fileURLToPath(new URL(`ic-manager-${width}.png`,out)),fullPage:true});await page.close();
 }
 const interactive=await browser.newPage({viewport:{width:390,height:844}});
-await interactive.setContent('<div id="app"></div><div id="toast" hidden></div>');
+await interactive.setContent(`<style>${style}</style><div id="app"></div><div id="toast" hidden></div>`);
 await interactive.addScriptTag({content:modelSource.replaceAll('export ','')+'\n'+js+'\n user='+JSON.stringify(fixtureUser)+'; source='+JSON.stringify(state)+'; people=currentRoster(source); records={a:'+JSON.stringify(record)+'};selected="a";render();'});
 await interactive.evaluate(()=>{sdk=Promise.resolve({auth:{currentUser:{uid:'auth'}},db:{},d:{ref:(_,p)=>p,get:async p=>({val:()=>p.startsWith('authSessions')?{userUid:'leader'}:{role:'TL',status:'active'}}),onValue:(_,resolve)=>{queueMicrotask(()=>resolve({val:()=>null}));return ()=>{};},runTransaction:async(_,fn)=>({committed:!!fn(null)})}});});
+assert.equal(await interactive.locator('.hub-link').getAttribute('href'),'../index.html');assert.equal(await interactive.locator('.hub-link').evaluate(el=>el.getBoundingClientRect().height>=44),true);
 await interactive.locator('[data-score="relate"]').fill('8');
 await interactive.locator('#save').click();
 await interactive.waitForFunction(()=>revision===1&&!dirty);
