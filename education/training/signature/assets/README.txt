@@ -15,5 +15,7 @@ Higgsfield seedance_2_5 영상 생성 시도: Requires plus plan or higher 응�
   "days-diagram": "80995103-93c7-4df4-a3bc-96810142400d",
   "five-diagram": "c8fb73a2-0ac2-4d83-a4b2-68267aefaa3f",
   "weeks-diagram": "dcf2396e-97cf-497b-a12a-8e83ec97ed44",
-  "callback-diagram": "c5a47c59-c204-4a05-b968-becc394a820e"
+  "callback-diagram": "c5a47c59-c204-4a05-b968-becc394a820e",
+  "sandwich": "623f67b2-6ea5-4a15-a0bf-86c956c4b4f9",
+  "sbi": "a32def0a-1f0f-48ae-93e9-42e6179c5b09"
 }

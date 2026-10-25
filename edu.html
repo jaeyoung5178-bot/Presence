@@ -396,7 +396,9 @@
     return changed;
   }
 
-  function ensureSignatureTraining(d){
+  function ensureCompactTraining(d){if(!d||!Array.isArray(d.items)||!Array.isArray(d.folders))return false;if(d.folders.indexOf("트레이닝")<0)d.folders.push("트레이닝");if(d.items.some(function(i){return i.id==="presence-training-compact";}))return false;d.items.unshift({id:"presence-training-compact",tag:"20 SLIDES",title:"딱 한 걸음 앞서 · 20장 핵심 버전",sub:"반복을 줄이고 핵심 트레이닝을 모은 비교용 발표 · 임재영 AOP",href:"education/training/signature/compact/index.html",target:"_blank",folder:"트레이닝"});return true;}
+
+function ensureSignatureTraining(d){
  if(!d||!Array.isArray(d.folders)||!Array.isArray(d.items))return false;
  var changed=false;if(d.folders.indexOf("트레이닝")<0){d.folders.splice(Math.min(1,d.folders.length),0,"트레이닝");changed=true;}
  if(!d.items.some(function(it){return it.id==="presence-signature-training"||it.href==="education/training/signature/index.html";})){d.items.unshift({id:"presence-signature-training",tag:"SIGNATURE",title:"딱 한 걸음 앞서 · 신입 IC 트레이닝",sub:"임재영 AOP · 동기와 관찰부터 6주 자립까지, 시그니처 강의",href:"education/training/signature/index.html",target:"_blank",folder:"트레이닝"});changed=true;}return changed;
@@ -535,6 +537,7 @@
       localChanged=ensureCharityTraining(data)||localChanged;
       localChanged=ensureOxfamNewHireGuide(data)||localChanged;
       localChanged=ensureWarHistoryTodayGuide(data)||localChanged;
+      localChanged=ensureCompactTraining(data)||localChanged;
       localChanged=ensureSignatureTraining(data)||localChanged;
       localChanged=ensureFieldRookieGuide(data)||localChanged;
       localChanged=ensureTripOperationGuide(data)||localChanged;
@@ -557,6 +560,7 @@
         remoteChanged=ensureCharityTraining(data)||remoteChanged;
         remoteChanged=ensureOxfamNewHireGuide(data)||remoteChanged;
         remoteChanged=ensureWarHistoryTodayGuide(data)||remoteChanged;
+        remoteChanged=ensureCompactTraining(data)||remoteChanged;
         remoteChanged=ensureSignatureTraining(data)||remoteChanged;
         remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
         remoteChanged=ensureTripOperationGuide(data)||remoteChanged;
@@ -568,12 +572,12 @@
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
     });
   }
   function save(silent){
