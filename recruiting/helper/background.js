@@ -1,6 +1,7 @@
 const api=chrome,jobStore=chrome.storage.session||chrome.storage.local,hubURL='https://hub.presence.co.kr/recruiting/index.html';
 const isHub=url=>{try{const u=new URL(url);return (u.origin==='https://hub.presence.co.kr'||u.origin==='http://127.0.0.1:4189')&&u.pathname.startsWith('/recruiting/');}catch{return false;}};
 const normalize=url=>{try{const u=new URL(url);if(u.protocol!=='https:'||!['albamon.com','www.albamon.com'].includes(u.hostname)||!/^\/human-resources\/detail\/\d+\/?$/.test(u.pathname))return '';return u.origin+u.pathname;}catch{return '';}};
+const isAlbamon=url=>{try{const u=new URL(url);return u.protocol==='https:'&&['albamon.com','www.albamon.com'].includes(u.hostname);}catch{return false;}};
 const jobKey=id=>'crewJob_'+id;
 async function jobs(){return jobStore.get(null);}
 async function findJob(tabId){const all=await jobs();return Object.values(all).find(j=>j?.albamonTab===tabId&&Date.now()-j.at<300000);}
@@ -22,7 +23,7 @@ api.runtime.onMessage.addListener((message,sender,reply)=>{(async()=>{
   for(const [key,prior]of Object.entries(await jobs()))if(prior?.albamonTab===sender.tab.id)await jobStore.remove(key);
   await jobStore.set({[jobKey(id)]:job});return {ok:true,job:{id,url:source}};
  }
- if(message?.type==='CREW_OPEN_HUB'&&normalize(sender.tab?.url)){const tabs=await api.tabs.query({url:'https://hub.presence.co.kr/recruiting/*'});if(tabs.length)await api.tabs.update(tabs[0].id,{active:true});else await api.tabs.create({url:hubURL,active:true});return {ok:true};}
+ if(message?.type==='CREW_OPEN_HUB'&&isAlbamon(sender.tab?.url)){const tabs=await api.tabs.query({url:'https://hub.presence.co.kr/recruiting/*'});if(tabs.length)await api.tabs.update(tabs[0].id,{active:true});else await api.tabs.create({url:hubURL,active:true});return {ok:true};}
  return {ok:false,error:'지원하지 않는 요청입니다.'};
 })().then(reply).catch(e=>reply({ok:false,error:e.message||'브라우저 연결 실패'}));return true;});
 api.tabs.onRemoved.addListener(async id=>{for(const [key,job]of Object.entries(await jobs()))if(job?.albamonTab===id||job?.hubTab===id||Date.now()-job?.at>300000)await jobStore.remove(key);});

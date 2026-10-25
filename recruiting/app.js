@@ -1,5 +1,5 @@
 import {createSheetSync} from './sheet-sync.js?v=20261025-5';
-import {createImportTools} from './import-tools.js?v=20261026-monster1';
+import {createImportTools} from './import-tools.js?v=20261026-monster2';
 import {TODAY,uid,LABELS,DEFAULTS,range,metrics,events,dateLabel,timeLabel,sms,kakao,formURL,fingerprint,parseResume,sourceKey,validate,transition,sheetRows,validDate} from './model.js?v=20261025-5';
 import {auth,createCloud} from './store.js?v=20261025-1';
 const $=s=>document.querySelector(s),app=$('#app'),editor=$('#editor'),utility=$('#utility');
