@@ -44,8 +44,8 @@ function doPost(e){
       let showed=remoteShow;
       if(offset<0)showed=candidateShow;
       else if(prior&&remoteShow===prior.showed&&candidateShow!==prior.showed)showed=candidateShow;
-      const next=['알바몬',date_(c.bookedDate),date_(c.interviewDate),showed?'O':'',c.interviewTime,'NM','OUT',clean_(c.name),clean_(c.age),c.gender,clean_(c.mobile),user.name,'PR',clean_(c.note==='인터뷰 로그에서 등록'?'':c.note)];
-      const inputHash=hash_([c.name,c.age,c.gender,c.mobile,c.interviewDate,c.interviewTime,c.bookedDate,c.note]);
+      const next=[clean_(c.channel),date_(c.bookedDate),date_(c.interviewDate),showed?'O':'',c.interviewTime,'NM','OUT',clean_(c.name),clean_(c.age),c.gender,clean_(c.mobile),user.name,'PR',clean_(c.note==='인터뷰 로그에서 등록'?'':c.note)];
+      const inputHash=hash_([c.channel,c.name,c.age,c.gender,c.mobile,c.interviewDate,c.interviewTime,c.bookedDate,c.note]);
       const shouldWrite=offset<0||!mapped||mapped.inputHash!==inputHash||current[3]!==next[3];
       // After adoption, external edits other than O are preserved until the corresponding page record changes.
       if(shouldWrite){

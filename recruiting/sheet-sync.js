@@ -12,7 +12,7 @@ export function createSheetSync({all,settings,save,onStatus,canPull,demo}) {
     busy=true;status('인터뷰 시트 확인 중…');
     try{
       const f=await firebase(),token=await f.auth.currentUser.getIdToken();
-      const candidates=scheduled().map(c=>({id:c.id,name:c.name,age:c.age,gender:c.gender,mobile:c.mobile,recruiter:c.recruiter,interviewDate:c.interviewDate,interviewTime:c.interviewTime,bookedDate:c.bookedDate||'',note:c.note||'',status:c.status,revision:c.revision,sheetState:c.sheetState||null}));
+      const candidates=scheduled().map(c=>({id:c.id,channel:c.channel||(c.url?.includes('albamon.com')?'알바몬':''),name:c.name,age:c.age,gender:c.gender,mobile:c.mobile,recruiter:c.recruiter,interviewDate:c.interviewDate,interviewTime:c.interviewTime,bookedDate:c.bookedDate||'',note:c.note||'',status:c.status,revision:c.revision,sheetState:c.sheetState||null}));
       const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token,candidates}),signal:AbortSignal.timeout(25000),credentials:'omit',referrerPolicy:'no-referrer'});
       if(!response.ok)throw Error('시트 연결 응답을 확인하지 못했어요.');
       const result=await response.json();if(!result.ok)throw Error(result.error||'시트 연결에 실패했어요.');
