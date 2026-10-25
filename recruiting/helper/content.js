@@ -1,7 +1,7 @@
 (()=>{
  'use strict';if(document.getElementById('presence-camp-helper'))return;
  const ui=globalThis.PresenceMonster(),{host,$}=ui;
- let enabled=false,job=null,last='',timer,pending=false,busy=false;
+ let enabled=false,job=null,last='',timer,pendingUntil=0,busy=false;
  const read=()=>globalThis.PresenceAlbamonExtract.extract(document,location.origin+location.pathname);
  function runtime(message){return new Promise((resolve,reject)=>{try{chrome.runtime.sendMessage(message,result=>{if(chrome.runtime.lastError)reject(Error('도우미와 이력서 페이지를 새로고침해 주세요.'));else if(!result?.ok)reject(Error(result?.error||'캠프 연결을 확인하고 다시 눌러 주세요.'));else resolve(result);});}catch{reject(Error('웨일 확장앱과 이력서 페이지를 새로고침해 주세요.'));}});}
  async function send(manual=false){
@@ -17,7 +17,7 @@
  async function find(){try{const r=await runtime({type:'CREW_JOB'});if(r.job){job=r.job;enabled=true;ui.toggle(enabled);send();}}catch{}}
  $('manual').onclick=()=>send(true);$('toggle').onclick=()=>{enabled=!enabled;ui.toggle(enabled);ui.state(enabled?'알바몬에서 직접 번호를 공개하면 새 정보를 이어서 가져올게요.':'자동 채우기를 껐어요. 정보 가져오기는 직접 누를 수 있어요.');};
  $('open-camp').onclick=async()=>{try{await runtime({type:'CREW_OPEN_HUB'});}catch(error){ui.state(error.message);}};
- document.addEventListener('click',e=>{if(!enabled||!e.isTrusted||e.composedPath().includes(host))return;const b=e.target.closest('button,a,[role="button"]');if(!b||!/(전화번호|연락처|휴대폰|번호)\\s*(보기|확인|열람)|^열람하기$|^확인하기$|연락처\\s*공개/.test(b.innerText?.trim()||''))return;pending=true;clearTimeout(timer);timer=setTimeout(()=>{pending=false;send();},1500);},true);
- const observer=new MutationObserver(mutations=>{if(!enabled||mutations.every(m=>host.contains(m.target)))return;clearTimeout(timer);timer=setTimeout(()=>{if(pending||job)send();},600);});observer.observe(document.body,{childList:true,subtree:true,characterData:true});
+ document.addEventListener('click',e=>{if(!enabled||!e.isTrusted||e.composedPath().includes(host))return;const b=e.target.closest('button,a,[role="button"]');if(!b||!/(전화번호|연락처|휴대폰|번호)\\s*(보기|확인|열람)|^열람하기$|^확인하기$|연락처\\s*공개/.test(b.innerText?.trim()||''))return;pendingUntil=Date.now()+15000;clearTimeout(timer);timer=setTimeout(()=>send(),1500);},true);
+ const observer=new MutationObserver(mutations=>{if(!enabled||mutations.every(m=>host.contains(m.target)))return;clearTimeout(timer);timer=setTimeout(()=>{if(Date.now()<pendingUntil||job)send();},600);});observer.observe(document.body,{childList:true,subtree:true,characterData:true});
  chrome.runtime.onMessage.addListener(message=>{if(message?.type==='CREW_READ_NOW')find();});find();setTimeout(find,1000);
 })();
