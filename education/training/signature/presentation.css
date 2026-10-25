@@ -47,6 +47,10 @@ body.reading .fiveR .node:before{display:block;position:static;font-size:48px;li
 .sandwich .node[data-build]{opacity:.16;filter:none}.sandwich .node.revealed{opacity:1}
 .cover-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .intro-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+body.has-intro-video .intro-image,body.has-intro-video .intro-light,body.has-intro-video .particle{display:none}
+body.has-intro-video .intro-copy h1{animation:none}
+body.has-intro-video .intro-copy h1 em{color:#d9d1c5}
+@media(max-width:720px){.intro-video{object-position:94% center}}
 body.reading .sandwich-stack{position:relative;left:auto;top:auto;width:280px;height:240px;margin:30px auto 0}
 body.reading .sandwich-layer{width:280px;height:81px;opacity:1;transform:none}
 body.reading .layer-filling{top:75px}body.reading .layer-bottom{top:150px}body.reading .layer-link{display:none}
