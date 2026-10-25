@@ -117,6 +117,25 @@ try {
   await errorPage.goto(`${base}/networking/`, { waitUntil: 'networkidle' });
   check('DB failure shows error and prevents false save', await errorPage.locator('#newRecord').isDisabled() && (await errorPage.locator('#records').textContent()).includes('저장 공간을 열지 못'));
   await errorContext.close();
+  if (process.env.NETWORKING_QA_HUB === '1') for (const viewport of [{ width: 390, height: 844 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+    const context = await browser.newContext({ viewport });
+    await context.route('**/*', route => ['GET','HEAD'].includes(route.request().method()) ? route.continue() : route.abort());
+    await context.addInitScript(() => { localStorage.setItem('presence_hub_admin','1'); localStorage.setItem('presence_hub_lastauth',String(Date.now())); });
+    const page = await context.newPage();
+    await page.goto(`${base}/?v=networking-qa-${Date.now()}`, { waitUntil: 'domcontentloaded' });
+    await page.locator('#moreBtn').click();
+    const link = page.locator('[data-hub-category="NETWORK"]');
+    await link.waitFor({ state: 'visible' });
+    check(`hub-${viewport.width}: networking in learning category`, await link.evaluate(el => el.closest('[data-hub-section]')?.dataset.hubSection === 'learn' || el.parentElement.previousElementSibling?.textContent.includes('배움과 아카이브') || el.parentElement.parentElement.textContent.includes('배움과 아카이브')));
+    check(`hub-${viewport.width}: icon loaded`, await link.locator('img').evaluate(img => img.complete && img.naturalWidth > 0));
+    const box = await link.boundingBox();
+    check(`hub-${viewport.width}: link inside viewport`, box.x >= 0 && box.x + box.width <= viewport.width + 1);
+    await page.screenshot({ path: `${out}/hub-${viewport.width}-menu.png`, fullPage: true });
+    await link.click();
+    await page.waitForURL('**/networking/index.html');
+    check(`hub-${viewport.width}: navigation works`, await page.locator('#newRecord').isVisible());
+    await context.close();
+  }
 } finally {
   await browser.close();
   await writeFile(`${out}/report.json`, JSON.stringify({ checks, failures }, null, 2));
