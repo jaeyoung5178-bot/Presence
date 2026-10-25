@@ -31,6 +31,9 @@ body.reading .iconic .node{padding-left:72px!important;min-height:60px}body.read
 
 /* Flat, transparent visual language. Photos remain on photographic compositions. */
 .scene{background:#090b0e}
+h1,h2,.subtitle,.node p,blockquote,.foot,.contact{word-break:keep-all;overflow-wrap:normal}
+.node h2{text-wrap:balance}
+.subtitle,.node p,blockquote,.foot,.contact{text-wrap:pretty}
 .item-picto{width:36px;height:36px;top:3px;mix-blend-mode:normal;opacity:.85}
 .iconic .node{padding-left:56px}
 .matrix.iconic .node{padding-left:56px}
