@@ -1,6 +1,6 @@
 전용 AI 생성 컨셉 사진: OpenAI image_gen 내장 도구. 실제 팀 활동을 기록한 사진이 아님.
-픽토그램 및 샌드위치: Lucide Icons, https://lucide.dev, ISC / Feather MIT. 원본 SVG 및 라이선스 assets/line-icons/. 투명 배경 PNG.\nportrait.jpg: 제공된 원본 PPT slide29의 image50.PNG에서 검정 여백만 제거.
-인트로: 생성 배경 이미지에 CSS 카메라 이동, 빛, 입자, 타이포그래피 모션.
+픽토그램: Lucide Icons, https://lucide.dev, ISC / Feather MIT. 원본 SVG 및 라이선스 assets/line-icons/. 투명 배경 PNG.\nportrait.jpg: 제공된 원본 PPT slide29의 image50.PNG에서 검정 여백만 제거.
+샌드위치: 긍정·개선점·긍정과 대응하는 투명 SVG 3개 층. 웹에서 순차 빌드 및 역순 이동.\n인트로: 현재 생성 배경 이미지에 CSS 카메라 이동, 빛, 입자, 타이포그래피 모션. 실제 영상은 assets/intro-training.mp4가 준비되었을 때만 재생.
 Higgsfield seedance_2_5 영상 생성 시도: Requires plus plan or higher 응답, 작업 미제출.
 {
   "hero": "152ba2f0-c0c7-4cbb-aa61-cc3dac8c46e6",
