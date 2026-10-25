@@ -502,6 +502,7 @@
   var IN=document.getElementById('hsIn'), LIST=document.getElementById('hsList');
 
   var CORE=[
+    {t:'네트워킹 · 나와 팀원의 만남 아카이브',u:'networking/index.html',e:'💬',g:'PAGE',k:'네트워킹 만남 지점 대화 사진 반응 카톡 팀원'},
     {t:'메모 · 기록노트 · 액션플랜',u:'memo.html',e:'📝',g:'PAGE',k:'메모 노트 일기 저널 액션플랜 플랜 할일 계획'},
     {t:'액션플랜 보드',u:'memo.html#plan',e:'✅',g:'PAGE',k:'액션 플랜 계획 할일 투두'},
     {t:'개인 세일즈 기록 (필드 레코드)',u:'presence-record.html',e:'📊',g:'PAGE',k:'레코드 기록 세일즈 노제로 후원자 리젝'},
