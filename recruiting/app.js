@@ -1,6 +1,6 @@
-import {createSheetSync} from './sheet-sync.js?v=20261025-4';
-import {createImportTools} from './import-tools.js?v=20261025-4';
-import {TODAY,uid,LABELS,DEFAULTS,range,metrics,events,dateLabel,timeLabel,sms,kakao,formURL,fingerprint,parseResume,sourceKey,validate,transition,sheetRows,validDate} from './model.js?v=20261025-4';
+import {createSheetSync} from './sheet-sync.js?v=20261025-5';
+import {createImportTools} from './import-tools.js?v=20261025-5';
+import {TODAY,uid,LABELS,DEFAULTS,range,metrics,events,dateLabel,timeLabel,sms,kakao,formURL,fingerprint,parseResume,sourceKey,validate,transition,sheetRows,validDate} from './model.js?v=20261025-5';
 import {auth,createCloud} from './store.js?v=20261025-1';
 const $=s=>document.querySelector(s),app=$('#app'),editor=$('#editor'),utility=$('#utility');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

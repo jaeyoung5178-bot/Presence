@@ -1,5 +1,5 @@
 import {firebase} from './store.js?v=20261025-1';
-import {reconcileShowup} from './sheet-sync-model.js?v=20261025-4';
+import {reconcileShowup} from './sheet-sync-model.js?v=20261025-5';
 export function createSheetSync({all,settings,save,onStatus,canPull,demo}) {
   let busy=false,timer,last='인터뷰 시트 자동연결 준비 중';
   const scheduled=()=>all().filter(c=>c.interviewDate&&c.mobile&&['booked','showed','starter','noShow','cancelled'].includes(c.status));
