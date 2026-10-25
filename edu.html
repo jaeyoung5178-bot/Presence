@@ -195,7 +195,7 @@
   </dialog>
 <div class="save-toast" id="toast" role="status">저장됨 ✓</div>
 
-<script src="assets/education/academy-v1.js?v=20260928-library-compact2"></script>
+<script src="assets/education/academy-v1.js?v=20261025-training1"></script>
 <script src="education/bookclub/catalog.js?v=20260928-2"></script>
 <script src="education/bookclub/gallery.js?v=20260928-2"></script>
 <script>
@@ -396,7 +396,13 @@
     return changed;
   }
 
-  function ensureFieldRookieGuide(d){
+  function ensureSignatureTraining(d){
+ if(!d||!Array.isArray(d.folders)||!Array.isArray(d.items))return false;
+ var changed=false;if(d.folders.indexOf("트레이닝")<0){d.folders.splice(Math.min(1,d.folders.length),0,"트레이닝");changed=true;}
+ if(!d.items.some(function(it){return it.id==="presence-signature-training"||it.href==="education/training/signature/index.html";})){d.items.unshift({id:"presence-signature-training",tag:"SIGNATURE",title:"딱 한 걸음 앞서 · 신입 IC 트레이닝",sub:"임재영 AOP · 동기와 관찰부터 6주 자립까지, 시그니처 강의",href:"education/training/signature/index.html",target:"_blank",folder:"트레이닝"});changed=true;}return changed;
+ }
+
+ function ensureFieldRookieGuide(d){
     if(!d || !d.items || d.items.some(function(it){ return it.id==="presence-field-rookie" || it.href==="education/sector-leader/field-rookie/index.html"; })) return false;
     d.items.unshift({id:"presence-field-rookie",tag:"FIELD",title:"신입과 필드 뛰는 법",sub:"신입의 자립을 만드는 필드 리더십 · 임재영 AOP",href:"education/sector-leader/field-rookie/index.html",target:"_blank",folder:"섹터리더"});
     return true;
@@ -529,6 +535,7 @@
       localChanged=ensureCharityTraining(data)||localChanged;
       localChanged=ensureOxfamNewHireGuide(data)||localChanged;
       localChanged=ensureWarHistoryTodayGuide(data)||localChanged;
+      localChanged=ensureSignatureTraining(data)||localChanged;
       localChanged=ensureFieldRookieGuide(data)||localChanged;
       localChanged=ensureTripOperationGuide(data)||localChanged;
       localChanged=ensureMyStoryGuide(data) || localChanged;
@@ -550,6 +557,7 @@
         remoteChanged=ensureCharityTraining(data)||remoteChanged;
         remoteChanged=ensureOxfamNewHireGuide(data)||remoteChanged;
         remoteChanged=ensureWarHistoryTodayGuide(data)||remoteChanged;
+        remoteChanged=ensureSignatureTraining(data)||remoteChanged;
         remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
         remoteChanged=ensureTripOperationGuide(data)||remoteChanged;
         remoteChanged=ensureMyStoryGuide(data) || remoteChanged;
@@ -560,12 +568,12 @@
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
     });
   }
   function save(silent){

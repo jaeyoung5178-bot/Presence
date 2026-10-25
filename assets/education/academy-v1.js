@@ -30,11 +30,12 @@
     moon:svg('<path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/>')
   };
   const categories={
-    '__ALL__':{label:'전체',icon:'grid'},'신입':{icon:'book'},'피치카드':{icon:'mic'},'세일즈':{icon:'chart'},'섹터리더':{icon:'flag'},'멘탈리티':{icon:'spark'},'마이스토리':{icon:'camera'},'리캡':{icon:'ticket'},'위페어':{icon:'globe'},'클라이언트 미팅':{icon:'people'},'BOM':{icon:'compass'},'FOM':{icon:'flag'}
+    '__ALL__':{label:'전체',icon:'grid'},'신입':{icon:'book'},'트레이닝':{icon:'compass'},'피치카드':{icon:'mic'},'세일즈':{icon:'chart'},'섹터리더':{icon:'flag'},'멘탈리티':{icon:'spark'},'마이스토리':{icon:'camera'},'리캡':{icon:'ticket'},'위페어':{icon:'globe'},'클라이언트 미팅':{icon:'people'},'BOM':{icon:'compass'},'FOM':{icon:'flag'}
   };
   const topicFolders=['세일즈','멘탈리티','마이스토리','섹터리더'];
   const libraryInfo={
     '신입':{art:'sprout',description:'처음부터, 차근차근'},
+    '트레이닝':{art:'leader',description:'한 걸음 앞서, 자립을 돕는 리더십'},
     '__BOOKCLUB__':{art:'reading',description:'함께 읽고 생각을 나눠요'},
     '__TOPICS__':{art:'topics',description:'세일즈부터 리더십까지'},
     '피치카드':{art:'pitch',description:'마음을 움직이는 한마디'},
@@ -119,7 +120,7 @@
   function toggleSaved(href){const remove=state.saved.has(href);remove?state.saved.delete(href):state.saved.add(href);storage.set(savedKey,[...state.saved]);hooks.toast(remove?'보관함에서 뺐어요.':'나의 보관함에 담았어요.');if(state.savedOnly)hooks.render();else savedLabels();}
   function renderFolders(){
     const data=state.data,topics=state.view==='topics';
-    const primary=['신입','__BOOKCLUB__','__TOPICS__','피치카드','위페어','리캡'];
+    const primary=['신입','트레이닝','__BOOKCLUB__','__TOPICS__','피치카드','위페어','리캡'];
     const order=topics?topicFolders.filter(f=>data.folders.includes(f)):[...primary.filter(f=>f.startsWith('__')||data.folders.includes(f)),...data.folders.filter(f=>!primary.includes(f)&&!topicFolders.includes(f))];
     const entries=order.map(folder=>({folder,label:libraryLabel(folder),count:folder==='__BOOKCLUB__'?(window.PresenceBookGallery?.count()??1):folder==='__TOPICS__'?topicFolders.filter(f=>data.folders.includes(f)).length:data.items.filter(i=>i.folder===folder).length,editable:!folder.startsWith('__')}));
     const available=entries.filter(f=>f.count>0),upcoming=entries.filter(f=>f.count===0);
