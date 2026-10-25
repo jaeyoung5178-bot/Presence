@@ -1,6 +1,8 @@
 전용 AI 생성 컨셉 사진: OpenAI image_gen 내장 도구. 실제 팀 활동을 기록한 사진이 아님.
-픽토그램: Lucide Icons, https://lucide.dev, ISC / Feather MIT. 원본 SVG 및 라이선스 assets/line-icons/. 투명 배경 PNG.\nportrait.jpg: 제공된 원본 PPT slide29의 image50.PNG에서 검정 여백만 제거.
-샌드위치: 긍정·개선점·긍정과 대응하는 투명 SVG 3개 층. 웹에서 순차 빌드 및 역순 이동.\n인트로: Higgsfield Seedance 2.0 Fast, 2026-10-25 생성. 10초 손그림 2D 애니메이션. 같은 계단과 상가 거리를 하나의 연속 촬영으로 생성. 도입은 한 번 재생하고 동일한 원본의 마지막 거리 구간만 반복됨. MBC 브랜드송 MV는 화풍과 정서 참고이며 원본 영상·인물·음원·로고를 사용하지 않음. 1280×720, 24fps, 무음. AI로 연출한 장면이며 실제 팀 기록 영상이 아님. 인트로와 첫 슬라이드에서 자동 반복, 숨겨진 화면에서는 일시정지.
+픽토그램: Lucide Icons, https://lucide.dev, ISC / Feather MIT. 원본 SVG 및 라이선스 assets/line-icons/. 투명 배경 PNG.
+portrait.jpg: 제공된 원본 PPT slide29의 image50.PNG에서 검정 여백만 제거.
+샌드위치: 긍정·개선점·긍정과 대응하는 투명 SVG 3개 층. 웹에서 순차 빌드 및 역순 이동.
+인트로 growth16: OpenAI image_gen 원화 3장과 WebGL 애니매틱을 바탕으로 Higgsfield Genjutsu Lite 공식 무료 모션 편집 1회 사용, asset c280abe6-7910-494f-940c-ebb49df5ba45. 아이의 연필 학습, 청소년의 독서, 웃는 성인으로 연결되는 10초 성장 미니 애니메이션. 마지막 프레임을 바탕으로 독립 레이어 모션을 제작하여 성인과 방은 정지하고 커튼·창밖 구름·햇빛만 6초 주기로 반복됨. 반복 경계에 인물 디졸브 없음. 1280×720, 24fps, 무음. Seedance는 Plus 요구로 실행하지 않았고 Genjutsu Lite 무료 제공분으로 완성함. 추가 결제 없음. 실제 팀 기록 영상이 아님. 도입은 한 번 재생하고 첫 슬라이드는 마지막 배경 모션만 반복. 숨겨진 화면에서는 일시정지.
 {
   "hero": "152ba2f0-c0c7-4cbb-aa61-cc3dac8c46e6",
   "safety": "86141006-ec9b-4286-ba0d-279cab2b7f34",
