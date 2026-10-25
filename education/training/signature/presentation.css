@@ -55,6 +55,7 @@ body.intro-story-playing #intro .intro-shade{background:linear-gradient(0deg,#08
 .replay-intro{order:3;border:1px solid #ffffff38;background:#10151988;color:#c9d0d4;border-radius:3px;padding:12px 16px;min-height:44px;font-size:12px}
 body.has-intro-video .intro-copy h1 em{color:#d9d1c5}
 @media(max-width:720px){.intro-video,.intro-world-video{object-position:78% center}}
+@media(max-aspect-ratio:4/3){.intro-video,.intro-world-video,.cover-video{object-position:78% center}}
 body.reading .sandwich-stack{position:relative;left:auto;top:auto;width:280px;height:240px;margin:30px auto 0}
 body.reading .sandwich-layer{width:280px;height:81px;opacity:1;transform:none}
 body.reading .layer-filling{top:75px}body.reading .layer-bottom{top:150px}body.reading .layer-link{display:none}
