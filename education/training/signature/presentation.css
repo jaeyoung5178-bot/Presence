@@ -33,6 +33,9 @@ body.reading .iconic .node{padding-left:72px!important;min-height:60px}body.read
 .sandwich-layer{position:absolute;left:0;width:430px;height:124px;opacity:0;filter:none;transform:translateY(-24px);transition:opacity .5s ease,transform .75s cubic-bezier(.2,.75,.2,1)}
 .layer-top{top:0}.layer-filling{top:112px;transform:translateX(22px)}.layer-bottom{top:224px;transform:translateY(24px)}
 .sandwich-layer.revealed{opacity:1;transform:none}
+.sandwich[data-step="3"] .layer-top.revealed{transform:translateY(44px)}
+.sandwich[data-step="3"] .layer-bottom.revealed{transform:translateY(-44px)}
+.sandwich[data-step="3"] .layer-link{opacity:0}
 .sandwich-layer img{display:block;width:100%;height:100%;object-fit:contain}
 .layer-link{position:absolute;right:calc(100% + 24px);top:60px;width:75px;height:1px;background:#b49a72;opacity:.5}
 .layer-filling .layer-link{background:#a3d9c2}
@@ -42,6 +45,7 @@ body.reading .iconic .node{padding-left:72px!important;min-height:60px}body.read
 body.reading .sandwich-stack{position:relative;left:auto;top:auto;width:280px;height:240px;margin:30px auto 0}
 body.reading .sandwich-layer{width:280px;height:81px;opacity:1;transform:none}
 body.reading .layer-filling{top:75px}body.reading .layer-bottom{top:150px}body.reading .layer-link{display:none}
+body.reading .sandwich .sandwich-layer{transform:none!important}
 @media print{.sandwich-layer{opacity:1!important;transform:none!important}}
 
 /* Flat, transparent visual language. Photos remain on photographic compositions. */
