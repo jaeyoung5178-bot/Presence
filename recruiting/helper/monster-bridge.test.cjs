@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+let handler;const values={},created=[],updated=[],sent=[];let existing=[];
+const chrome={runtime:{onMessage:{addListener:f=>handler=f}},storage:{session:{get:async()=>({...values}),set:async v=>Object.assign(values,v),remove:async k=>delete values[k]}},tabs:{query:async()=>existing,create:async options=>{const t={id:created.length+100,...options};created.push(t);return t;},update:async(id,options)=>updated.push({id,...options}),sendMessage:async(id,m)=>sent.push({id,...m}),onRemoved:{addListener:()=>{}},onUpdated:{addListener:()=>{}}}};
+vm.runInNewContext(fs.readFileSync(__dirname+'/background.js','utf8'),{chrome,URL,Date});
+const send=(m,url,id=22)=>new Promise(resolve=>handler(m,{tab:{id,url}},resolve));
+(async()=>{const url='https://www.albamon.com/human-resources/detail/12345678',payload={name:'김**',education:'테스트대학교',career:'카페 1년',nameMasked:true,contactOpened:false,password:'excluded'};
+ assert(!(await send({type:'PRESENCE_CAPTURE',payload},'https://evil.example')).ok);
+ const first=await send({type:'PRESENCE_CAPTURE',payload},url);assert(first.ok&&first.job);assert.equal(created.length,1);assert(created[0].active);const decoded=JSON.parse(decodeURIComponent(created[0].url.split('#capture=')[1]));assert.equal(decoded.education,'테스트대학교');assert(!('password'in decoded));
+ const job=await send({type:'CREW_JOB'},url);assert.equal(job.job.id,first.job.id);
+ assert((await send({type:'CREW_RESULT',payload:{...payload,name:'김테스트',phone:'0507-0000-0000',nameMasked:false,contactOpened:true}},url)).ok);assert(sent.some(m=>m.id===100&&m.type==='CREW_RESULT'));assert(updated.some(t=>t.id===100&&t.active));
+ existing=[{id:100}];await send({type:'PRESENCE_CAPTURE',payload},url);assert.equal(created.length,1);assert.equal(Object.keys(values).length,1);assert((await send({type:'CREW_OPEN_HUB'},url)).ok);assert.equal(created.length,1);
+ console.log('Monster click opens/reuses camp, masked preview continues after reveal, data allowlist and origin checks passed');
+})().catch(e=>{console.error(e);process.exit(1)});

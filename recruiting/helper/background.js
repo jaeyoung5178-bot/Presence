@@ -15,7 +15,14 @@ api.runtime.onMessage.addListener((message,sender,reply)=>{(async()=>{
  if(message?.type==='CREW_JOB'&&normalize(sender.tab?.url)){const job=await findJob(sender.tab.id);return job?{ok:true,job:{id:job.id,url:job.url}}:{ok:false};}
  if(message?.type==='CREW_FOCUS_ALBAMON'&&isHub(sender.tab?.url)){const all=await jobs(),job=all[jobKey(message.requestId)];if(!job||job.hubTab!==sender.tab.id)return {ok:false};await api.tabs.update(job.albamonTab,{active:true});return {ok:true};}
  if(message?.type==='CREW_RESULT'&&normalize(sender.tab?.url)){const job=await findJob(sender.tab.id);if(!job)return {ok:false};const url=normalize(sender.tab.url);if(url!==job.url)return {ok:false};const payload=sanitize(message.payload||{},url);await notify(job,payload);if(payload.contactOpened&&!payload.nameMasked){await api.tabs.update(job.hubTab,{active:true});await jobStore.set({[jobKey(job.id)]:{...job,completed:true}});}return {ok:true};}
- if(message?.type==='PRESENCE_CAPTURE'&&normalize(sender.tab?.url)){const payload=sanitize(message.payload||{},normalize(sender.tab.url)),tabs=await api.tabs.query({url:'https://hub.presence.co.kr/recruiting/*'}),url=hubURL+'#capture='+encodeURIComponent(JSON.stringify(payload));if(tabs.length)await api.tabs.update(tabs[0].id,{url,active:true});else await api.tabs.create({url});return {ok:true};}
+ if(message?.type==='PRESENCE_CAPTURE'&&normalize(sender.tab?.url)){
+  const source=normalize(sender.tab.url),payload=sanitize(message.payload||{},source),tabs=await api.tabs.query({url:'https://hub.presence.co.kr/recruiting/*'}),url=hubURL+'#capture='+encodeURIComponent(JSON.stringify(payload));
+  const hub=tabs[0]||await api.tabs.create({url,active:true});if(tabs.length)await api.tabs.update(hub.id,{url,active:true});
+  const id='monster-'+Date.now()+'-'+sender.tab.id,job={id,url:source,hubTab:hub.id,hubURL,albamonTab:sender.tab.id,at:Date.now()};
+  for(const [key,prior]of Object.entries(await jobs()))if(prior?.albamonTab===sender.tab.id)await jobStore.remove(key);
+  await jobStore.set({[jobKey(id)]:job});return {ok:true,job:{id,url:source}};
+ }
+ if(message?.type==='CREW_OPEN_HUB'&&normalize(sender.tab?.url)){const tabs=await api.tabs.query({url:'https://hub.presence.co.kr/recruiting/*'});if(tabs.length)await api.tabs.update(tabs[0].id,{active:true});else await api.tabs.create({url:hubURL,active:true});return {ok:true};}
  return {ok:false,error:'지원하지 않는 요청입니다.'};
 })().then(reply).catch(e=>reply({ok:false,error:e.message||'브라우저 연결 실패'}));return true;});
 api.tabs.onRemoved.addListener(async id=>{for(const [key,job]of Object.entries(await jobs()))if(job?.albamonTab===id||job?.hubTab===id||Date.now()-job?.at>300000)await jobStore.remove(key);});
