@@ -91,7 +91,17 @@ for(const [width,height] of [[390,844],[1024,768],[1440,900]]){
  const tiny=await page.locator('button,input,textarea,select,a').evaluateAll(nodes=>nodes.filter(el=>{let r=el.getBoundingClientRect();return r.width>0&&r.height>0&&(r.width<43||r.height<43)}).map(el=>el.outerHTML.slice(0,140)));
  assert.deepEqual(tiny,[],width+'px touch targets');assert.deepEqual(errors,[]);
  await page.screenshot({path:fileURLToPath(new URL('ic-manager-'+width+'.png',out)),fullPage:true});
- await page.screenshot({path:fileURLToPath(new URL('ic-manager-'+width+'-viewport.png',out))});await page.close();
+ await page.screenshot({path:fileURLToPath(new URL('ic-manager-'+width+'-viewport.png',out))});
+ await page.locator('[data-people-view="ic"]').focus();await page.locator('[data-people-view="ic"]').press('Enter');
+ assert.equal(await page.locator('[data-people-view="ic"]').getAttribute('aria-pressed'),'true','Keyboard toggles IC-only view');assert.equal(await page.locator('.tree-leader').count(),0,'IC-only view hides all leadership nodes');assert.equal(await page.locator('.sidebar [data-person]').count(),3,'IC-only displays current three ICs');assert.equal(await page.evaluate(()=>selected),'a','View toggle preserves selected IC');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,width+'px IC view overflow');
+ const toggleSize=await page.locator('[data-people-view="ic"]').boundingBox();assert.ok(toggleSize.width>=44&&toggleSize.height>=44);
+ await page.locator('#private-note-text').fill('뷰 전환 중 보존할 관리자 메모');await page.evaluate(()=>globalThis.noteElement=document.querySelector('#private-note-text'));
+ await page.locator('[data-people-view="tree"]').click();assert.equal(await page.evaluate(()=>noteElement===document.querySelector('#private-note-text')),true,'Toggle updates sidebar only; note DOM retained');assert.equal(await page.locator('#private-note-text').inputValue(),'뷰 전환 중 보존할 관리자 메모');
+ await page.locator('[data-people-view="ic"]').click();await page.locator('#search').fill('김하린');assert.equal(await page.locator('.sidebar [data-person]').count(),1,'Existing search filters IC-only view');await page.waitForFunction(()=>!document.querySelector('#private-note-text').disabled);assert.equal(await page.locator('#private-note-text').inputValue(),'뷰 전환 중 보존할 관리자 메모','Search rerender preserves note draft');
+ await page.locator('#search').fill('');page.on('dialog',dialog=>dialog.accept());await page.locator('#team').selectOption('name:Presence East');assert.equal(await page.locator('.sidebar [data-person]').count(),1,'Existing team scope filters IC-only');assert.equal(await page.locator('.sidebar [data-person]').getAttribute('data-person'),'c');
+ await page.locator('#team').selectOption('');await page.locator('.sidebar [data-person="a"]').click();await page.waitForFunction(()=>!document.querySelector('#private-note-text').disabled);assert.equal(await page.locator('#private-note-text').inputValue(),'뷰 전환 중 보존할 관리자 메모','IC selection preserves per-member administrator draft');
+ await page.close();
 }
 const interactive=await browser.newPage({viewport:{width:390,height:844}});
 await interactive.setContent(`<style>${style}</style><div id="app"></div><div id="toast" hidden></div>`);
@@ -116,6 +126,6 @@ await interactive.locator('[data-clear="relate"]').click();assert.equal(await in
 await interactive.locator('[data-step="relate"][data-delta="-1"]').click();assert.equal(await interactive.locator('[data-score="relate"]').inputValue(),'0','Minus from null deliberately setszero');
 await interactive.emulateMedia({reducedMotion:'reduce'});await interactive.locator('[data-step="relate"][data-delta="1"]').click();assert.equal(await interactive.locator('[data-ability="relate"] .segments').evaluate(el=>getComputedStyle(el).animationName),'none','Reduced motion disables pulse');
 assert.equal(await interactive.locator('.tree-leader button').count(),0,'Leadership tree nodes readonly');
-assert.equal(await interactive.locator('#private-notes').count(),0,'TL receives no administrator notes DOM');
+assert.equal(await interactive.locator('#private-notes').count(),0,'TL receives no administrator notes DOM');await interactive.locator('[data-people-view="ic"]').click();assert.equal(await interactive.locator('.tree-leader').count(),0,'Leader can use IC-only without leadership nodes');assert.equal(await interactive.locator('#private-notes').count(),0,'IC-only does not expose administrator data to leader');assert.equal(await interactive.locator('[data-score="relate"]').inputValue(),'1','IC-only sidebar toggle preserves unsaved card score');
 await interactive.close();
 await browser.close();console.log('PASS: source graph, promoted role exclusion, no-account IC, zero vs null, confirmed-day average, 390/1024/1440 geometry and screenshots.');
