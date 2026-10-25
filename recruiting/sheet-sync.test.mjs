@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {reconcileShowup} from './sheet-sync-model.js';
+import {sheetRows,metrics} from './model.js';
+const c={id:'qa',name:'테스트',age:'24세',gender:'여',mobile:'010-0000-0000',recruiter:'임재영',status:'booked',interviewDate:'2026-10-25',interviewTime:'11:00',bookedDate:'2026-10-24',events:{},note:'고객응대 경험'};
+const remote={id:'qa',showed:true,interviewDate:'2026-10-25',hash:'one',row:111,sheet:'26년 10월'};
+const shown=reconcileShowup(c,remote);assert.equal(shown.status,'showed');assert.equal(metrics([shown],'2026-10-25').showed,1);assert.equal(reconcileShowup(shown,remote),null);
+const undone=reconcileShowup(shown,{...remote,showed:false});assert.equal(undone.status,'booked');assert.equal(metrics([undone],'2026-10-25').showed,0);
+const rows=sheetRows([shown,c],'booked',false).split('\n').map(r=>r.split('\t'));assert.equal(rows.length,2);assert(rows.every(r=>r.length===14));assert.deepEqual(rows[0],['알바몬','10/24','10/25','O','11:00','NM','OUT','테스트','24세','여','010-0000-0000','임재영','PR','고객응대 경험']);
+assert.equal(rows[1][3],'');assert.equal(sheetRows([{...c,bookedDate:''}],'booked',false).split('\t')[1],'');
+console.log('Sheet schema, date attribution, O idempotency and O removal passed');
