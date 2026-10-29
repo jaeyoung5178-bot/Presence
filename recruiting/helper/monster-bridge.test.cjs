@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 let handler;const values={},created=[],updated=[],sent=[];let existing=[];
 const chrome={runtime:{onMessage:{addListener:f=>handler=f}},storage:{session:{get:async()=>({...values}),set:async v=>Object.assign(values,v),remove:async k=>delete values[k]}},tabs:{query:async()=>existing,create:async options=>{const t={id:created.length+100,...options};created.push(t);return t;},update:async(id,options)=>updated.push({id,...options}),sendMessage:async(id,m)=>sent.push({id,...m}),onRemoved:{addListener:()=>{}},onUpdated:{addListener:()=>{}}}};
-vm.runInNewContext(fs.readFileSync(__dirname+'/background.js','utf8'),{chrome,URL,Date});
+vm.runInNewContext(fs.readFileSync(__dirname+'/resume-sources.js','utf8')+fs.readFileSync(__dirname+'/background.js','utf8').replace("importScripts('resume-sources.js');",''),{chrome,URL,Date});
 const send=(m,url,id=22)=>new Promise(resolve=>handler(m,{tab:{id,url}},resolve));
 (async()=>{const url='https://www.albamon.com/human-resources/detail/12345678',payload={name:'김**',education:'테스트대학교',career:'카페 1년',nameMasked:true,contactOpened:false,password:'excluded'};
  assert(!(await send({type:'PRESENCE_CAPTURE',payload},'https://evil.example')).ok);
