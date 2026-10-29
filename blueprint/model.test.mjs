@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {emptyDocument,validateDocument,ratio,daysLeft,insights,nextQuestions,summary,todayKST} from './model.mjs';
+assert.equal(ratio(null,4),null);assert.equal(ratio(3,0),null);assert.deepEqual(ratio(3,4),{percent:75,remaining:1,complete:false});assert.deepEqual(ratio(10,15),{percent:66.7,remaining:5,complete:false});assert.deepEqual(ratio(12,10),{percent:120,remaining:0,complete:true});
+assert.equal(daysLeft('2026-12-31','2026-10-29'),63);assert.equal(daysLeft('2026-10-28','2026-10-29'),-1);assert.equal(todayKST(new Date('2026-10-28T15:00:00Z')),'2026-10-29');
+const d=emptyDocument();d.goals.includes='included';d.goals.total.current=8;d.goals.leaders.current=6;d.goals.leaders.target=11;d.goals.first.current=2;d.promotion.leadersRequired=6;d.promotion.firstRequired=3;d.identity.vision='테스트 비전';d.promotion.candidate='비공개 후보';
+assert.match(insights(d).join(' '),/3명의 순인원/);assert.equal(ratio(d.goals.leaders.current,d.promotion.leadersRequired).complete,true);assert.equal(ratio(d.goals.leaders.current,d.goals.leaders.target).complete,false);
+const share=summary(d);assert.match(share,/테스트 비전/);assert.doesNotMatch(share,/비공개 후보|연말 성장 목표|필요 퍼스트/);assert.match(summary(d,['promotion']),/비공개 후보/);
+assert.equal(nextQuestions(d)[0][0],'influence');d.identity.influence='영향력';d.identity.boundaries='원칙';assert.equal(nextQuestions(d)[0][0],'candidate');d.promotion.candidateGap='남은 조건';assert.equal(nextQuestions(d)[0][0],'promotionDate');
+assert.throws(()=>validateDocument({...d,goals:{...d.goals,total:{current:-1,target:10}}}),/정수/);assert.throws(()=>validateDocument({...d,goals:{...d.goals,deadline:'2026-02-30'}}),/날짜/);assert.throws(()=>validateDocument({...d,version:2}),/지원하지/);
+const clean=validateDocument({...d,adminSecret:'drop',identity:{...d.identity,extra:'drop'}});assert.equal(clean.adminSecret,undefined);assert.equal(clean.identity.extra,undefined);assert.equal(validateDocument(d).promotion.candidate,'비공개 후보');
+console.log('PASS: ratios, Korea dates, hierarchy, separate promotion gates, share privacy, question routing, import validation.');
