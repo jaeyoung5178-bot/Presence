@@ -7,6 +7,7 @@ const isSourceLogin=url=>{try{const u=new URL(url);return u.protocol==='https:'&
 const jobKey=id=>'crewJob_'+id;
 async function jobs(){return jobStore.get(null);}
 async function findJob(tabId){const all=await jobs();return Object.values(all).find(j=>(j?.sourceTab??j?.albamonTab)===tabId&&Date.now()-j.at<300000);}
+const matchesJob=(job,source)=>{const original=normalize(job?.url);return !!(original&&source&&original.sourceService===source.sourceService&&original.key===source.key);};
 function sanitize(p,source){
  const out={version:2,url:source.url,sourceService:source.sourceService};
  for(const [k,n]of Object.entries({name:80,age:20,phone:30,mobile:30,education:4000,career:4000,wish:2000,note:4000,relate:1000}))out[k]=String(p[k]||'').slice(0,n);
@@ -19,7 +20,7 @@ function sanitize(p,source){
 }
 async function notify(job,payload){try{await api.tabs.sendMessage(job.hubTab,{type:'CREW_RESULT',requestId:job.id,payload});}catch{await api.tabs.update(job.hubTab,{url:job.hubURL+'#capture='+encodeURIComponent(JSON.stringify(payload))});}}
 api.runtime.onMessage.addListener((message,sender,reply)=>{(async()=>{
- if(message?.type==='CREW_PING'&&isHub(sender.tab?.url))return {ok:true,version:4,extensionVersion:'4.0.0',sources:['albamon','albacheonguk']};
+ if(message?.type==='CREW_PING'&&isHub(sender.tab?.url))return {ok:true,version:4,extensionVersion:'4.0.1',sources:['albamon','albacheonguk'],features:['albacheonguk-popup']};
  if(message?.type==='CREW_IMPORT'&&isHub(sender.tab?.url)){
   const source=normalize(message.url);if(!source)return {ok:false,error:'알바몬 또는 알바천국의 개별 이력서 링크를 넣어 주세요.'};
   const id=String(message.requestId||'').slice(0,100);if(!/^[a-zA-Z0-9-]{10,100}$/.test(id))return {ok:false,error:'요청을 다시 시작해 주세요.'};
@@ -27,13 +28,13 @@ api.runtime.onMessage.addListener((message,sender,reply)=>{(async()=>{
   await jobStore.set({[jobKey(id)]:job});try{await api.tabs.sendMessage(tab.id,{type:'CREW_READ_NOW'});}catch{}return {ok:true,requestId:id};
  }
  if(message?.type==='CREW_JOB'&&normalize(sender.tab?.url)){
-  const job=await findJob(sender.tab.id),source=normalize(sender.tab.url);return job&&source.url===job.url?{ok:true,job:{id:job.id,url:job.url,sourceService:source.sourceService}}:{ok:false};
+  const job=await findJob(sender.tab.id),source=normalize(sender.tab.url);return matchesJob(job,source)?{ok:true,job:{id:job.id,url:source.url,sourceService:source.sourceService}}:{ok:false};
  }
  if(['CREW_FOCUS_ALBAMON','CREW_FOCUS_SOURCE'].includes(message?.type)&&isHub(sender.tab?.url)){
   const all=await jobs(),job=all[jobKey(message.requestId)];if(!job||job.hubTab!==sender.tab.id||Date.now()-job.at>300000)return {ok:false};await api.tabs.update(job.sourceTab??job.albamonTab,{active:true});return {ok:true};
  }
  if(message?.type==='CREW_RESULT'&&normalize(sender.tab?.url)){
-  const job=await findJob(sender.tab.id),source=normalize(sender.tab.url);if(!job||source.url!==job.url)return {ok:false};
+  const job=await findJob(sender.tab.id),source=normalize(sender.tab.url);if(!matchesJob(job,source))return {ok:false};
   const payload=sanitize(message.payload||{},source);await notify(job,payload);
   if(payload.contactOpened&&!payload.nameMasked){await api.tabs.update(job.hubTab,{active:true});await jobStore.set({[jobKey(job.id)]:{...job,completed:true}});}return {ok:true};
  }
@@ -51,5 +52,5 @@ api.tabs.onRemoved.addListener(async id=>{for(const [key,job]of Object.entries(a
 api.tabs.onUpdated.addListener(async(id,change)=>{
  if(!change.url)return;const job=await findJob(id);if(!job)return;
  if(isSourceLogin(change.url))await notify(job,{version:2,url:job.url,sourceService:job.sourceService,loginRequired:true,name:'',nameMasked:true,contactOpened:false});
- // A result from a redirect or another resume can never complete the original request.
+ // Results must remain on a supported route with the same service and resume ID.
 });

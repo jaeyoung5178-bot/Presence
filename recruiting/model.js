@@ -1,4 +1,4 @@
-import {normalizeResumeURL} from './resume-sources.js?v=20261029-alba1';
+import {normalizeResumeURL} from './resume-sources.js?v=20261029-alba-popup1';
 export const TODAY=()=>new Date(Date.now()+32400000).toISOString().slice(0,10);
 export const uid=()=>crypto.randomUUID();
 export const LABELS={new:'통화 대기',absent:'부재 · 재연락',rejected:'거절',booked:'면접 부킹',showed:'쇼업',noShow:'노쇼',starter:'스타터',cancelled:'면접 취소'};

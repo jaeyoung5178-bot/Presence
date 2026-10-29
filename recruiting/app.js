@@ -1,10 +1,10 @@
 import {createTrash} from './trash.js?v=20261026-trash1';
 import {createSheetSync} from './sheet-sync.js?v=20261025-5';
-import {createImportTools} from './import-tools.js?v=20261029-alba1';
-import {TODAY,uid,LABELS,DEFAULTS,range,metrics,events,dateLabel,timeLabel,sms,kakao,formURL,fingerprint,parseResume,sourceKey,validate,transition,sheetRows,validDate} from './model.js?v=20261029-alba1';
+import {createImportTools} from './import-tools.js?v=20261029-alba-popup1';
+import {TODAY,uid,LABELS,DEFAULTS,range,metrics,events,dateLabel,timeLabel,sms,kakao,formURL,fingerprint,parseResume,sourceKey,validate,transition,sheetRows,validDate} from './model.js?v=20261029-alba-popup1';
 import {auth,createCloud} from './store.js?v=20261025-1';
 import {smsHref,smsRecipient,interviewBookings,calendarDays,shiftCalendar} from './contact-calendar.js?v=20261029-booking-sms1';
-import {normalizeResumeURL} from './resume-sources.js?v=20261029-alba1';
+import {normalizeResumeURL} from './resume-sources.js?v=20261029-alba-popup1';
 const $=s=>document.querySelector(s),app=$('#app'),editor=$('#editor'),utility=$('#utility');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const toastNode=$('#toast');

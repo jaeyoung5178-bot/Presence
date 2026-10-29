@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Presence · 이력서 연결 도우미",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "알바몬·알바천국에서 직접 열어 본 이력서를 Presence Crew Camp에 담습니다.",
   "permissions": ["tabs", "storage"],
   "host_permissions": ["https://hub.presence.co.kr/*", "https://www.albamon.com/*", "https://albamon.com/*", "https://www.alba.co.kr/*", "https://alba.co.kr/*", "http://127.0.0.1/*"],

@@ -1,5 +1,5 @@
 // Only source-owned HTTPS resume detail routes may enter the import bridge.
-// Alba's official homepage/preview script links /resume/Detail?adid=... .
+// Alba supports both listing detail links and the actual opened resume popup.
 export function normalizeResumeURL(raw) {
   try {
     if (typeof raw !== 'string' || raw.length > 4000 || /[\u0000-\u001f\u007f]/.test(raw)) return null;
@@ -12,11 +12,12 @@ export function normalizeResumeURL(raw) {
       const id = match[1], path = `/human-resources/detail/${id}`;
       return { sourceService:'albamon',channel:'알바몬',label:'알바몬',id,url:`https://www.albamon.com${path}`,key:path };
     }
-    if (['alba.co.kr','www.alba.co.kr'].includes(url.hostname) && /^\/resume\/Detail\/?$/i.test(url.pathname)) {
+    if (['alba.co.kr','www.alba.co.kr'].includes(url.hostname) && /^\/resume\/(?:Detail|popup\/ResumeDetail)\/?$/i.test(url.pathname)) {
       const identifiers = [...url.searchParams].filter(([key]) => key.toLowerCase() === 'adid');
       if (identifiers.length !== 1 || !/^[A-Za-z0-9_-]{1,100}$/.test(identifiers[0][1])) return null;
-      const id = identifiers[0][1];
-      return { sourceService:'albacheonguk',channel:'알바천국',label:'알바천국',id,url:`https://www.alba.co.kr/resume/Detail?adid=${encodeURIComponent(id)}`,key:`albacheonguk:${id}` };
+      const id = identifiers[0][1],view=/^\/resume\/popup\//i.test(url.pathname)?'popup':'detail';
+      const path=view==='popup'?'/resume/popup/ResumeDetail':'/resume/Detail';
+      return { sourceService:'albacheonguk',channel:'알바천국',label:'알바천국',id,view,url:`https://www.alba.co.kr${path}?adid=${encodeURIComponent(id)}`,key:`albacheonguk:${id}` };
     }
   } catch {}
   return null;

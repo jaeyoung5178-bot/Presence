@@ -11,11 +11,11 @@ function normalizeResumeURL(raw){
    const url='https://www.albamon.com/human-resources/detail/'+match[1];
    return {sourceService:'albamon',channel:'알바몬',label:'알바몬',id:match[1],url,key:'/human-resources/detail/'+match[1]};
   }
-  if(['alba.co.kr','www.alba.co.kr'].includes(u.hostname)&&/^\/resume\/detail\/?$/i.test(u.pathname)){
+  if(['alba.co.kr','www.alba.co.kr'].includes(u.hostname)&&/^\/resume\/(?:detail|popup\/ResumeDetail)\/?$/i.test(u.pathname)){
    const ids=[...u.searchParams].filter(([key])=>key.toLowerCase()==='adid');
    if(ids.length!==1||!/^[A-Za-z0-9_-]{1,100}$/.test(ids[0][1]))return null;
-   const id=ids[0][1],url='https://www.alba.co.kr/resume/Detail?adid='+encodeURIComponent(id);
-   return {sourceService:'albacheonguk',channel:'알바천국',label:'알바천국',id,url,key:'albacheonguk:'+id};
+   const id=ids[0][1],view=/^\/resume\/popup\//i.test(u.pathname)?'popup':'detail',path=view==='popup'?'/resume/popup/ResumeDetail':'/resume/Detail',url='https://www.alba.co.kr'+path+'?adid='+encodeURIComponent(id);
+   return {sourceService:'albacheonguk',channel:'알바천국',label:'알바천국',id,view,url,key:'albacheonguk:'+id};
   }
  }catch{}
  return null;
