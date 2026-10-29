@@ -1,0 +1,9 @@
+Mode: built-in image_gen edit, transparent_background=true.
+Asset: assets/presence-mutual.png
+Reference: previous concept 01-mutual.png, generated in this conversation.
+Status: brand exploration, not a confirmed brand replacement.
+
+Edit the supplied Presence identity plate. Extract and refine ONLY the two-stroke MUTUAL emblem from the plate as a clean standalone logo asset. Preserve its distinctive structure: two broad sculptural strokes, gently curved outer sides and a precise triangular interior gap, leaning into each other near the top; equal visual standing, a subtle offset shoulder joint. Make a sophisticated, optically balanced flat symbol with crisp edges and SOLID pale sage green #B9D4B3. No wordmark, no text, no numbers, no panel, no small repeated symbol, no gradients, shadows or texture. Center the single emblem on a genuinely transparent square canvas with about 18 percent safe padding. This is a proposed brand exploration for a people-development and F2F marketing team's strategy workspace, representing mutual support and shared progress. Preserve transparency.
+
+The five concept plates are copied unchanged from the user's previous logo design exploration.
+Research references: https://www.pentagram.com/work/mastercard ; https://www.pentagram.com/work/slack ; https://www.pentagram.com/work/paypal
