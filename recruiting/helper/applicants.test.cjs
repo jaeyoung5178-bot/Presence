@@ -1,0 +1,30 @@
+// Synthetic identifiers only. No source-site credentials or real saves.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const values={},created=[],sent=[];let handler;
+const chrome={storage:{session:{get:async()=>({...values}),set:async value=>Object.assign(values,value),remove:async key=>delete values[key]}},runtime:{onMessage:{addListener:value=>handler=value}},tabs:{create:async options=>{const tab={id:101+created.length,...options};created.push(tab);return tab;},update:async()=>{},query:async()=>[],sendMessage:async(id,message)=>sent.push({id,...message}),onRemoved:{addListener:()=>{}},onUpdated:{addListener:()=>{}}}};
+const context=vm.createContext({chrome,URL,URLSearchParams,Date});
+vm.runInContext(fs.readFileSync(__dirname+'/resume-sources.js','utf8')+fs.readFileSync(__dirname+'/background.js','utf8').replace("importScripts('resume-sources.js');",''),context);
+const normalize=context.PresenceResumeSources.normalizeResumeURL;
+const main=vm.createContext({URL,URLSearchParams});vm.runInContext(fs.readFileSync(__dirname+'/../resume-sources.js','utf8').replace('export function normalizeResumeURL','globalThis.normalize=function'),main);
+const send=(message,url,id=10)=>new Promise(resolve=>handler(message,{tab:{id,url}},resolve));
+(async()=>{
+ const hub='https://hub.presence.co.kr/recruiting/index.html',application=(adid='0',job='12345678',index='11111111')=>`https://www.alba.co.kr/biz/applicants/ApplicantsDetailView?adid=${adid}&jobadid=${job}&application_idx=${index}`;
+ const zero=application(),positive=application('22222222'),other=application('0','12345678','33333333'),resume='https://www.alba.co.kr/resume/Detail?adid=22222222';
+ const invalid=[application().replace('&jobadid=12345678',''),application().replace('application_idx=11111111','application_idx=0'),application()+'&ADID=4',application()+'&application_idx=5',application()+'&jobadid=0',application().replace('/ApplicantsDetailView','/ApplicantsList'),application().replace('www.alba.co.kr','www.alba.co.kr.evil.test'),application().replace('https:','http:'),application()+'&gourl=https://example.test','https://www.alba.co.kr/resume/Detail?adid=0'];
+ const candidates=[zero,positive,other,resume,application('22222222').replace('&jobadid=12345678',''),...invalid];
+ for(const url of candidates)assert.equal(JSON.stringify(normalize(url)),JSON.stringify(main.normalize(url)),url);
+ for(const url of invalid)assert.equal(normalize(url),null,url);
+ assert.equal(normalize(zero).url,zero);assert.equal(normalize(zero).key,'albacheonguk:application:12345678:11111111');assert.notEqual(normalize(zero).key,normalize(other).key);
+ assert.equal(normalize(positive).key,normalize(resume).key);assert(normalize(positive).keys.includes(normalize(zero).key));
+ const ping=await send({type:'CREW_PING'},hub);assert.equal(ping.extensionVersion,'4.1.0');assert(ping.features.includes('albacheonguk-applicants'));
+ const requestId='11111111-1111-4111-8111-111111111111';assert((await send({type:'CREW_IMPORT',url:zero+'&tracking=drop',requestId},hub)).ok);assert.equal(created[0].url,zero);
+ assert((await send({type:'CREW_JOB'},positive,101)).ok,'Same application may reveal a positive resume ID');
+ assert(!(await send({type:'CREW_JOB'},other,101)).ok,'Another zero-ID applicant cannot claim the job');
+ assert(!(await send({type:'CREW_JOB'},application('22222222','99999999'),101)).ok,'Another job cannot claim the job');
+ const payload={url:zero,name:'홍테스트',mobile:'010-0000-0000',contactOpened:true};assert((await send({type:'CREW_RESULT',payload},positive,101)).ok);assert(sent.some(message=>message.type==='CREW_RESULT'&&message.payload.url===positive));
+ assert(!(await send({type:'PRESENCE_CAPTURE',payload},other,999)).ok,'Stale payload cannot be attributed to another application');
+ const secondId='22222222-2222-4222-8222-222222222222';assert((await send({type:'CREW_IMPORT',url:positive,requestId:secondId},hub)).ok);
+ assert(!(await send({type:'CREW_JOB'},application('22222222','12345678','99999999'),102)).ok,'Same resume, different application is not the pending request');
+ assert((await send({type:'CREW_JOB'},resume,102)).ok,'Positive resume alias may redirect to standard detail');
+ console.log('Applicants identities, zero-ID isolation, URL parity, features and request ownership passed');
+})().catch(error=>{console.error(error);process.exit(1);});

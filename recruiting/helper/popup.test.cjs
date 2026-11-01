@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const values={},created=[],updates=[],sent=[];let handler;
 const chrome={storage:{session:{get:async()=>({...values}),set:async value=>Object.assign(values,value),remove:async key=>delete values[key]}},runtime:{onMessage:{addListener:value=>handler=value}},tabs:{create:async options=>{const tab={id:101+created.length,...options};created.push(tab);return tab;},update:async(id,options)=>updates.push({id,...options}),query:async()=>[],sendMessage:async(id,message)=>sent.push({id,...message}),onRemoved:{addListener:()=>{}},onUpdated:{addListener:()=>{}}}};
-const context=vm.createContext({chrome,URL,Date});
+const context=vm.createContext({chrome,URL,URLSearchParams,Date});
 vm.runInContext(fs.readFileSync(__dirname+'/resume-sources.js','utf8')+fs.readFileSync(__dirname+'/background.js','utf8').replace("importScripts('resume-sources.js');",''),context);
 const normalize=context.PresenceResumeSources.normalizeResumeURL;
 const send=(message,url,id=10)=>new Promise(resolve=>handler(message,{tab:{id,url}},resolve));
@@ -11,7 +11,7 @@ const send=(message,url,id=10)=>new Promise(resolve=>handler(message,{tab:{id,ur
  const source=normalize(popup+'&useai=N');assert.equal(source.url,popup);assert.equal(source.view,'popup');assert.equal(source.key,normalize(detail).key);
  assert.equal(normalize('https://alba.co.kr/RESUME/POPUP/RESUMEDETAIL/?ADID=11111111').url,popup);
  for(const invalid of [popup+'&adid=22222222',popup+'&gourl=https://example.test',popup.replace('www.alba.co.kr','www.alba.co.kr.evil.test'),popup.replace('/ResumeDetail','/ResumeDetail/other'),popup.replace('https:','http:')])assert.equal(normalize(invalid),null,invalid);
- const ping=await send({type:'CREW_PING'},hub);assert.equal(ping.extensionVersion,'4.0.1');assert(ping.features.includes('albacheonguk-popup'));
+ const ping=await send({type:'CREW_PING'},hub);assert.equal(ping.extensionVersion,'4.1.0');assert(ping.features.includes('albacheonguk-popup'));
  assert((await send({type:'CREW_IMPORT',url:popup+'&useai=N',requestId},hub)).ok);assert.equal(created[0].url,popup);assert.equal(created[0].active,false);
  assert((await send({type:'CREW_JOB'},detail,101)).ok,'Same resume may redirect from popup to detail');
  assert(!(await send({type:'CREW_JOB'},popup.replace('11111111','22222222'),101)).ok,'Another ID cannot claim the request');

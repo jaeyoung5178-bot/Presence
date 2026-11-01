@@ -1,10 +1,10 @@
 import {createTrash} from './trash.js?v=20261026-trash1';
 import {createSheetSync} from './sheet-sync.js?v=20261025-5';
-import {createImportTools} from './import-tools.js?v=20261029-alba-popup1';
-import {TODAY,uid,LABELS,DEFAULTS,range,metrics,events,dateLabel,timeLabel,sms,kakao,formURL,fingerprint,parseResume,sourceKey,validate,transition,sheetRows,validDate} from './model.js?v=20261029-alba-popup1';
+import {createImportTools} from './import-tools.js?v=20261101-alba-applicants1';
+import {TODAY,uid,LABELS,DEFAULTS,range,metrics,events,dateLabel,timeLabel,sms,kakao,formURL,fingerprint,parseResume,sourceKey,sourceKeys,sameSource,validate,transition,sheetRows,validDate} from './model.js?v=20261101-alba-applicants1';
 import {auth,createCloud} from './store.js?v=20261025-1';
 import {smsHref,smsRecipient,interviewBookings,calendarDays,shiftCalendar} from './contact-calendar.js?v=20261029-booking-sms1';
-import {normalizeResumeURL} from './resume-sources.js?v=20261029-alba-popup1';
+import {normalizeResumeURL} from './resume-sources.js?v=20261101-alba-applicants1';
 const $=s=>document.querySelector(s),app=$('#app'),editor=$('#editor'),utility=$('#utility');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const toastNode=$('#toast');
@@ -72,25 +72,30 @@ function readForm(){const f=new FormData($('#candidate-form'));const v={...selec
 function persistDraft(){try{sessionStorage.setItem(draftKey(),JSON.stringify({value:readForm(),baseRevision,dirty:true}));}catch{toast('임시 보관 공간이 부족해요. 저장 버튼으로 기록해 주세요.');}}
 function restoreDraft(){try{const d=JSON.parse(sessionStorage.getItem(draftKey())||'null');if(d?.value?.id&&data.candidates[d.value.id]?.deleted){sessionStorage.removeItem(draftKey());return;}if(d?.dirty){selected=d.value;baseRevision=d.baseRevision;dirty=true;showEditor(!baseRevision);$('#draft-status').textContent='이전에 작성하던 임시 기록을 복원했어요.';}}catch{}}
 function closeEditor(){clearTimeout(noteTimer);if(saving){toast('저장이 끝날 때까지 잠시 기다려 주세요.');return;}if(dirty){utility.innerHTML='<div class="dialog-head"><h2 id="utility-title">작성 중인 기록이 있어요.</h2><button data-close>계속 작성</button></div><p>저장 버튼으로 온라인 기록에 남길 수 있어요. 창을 닫으면 작성 내용은 이 탭의 임시 기록으로 유지됩니다.</p><button id="keep-draft" class="primary">임시 보관하고 닫기</button>';openUtility();$('#keep-draft').onclick=()=>{persistDraft();dirty=false;utility.close();editor.close();};return;}editor.close();}
-async function saveSelected(type,button){if(saving)return;clearTimeout(noteTimer);let v=readForm();const day=v.resultDay;delete v.resultDay;const isNew=baseRevision===0;if(type&&type!=='opened')v.status=type;const err=validate(v);if(err){$('#editor-error').textContent=err;return;}if(!validDate(day)||day>TODAY()){$('#editor-error').textContent='결과 기록일은 오늘 또는 과거 날짜로 입력해 주세요.';return;}try{let base={...v,status:selected.status};if(isNew){const sk=sourceKey(v);const duplicate=all().find(c=>c.id!==v.id&&((sk&&sourceKey(c)===sk)||(!sk&&c.name===v.name&&(c.phone||c.mobile)&&((v.phone&&c.phone===v.phone)||(v.mobile&&c.mobile===v.mobile)))));if(duplicate){$('#editor-error').textContent='이미 등록한 후보자예요. 수첩에서 기존 후보자를 열어 주세요.';return;}if(v.contactOpened!==false)base=transition(base,'opened',TODAY());}if(type==='opened')base.contactOpened=true;if(type)base=transition(base,type,day);v={...base,status:type&&type!=='opened'?type:selected.status};if(!type&&selected.interviewDate&&(selected.interviewDate!==v.interviewDate||selected.interviewTime!==v.interviewTime)){const id=uid();v.events={...v.events,[id]:{id,type:'rescheduled',day:TODAY(),at:Date.now(),previousDate:selected.interviewDate,previousTime:selected.interviewTime}};}saving=true;editor.querySelectorAll('button,input,textarea,select').forEach(b=>b.disabled=true);$('#editor-error').textContent='저장 중…';let result;if(demo){result={...v,revision:baseRevision+1,updatedAt:Date.now()};data.candidates[v.id]=result;}else result=await cloud.save(v.id,v,baseRevision);selected=structuredClone(result);baseRevision=result.revision;dirty=false;sessionStorage.removeItem(draftKey());renderContent();saving=false;showEditor(false);sparkle(editor.querySelector('.post-outcomes .badge')||$('#editor-title'),['booked','showed','starter'].includes(type));toast(type==='booked'?'초대장 완성! 안내 문자를 복사해 보내 주세요.':type==='starter'?'새로운 동료가 합류했어요! 함께할 모험을 응원해요.':isNew?'첫 만남을 기록했어요. 통화 결과도 이어서 남겨 주세요.':'이야기를 저장했어요.');}catch(error){$('#editor-error').textContent=error.message;persistDraft();}finally{saving=false;editor.querySelectorAll('button,input,textarea,select').forEach(b=>b.disabled=false);editor.querySelectorAll('button.message-action').forEach(b=>b.disabled=true);}}
+async function saveSelected(type,button){if(saving)return;clearTimeout(noteTimer);let v=readForm();const day=v.resultDay;delete v.resultDay;const isNew=baseRevision===0;if(type&&type!=='opened')v.status=type;const err=validate(v);if(err){$('#editor-error').textContent=err;return;}if(!validDate(day)||day>TODAY()){$('#editor-error').textContent='결과 기록일은 오늘 또는 과거 날짜로 입력해 주세요.';return;}try{let base={...v,status:selected.status};if(isNew){const sk=sourceKey(v);const duplicate=all().find(c=>c.id!==v.id&&((sk&&sameSource(c,v))||(!sk&&c.name===v.name&&(c.phone||c.mobile)&&((v.phone&&c.phone===v.phone)||(v.mobile&&c.mobile===v.mobile)))));if(duplicate){$('#editor-error').textContent='이미 등록한 후보자예요. 수첩에서 기존 후보자를 열어 주세요.';return;}if(v.contactOpened!==false)base=transition(base,'opened',TODAY());}if(type==='opened')base.contactOpened=true;if(type)base=transition(base,type,day);v={...base,status:type&&type!=='opened'?type:selected.status};if(!type&&selected.interviewDate&&(selected.interviewDate!==v.interviewDate||selected.interviewTime!==v.interviewTime)){const id=uid();v.events={...v.events,[id]:{id,type:'rescheduled',day:TODAY(),at:Date.now(),previousDate:selected.interviewDate,previousTime:selected.interviewTime}};}saving=true;editor.querySelectorAll('button,input,textarea,select').forEach(b=>b.disabled=true);$('#editor-error').textContent='저장 중…';let result;if(demo){result={...v,revision:baseRevision+1,updatedAt:Date.now()};data.candidates[v.id]=result;}else result=await cloud.save(v.id,v,baseRevision);selected=structuredClone(result);baseRevision=result.revision;dirty=false;sessionStorage.removeItem(draftKey());renderContent();saving=false;showEditor(false);sparkle(editor.querySelector('.post-outcomes .badge')||$('#editor-title'),['booked','showed','starter'].includes(type));toast(type==='booked'?'초대장 완성! 안내 문자를 복사해 보내 주세요.':type==='starter'?'새로운 동료가 합류했어요! 함께할 모험을 응원해요.':isNew?'첫 만남을 기록했어요. 통화 결과도 이어서 남겨 주세요.':'이야기를 저장했어요.');}catch(error){$('#editor-error').textContent=error.message;persistDraft();}finally{saving=false;editor.querySelectorAll('button,input,textarea,select').forEach(b=>b.disabled=false);editor.querySelectorAll('button.message-action').forEach(b=>b.disabled=true);}}
 function helperGuide(){importTools.install();}
 async function persistCandidate(v,expected){if(demo){const result={...v,revision:expected+1,updatedAt:Date.now()};data.candidates[v.id]=result;return result;}if(!cloud)throw Error('로그인한 뒤 다시 시도해 주세요.');return cloud.save(v.id,v,expected);}
 async function receiveImported(raw,accountUid=user?.uid){
   if(!user||user.uid!==accountUid)return;
   const source=normalizeResumeURL(raw?.url);
   if(!source){toast('알바몬 또는 알바천국의 이력서 상세 링크를 확인해 주세요.');return;}
-  if(editor.open&&dirty&&sourceKey(selected||{})!==source.key){persistDraft();toast('작성 중인 후보자 기록을 먼저 저장한 뒤 새 링크를 다시 가져와 주세요.');return;}
+  if(editor.open&&dirty&&!sameSource(selected||{},{url:source.url})){persistDraft();toast('작성 중인 후보자 기록을 먼저 저장한 뒤 새 링크를 다시 가져와 주세요.');return;}
   if(raw.loginRequired&&!raw.name){toast(source.label+'에 로그인한 뒤 정보를 다시 가져와 주세요.');return;}
   if(saving){setTimeout(()=>receiveImported(raw,accountUid),600);return;}
   try{
-    const removed=Object.values(data.candidates||{}).find(c=>c.deleted&&sourceKey(c)===source.key);
+    const matches=Object.values(data.candidates||{}).filter(c=>sameSource(c,{url:source.url}));
+    if(matches.length>1){toast('이 지원자와 연결되는 기존 기록이 여러 개예요. 자동으로 합치지 않았으니 후보자 수첩에서 확인해 주세요.');return;}
+    const removed=matches.find(c=>c.deleted);
     if(removed){toast('휴지통에 있는 후보자예요. 후보자 수첩의 휴지통에서 먼저 복원해 주세요.');return;}
-    const existing=all().find(c=>sourceKey(c)===source.key),sameOpen=editor.open&&sourceKey(selected||{})===source.key;
+    const existing=matches.find(c=>!c.deleted),sameOpen=editor.open&&sameSource(selected||{},{url:source.url});
+    if(sameOpen&&existing&&selected.id!==existing.id){toast('다른 창에서 등록된 기록이 있어요. 작성 내용은 유지했으니 후보자 수첩에서 확인해 주세요.');return;}
     let c=sameOpen?readForm():existing?structuredClone(existing):{id:uid(),name:'',age:'',gender:'',phone:'',mobile:'',education:'',career:'',wish:'',relate:'',note:'',status:'new',events:{},recruiter:settings().name,interviewDate:'',interviewTime:'11:00',nextDate:'',contactOpened:false};
     delete c.resultDay;
     const prior=c.importedFields||{},imports={...prior},limits={name:80,age:20,gender:1,phone:30,mobile:30,education:4000,career:4000,wish:2000,note:4000,relate:1000};
     for(const [key,limit]of Object.entries(limits)){const value=String(raw[key]||'').trim().slice(0,limit);if(!value)continue;if(!c[key]||c[key]===prior[key]||(key==='name'&&/[*○●•〇＊]/.test(c[key]))){c[key]=value;imports[key]=value;}}
+    const priorAliases=sourceKeys(c);
     c.channel=source.channel;c.sourceService=source.sourceService;c.url=source.url;
+    c.sourceAliases=[...new Set([...(source.keys||[source.key]),...priorAliases])].slice(0,32);
     const visibleContact=Boolean(smsRecipient(c));
     c.contactOpened=Boolean(c.contactOpened)||(raw.contactOpened===true&&visibleContact&&!raw.loginRequired);
     c.importedFields=imports;c.importedAt=Date.now();

@@ -7,7 +7,21 @@ const isSourceLogin=url=>{try{const u=new URL(url);return u.protocol==='https:'&
 const jobKey=id=>'crewJob_'+id;
 async function jobs(){return jobStore.get(null);}
 async function findJob(tabId){const all=await jobs();return Object.values(all).find(j=>(j?.sourceTab??j?.albamonTab)===tabId&&Date.now()-j.at<300000);}
-const matchesJob=(job,source)=>{const original=normalize(job?.url);return !!(original&&source&&original.sourceService===source.sourceService&&original.key===source.key);};
+const matchesSources=(original,source)=>{
+ if(!original||!source||original.sourceService!==source.sourceService)return false;
+ if(original.view==='applicants'&&source.view==='applicants'){
+  if(original.application_idx!==source.application_idx)return false;
+  if(original.jobadid&&source.jobadid&&original.jobadid!==source.jobadid)return false;
+  if(/^0+$/.test(original.id)||/^0+$/.test(source.id))return !!original.applicationKey&&original.applicationKey===source.applicationKey;
+  return original.legacyKey===source.legacyKey;
+ }
+ if(original.view==='applicants'||source.view==='applicants'){
+  const applicant=original.view==='applicants'?original:source,resume=original.view==='applicants'?source:original;
+  return !!applicant.legacyKey&&applicant.legacyKey===resume.key;
+ }
+ return original.key===source.key;
+};
+const matchesJob=(job,source)=>matchesSources(normalize(job?.url),source);
 function sanitize(p,source){
  const out={version:2,url:source.url,sourceService:source.sourceService};
  for(const [k,n]of Object.entries({name:80,age:20,phone:30,mobile:30,education:4000,career:4000,wish:2000,note:4000,relate:1000}))out[k]=String(p[k]||'').slice(0,n);
@@ -20,7 +34,7 @@ function sanitize(p,source){
 }
 async function notify(job,payload){try{await api.tabs.sendMessage(job.hubTab,{type:'CREW_RESULT',requestId:job.id,payload});}catch{await api.tabs.update(job.hubTab,{url:job.hubURL+'#capture='+encodeURIComponent(JSON.stringify(payload))});}}
 api.runtime.onMessage.addListener((message,sender,reply)=>{(async()=>{
- if(message?.type==='CREW_PING'&&isHub(sender.tab?.url))return {ok:true,version:4,extensionVersion:'4.0.1',sources:['albamon','albacheonguk'],features:['albacheonguk-popup']};
+ if(message?.type==='CREW_PING'&&isHub(sender.tab?.url))return {ok:true,version:4,extensionVersion:'4.1.0',sources:['albamon','albacheonguk'],features:['albacheonguk-popup','albacheonguk-applicants']};
  if(message?.type==='CREW_IMPORT'&&isHub(sender.tab?.url)){
   const source=normalize(message.url);if(!source)return {ok:false,error:'알바몬 또는 알바천국의 개별 이력서 링크를 넣어 주세요.'};
   const id=String(message.requestId||'').slice(0,100);if(!/^[a-zA-Z0-9-]{10,100}$/.test(id))return {ok:false,error:'요청을 다시 시작해 주세요.'};
@@ -35,11 +49,13 @@ api.runtime.onMessage.addListener((message,sender,reply)=>{(async()=>{
  }
  if(message?.type==='CREW_RESULT'&&normalize(sender.tab?.url)){
   const job=await findJob(sender.tab.id),source=normalize(sender.tab.url);if(!matchesJob(job,source))return {ok:false};
+  if(message.payload?.url&&!matchesSources(normalize(message.payload.url),source))return {ok:false};
   const payload=sanitize(message.payload||{},source);await notify(job,payload);
   if(payload.contactOpened&&!payload.nameMasked){await api.tabs.update(job.hubTab,{active:true});await jobStore.set({[jobKey(job.id)]:{...job,completed:true}});}return {ok:true};
  }
  if(message?.type==='PRESENCE_CAPTURE'&&normalize(sender.tab?.url)){
-  const source=normalize(sender.tab.url),payload=sanitize(message.payload||{},source),tabs=await api.tabs.query({url:'https://hub.presence.co.kr/recruiting/*'}),url=hubURL+'#capture='+encodeURIComponent(JSON.stringify(payload));
+  const source=normalize(sender.tab.url);if(message.payload?.url&&!matchesSources(normalize(message.payload.url),source))return {ok:false,error:'지원자가 바뀌었어요. 현재 이력서에서 다시 가져와 주세요.'};
+  const payload=sanitize(message.payload||{},source),tabs=await api.tabs.query({url:'https://hub.presence.co.kr/recruiting/*'}),url=hubURL+'#capture='+encodeURIComponent(JSON.stringify(payload));
   const hub=tabs[0]||await api.tabs.create({url,active:true});if(tabs.length)await api.tabs.update(hub.id,{url,active:true});
   const id='monster-'+Date.now()+'-'+sender.tab.id,job={id,url:source.url,sourceService:source.sourceService,key:source.key,hubTab:hub.id,hubURL,sourceTab:sender.tab.id,at:Date.now()};
   for(const [key,prior]of Object.entries(await jobs()))if((prior?.sourceTab??prior?.albamonTab)===sender.tab.id)await jobStore.remove(key);

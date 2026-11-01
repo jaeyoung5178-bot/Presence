@@ -33,8 +33,44 @@ function visibleText(node){
 }
 const textAt=(root,selector)=>visibleText(root?.querySelector(selector));
 const allText=(root,selector)=>[...(root?.querySelectorAll(selector)||[])].map(visibleText).filter(Boolean);
+function resumeScope(doc,source){return source?.view==='applicants'?doc.querySelector('#ResumeDetail #ResumeView1.resumeDocument.applicantsDoc'):doc.querySelector('#ResumeView1.resumeDocument')||doc;}
+function smsFields(scope){
+ const root=scope?.querySelector('.resume-sms');if(!root||!isVisible(root)||textAt(root,'.resume-sms__head').replace(/\s/g,'')!=='문자지원내용')return null;
+ const fields={};for(const term of root.querySelectorAll('.resume-sms__list .resume-sms__title')){
+  const value=term.nextElementSibling;if(value?.matches('.resume-sms__dsc'))fields[visibleText(term).replace(/\s/g,'')]=value;
+ }
+ return fields['지원자']&&fields['휴대폰']?fields:null;
+}
+function directPhone(node){
+ if(!isVisible(node)||!visibleText(node))return '';
+ const own=[...node.childNodes].filter(item=>item.nodeType===3).map(item=>item.textContent).join(' ');let result=phone(own);
+ if(!result)for(const link of node.querySelectorAll('a[href^="tel:"]'))if(visibleText(link)){result=phone(link.getAttribute('href')?.slice(4));if(result)break;}
+ return result;
+}
+function inspect(doc,url){
+ const source=globalThis.PresenceResumeSources?.normalizeResumeURL(url);let parsed;try{parsed=new URL(url);}catch{}
+ const login=/로그인/.test(doc.title||'')||[...(doc.querySelectorAll('input[type="password"]')||[])].some(isVisible);
+ if(!source){
+  if(login||/\/(?:auth|login)(?:\/|$)/i.test(parsed?.pathname||''))return {code:'login-required',message:'이력서 사이트에 로그인한 뒤 개별 이력서로 돌아와 주세요.'};
+  if(/^\/resume\/(?:main(?:\.asp)?|list\/[^/]+)\/?$/i.test(parsed?.pathname||'')||/^\/human-resources\/(?:total|main)\/?$/.test(parsed?.pathname||''))return {code:'list',message:'인재 목록이에요. 한 사람의 이름을 눌러 개별 이력서를 열어 주세요.'};
+  return {code:'unsupported-route',message:'이 주소의 이력서는 아직 확인할 수 없어요. Crew Camp에서 도우미 업데이트를 확인하고 개별 이력서 주소를 넣어 주세요.'};
+ }
+ if(source.sourceService!=='albacheonguk')return {code:'ready',message:'이름 · 나이 · 연락처 · 학력 · 경력을 가져와요.'};
+ const scope=resumeScope(doc,source),profile=scope?.querySelector('#ResumeBaseInfo .user-profile .user-profile__base');
+ if(isVisible(profile)&&profile.querySelector('.user-profile__name'))return {code:'ready',message:'이력서 본문을 확인했어요. 이 사람의 정보를 가져올 수 있어요.'};
+ if(source.view==='applicants'&&smsFields(scope))return {code:'ready',message:'문자지원 내용을 확인했어요. 지원자 정보와 지원 메시지를 가져올 수 있어요.'};
+ if(login)return {code:'login-required',message:'로그인이 필요해요. 이력서 사이트에서 로그인한 뒤 이 화면을 새로고침해 주세요.'};
+ return {code:doc.readyState==='loading'?'loading':'waiting-profile',message:'이력서 본문을 확인하고 있어요. 내용이 보이는데 계속 기다림 상태라면 이 화면을 새로고침해 주세요.'};
+}
 function extractAlba(doc,url){
- const candidate=doc.querySelector('#ResumeBaseInfo .user-profile'),base=isVisible(candidate)?candidate:null,profile=base?.querySelector('.user-profile__base');
+ const source=globalThis.PresenceResumeSources?.normalizeResumeURL(url),scope=resumeScope(doc,source);
+ const sms=source?.view==='applicants'?smsFields(scope):null;
+ if(sms){
+  const applicant=visibleText(sms['지원자']).match(/^(.{1,80}?)\s*\(\s*(남|여)\s*\/\s*(\d{1,3})\s*세(?:\s*\/[^)]*)?\s*\)$/);
+  const name=cut(applicant?.[1]||'',80),safe=directPhone(sms['휴대폰']),message=cut(visibleText(sms['지원메시지']));
+  return {version:2,url,sourceService:'albacheonguk',name,age:applicant?applicant[3]+'세':'',gender:applicant?.[2]||'',phone:safe.startsWith('050')?safe:'',mobile:safe.startsWith('01')?safe:'',education:'',career:'',wish:'',note:message?'지원 메시지: '+message:'',relate:'',contactOpened:!!safe,nameMasked:maskedName(name),loginRequired:false,capturedAt:Date.now()};
+ }
+ const candidate=scope?.querySelector('#ResumeBaseInfo .user-profile'),base=isVisible(candidate)?candidate:null,profile=base?.querySelector('.user-profile__base');
  const name=cut(textAt(profile,'.user-profile__name'),80),genderText=textAt(profile,'.user-profile__gender'),ageText=textAt(profile,'.user-profile__age');
  const ageMatch=ageText.match(/\d{1,3}/),age=ageMatch?ageMatch[0]+'세':'',gender=/^(여|여성)$/.test(genderText)?'여':/^(남|남성)$/.test(genderText)?'남':'';
  // A visible contact DD can contain a hidden guide with unrelated phone numbers.
@@ -42,20 +78,22 @@ function extractAlba(doc,url){
  let safe='';
  for(const term of base?.querySelectorAll('.user-profile__details .user-profile__term--contact')||[]){
   const dd=term.nextElementSibling;if(!dd?.matches('.user-profile__data')||!visibleText(dd))continue;
-  const own=[...dd.childNodes].filter(node=>node.nodeType===3).map(node=>node.textContent).join(' ');
-  safe=phone(own);
-  if(!safe)for(const link of dd.querySelectorAll('a[href^="tel:"]')){if(visibleText(link)){safe=phone(link.getAttribute('href')?.slice(4));if(safe)break;}}
+  safe=directPhone(dd);
   if(safe)break;
  }
- const rows=(id,selectors)=>{const root=doc.querySelector(id);return [textAt(root,'.resume-head__desc'),...[...(root?.querySelectorAll('.resume-content .data-view__list')||[])].map(row=>[...new Set(selectors.map(selector=>textAt(row,selector)).filter(Boolean))].join(' · '))].filter(Boolean).join('\n');};
+ const rows=(id,selectors)=>{const root=scope?.querySelector(id);return [textAt(root,'.resume-head__desc'),...[...(root?.querySelectorAll('.resume-content .data-view__list')||[])].map(row=>[...new Set(selectors.map(selector=>textAt(row,selector)).filter(Boolean))].join(' · '))].filter(Boolean).join('\n');};
  const education=cut(rows('#ResumeEducation',['.data-view__term','.resume-info__name','.resume-info__part']));
  const career=cut(rows('#ResumeCareer',['.data-view__term','.resume-info__name','.resume-info__part','.resume-info__time','.resume-info__sub']));
- const wish=cut([...allText(doc.querySelector('#ResumeLocal'),'.data-keyword__item'),...allText(doc.querySelector('#ResumeKind'),'.data-keyword__item'),...[...(doc.querySelector('#ResumeWork')?.querySelectorAll('.data-view__list')||[])].map(row=>[textAt(row,'.data-view__term'),textAt(row,'.data-view__desc')].filter(Boolean).join(': '))].filter(Boolean).join(' · '),2000);
+ const wish=cut([...allText(scope?.querySelector('#ResumeLocal'),'.data-keyword__item'),...allText(scope?.querySelector('#ResumeKind'),'.data-keyword__item'),...[...(scope?.querySelector('#ResumeWork')?.querySelectorAll('.data-view__list')||[])].map(row=>[textAt(row,'.data-view__term'),textAt(row,'.data-view__desc')].filter(Boolean).join(': '))].filter(Boolean).join(' · '),2000);
  const nameMasked=maskedName(name),loginRequired=!base;
  const note=cut([education&&'학력: '+education,career&&'경력: '+career,wish&&'희망: '+wish].filter(Boolean).join(' / '));
  return {version:2,url,sourceService:'albacheonguk',name,age,gender,phone:safe.startsWith('050')?safe:'',mobile:safe.startsWith('01')?safe:'',education,career,wish,note,relate:'',contactOpened:!!safe&&!loginRequired,nameMasked,loginRequired,capturedAt:Date.now()};
 }
-function extract(doc,url,rawOverride){const source=globalThis.PresenceResumeSources?.normalizeResumeURL(url);if(source?.sourceService==='albacheonguk')return extractAlba(doc,source.url);return extractAlbamon(doc,source?.url||url,rawOverride);}
-globalThis.PresenceAlbamonExtract={extract};
-globalThis.PresenceResumeExtract={extract};
+function extract(doc,url,rawOverride){
+ const source=globalThis.PresenceResumeSources?.normalizeResumeURL(url);
+ if(!source)return {version:2,url:'',name:'',age:'',gender:'',phone:'',mobile:'',education:'',career:'',wish:'',note:'',relate:'',contactOpened:false,nameMasked:true,loginRequired:false,capturedAt:Date.now()};
+ return source.sourceService==='albacheonguk'?extractAlba(doc,source.url):extractAlbamon(doc,source.url,rawOverride);
+}
+globalThis.PresenceAlbamonExtract={extract:extractAlbamon};
+globalThis.PresenceResumeExtract={extract,inspect};
 })();
