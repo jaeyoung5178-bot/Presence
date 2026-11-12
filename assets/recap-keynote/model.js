@@ -232,7 +232,7 @@ function callbackAggregate(rows) {
     knownRate:ratio(knownSubmitted, sum(applicable.filter(r => r.submitted != null), r => r.days))};
 }
 export function callbackDays(draft, member) {
-  if(draft?.month==='2026-10'&&draft.sourceNotes?.salesSnapshot?.confirmed===true)return num(draft?.callbackDays?.[member.id]);
+  if(draft?.month==='2026-10'&&draft.sourceNotes?.salesSnapshot?.confirmed===true)return num(member.days)??0;
   return num(draft?.callbackDays?.[member.id]) ?? num(member.days) ?? 0;
 }
 export function recruitingShowupRanks(rows) {
