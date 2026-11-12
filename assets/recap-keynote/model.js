@@ -270,7 +270,7 @@ export function recruitingSummary(input, month = '') {
   });
   const booking = totalKnown(rows.map(r => r.booking)), showup = totalKnown(rows.map(r => r.showup)), starter = totalKnown(rows.map(r => r.starter));
   const candidate = !Array.isArray(input) && input?.firstFieldCohort;
-  const cohort = candidate && monthValid(candidate.month) && (!month || candidate.month === month) && Number.isInteger(candidate.count) && candidate.count >= 0 && candidate.conversion === null && (candidate.source == null || typeof candidate.source === 'string' && candidate.source.trim()) ? clone(candidate) : null;
+  const cohort = candidate && monthValid(candidate.month) && (!month || candidate.month === month) && Number.isInteger(candidate.count) && candidate.count >= 0 && candidate.conversion == null && (candidate.source == null || typeof candidate.source === 'string' && candidate.source.trim()) ? {...clone(candidate),conversion:null} : null;
   return {...(!Array.isArray(input) && input || {}),...(candidate ? {firstFieldCohort:cohort} : {}),...(cohort ? {knownStarter:sum(rows,r=>r.starter)} : {}),rows,booking,booked:booking,bookings:booking,showup,showups:showup,starter,starters:starter,
     absent:booking != null && showup != null ? Math.max(0,booking - showup) : null,rate:ratio(showup,booking),people:rows.length};
 }

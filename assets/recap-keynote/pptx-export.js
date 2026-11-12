@@ -1,4 +1,4 @@
-import * as M from './model.js?v=20261112-canonical';
+import * as M from './model.js?v=20261112-canonical2';
 
 // All content is drawn as editable PowerPoint text, tables, shapes and charts.
 // The only runtime dependency is the same-origin, locally vendored bundle.
@@ -37,7 +37,7 @@ function table(slide,headers,rows,x,y,widths,{fontSize=14,rowH=.44,footer=null}=
   const data=[make(headers,true),...rows.map(row=>make(row))];if(footer)data.push(make(footer,false,true));
   slide.addTable(data,{x,y,w:total(widths),colW:widths,rowH,fontFace:FONT,fontSize,color:C.ink,
     margin:[.055,.07,.045,.07],border:{type:'solid',color:C.line,pt:.6},autoPage:false,verbose:false,
-    valign:'mid',paraSpaceAfterPt:0});
+    valign:'middle',paraSpaceAfterPt:0});
 }
 function kpis(slide,values,y=1.5) {
   const gap=.18,w=(11.93-gap*(values.length-1))/values.length;
@@ -248,9 +248,26 @@ export function buildPptx({draft,views,month,logoData},PptxGenJS) {
 
 // PptxGenJS emits connector geometry as ordinary shapes. Promote only our named
 // hierarchy edges to real OOXML connectors with references to editable node shapes.
+export function normalizeRecapChartXML(xml) {
+  const ns='http://schemas.openxmlformats.org/drawingml/2006/chart',doc=new DOMParser().parseFromString(xml,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length)throw new Error('PPTX 차트 XML을 확인해 주세요.');
+  const plot=doc.getElementsByTagNameNS(ns,'plotArea')[0];if(!plot)throw new Error('PPTX 차트 축을 확인해 주세요.');
+  const children=(node,name)=>Array.from(node.children).filter(child=>child.namespaceURI===ns&&child.localName===name);
+  const axes=new Set(Array.from(plot.children).filter(node=>/^(cat|val|date|ser)Ax$/.test(node.localName)).map(node=>children(node,'axId')[0]?.getAttribute('val')));
+  for(const group of Array.from(plot.children)){
+    if(!['barChart','lineChart','areaChart'].includes(group.localName))continue;
+    // PptxGenJS 3.12 adds a spare 3D series-axis reference to 2D charts.
+    for(const ref of children(group,'axId'))if(!axes.has(ref.getAttribute('val')))ref.remove();
+    const ids=children(group,'axId').map(ref=>ref.getAttribute('val'));
+    if(ids.length!==2||new Set(ids).size!==2)throw new Error('PPTX 2D 차트 축 연결을 확인해 주세요.');
+  }
+  return new XMLSerializer().serializeToString(doc);
+}
 export async function editablePptxBytes(pptx,JSZip=globalThis.JSZip) {
   if(!JSZip?.loadAsync)throw new Error('PPTX 압축 모듈을 불러오지 못했습니다.');
   const bytes=await pptx.write({outputType:'uint8array',compression:true}),zip=await JSZip.loadAsync(bytes);
+  for(const name of Object.keys(zip.files).filter(name=>/^ppt\/charts\/chart\d+\.xml$/.test(name)))zip.file(name,normalizeRecapChartXML(await zip.file(name).async('string')));
+  for(const name of Object.keys(zip.files).filter(name=>/^ppt\/slides\/slide\d+\.xml$/.test(name)))zip.file(name,(await zip.file(name).async('string')).replace(/<a:tcPr\b[^>]*>/g,tag=>tag.replace(/\banchor="mid"/g,'anchor="ctr"')));
   const bySlide=new Map();for(const binding of pptx._recapConnections||[]){if(!bySlide.has(binding.slide))bySlide.set(binding.slide,[]);bySlide.get(binding.slide).push(binding);}
   for(const [index,bindings]of bySlide){const name=`ppt/slides/slide${index}.xml`;let xml=await zip.file(name).async('string');
     const ids=new Map([...xml.matchAll(/<p:cNvPr\b[^>]*\bid="(\d+)"[^>]*\bname="([^"]+)"/g)].map(match=>[match[2],match[1]]));
