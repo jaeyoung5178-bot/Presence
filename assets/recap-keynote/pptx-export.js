@@ -192,7 +192,7 @@ function ic(slide,d,v) {
   for(let i=1;i<=3;i++){const x=5.07+(i-1)*2.49;box(slide,`DAY ${i}`,x,6.0,2.26,.2,10,{color:C.blue,bold:true});const value=p[`day${i}`];box(slide,value?.length>70?'상세 계획은 이어지는 페이지에서 확인합니다.':value||'계획 미입력',x,6.3,2.26,.36,12,{valign:'top'});}
 }
 function tree(slide,d,v,pptx,index) {
-  const nodes=v.items||d.tree||[];if(!nodes.length)return empty(slide,'저장된 팀 관계가 없습니다.');
+  const nodes=v.items||(Array.isArray(d.currentTree)?d.currentTree:d.tree)||[];if(!nodes.length)return empty(slide,'저장된 팀 관계가 없습니다.');
   if(v.treeRows){const rows=v.items||nodes;return table(slide,['팀원','역할','직접 리더','이끄는 팀','구분'],rows.map(node=>[node.name,node.role,nodes.find(p=>p.id===node.parent)?.name||'최상위',node.team||'—',node.planned?'추가 예정':'기존 팀원']),.7,1.64,[2.5,1.1,2.5,4.4,1.43],{fontSize:14,rowH:.52});}
   const map=new Map(nodes.map(node=>[node.id,node])),children=id=>nodes.filter(node=>node.parent===id),roots=nodes.filter(node=>!map.has(node.parent));
   const weights=new Map(),depths=new Map();let maxDepth=0;
