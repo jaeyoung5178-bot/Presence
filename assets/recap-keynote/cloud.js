@@ -1,4 +1,4 @@
-import {clone, validate, recruitingSummary, workbookTreeAudit} from './model.js?v=20261011-direct';
+import {clone, validate, recruitingSummary, workbookTreeAudit, mergeRecapFinancialSource} from './model.js?v=20261112-canonical';
 
 const CFG = {
   apiKey:'AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0',
@@ -171,7 +171,7 @@ export function gateway() {
     },
     async load(month) {
       checkMonth(month);
-      await requireAllowed();
+      const actor = await requireAllowed();
       const token = generation;
       // Never read all recaps: each month stays independent and sensitive sources are least-scope.
       const fields = {...treeFields,sales:'sales',memberInfo:'memberInfo',weeklyProfitRecaps:'weeklyProfitRecaps',profitMonthlyBep:'profitMonthlyBep',recruit:'recruit'};
@@ -194,6 +194,26 @@ export function gateway() {
           else documents[path] = null;
         } else if (sourceKeys.has(path)) state[sourceKeys.get(path)] = sourceValue(sourceKeys.get(path),result.value);
         else documents[path] = result.value;
+      }
+      let canonicalTeams = null, scopedTeam = '';
+      if (actor.uid === 'admin') {
+        try {canonicalTeams = await rawGet('recapStudioTeams');}
+        catch {throw error('recap/load','canonical 리캡 원본을 불러오지 못했습니다. 기존 기록을 보호하기 위해 새로 불러오기를 중단했습니다.');}
+      } else {
+        let access;
+        try {access = await rawGet(`recapStudioAccess/viewers/${actor.uid}`);}
+        catch {warnings.push('canonical 리캡 접근 범위를 확인하지 못했습니다. 급여 수치를 확인해 주세요.');state.weeklyProfitRecaps = null;state.profitMonthlyBep = null;}
+        if (access?.active !== false && access?.scope === 'team' && !access.revokedAt && ['presence','fuse','youngwave'].includes(access.teamKey)) {
+          scopedTeam = access.teamKey;
+          try {canonicalTeams = {[scopedTeam]:await rawGet(`recapStudioTeams/${scopedTeam}`)};}
+          catch {throw error('recap/load','승인된 팀의 canonical 리캡을 불러오지 못했습니다. 기존 기록을 보호하기 위해 새로 불러오기를 중단했습니다.');}
+        }
+      }
+      if (token !== generation || current?.uid !== actor.uid || !allowed(current)) throw error('recap/superseded','세션이 변경되어 불러오기를 취소했습니다.');
+      if (canonicalTeams) {
+        const merged = mergeRecapFinancialSource(state,month,canonicalTeams,scopedTeam);
+        state.weeklyProfitRecaps = merged.state.weeklyProfitRecaps;state.profitMonthlyBep = merged.state.profitMonthlyBep;
+        warnings.push(...merged.warnings);
       }
       state.sourceAt = Date.now();
       const treeAudit = workbookTreeAudit(state);

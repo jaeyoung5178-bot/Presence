@@ -1,4 +1,4 @@
-import * as M from './model.js?v=20261011-direct';
+import * as M from './model.js?v=20261112-canonical';
 
 // All content is drawn as editable PowerPoint text, tables, shapes and charts.
 // The only runtime dependency is the same-origin, locally vendored bundle.
@@ -10,6 +10,7 @@ const n=M.num,fmt=v=>n(v)==null?'—':n(v).toLocaleString('ko-KR',{maximumFracti
 const avg=v=>n(v)==null?'—':n(v).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const money=v=>n(v)==null?'—':Math.round(n(v)).toLocaleString('ko-KR')+'원';
 const pct=v=>n(v)==null?'N/A':n(v).toFixed(1)+'%';
+const md=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?String(value).slice(5).replace('-','.'):'—';
 const total=values=>values.reduce((a,b)=>a+(n(b)??0),0);
 const text=v=>String(v??'');
 const monthTitle=month=>`${month.slice(0,4)}년 ${Number(month.slice(5))}월`;
@@ -57,7 +58,7 @@ function header(slide,view,draft,index,count,logoData) {
   }
   if(['wins','challenges'].includes(view.id))return;
   line(slide,.7,7.01,11.93,0,C.line);
-  box(slide,view.id==='cover'?`Presence · ${draft.leader||'임재영'} ${(draft.members||[]).find(m=>m.name===draft.leader)?.role||'AOP'}`:[draft.teamName||'Presence',monthTitle(draft.month),draft.leader].filter(Boolean).join(' · '),.7,7.12,10,.15,8.5,{color:C.muted});
+  box(slide,view.id==='cover'?`Presence · ${M.leaderLabel(draft)}`:[draft.teamName||'Presence',monthTitle(draft.month),draft.leader].filter(Boolean).join(' · '),.7,7.12,10,.15,8.5,{color:C.muted});
   box(slide,`${String(index+1).padStart(2,'0')} / ${count}`,11.4,7.1,1.2,.19,9,{align:'right',color:C.muted});
 }
 function cover(slide,d) {
@@ -80,6 +81,7 @@ function contents(slide) {
 }
 function sales(slide,d,v) {
   const all=[...d.members].sort((a,b)=>(M.memberMetric(b).sales??0)-(M.memberMetric(a).sales??0)),rows=v.items||all,t=M.totals(d);
+  box(slide,`필드 ${md(d.weeks?.[0]?.start)}–${md(d.weeks?.at(-1)?.end)}`,.7,1.23,11.9,.2,10.5,{color:C.muted});
   if(!rows.length)return empty(slide,'이달의 워크북 기록이 없습니다.');
   const widths=[1.35,.65,2.72,2.03,2.69,.85,1.64],x=.7,y=1.58,rh=.44;
   const data=rows.map(m=>{const a=M.memberMetric(m);return [m.name+' '+m.role,fmt(a.days),'','',money(a.income)+(a.incomeComplete?'':' *'),fmt(a.reject),{text:pct(a.rate),options:{color:a.alert?C.red:C.ink,bold:a.alert}}];});
@@ -115,19 +117,19 @@ function income(slide,d,v) {
   if(!t.incomeComplete)box(slide,'미입력 급여는 0원으로 확정하지 않습니다.',.7,6.65,11.9,.23,10,{color:C.muted});
 }
 function recruit(slide,d,v,rank=false) {
-  const r=M.recruitingSummary(d.recruiting);
-  if(rank){const rows=v.items||r.rows;return rows.length?table(slide,['랭킹 · 팀원','부킹','쇼업','스타터'],rows.map((row,i)=>[`${(v.part||0)*9+i+1}  ${row.name}`,fmt(row.booking??row.booked),fmt(row.showup),fmt(row.starter??row.starters)]),.7,1.65,[4.7,2.4,2.4,2.43],{rowH:.45,footer:['팀 합계',fmt(r.booking),fmt(r.showup),fmt(r.starter)]}):empty(slide,'리쿠르팅 실적 미입력');}
-  [['BOOKING','부킹',r.booking],['SHOW UP','쇼업',r.showup],['STARTER','스타터',r.starter]].forEach(([en,ko,value],i)=>{const x=.7+i*4.03;rect(slide,x,1.75,3.76,2.55,i===0?C.ink:i===1?C.blue:C.pale);const color=i<2?C.paper:C.ink;
+  const r=M.recruitingSummary(d.recruiting,d.month),cohort=r.firstFieldCohort;
+  if(rank){const rows=v.items||r.rows;if(!rows.length)return empty(slide,'리쿠르팅 실적 미입력');table(slide,['랭킹 · 팀원','부킹','쇼업',cohort?'확인된 스타터':'스타터'],rows.map((row,i)=>[`${(v.part||0)*9+i+1}  ${row.name}`,fmt(row.booking??row.booked),fmt(row.showup),fmt(row.starter??row.starters)]),.7,1.65,[4.7,2.4,2.4,2.43],{rowH:.45,footer:[cohort?'팀 합계 · 스타터 부분 확정':'팀 합계',fmt(r.booking),fmt(r.showup),fmt(cohort?r.knownStarter:r.starter)]});if(cohort)box(slide,`${Number(cohort.month.slice(5))}월 첫필드 ${fmt(cohort.count)}명 · 외부 리쿠르터 ${fmt(cohort.externalVerified)}명 · 귀속 확인 중 ${fmt(cohort.unattributed)}명`,.7,6.25,11.9,.4,12,{color:C.muted});return;}
+  [['BOOKING','부킹',r.booking],['SHOW UP','쇼업',r.showup],cohort?[`${Number(cohort.month.slice(5))}월 첫필드`,'첫필드 인원',cohort.count]:['STARTER','스타터',r.starter]].forEach(([en,ko,value],i)=>{const x=.7+i*4.03;rect(slide,x,1.75,3.76,2.55,i===0?C.ink:i===1?C.blue:C.pale);const color=i<2?C.paper:C.ink;
     box(slide,en,x+.25,2.02,3.26,.25,13,{color,bold:true});box(slide,fmt(value),x+.25,2.65,3.26,.8,56,{color,bold:true});box(slide,ko,x+.25,3.72,3.26,.25,16,{color});});
   box(slide,'부킹 → 쇼업',.85,4.92,5.3,.3,18,{color:C.muted});box(slide,pct(M.ratio(r.showup,r.booking)),.85,5.42,5.3,.55,35,{bold:true,color:C.blue});
-  box(slide,'쇼업 → 스타터',6.7,4.92,5.3,.3,18,{color:C.muted});box(slide,pct(M.ratio(r.starter,r.showup)),6.7,5.42,5.3,.55,35,{bold:true,color:C.blue});
+  box(slide,'쇼업 → 스타터',6.7,4.92,5.3,.3,18,{color:C.muted});box(slide,cohort?'—':pct(M.ratio(r.starter,r.showup)),6.7,5.42,5.3,.55,35,{bold:true,color:C.blue});if(cohort)box(slide,`${Number(cohort.month.slice(5))}월 첫필드에는 이전 달 면접자도 포함됩니다.`,6.7,6.1,5.3,.45,11,{color:C.muted});
 }
 function qc(slide,d,v) {
   const events=d.events||[],ins=n(d.qc?.inCount)??events.filter(e=>e.type==='In').length,outs=n(d.qc?.outCount)??events.filter(e=>!['In','Retain'].includes(e.type)).length,start=n(d.qc?.startCount);
   kpis(slide,[['월초 인원',fmt(start)],['In',fmt(ins)],['Out',fmt(outs)],['월말 인원',start==null?'—':fmt(start+ins-outs)]]);
   const rows=v.items||events;if(!rows.length)return box(slide,'이달의 In · Out 기록이 없습니다.',.7,3.8,11.9,.8,22,{align:'center',color:C.muted});
   const md=v=>{const m=String(v||'').match(/^(?:\d{4}-)?(\d{2})-(\d{2})$/);return m?Number(m[1])+'/'+Number(m[2]):(v||'미입력');};
-  table(slide,['팀원','일자','구분','사유 · 후속 액션','상위리더'],rows.map(e=>[e.name,md(e.date),e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.2,1.0,1.1,7.22,1.41],{fontSize:10.5,rowH:rows.length>8?.36:.51});
+  table(slide,['팀원','일자','구분','사유 · 후속 액션','상위리더'],rows.map(e=>[e.name,e.displayDate||md(e.date),e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.2,1.0,1.1,7.22,1.41],{fontSize:10.5,rowH:rows.length>8?.36:.51});
 }
 function stories(slide,d,v) {
   const rows=v.items||[],win=v.id==='wins';if(!rows.length)return empty(slide);
@@ -168,6 +170,7 @@ function learning(slide,d,v) {
 function ic(slide,d,v) {
   const m=v.items?.[0];if(!m)return empty(slide,'IC 성장 플랜이 없습니다.');const p=d.icPlans?.[m.id]||{},days=(p.firstDays?.length?p.firstDays.map(sales=>({date:'',sales})):m.firstFive||[]).slice(0,5),known=days.filter(row=>n(row.sales)!=null),sales=known.length?total(known.map(row=>row.sales)):null;
   rect(slide,.7,1.53,4.0,5.17,C.ink);box(slide,m.name,.95,1.88,3.5,.55,31,{bold:true,color:C.paper});box(slide,[m.team||'팀 미지정',m.role||'IC'].join(' · '),.95,2.55,3.5,.3,16,{color:'C4D1E6'});
+  if(m.asOf)box(slide,'현재 IC · '+String(m.asOf).replaceAll('-','.'),.95,1.61,3.5,.18,9.5,{color:'C4D1E6'});
   box(slide,'실제 첫 5일 기록',.95,3.16,3.5,.26,13,{color:C.paper,bold:true});
   for(let i=0;i<5;i++){const x=.95+i*.69;box(slide,`D${i+1}\n${days[i]?.date?.slice(5)||'—'}`,x,3.58,.64,.5,10,{align:'center',color:'C4D1E6'});box(slide,fmt(days[i]?.sales),x,4.18,.64,.38,22,{bold:true,align:'center',color:C.paper});}
   box(slide,`첫 5일 확인 성과   ${fmt(sales)}건\n확인 일수 AVG   ${avg(known.length?sales/known.length:null)}\n확인 ${known.length} / 5일`,.95,5.08,3.5,1.0,16,{color:C.paper});
@@ -215,10 +218,10 @@ function goalPage(slide,d){const g=d.goals||{},lines=v=>String(v||'').split(/\n+
   cols.forEach(([title,body],i)=>{const x=.7+i*4.03;box(slide,title,x,3.1,3.8,.3,15,{bold:true,color:C.blue});line(slide,x,3.48,3.8,0);box(slide,body||'미입력',x,3.6,3.8,2.6,13,{valign:'top',bold:i===0});});
   if(g.reward){rect(slide,.7,6.35,11.93,.32,C.soft);box(slide,`REWARD   ${g.reward}`,.85,6.39,11.6,.24,11,{bold:true});}}
 function overview(slide,d) {
-  const t=M.totals(d),r=M.recruitingSummary(d.recruiting),rows=d.members.map(m=>({...m,days:M.callbackDays(d,m),submitted:n(d.callbacks?.[m.id])})),cbDays=total(rows.map(m=>m.days)),cbSub=total(rows.map(m=>m.submitted)),missing=rows.filter(m=>m.days>0&&m.submitted==null).length,g=d.goals||{};
+  const t=M.totals(d),r=M.recruitingSummary(d.recruiting,d.month),rows=d.members.map(m=>({...m,days:M.callbackDays(d,m),submitted:n(d.callbacks?.[m.id])})),cbDays=total(rows.map(m=>m.days)),cbSub=total(rows.map(m=>m.submitted)),missing=rows.filter(m=>m.days>0&&m.submitted==null).length,g=d.goals||{};
   rect(slide,.7,1.52,11.93,1.3,C.blue);box(slide,`${Number(d.month.slice(5))}월 팀 성과 요약`,.97,1.85,8.6,.54,29,{bold:true,color:C.paper});box(slide,fmt(t.sales),10.3,1.81,2.0,.64,44,{bold:true,color:C.paper,align:'right'});
   if(d.headline||d.wins?.[0]?.title)box(slide,d.headline||d.wins[0].title,.97,2.47,8.8,.22,12,{color:C.paper});
-  const values=[['AVG',avg(t.avg),`필드 ${fmt(t.days)}일`],[t.incomeComplete?'TEAM INCOME':'확인된 인컴',money(t.incomeComplete?t.income:t.knownIncome),'입력 급여 주차 합계'],['REJECTION',pct(t.rate),'리섭 차감 후 기준'],['RECRUITING',`${fmt(r.starter)}명`,`부킹 ${fmt(r.booking)} · 쇼업 ${fmt(r.showup)}`],['CALLBACK',missing?'입력 중':pct(M.ratio(cbSub,cbDays)),`${cbSub}회 / ${cbDays}일 · 미입력 ${missing}명`],['LEARNING',`${(d.learning||[]).length}개`,'회고와 다음 달 계획']];
+  const values=[['AVG',avg(t.avg),`필드 ${fmt(t.days)}일`],[t.incomeComplete?'TEAM INCOME':'확인된 인컴',money(t.incomeComplete?t.income:t.knownIncome),'입력 급여 주차 합계'],['REJECTION',pct(t.rate),'리섭 차감 후 기준'],[r.firstFieldCohort?'첫필드 인원':'RECRUITING',`${fmt(r.firstFieldCohort?r.firstFieldCohort.count:r.starter)}명`,`부킹 ${fmt(r.booking)} · 쇼업 ${fmt(r.showup)}`],['CALLBACK',missing?'입력 중':pct(M.ratio(cbSub,cbDays)),`${missing?'—':fmt(cbSub)}회 / ${cbDays}일 · 미입력 ${missing}명`],['LEARNING',`${(d.learning||[]).length}개`,'회고와 다음 달 계획']];
   values.forEach(([label,value,note],i)=>{const x=.7+(i%3)*4.03,y=3.07+Math.floor(i/3)*1.15;box(slide,label,x,y,3.78,.24,11,{color:C.muted,bold:true});box(slide,value,x,y+.36,3.78,.43,26,{bold:true});box(slide,note,x,y+.87,3.78,.19,10,{color:C.muted});});
   rect(slide,.7,5.68,11.93,.94,C.soft);box(slide,'NEXT GOAL',.93,5.95,1.6,.28,13,{color:C.blue,bold:true});
   box(slide,[g.sales!=null&&g.sales!==''&&'세일즈 '+fmt(g.sales)+'+',g.income&&'인컴 '+money(g.income),g.avg!=null&&g.avg!==''&&'AVG '+avg(g.avg),g.recruit!=null&&g.recruit!==''&&'스타터 '+fmt(g.recruit)+'명',g.callback!=null&&g.callback!==''&&'콜백 '+fmt(g.callback)+'%'].filter(Boolean).join(' · ')||'다음 달 목표 미입력',2.72,5.82,9.55,.65,14,{bold:true});

@@ -16,6 +16,7 @@ export const views = [
 
 export const id = () => globalThis.crypto?.randomUUID?.() || `r${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 export const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+export function leaderLabel(draft){const leader=String(draft.leader||'임재영');return /\b(IC|LR|TL|AOP|OP|O|OWNER)$/.test(leader)?leader:leader+' '+((draft.members||[]).find(m=>m.name===leader)?.role||'AOP');}
 export const nk = value => String(value ?? '').replace(/[.#$\/\[\]\s]/g, '_');
 export function num(value) {
   if (value == null || typeof value === 'boolean' || (typeof value === 'string' && !value.trim())) return null;
@@ -42,6 +43,14 @@ const totalKnown = values => values.length && values.every(v => num(v) != null) 
 const rejectKeys = ['cl', 'sw', 'clResub', 'swResub'];
 const rejectRow = row => {
   if (!row || typeof row !== 'object') return null;
+  // The workbook adds the old untyped resubmission count to the newer CL/SW counts.
+  // Preserve that total without inventing how its legacy portion was distributed.
+  if (num(row.resubmitCount) > 0) {
+    const cl = num(row.cl ?? row.rejectCLCount ?? row.clReject ?? row.reject), sw = num(row.sw ?? row.rejectSWCount ?? row.swReject);
+    return {cl,sw,clResub:null,swResub:null,
+      ...(cl != null && sw != null ? {rawTotal:cl + sw} : num(row.rawTotal) != null ? {rawTotal:num(row.rawTotal)} : {}),
+      resubTotal:num(row.resubmitCount) + (num(row.resubmitCLCount ?? row.clResub) ?? 0) + (num(row.resubmitSWCount ?? row.swResub) ?? 0)};
+  }
   return {cl:num(row.cl ?? row.rejectCLCount ?? row.clReject ?? row.reject),
     sw:num(row.sw ?? row.rejectSWCount ?? row.swReject),
     clResub:num(row.clResub ?? row.resubmitCLCount ?? row.resub),
@@ -68,6 +77,52 @@ export function schedule(month) {
     weeks.push({pay:shift(0), we:shift(-5), start:shift(-11), end:shift(-5), label:`W${weeks.length + 1}`});
   }
   return weeks;
+}
+
+// Read-only source reconciliation. Saved monthly snapshots never pass through this helper.
+export function mergeRecapFinancialSource(state, month, teams, scopedTeam = '') {
+  const result = {...state,weeklyProfitRecaps:clone(state.weeklyProfitRecaps || {}),profitMonthlyBep:clone(state.profitMonthlyBep || {})};
+  const pays = new Set(schedule(month).map(week => week.pay)), warnings = [], seen = new Map(), conflicts = new Set();
+  for (const [teamKey,team] of Object.entries(teams || {})) {
+    if (!['presence','fuse','youngwave'].includes(teamKey) || scopedTeam && scopedTeam !== teamKey) continue;
+    for (const [pay,rows] of Object.entries(team?.weekly || {})) {
+      if (!pays.has(pay)) continue;
+      for (const [uid,record] of Object.entries(rows || {})) {
+        const key = pay + '/' + uid;
+        if (seen.has(key) && seen.get(key) !== teamKey || conflicts.has(key)) {
+          conflicts.add(key);if (result.weeklyProfitRecaps[pay]) delete result.weeklyProfitRecaps[pay][uid];
+          warnings.push(`${pay}: 한 계정의 canonical 리캡 팀이 중복되어 제외했습니다.`);continue;
+        }
+        if (!record || record.uid !== uid || record.payDate !== pay || record.teamKey !== teamKey) {
+          warnings.push(`${pay}: canonical 리캡의 계정·급여일·팀이 일치하지 않아 제외했습니다.`);
+          // An invalid canonical row must not expose an older legacy value as verified.
+          if (result.weeklyProfitRecaps[pay]) delete result.weeklyProfitRecaps[pay][uid];
+          continue;
+        }
+        result.weeklyProfitRecaps[pay] ||= {};
+        seen.set(key,teamKey);
+        result.weeklyProfitRecaps[pay][uid] = clone(record);
+      }
+    }
+    for (const [uid,value] of Object.entries(team?.bep?.[month] || {})) {
+      if (num(value) == null || num(value) < 0 || !team?.roster?.[uid]) continue;
+      result.profitMonthlyBep[month] ||= {};
+      result.profitMonthlyBep[month][uid] = num(value);
+    }
+  }
+  return {state:result,warnings:[...new Set(warnings)]};
+}
+
+export function preserveDraftSourceSnapshot(draft, fresh) {
+  const marker = draft?.sourceNotes?.salesSnapshot;
+  if (!marker) return null;
+  const ids = marker.memberUids, members = arr(draft.members), expected = schedule(draft.month).map(w => w.pay);
+  const fail = () => {throw new Error('첨부 확정 집계의 월·명단·주차를 확인해 주세요. 기존 내용은 유지됩니다.');};
+  if (marker.confirmed !== true || marker.month !== draft.month || !String(marker.sourceFile || '').trim() || !Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length) fail();
+  const memberIds = members.map(m => m.uid || m.id);
+  if (members.length !== ids.length || new Set(memberIds).size !== ids.length || ids.some(uid => !memberIds.includes(uid))) fail();
+  for (const weeks of [draft.weeks,fresh?.weeks]) if (!Array.isArray(weeks) || JSON.stringify(weeks.map(w => w.pay)) !== JSON.stringify(expected)) fail();
+  return {members:clone(members),roster:clone(draft.roster || []),weeks:clone(draft.weeks)};
 }
 
 function byName(source, name) {
@@ -207,14 +262,16 @@ export function totals(draft = {}) {
     recruiting:recruitingSummary(draft.recruiting), callback:callbackGroups(draft)};
 }
 
-export function recruitingSummary(input) {
+export function recruitingSummary(input, month = '') {
   const rows = arr(Array.isArray(input) ? input : input?.rows).map(row => {
     const booking = num(row.booking ?? row.booked), showup = num(row.showup), starter = num(row.starter ?? row.starters);
     return {...row,booking,booked:booking,showup,starter,starters:starter,
       absent:booking != null && showup != null ? Math.max(0,booking - showup) : null,rate:ratio(showup,booking)};
   });
   const booking = totalKnown(rows.map(r => r.booking)), showup = totalKnown(rows.map(r => r.showup)), starter = totalKnown(rows.map(r => r.starter));
-  return {...(!Array.isArray(input) && input || {}),rows,booking,booked:booking,bookings:booking,showup,showups:showup,starter,starters:starter,
+  const candidate = !Array.isArray(input) && input?.firstFieldCohort;
+  const cohort = candidate && monthValid(candidate.month) && (!month || candidate.month === month) && Number.isInteger(candidate.count) && candidate.count >= 0 && candidate.conversion === null && (candidate.source == null || typeof candidate.source === 'string' && candidate.source.trim()) ? clone(candidate) : null;
+  return {...(!Array.isArray(input) && input || {}),...(candidate ? {firstFieldCohort:cohort} : {}),...(cohort ? {knownStarter:sum(rows,r=>r.starter)} : {}),rows,booking,booked:booking,bookings:booking,showup,showups:showup,starter,starters:starter,
     absent:booking != null && showup != null ? Math.max(0,booking - showup) : null,rate:ratio(showup,booking),people:rows.length};
 }
 

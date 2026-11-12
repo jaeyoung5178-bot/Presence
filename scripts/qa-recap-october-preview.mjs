@@ -1,0 +1,25 @@
+import {createRequire} from 'node:module';import fs from 'node:fs';import assert from 'node:assert/strict';
+const require=createRequire(import.meta.url),{chromium}=require('/Users/jaeyoung5178/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const october=JSON.parse(fs.readFileSync('/Users/jaeyoung5178/Documents/ChatGPT/리캡/build/october-recap-20261112/draft-prepared.json','utf8'));
+const september=JSON.parse(fs.readFileSync('/tmp/october-recap-baseline-1794484147397/source-secure.json','utf8'))['recaps/keynote/2026-09'];
+const out='/tmp/recap-october-release-preview';fs.mkdirSync(out,{recursive:true});
+const requested=new Set((process.env.RECAP_QA_VIEWS||'cover,sales,recruit,rank,qc,wins,tree,ic,september').split(','));
+const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+for(const width of (process.env.RECAP_QA_WIDTHS||'390,1440').split(',').map(Number)){
+ const page=await browser.newPage({viewport:{width,height:width===390?844:width===1024?768:900},reducedMotion:'reduce'});
+ page.on('pageerror',e=>console.log('PAGEERROR',e.message));
+ await page.addInitScript(({october,september})=>{window.__recapPreview={october,september};window.__blockedWrites=0;},{october,september});
+ await page.route('**/assets/recap-keynote/cloud.js*',r=>r.fulfill({contentType:'text/javascript',body:`export const allowed=()=>true;export function shareReader(){throw Error('disabled');}export function gateway(){const load=async month=>({state:{},saved:structuredClone(month==='2026-10'?window.__recapPreview.october:window.__recapPreview.september),warnings:[]});const no=()=>{window.__blockedWrites++;throw Error('WRITE BLOCKED');};return {restore:async()=>({uid:'admin',name:'관리자',role:'AOP',status:'active'}),load,read:load,save:no,publish:no,createShare:no};}`}));
+ await page.route(/firebaseio|firebasedatabase|identitytoolkit|securetoken|gstatic.com\/firebasejs/,r=>r.abort());
+ await page.goto('http://127.0.0.1:4199/recap-keynote.html?month=2026-10',{waitUntil:'domcontentloaded'});await page.locator('.slide[data-view="cover"]').waitFor();
+ async function capture(name){await page.waitForTimeout(400);assert.equal(await page.locator('.slide').evaluate(e=>getComputedStyle(e).opacity),'1');await page.locator('.slide').screenshot({path:`${out}/oct-${width}-${name}.png`});console.log('READY',`${out}/oct-${width}-${name}.png`);}
+ if(requested.has('cover'))await capture('cover');
+ const routes=[['sales',0,0],['recruit',1,0],['rank',1,1],['qc',2,0],['wins',3,0],['challenges',4,0],['tree',6,0]].filter(([name])=>requested.has(name));
+ for(const [name,chapter,sub]of routes){await page.locator(`[data-action="chapter"][data-index="${chapter}"]`).click();await page.locator('#subnav button').nth(sub).click();await capture(name);if(name==='recruit'){assert((await page.locator('.slide').textContent()).includes('10월 첫필드'));assert((await page.locator('.slide').textContent()).includes('이전 달 면접자'));}if(name==='rank')assert((await page.locator('.slide').textContent()).includes('확인된 스타터'));if(name==='sales'&&width===390){const wrap=page.locator('.table-wrap').first();await wrap.focus();const before=await wrap.evaluate(e=>e.scrollLeft);await page.keyboard.press('ArrowRight');await page.waitForTimeout(150);assert((await wrap.evaluate(e=>e.scrollLeft))>before);assert(await page.locator('.table-scroll-hint').first().isVisible());}}
+ if(requested.has('ic')){await page.locator('[data-action="chapter"][data-index="5"]').click();await page.locator('#subnav button').filter({hasText:'IC 성장 플랜'}).click();assert((await page.locator('.slide').textContent()).includes('현재 IC · 2026.11.12'));await capture('ic-1');if(await page.locator('[data-action="ic-next"]').isVisible())await page.locator('[data-action="ic-next"]').click();else await page.keyboard.press('ArrowRight');await capture('ic-2');assert.equal(await page.locator('.slide').evaluate(e=>e.scrollWidth>e.clientWidth+2),false);}
+ if(width===1440&&process.env.RECAP_QA_EXPORT==='1'){const downloadPromise=page.waitForEvent('download',{timeout:20000}).catch(async()=>{throw Error('PPTX download failed: '+await page.locator('#toast').textContent());});await page.locator('[data-action="export-pptx"]').click();const download=await downloadPromise;await download.saveAs(out+'/october-recap-smoke.pptx');console.log('PPTX',out+'/october-recap-smoke.pptx');}
+ assert.equal(await page.evaluate(()=>window.__blockedWrites),0);console.log('PASS October actual renderer',width);
+ if(width===1440&&requested.has('september')){await page.goto('http://127.0.0.1:4199/recap-view.html?month=2026-09',{waitUntil:'domcontentloaded'});await page.locator('.slide[data-view="cover"]').waitFor();await page.waitForTimeout(400);await page.locator('.slide').screenshot({path:`${out}/sep-1440-cover.png`});assert.equal(await page.evaluate(()=>window.__blockedWrites),0);console.log('PASS September saved renderer load');}
+ await page.close();
+}
+await browser.close();console.log('PASS all CSS, real app/model renderer; gateway fixture only; no save/publish/DB writes');
