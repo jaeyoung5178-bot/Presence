@@ -1,18 +1,30 @@
-import { LABELS, incrementPaperMetric, parseObjectionBlocks, replaceObjectionNote, validateSheet } from './sheet-model.js?v=20261018-case1';
+import { LABELS, incrementPaperMetric, decrementPaperMetric, parseObjectionBlocks, replaceObjectionNote, validateSheet } from './sheet-model.js?v=20261112-close-minus1';
 
 export function createPaperInteraction({ getSheet, isReady, checkValid, onChange, onError }) {
   const $ = selector => document.querySelector(selector), layer = $('#paper-hit-layer'), scroll = $('#paper-scroll'), toggle = $('#paper-edit-toggle'), undoButton = $('#paper-undo'), dialog = $('#paper-note-dialog');
   const desktop = matchMedia('(min-width:1300px)');
-  let expanded = false, geometrySheetId = null, undo = null, editing = null;
+  let expanded = false, subtracting = false, geometrySheetId = null, undo = null, editing = null;
   const buttons = new Map();
   function clearUndo() { undo = null; undoButton.disabled = true; }
-  function reset() { clearUndo(); geometrySheetId = null; buttons.clear(); layer.replaceChildren(); editing = null; if (dialog.open) dialog.close(); $('#paper-note-body').value = ''; $('#paper-note-donor').checked = false; $('#paper-note-existing').textContent = ''; $('#paper-note-existing').hidden = true; $('#paper-note-error').textContent = ''; $('#paper-note-error').hidden = true; $('#paper-announcement').textContent = ''; }
+  function reset() { clearUndo(); subtracting = false; geometrySheetId = null; buttons.clear(); layer.replaceChildren(); editing = null; if (dialog.open) dialog.close(); $('#paper-note-body').value = ''; $('#paper-note-donor').checked = false; $('#paper-note-existing').textContent = ''; $('#paper-note-existing').hidden = true; $('#paper-note-error').textContent = ''; $('#paper-note-error').hidden = true; $('#paper-announcement').textContent = ''; updateMode(); }
+  function updateMetricButton(button, target) {
+    const row = getSheet().rows.find(row => row.id === target.rowId), count = row?.[target.metric] ?? 0;
+    button.setAttribute('aria-label', `${target.rowIndex + 1}행 ${row?.time || '시간 미입력'} ${LABELS[target.metric]} ${count}회 · 1회 ${subtracting ? '빼기' : '추가'}`);
+    button.disabled = subtracting ? count <= 0 : count >= 999;
+  }
   function updateMode() {
     scroll.classList.toggle('is-editing', expanded); layer.hidden = !expanded && !desktop.matches;
+    layer.classList.toggle('is-subtracting', subtracting);
+    $('#paper-add-mode').setAttribute('aria-pressed', String(!subtracting));
+    $('#paper-subtract-mode').setAttribute('aria-pressed', String(subtracting));
+    for (const button of buttons.values()) if (button.paperTarget?.kind === 'metric') updateMetricButton(button, button.paperTarget);
     toggle.setAttribute('aria-pressed', String(expanded)); toggle.textContent = expanded ? '전체 종이 보기' : '확대해서 기록';
-    $('#paper-edit-guide').textContent = expanded ? '종이를 옆으로 움직이며 숫자 칸을 누르면 +1, 오른쪽 메모를 누르면 수정해요.' : desktop.matches ? '숫자 칸을 누를 때마다 +1 · Close를 누르면 오른쪽에 메모 번호가 생겨요.' : '확대해서 기록을 누르면 종이의 숫자 칸과 메모를 직접 누를 수 있어요.';
+    const guide = subtracting ? '빼기 모드 · 숫자 칸을 누르면 −1, 0회 아래로 내려가지 않아요. 작성한 메모와 후원자 표시는 보존돼요.' : '더하기 모드 · 숫자 칸을 누르면 +1, Close를 더하면 오른쪽에 메모 번호가 생겨요.';
+    $('#paper-edit-guide').textContent = !expanded && !desktop.matches ? `확대해서 기록을 누른 뒤 종이의 숫자 칸과 메모를 직접 눌러 주세요. ${guide}` : `${guide} 오른쪽 메모를 누르면 수정해요.`;
   }
   toggle.addEventListener('click', () => { expanded = !expanded; updateMode(); }); desktop.addEventListener('change', updateMode); updateMode();
+  $('#paper-add-mode').addEventListener('click', () => { subtracting = false; updateMode(); });
+  $('#paper-subtract-mode').addEventListener('click', () => { subtracting = true; updateMode(); });
   function setGeometry(sheetId, value) {
     if (getSheet().id !== sheetId) return;
     geometrySheetId = sheetId; const active = new Set();
@@ -24,10 +36,8 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
       button.classList.toggle('paper-note-hit', target.kind !== 'metric');
       const inset = 4; Object.assign(button.style, { left: `${(target.x + inset) / value.logicalWidth * 100}%`, top: `${(target.y + inset) / value.logicalHeight * 100}%`, width: `${(target.width - inset * 2) / value.logicalWidth * 100}%`, height: `${(target.height - inset * 2) / value.logicalHeight * 100}%` });
       if (target.kind === 'metric') {
-        const row = getSheet().rows.find(row => row.id === target.rowId);
         button.dataset.paperMetric = target.metric; button.dataset.rowId = target.rowId;
-        button.setAttribute('aria-label', `${target.rowIndex + 1}행 ${row?.time || '시간 미입력'} ${LABELS[target.metric]} ${row?.[target.metric] ?? 0}회 · 1회 추가`);
-        button.disabled = (row?.[target.metric] ?? 0) >= 999;
+        updateMetricButton(button, target);
       } else { delete button.dataset.paperMetric; button.setAttribute('aria-label', `${target.text} 메모 수정`); button.disabled = false; }
     });
     for (const [key, button] of buttons) if (!active.has(key)) { button.remove(); buttons.delete(key); }
@@ -39,22 +49,24 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
     if (!checkValid()) return;
     if (target.kind !== 'metric') { openNote(target); return; }
     try {
-      undo = incrementPaperMetric(getSheet(), target.rowId, target.metric); undoButton.disabled = false;
+      const action = (subtracting ? decrementPaperMetric : incrementPaperMetric)(getSheet(), target.rowId, target.metric);
+      if (!action) return;
+      undo = action; undoButton.disabled = false;
       const row = getSheet().rows.find(row => row.id === target.rowId);
-      button.disabled = row[target.metric] >= 999;
-      button.setAttribute('aria-label', `${target.rowIndex + 1}행 ${row.time || '시간 미입력'} ${LABELS[target.metric]} ${row[target.metric]}회 · 1회 추가`);
-      $('#paper-announcement').textContent = `${row.time || `${target.rowIndex + 1}행`} ${LABELS[target.metric]} ${row[target.metric]}회${undo.note ? ` · 메모 ${undo.note} 추가됨` : ''}`;
+      updateMetricButton(button, target);
+      $('#paper-announcement').textContent = `${row.time || `${target.rowIndex + 1}행`} ${LABELS[target.metric]} ${row[target.metric]}회 · 1회 ${subtracting ? '뺐어요' : '더했어요'}${undo.note ? ` · 메모 ${undo.note} 추가됨` : ''}${undo.caseAdjusted ? ' · 연결된 케이스 횟수도 1회 줄였어요. 메모와 후원자 표시는 그대로예요.' : ''}`;
       onChange();
     } catch (error) { onError(error.message); }
   });
   undoButton.addEventListener('click', () => {
     const sheet = getSheet(), row = sheet.rows.find(row => row.id === undo?.rowId);
-    if (!undo || sheet.id !== undo.sheetId || !row || row[undo.metric] !== undo.next || sheet.objections !== undo.afterObjections) { clearUndo(); return; }
-    const candidate = { ...sheet, objections: undo.beforeObjections, donorObjections: undo.beforeFlags, rows: sheet.rows.map(item => item === row ? { ...row, [undo.metric]: undo.previous } : item) };
-    if (!validateSheet(candidate).valid) { clearUndo(); onError('다른 입력이 바뀌어 마지막 +1을 취소할 수 없어요. 숫자 칸에서 직접 수정해 주세요.'); return; }
+    if (!undo || sheet.id !== undo.sheetId || !row || row[undo.metric] !== undo.next || sheet.objections !== undo.afterObjections || ('afterCases' in undo && JSON.stringify(row.donorCases) !== JSON.stringify(undo.afterCases))) { clearUndo(); return; }
+    const candidate = { ...sheet, objections: undo.beforeObjections, donorObjections: undo.beforeFlags, rows: sheet.rows.map(item => item === row ? { ...row, [undo.metric]: undo.previous, ...('beforeCases' in undo && undo.beforeCases !== undefined ? { donorCases: undo.beforeCases } : {}) } : item) };
+    if (!validateSheet(candidate).valid) { clearUndo(); onError('다른 입력이 바뀌어 마지막 변경을 취소할 수 없어요. 숫자 칸에서 직접 수정해 주세요.'); return; }
     row[undo.metric] = undo.previous; sheet.objections = undo.beforeObjections;
+    if ('beforeCases' in undo) { if (undo.beforeCases === undefined) delete row.donorCases; else row.donorCases = structuredClone(undo.beforeCases); }
     if (undo.beforeFlags === undefined) delete sheet.donorObjections; else sheet.donorObjections = [...undo.beforeFlags];
-    clearUndo(); $('#paper-announcement').textContent = '마지막 +1을 취소했어요.'; onChange();
+    clearUndo(); $('#paper-announcement').textContent = '마지막 변경을 취소했어요.'; onChange();
   });
   function openNote(target) {
     const sheet = getSheet(); let body, donor, block;

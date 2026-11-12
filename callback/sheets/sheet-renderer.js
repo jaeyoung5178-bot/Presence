@@ -1,4 +1,4 @@
-import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks, getPaperNotes } from './sheet-model.js?v=20261018-case1';
+import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks, getPaperNotes } from './sheet-model.js?v=20261112-close-minus1';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';
@@ -72,15 +72,18 @@ function plan(ctx, sheet) {
   pen(ctx, 22);
   const processLines = METRICS.slice(0, 4).map((key, i) => wrap(ctx, sheet.processGoals[key], cols[i + 1] - 16));
   const goalHeight = Math.max(34, ...processLines.map(lines => lines.length * 23 + 10));
-  const rowHeights = sheet.rows.map(row => Math.max(43, ...METRICS.slice(0, 4).map((key, i) => tallyHeight(row[key], cols[i + 1]))));
+  const metricRowHeight = Math.max(43, ...sheet.rows.flatMap(row => METRICS.slice(0, 4).map((key, i) => tallyHeight(row[key], cols[i + 1]))));
   pen(ctx, 23);
   const notes = getPaperNotes(sheet).map(note => ({ ...note, lines: wrap(ctx, note.text, cols[5] - 24), color: note.donor ? DONOR_INK : INK }));
   print(ctx, 12);
   const exampleLines = PRINTED_EXAMPLES.flatMap(text => wrap(ctx, text, cols[5] - 18));
   const exampleHeight = exampleLines.length * 21 + 15;
-  const rowTotal = rowHeights.reduce((a, b) => a + b, 0);
+  const rowTotal = metricRowHeight * sheet.rows.length;
   const tableBodyHeight = Math.max(rowTotal, exampleHeight + notes.reduce((sum, note) => sum + Math.max(43, note.lines.length * 23 + 7), 0) + 16);
-  if (tableBodyHeight > rowTotal) rowHeights[rowHeights.length - 1] += tableBodyHeight - rowTotal;
+  // The notes span the whole table: share their required space across every
+  // time row instead of stretching only the final row. Preview and PNG use
+  // this same geometry, including long notes and large tally counts.
+  const rowHeights = sheet.rows.map(() => tableBodyHeight / sheet.rows.length);
   const summaryY = tableY + 32 + goalHeight + tableBodyHeight + 23;
   const reviewY = summaryY + 102;
   pen(ctx, 24);

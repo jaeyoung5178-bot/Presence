@@ -154,6 +154,41 @@ export function incrementPaperMetric(sheet, rowId, metric) {
   row[metric] = next; sheet.objections = afterObjections; if (afterFlags !== undefined) sheet.donorObjections = afterFlags;
   return { sheetId: sheet.id, rowId, metric, previous, next, note, beforeObjections, afterObjections, beforeFlags };
 }
+export function decrementPaperMetric(sheet, rowId, metric) {
+  const row = sheet.rows.find(item => item.id === rowId);
+  if (!row || !CASE_METRICS.includes(metric)) throw new Error('이 시간의 숫자 칸을 찾지 못했어요.');
+  const previous = row[metric];
+  // A blank is still unrecorded; subtracting from zero must not invent a value.
+  if (previous === null || previous === 0) return null;
+  if (!Number.isInteger(previous) || previous < 0 || previous > 999) throw new Error('0~999 사이의 정수를 입력해 주세요. 빈칸도 가능해요.');
+  const next = previous - 1, beforeObjections = sheet.objections;
+  const beforeFlags = sheet.donorObjections === undefined ? undefined : [...sheet.donorObjections];
+  const beforeCases = row.donorCases === undefined ? undefined : structuredClone(row.donorCases);
+  const afterCases = beforeCases === undefined ? undefined : structuredClone(beforeCases);
+  let caseAdjusted = false;
+  // Unclassified counts are removed first. If every count belongs to a case,
+  // reduce its last assigned count, retaining the case, note and donor flag.
+  if (getCaseTotals(row)[metric] > next) {
+    const item = afterCases?.findLast(item => item.counts[metric] > 0);
+    if (item) { item.counts[metric]--; caseAdjusted = true; }
+  }
+  let afterObjections = beforeObjections;
+  if (metric === 'close') {
+    const total = getTotals(sheet).close - 1, blocks = parseObjectionBlocks(beforeObjections);
+    const keep = blocks.filter(block => {
+      const number = noteNumber(block);
+      return number === null || number <= total || noteIdentity(block) || beforeFlags?.includes(block);
+    });
+    // Only unused, empty placeholders disappear. Written notes keep their
+    // original numbers and flags even when there are now fewer Close counts.
+    if (keep.length !== blocks.length) afterObjections = keep.join('\n\n');
+  }
+  const updatedRow = { ...row, [metric]: next, ...(afterCases === undefined ? {} : { donorCases: afterCases }) };
+  const candidate = { ...sheet, objections: afterObjections, rows: sheet.rows.map(item => item === row ? updatedRow : item) };
+  const result = validateSheet(candidate); if (!result.valid) throw new Error(result.errors[0].message);
+  row[metric] = next; if (afterCases !== undefined) row.donorCases = afterCases; sheet.objections = afterObjections;
+  return { sheetId: sheet.id, rowId, metric, previous, next, note: null, delta: -1, beforeObjections, afterObjections, beforeFlags, beforeCases, afterCases, caseAdjusted };
+}
 export function replaceObjectionNote(sheet, block, body, donor, blockIndex) {
   const blocks = parseObjectionBlocks(sheet.objections), index = blockIndex ?? blocks.indexOf(block);
   if (index < 0 || blocks[index] !== block) throw new Error('이 메모가 바뀌었어요. 다시 열어 주세요.');
