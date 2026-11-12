@@ -1,0 +1,16 @@
+TEAM BUILDING SUPPORT — ASSET NOTES
+Created: 2026-11-12 (Asia/Seoul)
+Mode: built-in image_gen tool. No API/CLI fallback.
+Both outputs preserve the original generated PNG and alpha channel.
+
+1. team-building-hero.png
+Source: exec-9e1b0806-7a86-4a41-9eb3-fd6eca39e8c1.png
+Size: 1536 x 1024. Transparent background.
+Final prompt:
+Use case: stylized-concept. Asset type: a premium transparent-background hero illustration for a Korean team's daily mentoring and field action-plan workspace, called Team Building Support. Primary request: a carefully art-directed small tactile 3D diorama about a mentor supporting two new teammates as they build a simple little pathway together. Three charming but restrained abstract ceramic human figures, no identifiable real person, no text, no lettering, no logo. One taller sage-green mentor figure calmly offers a small step to a lavender teammate; a cream teammate holds a simple open notebook. Beside them only a compact field map with one path line, two modest rounded stepping stones, and a single young plant suggesting growth. Minimal facial details, friendly calm body language, adult professional rather than children's toy advertising. Matte unglazed ceramic with subtle paper grain, very refined rounded shapes, believable soft studio lighting from upper left, gentle ambient shadows confined beneath objects. Palette sage green, muted lavender, warm ivory, small apricot accents, compatible with a deep charcoal-green website. Composition: wide balanced 3:2 landscape scene, whole group fully visible, generous transparent margins on every edge, no background environment, no opaque rectangle, no oversized empty floor, no clutter. High-end boutique product photography of a handmade miniature sculpture; clean silhouette, quiet warmth, precise materials, beautiful editorial finish. This is a standalone website illustration, not a screenshot, UI mockup, icon sheet, avatar inventory or logo. Output with genuine alpha transparency. No decorative text or watermark.
+
+2. team-building-journal.png
+Source: exec-18dc75d3-02c0-4544-9ae8-5dc91daf4df5.png
+Size: 1254 x 1254. Transparent background.
+Final prompt:
+Use case: stylized-concept. Asset type: a small premium transparent-background empty-state illustration for a daily team mentoring journal website. Primary request: one warm ivory open notebook on a small rounded sage ceramic base, with a muted lavender bookmark and a tiny young plant growing beside it. A single apricot pencil rests naturally next to the notebook. The paper has only a few subtle debossed check circles and lines, absolutely no words, numbers or lettering. Same visual sensibility as handmade matte ceramic and felt-paper miniature sculpture: refined tactile grain, soft rounded edges, careful material variation, warm quiet studio light, delicate ambient contact shadow. Restrained adult professional editorial aesthetic, not busy or cartoon-advertising. Palette warm cream, sage, lavender and one apricot accent; compatible with deep charcoal-green UI. Square composition; notebook, plant and pencil occupy the central 65 percent, everything fully within frame with generous transparent margins on all sides. Genuine alpha transparency, no background environment or rectangle, no watermark, no logos, no UI screenshot. Beautiful boutique finish and clear silhouette even at 100 pixels.

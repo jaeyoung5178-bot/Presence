@@ -1,0 +1,427 @@
+{
+  ".read": false,
+  ".write": false,
+  "config": {
+    ".read": "auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && (root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin' || root.child('authSessions').child(auth.uid).child('userUid').val() == 'umqn5es9t')",
+    ".write": "auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin' && newData.exists()",
+    ".validate": "newData.hasChildren(['version','ownerUid','ownerName','ownerRole','enabled','updatedAt','updatedBy'])",
+    "version": {
+      ".validate": "newData.val() == 1"
+    },
+    "ownerUid": {
+      ".validate": "newData.val() == 'umqn5es9t'"
+    },
+    "ownerName": {
+      ".validate": "newData.val() == '박인선' && root.child('users').child('umqn5es9t').child('name').val() == '박인선'"
+    },
+    "ownerRole": {
+      ".validate": "newData.val() == 'LR'"
+    },
+    "enabled": {
+      ".validate": "newData.isBoolean()"
+    },
+    "updatedAt": {
+      ".validate": "newData.isNumber() && newData.val() <= now + 10000 && newData.val() >= now - 300000"
+    },
+    "updatedBy": {
+      ".validate": "newData.val() == 'admin'"
+    },
+    "$other": {
+      ".validate": false
+    }
+  },
+  "directory": {
+    "$ownerUid": {
+      ".read": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && (root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin' || root.child('authSessions').child(auth.uid).child('userUid').val() == 'umqn5es9t'))",
+      ".write": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin') && newData.exists()",
+      ".validate": "newData.hasChildren(['version','memberIndexVersion','updatedAt','updatedBy','members','nameIndex'])",
+      "version": {
+        ".validate": "newData.val() == 1"
+      },
+      "updatedAt": {
+        ".validate": "newData.isNumber() && newData.val() <= now + 10000 && newData.val() >= now - 300000"
+      },
+      "updatedBy": {
+        ".validate": "newData.val() == 'admin'"
+      },
+      "members": {
+        "$memberId": {
+          ".validate": "$memberId.matches(/^[A-Za-z0-9_-]{1,128}$/) && newData.hasChildren(['name','role','active']) && newData.parent().parent().child('nameIndex').child(newData.child('name').val().toLowerCase()).val() == $memberId && (($memberId.matches(/^custom_[a-f0-9]{32}$/) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 40 && newData.child('name').val().matches(/^[가-힣A-Za-z0-9]([가-힣A-Za-z0-9 _-]*[가-힣A-Za-z0-9])?$/) && !newData.child('name').val().matches(/.*  .*/) && newData.hasChildren(['createdAt','createdBy']) && newData.child('role').val() == 'IC' && (data.exists() ? (newData.child('createdAt').val() == data.child('createdAt').val() && newData.child('createdBy').val() == data.child('createdBy').val()) : (newData.child('active').val() == true && newData.child('createdBy').val() == root.child('authSessions').child(auth.uid).child('userUid').val() && newData.child('createdAt').val() >= now - 300000 && newData.child('createdAt').val() <= now + 10000))) || (!$memberId.matches(/^custom_[a-f0-9]{32}$/) && !newData.child('createdAt').exists() && !newData.child('createdBy').exists()))",
+          "name": {
+            ".validate": "newData.isString() && newData.val().length <= 100"
+          },
+          "role": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "active": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$other": {
+            ".validate": false
+          },
+          ".write": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active') && (root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin' || root.child('authSessions').child(auth.uid).child('userUid').val() == 'umqn5es9t') && root.child('teamBuildingSupport').child('config').child('enabled').val() == true && $memberId.matches(/^custom_[a-f0-9]{32}$/) && !data.exists() && newData.exists()",
+          "createdAt": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= now + 10000"
+          },
+          "createdBy": {
+            ".validate": "newData.val() == 'umqn5es9t' || newData.val() == 'admin'"
+          }
+        }
+      },
+      "$other": {
+        ".validate": false
+      },
+      "memberIndexVersion": {
+        ".validate": "newData.val() == 1"
+      },
+      "nameIndex": {
+        "$nameKey": {
+          ".write": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active') && (root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin' || root.child('authSessions').child(auth.uid).child('userUid').val() == 'umqn5es9t') && root.child('teamBuildingSupport').child('config').child('enabled').val() == true && !data.exists() && newData.exists() && newData.isString() && newData.val().matches(/^custom_[a-f0-9]{32}$/)",
+          ".validate": "$nameKey.length >= 1 && $nameKey.length <= 40 && $nameKey == $nameKey.toLowerCase() && $nameKey.matches(/^[가-힣a-z0-9]([가-힣a-z0-9 _-]*[가-힣a-z0-9])?$/) && !$nameKey.matches(/.*  .*/) && newData.isString() && newData.parent().parent().child('members').child(newData.val()).child('name').val().toLowerCase() == $nameKey"
+        }
+      }
+    }
+  },
+  "records": {
+    ".read": "auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin'",
+    "$ownerUid": {
+      ".read": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && (root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin' || root.child('authSessions').child(auth.uid).child('userUid').val() == 'umqn5es9t'))",
+      ".indexOn": [
+        "record/date"
+      ],
+      "$date": {
+        ".write": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && (root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin' || root.child('authSessions').child(auth.uid).child('userUid').val() == 'umqn5es9t')) && root.child('teamBuildingSupport').child('config').child('enabled').val() == true && newData.exists()",
+        ".validate": "$date.matches(/^([0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)|[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])|([0-9]{2}(0[48]|[2468][048]|[13579][26])|(0[48]|[2468][048]|[13579][26])00)-02-29)$/) && newData.hasChildren(['version','ownerUid','revision','updatedAt','updatedBy','record']) && newData.child('revision').val() == (data.exists() ? data.child('revision').val() + 1 : 1) && newData.child('updatedBy').val() == root.child('authSessions').child(auth.uid).child('userUid').val() && newData.child('updatedAt').val() <= now + 10000 && newData.child('updatedAt').val() >= now - 300000",
+        "version": {
+          ".validate": "newData.val() == 1"
+        },
+        "ownerUid": {
+          ".validate": "newData.val() == $ownerUid"
+        },
+        "revision": {
+          ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() == (data.exists() ? data.val()+1 : 1)"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 10000 && newData.val() >= now - 300000"
+        },
+        "updatedBy": {
+          ".validate": "newData.val() == root.child('authSessions').child(auth.uid).child('userUid').val()"
+        },
+        "record": {
+          ".validate": "newData.hasChildren(['date','plan','review','sales'])",
+          "date": {
+            ".validate": "newData.val() == $date"
+          },
+          "plan": {
+            ".validate": "newData.hasChildren(['actions','barriers','solutions'])",
+            "salesGoal": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 9999"
+            },
+            "closeGoal": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 9999"
+            },
+            "actions": {
+              ".validate": "newData.isString() && newData.val().length <= 6000"
+            },
+            "barriers": {
+              ".validate": "newData.isString() && newData.val().length <= 6000"
+            },
+            "solutions": {
+              ".validate": "newData.isString() && newData.val().length <= 6000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "review": {
+            ".validate": "newData.hasChildren(['fieldSummary','care','followUp','nextDate'])",
+            "fieldSummary": {
+              ".validate": "newData.isString() && newData.val().length <= 6000"
+            },
+            "care": {
+              ".validate": "newData.hasChildren(['safety','showing','atmosphere','preemptive','aftercare'])",
+              "safety": {
+                ".validate": "newData.hasChildren(['rating','note'])",
+                "rating": {
+                  ".validate": "newData.isString() && (newData.val() == '' || newData.val().matches(/^(good|improve|not_done|na)$/))"
+                },
+                "note": {
+                  ".validate": "newData.isString() && newData.val().length <= 6000"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "showing": {
+                ".validate": "newData.hasChildren(['rating','note'])",
+                "rating": {
+                  ".validate": "newData.isString() && (newData.val() == '' || newData.val().matches(/^(good|improve|not_done|na)$/))"
+                },
+                "note": {
+                  ".validate": "newData.isString() && newData.val().length <= 6000"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "atmosphere": {
+                ".validate": "newData.hasChildren(['rating','note'])",
+                "rating": {
+                  ".validate": "newData.isString() && (newData.val() == '' || newData.val().matches(/^(good|improve|not_done|na)$/))"
+                },
+                "note": {
+                  ".validate": "newData.isString() && newData.val().length <= 6000"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "preemptive": {
+                ".validate": "newData.hasChildren(['rating','note'])",
+                "rating": {
+                  ".validate": "newData.isString() && (newData.val() == '' || newData.val().matches(/^(good|improve|not_done|na)$/))"
+                },
+                "note": {
+                  ".validate": "newData.isString() && newData.val().length <= 6000"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "aftercare": {
+                ".validate": "newData.hasChildren(['rating','note'])",
+                "rating": {
+                  ".validate": "newData.isString() && (newData.val() == '' || newData.val().matches(/^(good|improve|not_done|na)$/))"
+                },
+                "note": {
+                  ".validate": "newData.isString() && newData.val().length <= 6000"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            },
+            "followUp": {
+              ".validate": "newData.isString() && newData.val().length <= 6000"
+            },
+            "nextDate": {
+              ".validate": "newData.isString() && (newData.val() == '' || newData.val().matches(/^([0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)|[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])|([0-9]{2}(0[48]|[2468][048]|[13579][26])|(0[48]|[2468][048]|[13579][26])00)-02-29)$/))"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "sales": {
+            ".validate": "newData.hasChild('self')",
+            "self": {
+              ".validate": "newData.hasChild('note')",
+              "donors": {
+                ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 9999"
+              },
+              "closes": {
+                ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 9999"
+              },
+              "note": {
+                ".validate": "newData.isString() && newData.val().length <= 3000"
+              },
+              "$other": {
+                ".validate": false
+              }
+            },
+            "team": {
+              "$memberId": {
+                ".validate": "$memberId != $ownerUid && newData.hasChildren(['memberName','note']) && ((root.child('teamBuildingSupport').child('directory').child($ownerUid).child('members').child($memberId).child('active').val() == true && newData.child('memberName').val() == root.child('teamBuildingSupport').child('directory').child($ownerUid).child('members').child($memberId).child('name').val()) || (data.exists() && newData.child('memberName').val() == data.child('memberName').val()))",
+                "donors": {
+                  ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 9999"
+                },
+                "closes": {
+                  ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 9999"
+                },
+                "note": {
+                  ".validate": "newData.isString() && newData.val().length <= 3000"
+                },
+                "$other": {
+                  ".validate": false
+                },
+                "memberName": {
+                  ".validate": "newData.isString() && newData.val().length <= 100"
+                }
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  },
+  "analytics": {
+    ".read": "auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin'",
+    "$ownerUid": {
+      ".read": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin')",
+      "$rangeKey": {
+        ".write": "$ownerUid == 'umqn5es9t' && (auth != null && root.child('authSessions').child(auth.uid).child('userUid').val() != null && root.child('users').child(root.child('authSessions').child(auth.uid).child('userUid').val()).child('status').val() == 'active' && root.child('authSessions').child(auth.uid).child('userUid').val() == 'admin') && newData.exists()",
+        ".validate": "newData.hasChildren(['version','from','to','generatedAt','generatedBy','summary','care']) && $rangeKey == newData.child('from').val() + '_' + newData.child('to').val() && newData.child('from').val() <= newData.child('to').val()",
+        "version": {
+          ".validate": "newData.val() == 1"
+        },
+        "from": {
+          ".validate": "newData.isString() && newData.val().matches(/^([0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)|[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])|([0-9]{2}(0[48]|[2468][048]|[13579][26])|(0[48]|[2468][048]|[13579][26])00)-02-29)$/)"
+        },
+        "to": {
+          ".validate": "newData.isString() && newData.val().matches(/^([0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)|[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])|([0-9]{2}(0[48]|[2468][048]|[13579][26])|(0[48]|[2468][048]|[13579][26])00)-02-29)$/)"
+        },
+        "generatedAt": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 10000 && newData.val() >= now - 300000"
+        },
+        "generatedBy": {
+          ".validate": "newData.val() == 'admin'"
+        },
+        "sourceRevisions": {
+          "$date": {
+            ".validate": "$date.matches(/^([0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)|[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])|([0-9]{2}(0[48]|[2468][048]|[13579][26])|(0[48]|[2468][048]|[13579][26])00)-02-29)$/) && newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 1"
+          }
+        },
+        "summary": {
+          ".validate": "newData.hasChildren(['days','planDays','reviewDays','ownDonors','ownCloses','teamDonors','teamCloses'])",
+          "days": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+          },
+          "planDays": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+          },
+          "reviewDays": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+          },
+          "ownDonors": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+          },
+          "ownCloses": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+          },
+          "teamDonors": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+          },
+          "teamCloses": {
+            ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "care": {
+          ".validate": "newData.hasChildren(['safety','showing','atmosphere','preemptive','aftercare'])",
+          "safety": {
+            ".validate": "newData.hasChildren(['total','good','improve','notDone'])",
+            "total": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "good": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "improve": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "notDone": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "showing": {
+            ".validate": "newData.hasChildren(['total','good','improve','notDone'])",
+            "total": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "good": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "improve": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "notDone": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "atmosphere": {
+            ".validate": "newData.hasChildren(['total','good','improve','notDone'])",
+            "total": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "good": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "improve": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "notDone": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "preemptive": {
+            ".validate": "newData.hasChildren(['total','good','improve','notDone'])",
+            "total": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "good": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "improve": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "notDone": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "aftercare": {
+            ".validate": "newData.hasChildren(['total','good','improve','notDone'])",
+            "total": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "good": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "improve": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "notDone": {
+              ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() <= 1000000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  },
+  "$other": {
+    ".validate": false
+  }
+}
