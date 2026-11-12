@@ -1,4 +1,4 @@
-import {clone, validate, recruitingSummary, workbookTreeAudit, mergeRecapFinancialSource} from './model.js?v=20261112-canonical2';
+import {clone, validate, recruitingSummary, workbookTreeAudit, mergeRecapFinancialSource} from './model.js?v=20261112-qc4';
 
 const CFG = {
   apiKey:'AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0',
