@@ -126,9 +126,17 @@ function recruit(slide,d,v,rank=false) {
 }
 function qc(slide,d,v) {
   const events=d.events||[],ins=n(d.qc?.inCount)??events.filter(e=>e.type==='In').length,outs=n(d.qc?.outCount)??events.filter(e=>!['In','Retain'].includes(e.type)).length,start=n(d.qc?.startCount);
+  if(d.month==='2026-10'&&d.sourceNotes?.salesSnapshot?.confirmed===true){
+    const incoming=events.filter(e=>e.type==='In'),outgoing=events.filter(e=>!['In','Retain'].includes(e.type));
+    for(const [i,label,count,color]of [[0,'10월 IN',ins,C.green],[1,'10월 OUT',outs,C.red]]){const x=.7+i*6.1;rect(slide,x,1.48,5.83,1.03,C.soft);box(slide,label,x+.2,1.64,3,.3,18,{color});box(slide,`${fmt(count)}명`,x+3.5,1.62,2,.55,32,{bold:true,align:'right',color});}
+    table(slide,['입사 명단','상위리더'],incoming.map(e=>[e.name,e.owner||'—']),.7,2.72,[2.1,3.73],{fontSize:14,rowH:.31});
+    table(slide,['퇴사 명단','사유'],outgoing.map(e=>[e.name,e.reason||'—']),6.8,2.72,[2.1,3.73],{fontSize:14,rowH:.31});
+    box(slide,`월초 ${fmt(start)}명 · 월말 ${start==null?'—':fmt(start+ins-outs)}명`,.7,6.54,11.93,.28,12,{color:C.muted});return;
+  }
   kpis(slide,[['월초 인원',fmt(start)],['In',fmt(ins)],['Out',fmt(outs)],['월말 인원',start==null?'—':fmt(start+ins-outs)]]);
   const rows=v.items||events;if(!rows.length)return box(slide,'이달의 In · Out 기록이 없습니다.',.7,3.8,11.9,.8,22,{align:'center',color:C.muted});
   const md=v=>{const m=String(v||'').match(/^(?:\d{4}-)?(\d{2})-(\d{2})$/);return m?Number(m[1])+'/'+Number(m[2]):(v||'미입력');};
+  if(d.month==='2026-10'&&d.sourceNotes?.salesSnapshot?.confirmed===true){table(slide,['팀원','구분','사유 · 후속 액션','상위리더'],rows.map(e=>[e.name,e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.4,1.2,7.72,1.61],{fontSize:10.5,rowH:rows.length>8?.36:.51});return;}
   table(slide,['팀원','일자','구분','사유 · 후속 액션','상위리더'],rows.map(e=>[e.name,e.displayDate||md(e.date),e.type,[e.reason||'사유 미입력',e.action].filter(Boolean).join('\n'),e.owner||'미지정']),.7,2.87,[1.2,1.0,1.1,7.22,1.41],{fontSize:10.5,rowH:rows.length>8?.36:.51});
 }
 function stories(slide,d,v) {
