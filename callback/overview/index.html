@@ -7,7 +7,7 @@
   <title>콜백싯 · Presence</title>
   <meta name="description" content="필드를 기록하고, 날짜별 콜백싯을 열람하고, 나의 성장을 돌아보세요.">
   <link rel="icon" href="../../icon-32.png">
-  <link rel="stylesheet" href="styles.css?v=20261008-overview1">
+  <link rel="stylesheet" href="styles.css?v=20261113-account1">
 </head>
 <body>
   <header class="topbar"><a class="brand" href="../../index.html" aria-label="Presence 허브"><span class="brand-mark" aria-hidden="true">p.</span><span>PRESENCE</span></a><nav aria-label="현재 위치"><span>Field workspace</span><span aria-hidden="true">/</span><strong>콜백싯</strong></nav><a class="hub-link" href="../../index.html">← 허브로</a></header>
@@ -30,10 +30,13 @@
         <span class="card-title">분석</span><span class="card-copy">숫자와 스킬, 애티튜드에서<br>다음 성장의 힌트를 찾아요.</span><span class="card-bottom"><span class="card-pill">1주부터 1년까지</span><span class="card-arrow" aria-hidden="true">↗</span></span>
       </a>
     </nav>
+<section class="account-connect-panel"><button id="open-account-connect" class="button primary account-connect-primary" type="button" hidden>프레젠스 계정으로 내 기록 불러오기</button><p id="account-connect-summary" role="status"></p></section>
+    <a class="legacy-records-link" href="../index.html?view=see">이전 콜백싯 기록 보기 <span aria-hidden="true">↗</span></a>
     <div class="workspace-note"><span aria-hidden="true">✧</span><p>한 장의 기록에서 시작하는, 나를 더 잘 이해하는 시간.</p></div>
   </main>
   <footer class="page-footer"><span>PRESENCE · CALL BACK SHEET</span><a href="../../index.html">허브로 돌아가기 <span aria-hidden="true">↗</span></a></footer>
   <dialog id="record-mode-dialog" aria-labelledby="mode-title"><div class="dialog-inner"><header class="dialog-header"><div><p class="eyebrow">LET'S WRITE TODAY</p><h2 id="mode-title">어떻게 기록할까요?</h2><p>오늘의 필드에 맞는 방식을 골라 주세요.</p></div><button id="close-record-options" class="close-button" aria-label="기록 방식 선택 닫기">×</button></header><div class="mode-grid"><a id="record-auto" class="mode-option automatic" href="../index.html"><span class="mode-symbol" aria-hidden="true">↯</span><span class="mode-tag">실시간 필드 카운터</span><strong>자동 기록</strong><span>필드에서 버튼을 누르며<br>진행 상황을 바로 기록해요.</span><span class="mode-action">자동 기록 시작 <span aria-hidden="true">→</span></span></a><a id="record-manual" class="mode-option manual" href="../sheets/index.html"><span class="mode-symbol" aria-hidden="true">✎</span><span class="mode-tag">손글씨 콜백싯</span><strong>수동 기록</strong><span>필드가 끝난 뒤 숫자와 회고를<br>종이 양식에 차근차근 옮겨요.</span><span class="mode-action">수동 기록 시작 <span aria-hidden="true">→</span></span></a></div></div></dialog>
-  <script src="app.js?v=20261008-overview1" defer></script>
+  <script src="app.js?v=20261113-account1" defer></script>
+<dialog id="account-connect-dialog" class="account-connect-dialog" aria-labelledby="account-connect-title"><form id="account-connect-form"><header><h2 id="account-connect-title">내 콜백싯 불러오기</h2><button id="cancel-account-connect" type="button" aria-label="로그인 닫기">×</button></header><p>프레젠스 계정으로 본인 기록을 연결해요.</p><label>아이디<input id="account-connect-id" autocomplete="username" required></label><label>비밀번호<input id="account-connect-password" type="password" autocomplete="current-password" required></label><p id="account-connect-status" role="status"></p><button class="button primary account-connect-submit" type="submit">내 기록 불러오기</button></form></dialog>
 </body>
 </html>

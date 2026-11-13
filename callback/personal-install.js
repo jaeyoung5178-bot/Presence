@@ -1,8 +1,9 @@
 (function(){
   'use strict';
+  var directSee=new URLSearchParams(location.search).get('view')==='see';
   var STORE='fcos_personal_launch_v2',COOKIE='fcos_personal_launch_v1',deferred=null;
   function valid(v){return !!(v&&v.u&&v.n&&v.k);}
-  function fromQuery(){var q=new URLSearchParams(location.search),v={u:q.get('u')||'',n:q.get('n')||'',k:q.get('k')||''};return valid(v)?v:null;}
+  function fromQuery(){if(directSee)return null;var q=new URLSearchParams(location.search),v={u:q.get('u')||'',n:q.get('n')||'',k:q.get('k')||''};return valid(v)?v:null;}
   function read(){try{return JSON.parse(localStorage.getItem(STORE)||'null');}catch(e){return null;}}
   function readCookie(){
     try{
@@ -41,7 +42,7 @@
        지금 연결된 계정과 어긋나는 옛 링크는 무시한다. */
     var cur=connected();
     if(valid(identity)&&cur&&cur.uid&&identity.u!==cur.uid)identity=null;
-    if(valid(identity)){
+    if(valid(identity)&&!directSee){
       save(identity);
       var restored=new URL(personalUrl(identity));
       history.replaceState(null,'',restored.pathname+restored.search);

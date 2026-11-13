@@ -1,3 +1,4 @@
+import {readExistingConnection,createAccountConnection} from '../account-connection.js?v=20261113-account1';
 import { createSheet, fillHourlyTimes, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261112-close-minus1';
 import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261112-close-minus1';
 import { createPaperInteraction } from './paper-interaction.js?v=20261112-close-minus1';
@@ -7,6 +8,8 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let sheet = createSheet(), records = [], owner = getStorageStatus().namespace, dirty = false, editVersion = 0, persistedDraftVersion = 0, draftTimer, renderTimer, toastTimer, imageURL, imageFile, sourceRecord = null, loadEpoch = 0, ready = false;
 let backupURLs = [];
+let remoteOwner=owner,remoteReadConfirmed=false,remoteReadError='',accountRefresh=null;
+const accountClient=createAccountConnection();let accountTicket=0;
 let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', selectedDate = '';
 const invalid = new Map();
 let paperEditor;
@@ -169,7 +172,7 @@ function renderCalendar() {
   monthRecords.forEach(record => { if (!byDate.has(record.date)) byDate.set(record.date, []); byDate.get(record.date).push(record); });
   $('#calendar-month-label').textContent = `${year}년 ${month}월`;
   const total = donorGroupSummary(monthRecords);
-  $('#calendar-summary').textContent = monthRecords.length ? (total.unknown === monthRecords.length ? `후원자 미확인 · 미확인 기록 ${total.unknown}개` : `후원자 ${total.known.toLocaleString()}명${total.unknown ? ` + 미확인 기록 ${total.unknown}개` : ''} · 콜백싯 ${monthRecords.length}개`) : '이 달에는 저장된 콜백싯이 없어요.';
+  $('#calendar-summary').textContent = monthRecords.length ? (total.unknown === monthRecords.length ? `후원자 미확인 · 미확인 기록 ${total.unknown}개` : `후원자 ${total.known.toLocaleString()}명${total.unknown ? ` + 미확인 기록 ${total.unknown}개` : ''} · 콜백싯 ${monthRecords.length}개`) : (getStorageStatus().uid ? ((!remoteReadConfirmed||remoteReadError)?'개인 기록을 확인하지 못했어요. 다시 불러오기를 눌러 주세요.':'이 달에는 저장된 콜백싯이 없어요.') : '현재 기기에서 확인되는 기록이 없어요. 개인 연결과 이전 콜백싯을 확인해 주세요.');
   const first = new Date(year, month - 1, 1).getDay(), days = new Date(year, month, 0).getDate(), today = localDate();
   let markup = '<span class="calendar-pad" aria-hidden="true"></span>'.repeat(first);
   for (let day = 1; day <= days; day++) {
@@ -180,6 +183,8 @@ function renderCalendar() {
   $('#calendar-grid').innerHTML = markup;
 }
 function renderArchive() {
+  const connection=getStorageStatus();$('#archive-error').hidden=!remoteReadError;$('#archive-error').textContent=remoteReadError;$('#archive-retry').hidden=!connection.uid||(!remoteReadError&&remoteReadConfirmed);
+
   const query = $('#archive-search').value.trim().toLocaleLowerCase(), currentMonth = localDate().slice(0, 7);
   if (!archiveMonth || !archiveMonthChosen) archiveMonth = records.some(record => record.date.startsWith(currentMonth)) || !records.length ? currentMonth : records.map(record => record.date.slice(0, 7)).sort().at(-1);
   $('#archive-month').value = archiveMonth;
@@ -191,6 +196,8 @@ function renderArchive() {
   renderCalendar();
   const filtered = records.filter(record => (query ? [record.date, ...Object.values(record.meta)].join(' ').toLocaleLowerCase().includes(query) : selectedDate ? record.date === selectedDate : record.date.startsWith(archiveMonth))).sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt));
   $('#archive-list').hidden = !query && !selectedDate && archiveView === 'calendar' && records.length > 0;
+  if(!filtered.length&&!records.length&&getStorageStatus().uid&&(!remoteReadConfirmed||remoteReadError)){$('#archive-list').innerHTML='<div class="archive-empty"><strong>'+ (remoteReadError?'개인 기록을 불러오지 못했어요':'연결된 기록을 확인하고 있어요')+'</strong><p>이 기기의 기록은 그대로 보관돼요. 다시 불러오기를 눌러 확인해 주세요.</p></div>';return;}
+  if (!filtered.length && !records.length && !getStorageStatus().uid) { $('#archive-list').innerHTML = '<div class="archive-empty"><strong>현재 기기의 보관함이에요</strong><p>개인 콜백 연결이 없으면 다른 기기의 기록은 보이지 않아요. 위의 이전 콜백싯 기록 보기에서 기존 연결을 확인해 주세요.</p></div>'; return; }
   if (!filtered.length) { $('#archive-list').innerHTML = `<div class="archive-empty"><strong>${records.length ? '찾는 기록이 없어요' : '첫 번째 필드를 기다리고 있어요'}</strong><p>${records.length ? '검색어나 월을 바꾸어 다시 찾아보세요.' : '새 기록을 작성하고 저장하면 날짜순으로 모여요.'}</p></div>`; return; }
   $('#archive-list').innerHTML = filtered.map(record => {
     const totals = getTotals(record), donor = getDonorSummary(record), photo = record.source?.type === 'photo', title = [record.meta.name, record.meta.location, record.meta.theme].filter(Boolean).join(' · ') || '이름 없는 필드 기록';
@@ -264,7 +271,7 @@ async function importBackup(file) {
     const thisOwner = owner; let imported = 0, skipped = 0, filled = 0;
     try { for (const record of sheets) { const result = await saveSheet(record, { owner: thisOwner, deferSync: true, importOriginal: record.source?.type === 'photo' }); if (result.metadataFilled) filled++; else if (result.skipped) skipped++; else imported++; } }
     catch (e) { throw new Error(`${imported}개를 가져온 후 중단되었어요. ${e.message}`); }
-    await refreshRecords(); toast(`${imported}개의 새 기록을 가져왔어요.${filled ? ` 기존 사진 ${filled}개의 읽어낸 기록을 보완했어요.` : ''}${skipped ? ` 이미 가져온 사진 ${skipped}개는 그대로 유지했어요.` : ''}`); syncSheets().then(refreshRecords).catch(e => error(e.message));
+    await refreshRecords(); toast(`${imported}개의 새 기록을 가져왔어요.${filled ? ` 기존 사진 ${filled}개의 읽어낸 기록을 보완했어요.` : ''}${skipped ? ` 이미 가져온 사진 ${skipped}개는 그대로 유지했어요.` : ''}`); syncAccountRecords().then(refreshRecords).catch(e => error(e.message));
   } catch (e) { toast(e instanceof SyntaxError ? 'JSON 파일을 읽을 수 없어요.' : e.message); }
   finally { $('#import-file').value = ''; }
 }
@@ -276,10 +283,17 @@ async function loadNamespace() {
     dirty = !!draft && !records.some(record => record.id === draft.id && JSON.stringify(record) === JSON.stringify(draft)); ready = true; status(draft ? (dirty ? '임시 저장한 기록을 이어서 작성해요' : '저장한 기록을 불러왔어요') : '새로운 하루 · 기록을 시작해 보세요');
   } catch (e) { ready = true; error(e.message || '저장된 기록을 읽지 못했어요.'); status('기록 불러오기 오류'); }
 }
+async function syncAccountRecords(){const namespace=getStorageStatus().namespace;try{const result=await syncSheets();const next=getStorageStatus();if(next.namespace!==namespace)return result;if(next.error||next.phase==='error'){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';}else if(next.uid&&next.mode==='connected'){remoteReadConfirmed=true;remoteReadError='';}renderArchive();return result;}catch(error){if(getStorageStatus().namespace===namespace){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';renderArchive();}throw error;}}
+async function preserveGuestDraft(){if(!dirty)return;if(invalid.size||!validateSheet(sheet).valid)throw Object.assign(new Error('작성 중인 내용을 먼저 확인해 주세요. 현재 기록은 이 창에 그대로 있어요.'),{code:'callback/draft-unconfirmed'});await persistDraft();if(persistedDraftVersion!==editVersion)throw Object.assign(new Error('작성 중인 기록을 보관하지 못했어요. 이 창을 유지하고 다시 시도해 주세요.'),{code:'callback/draft-unconfirmed'});}
 function storageStatusChanged(value = getStorageStatus()) {
   const next = value?.namespace ? value : getStorageStatus();
+  if(remoteOwner!==next.namespace){remoteOwner=next.namespace;remoteReadConfirmed=false;remoteReadError='';}
+  if(next.uid&&next.phase==='error'&&next.error){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';}
+  $('#open-account-connect').hidden=!!next.uid;
   $('#storage-status').textContent = `${next.name ? `${next.name} · ` : ''}${next.message || (next.mode === 'connected' ? '계정에 연결됨' : '이 기기에 저장')}`;
-  if (owner !== next.namespace && ready) { $('#source-dialog').close(); clearBackupLinks(); error(); loadNamespace().then(() => syncSheets()).then(refreshRecords).catch(e => error(e.message)); }
+  $('#archive-connection-status').textContent = $('#storage-status').textContent;
+  if (owner !== next.namespace && ready) { records=[]; $('#source-dialog').close(); clearBackupLinks(); error(); accountRefresh=loadNamespace().then(() => syncAccountRecords()).then(refreshRecords).catch(e => {error(e.message);}); }
+  if ($('#archive-dialog').open) renderArchive();
 }
 
 setupFields();
@@ -354,4 +368,10 @@ window.addEventListener('beforeunload', event => { if ((dirty && persistedDraftV
 subscribe(storageStatusChanged); storageStatusChanged();
 await loadNamespace();
 if (new URLSearchParams(location.search).get('view') === 'archive') await openArchive();
-syncSheets().then(refreshRecords).catch(e => error(e.message));
+syncAccountRecords().then(refreshRecords).catch(e => error(e.message));
+
+$('#open-account-connect').addEventListener('click',()=>{$('#account-connect-status').textContent='';$('#account-connect-dialog').showModal();$('#account-connect-id').focus();});
+$('#cancel-account-connect').addEventListener('click',()=>$('#account-connect-dialog').close());
+$('#account-connect-dialog').addEventListener('close',()=>{accountTicket++;accountClient.cancel();$('#account-connect-password').value='';$('#account-connect-form [type=submit]').disabled=false;($('#open-account-connect').hidden?$('.archive-legacy-access>a'):$('#open-account-connect')).focus();});
+$('#account-connect-form').addEventListener('submit',async event=>{event.preventDefault();const ticket=++accountTicket,submit=$('#account-connect-form [type=submit]');submit.disabled=true;$('#account-connect-status').textContent='본인 기록 연결을 확인하고 있어요…';try{await preserveGuestDraft();if(ticket!==accountTicket)return;await accountClient.connect($('#account-connect-id').value.trim(),$('#account-connect-password').value);if(ticket!==accountTicket)return;getStorageStatus();if(accountRefresh)await accountRefresh;else{await loadNamespace();await syncAccountRecords();await refreshRecords();}if(ticket!==accountTicket)return;$('#account-connect-dialog').close();renderArchive();}catch(error){if(ticket!==accountTicket)return;$('#account-connect-status').textContent=error.code==='callback/draft-unconfirmed'?error.message:error.code==='callback/profile-missing'?'워크북에서 내 콜백 링크를 먼저 확인해 주세요.':error.code==='callback/account-changed'?'이미 연결된 계정이 있어요. 기존 개인 콜백 링크를 확인해 주세요.':'계정 연결을 확인하지 못했어요. 아이디와 비밀번호를 확인하고 다시 시도해 주세요.';}finally{if(ticket===accountTicket){$('#account-connect-password').value='';submit.disabled=false;}}});
+$('#archive-retry').addEventListener('click',async()=>{const button=$('#archive-retry');button.disabled=true;try{await syncAccountRecords();await refreshRecords();}catch{}finally{button.disabled=false;renderArchive();}});

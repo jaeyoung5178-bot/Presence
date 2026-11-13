@@ -15,7 +15,7 @@
     var CANON="hub.presence.co.kr";
     if(location.hostname===CANON&&location.protocol==="https:")return;
     var q=new URLSearchParams(location.search);
-    if(!q.get("u")||!q.get("k")){
+    if(q.get("view")!=="see"&&(!q.get("u")||!q.get("k"))){
       try{
         var who=JSON.parse(localStorage.getItem("fcos_hub_identity")||"null");
         var key=localStorage.getItem("fcos_callback_access_key")||"";
@@ -26,6 +26,13 @@
     location.replace("https://"+CANON+"/callback/"+(qs?"?"+qs:"")+location.hash);
   }catch(e){}
 })();
+
+// Direct history entry is display-only; existing ordinary entry keeps its save behavior.
+const DIRECT_SEE = new URLSearchParams(location.search).get('view') === 'see';
+const DIRECT_SEE_CACHE = new Map();
+const DIRECT_SEE_STATE = {loaded:false,selected:false};
+function directSeeDates(){return Object.values(Store.getAll()).filter(s=>s&&!s.deleted&&s.info&&/^\d{4}-\d{2}-\d{2}$/.test(s.info.date)&&((s.logs||[]).length||(s.objections||[]).length||(s.rehashes||[]).length||s.info.site||Object.values(s.retro||{}).some(r=>r&&(r.good||r.bad)))).map(s=>s.info.date).sort().reverse();}
+function directSeeLatest(){if(DIRECT_SEE&&!DIRECT_SEE_STATE.selected){const date=directSeeDates()[0];if(date)S=Store.getSession(date)||S;}}
 
 /* ==================== Constants ==================== */
 const STAGES = ["contact", "stop", "presentation", "close", "rehash"];
@@ -51,10 +58,11 @@ const Store = {
     return this.KEY_BASE + "__guest";
   },
   _read() {
+    if (DIRECT_SEE && DIRECT_SEE_CACHE.has(this.KEY)) return JSON.parse(JSON.stringify(DIRECT_SEE_CACHE.get(this.KEY)));
     try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; }
     catch { return {}; }
   },
-  _write(all) { localStorage.setItem(this.KEY, JSON.stringify(all)); },
+  _write(all) { if (DIRECT_SEE) {DIRECT_SEE_CACHE.set(this.KEY, JSON.parse(JSON.stringify(all)));return;} localStorage.setItem(this.KEY, JSON.stringify(all)); },
   getAll() { return this._read(); },
   /* deleted(=tombstone) 세션은 없는 것으로 취급 → null 반환 */
   getSession(date) { const s = this._read()[date]; return s && !s.deleted ? s : null; },
@@ -94,6 +102,7 @@ function loadToday() {
   S = Store.getSession(todayStr()) || newSession(todayStr());
 }
 function save() {
+  if (DIRECT_SEE) return;
   S.up = Date.now();
   Store.saveSession(S);
   try { Cloud.queue(S.info.date); } catch (e) {}  // 클라우드 실시간 동기화
@@ -101,6 +110,7 @@ function save() {
 
 /* 날짜 전환 — 지난 날짜도 뒤늦게 작성 가능 */
 function switchDate(date) {
+  if (DIRECT_SEE) DIRECT_SEE_STATE.selected=true;
   if (!date || date === S.info.date) return;
   save();
   let next = Store.getSession(date);
@@ -774,6 +784,18 @@ function renderSee() {
   renderSiteStats();
   renderWeatherStats();
   loadRetro();
+  if (DIRECT_SEE) {
+    const linked = !!Hub.identity();
+    if(sd)sd.style.minHeight="44px";if(sb)sb.style.minHeight="44px";
+    let choices=$("see-history-dates");if(!choices){choices=document.createElement('select');choices.id='see-history-dates';choices.setAttribute('aria-label','저장된 날짜별 콜백 기록');choices.style.cssText='width:100%;min-height:44px;margin-top:10px;padding:9px;font-size:16px';$("see-date").parentElement.after(choices);choices.onchange=()=>{if(choices.value)switchDate(choices.value);};}
+    const dates=directSeeDates();choices.innerHTML=dates.map(date=>'<option value="'+date+'"'+(date===S.info.date?' selected':'')+'>'+date+' 기록</option>').join('')||'<option value="">'+(linked&&!DIRECT_SEE_STATE.loaded?'서버 기록 확인 중':'연결된 날짜 기록 선택')+'</option>';choices.disabled=!dates.length;
+    if(linked&&!DIRECT_SEE_STATE.loaded)$("see-sub").textContent+=' · 서버 기록 확인 중';
+    $("see-sub").textContent += linked ? ' · 읽기 전용 · 기존 날짜별 콜백' : ' · 이 기기의 기록 · 서버 연결 미확인';
+    if (!linked) $("see-sub").textContent += ' · 다른 기기의 기록은 워크북 개인 콜백 링크로 연결해 주세요.';
+    $("view-see").querySelectorAll('input,textarea,select,button').forEach(el => {
+      if (el.id !== 'see-date' && el.id !== 'see-today-btn' && el.id !== 'see-history-dates' && !el.closest('[data-replay]')) el.disabled = true;
+    });
+  }
 }
 
 function renderResultCards() {
@@ -1547,6 +1569,7 @@ const CallbackAuth = {
    기존에는 Cloud.init 뒤에 Team.init이 실행되어 첫 접속에서 관리자 연결을
    한 번 눌러야 실시간 동기화가 시작되는 기기가 있었다. */
 function bootstrapPersonalLinkIdentity() {
+  if (DIRECT_SEE) return false;
   try {
     const q = new URLSearchParams(location.search), uid = q.get("u"), name = q.get("n"), key = q.get("k");
     if (!uid || !name || !key) return false;
@@ -1688,6 +1711,7 @@ const Hub = {
   },
 
   async syncAll(showToast) {
+    if (DIRECT_SEE) return 0;
     const who = this.identity(); if (!who) return 0;
     const alive = await this.activeIdentity(who);
     if (alive === false) { this.revokeIdentity(who); return 0; }   // 명단에서 실제로 빠진 경우만 해제
@@ -1955,6 +1979,7 @@ const Cloud = {
     if (changed) {
       Store.importAll(all);
       S = Store.getSession(S.info.date) || S;
+      directSeeLatest();
       /* 어떤 날짜든 새 데이터가 오면 화면 갱신 (최근 7일·사이트 통계 포함) */
       this.rerender();
       this.toastOnce("☁️ 서버 기록을 불러왔어요");
@@ -1976,11 +2001,13 @@ const Cloud = {
 
   /* ---- 업로드 (저장할 때마다 자동, 0.7초 디바운스) ---- */
   queue(date) {
+    if (DIRECT_SEE) return;
     const uid = this.uid(); if (!uid || !date) return;
     clearTimeout(this.pushT[date]);
     this.pushT[date] = setTimeout(() => this.push(date), 700);
   },
   async push(date) {
+    if (DIRECT_SEE) return false;
     const uid = this.uid(); if (!uid) return;
     let s = Store.getSession(date); if (!s) return;
     try {
@@ -2032,7 +2059,9 @@ const Cloud = {
     try {
       const v = await CallbackAuth.json("callbacksheets/" + uid + "?t=" + Date.now(), {});
       if (this.uid() !== uid) return;   // 응답 도착 전 계정 전환 → 폐기 (교차 오염 차단)
+      if(DIRECT_SEE)DIRECT_SEE_STATE.loaded=true;
       this.applyRemote(v || {});
+      if(DIRECT_SEE){directSeeLatest();this.rerender();}
       const all = Store.getAll();
       Object.keys(all).forEach((d) => { if (!v || !v[d]) this.queue(d); });
       this.setStatus("on");
@@ -2299,6 +2328,7 @@ const Team = {
   /* 세션 tombstone 삭제 — 단순 DELETE는 팀원 기기의 pullAll이 로컬 사본을
      되살리므로 반드시 {deleted:true} 표식을 PUT한다 (모든 기기에서 사라짐) */
   async delSession(uid, name, date) {
+    if (DIRECT_SEE) return;
     if (!confirm(`${name}님의 ${date} 세션을 삭제할까요? 모든 기기에서 사라집니다`)) return;
     try {
       const res = await CallbackAuth.request("callbacksheets/" + uid + "/" + date, {
@@ -2321,7 +2351,7 @@ const Team = {
     try {
       const q = new URLSearchParams(location.search);
       const u = q.get("u"), n = q.get("n"), key = q.get("k");
-      if (u && n) {
+      if (u && n && !DIRECT_SEE) {
         const cur = Hub.identity();
         const wasAdmin = localStorage.getItem("fcos_was_admin") === "1";
         const connect = async () => {
@@ -2389,6 +2419,7 @@ Team.init();
 
 /* ==================== 앱 시작 (모든 모듈 정의 완료 후 실행) ==================== */
 loadToday();
+directSeeLatest();
 renderHeader();
 bind();
-nav("dashboard");
+nav(DIRECT_SEE ? "see" : "dashboard");
