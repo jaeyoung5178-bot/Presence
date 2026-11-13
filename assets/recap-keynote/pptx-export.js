@@ -85,7 +85,7 @@ function sales(slide,d,v) {
   const all=[...d.members].sort((a,b)=>(M.memberMetric(b).sales??0)-(M.memberMetric(a).sales??0)),rows=v.items||all,t=M.totals(d);
   box(slide,`필드 ${md(d.weeks?.[0]?.start)}–${md(d.weeks?.at(-1)?.end)}`,.7,1.23,11.9,.2,10.5,{color:C.muted});
   if(!rows.length)return empty(slide,'이달의 워크북 기록이 없습니다.');
-  const widths=[1.35,.65,2.72,2.03,2.69,.85,1.64],x=.7,y=1.58,rh=.44;
+  const widths=[1.35,.65,2.72,2.03,2.69,.85,1.64],x=.7,y=1.58,rh=rows.length>9?.40:.44;
   const data=rows.map(m=>{const a=M.memberMetric(m);return [m.name+' '+m.role,fmt(a.days),'','',money(a.income)+(a.incomeComplete?'':' *'),fmt(a.reject),{text:pct(a.rate),options:{color:a.alert?C.red:C.ink,bold:a.alert}}];});
   table(slide,['팀원','필드일','세일즈 (건)','AVG (건/일)','실인컴','리젝','리젝률'],data,x,y,widths,{fontSize:12.5,rowH:rh,footer:['팀 합계',fmt(t.days),fmt(t.sales),avg(t.avg),money(t.income),fmt(t.reject),pct(t.rate)]});
   const max=Math.max(1,...all.map(m=>M.memberMetric(m).sales||0)),maxAvg=Math.max(1,...all.map(m=>M.memberMetric(m).avg||0));
@@ -245,7 +245,16 @@ export function buildPptx({draft,views,month,logoData},PptxGenJS) {
   const errors=M.validate(draft);if(errors.length)throw new Error(errors.join('\n'));
   if(month&&month!==draft.month)throw new Error('선택 월과 리캡 월이 다릅니다.');
   if(!Array.isArray(views)||!views.length)throw new Error('내보낼 리캡 페이지가 없습니다.');
-  const d=M.clone(draft),pages=M.clone(views),pptx=new PptxGenJS();if(d.month==='2026-10'&&d.members.length<=10){const first=pages.findIndex(v=>v.id==='income');if(first>=0){pages[first]={...pages[first],items:[...d.members].sort((a,b)=>(M.memberMetric(b).income??-1)-(M.memberMetric(a).income??-1)),part:0,parts:1};for(let i=pages.length-1;i>first;i--)if(pages[i].id==='income')pages.splice(i,1);}}
+  const d=M.clone(draft),pages=M.clone(views),pptx=new PptxGenJS();
+  if(d.month==='2026-10'&&d.members.length<=10){
+    for(const id of ['sales','weekly','income']){
+      const first=pages.findIndex(v=>v.id===id);if(first<0)continue;
+      const items=[...d.members];
+      if(id!=='weekly')items.sort((a,b)=>(M.memberMetric(b)[id==='income'?'income':'sales']??-1)-(M.memberMetric(a)[id==='income'?'income':'sales']??-1));
+      pages[first]={...pages[first],items,part:0,parts:1};
+      for(let i=pages.length-1;i>first;i--)if(pages[i].id===id)pages.splice(i,1);
+    }
+  }
   pptx.layout='LAYOUT_WIDE';pptx.author=d.leader||'Presence';pptx.subject='저장된 월별 Team Recap';pptx.title=`${monthTitle(d.month)} ${d.teamName||'Presence'} Recap`;
   pptx.company=d.teamName||'Presence';pptx.lang='ko-KR';pptx.theme={headFontFace:FONT,bodyFontFace:FONT,lang:'ko-KR'};
   pptx._recapConnections=[];
