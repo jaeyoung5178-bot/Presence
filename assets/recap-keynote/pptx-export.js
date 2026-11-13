@@ -167,8 +167,8 @@ function callback(slide,d,v) {
   groups.forEach((group,i)=>{const columns=Math.min(3,groups.length),w=(11.93-(columns-1)*.18)/columns,x=.7+i*(w+.18),people=group.all||group.rows||[],sumDays=(d.month!=='2026-10'||people.some(m=>m.days!=null))?total(people.map(m=>m.days)):null,sumSub=(d.month!=='2026-10'||people.some(m=>m.submitted!=null))?total(people.map(m=>m.submitted)):null,miss=people.filter(m=>m.days==null||m.days>0&&m.submitted==null).length;
     box(slide,group.name+(group.totalParts>1?` · ${group.part+1}/${group.totalParts}`:''),x,2.87,w,.35,22,{bold:true});
     box(slide,`${fmt(sumSub)}회 / ${fmt(sumDays)}일 · ${miss?'입력 중':pct(M.ratio(sumSub,sumDays))}`,x,3.35,w,.26,13,{color:C.muted});
-    table(slide,['팀원',d.month==='2026-10'?'필드일수':'대상일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted),m.days==null?'대상일 미입력':!m.days?(d.month==='2026-10'?'—':'해당 없음'):m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[w*.28,w*.2,w*.24,w*.28],{fontSize:groups.length>2?10.5:12,rowH:.36});});
-  box(slide,d.month==='2026-10'?'제출률 = 제출 횟수 ÷ 첨부 필드일수 · 자동 집계':'제출률 = 제출 횟수 ÷ 콜백싯 대상일 · 세일즈 필드일수와 별도 집계',.7,6.7,11.9,.2,10,{color:C.muted});
+    table(slide,['팀원',d.month==='2026-10'?'필드일수':'대상일','제출','제출률'],(group.rows||[]).map(m=>[m.name,fmt(m.days),m.submitted==null?'미입력':fmt(m.submitted)+(d.month==='2026-10'&&d.sourceNotes?.callbackConfirmedEntries?.[m.id]?.estimated?' · 역산':''),m.days==null?'대상일 미입력':!m.days?(d.month==='2026-10'?'—':'해당 없음'):m.submitted==null?'미입력':pct(M.ratio(m.submitted,m.days))]),x,3.88,[w*.28,w*.2,w*.24,w*.28],{fontSize:groups.length>2?10.5:12,rowH:.36});});
+  box(slide,d.month==='2026-10'?'리캡 필드일 기준 · 역산: 사진 비율로 환산한 제출 횟수':'제출률 = 제출 횟수 ÷ 콜백싯 대상일 · 세일즈 필드일수와 별도 집계',.7,6.7,11.9,.2,10,{color:C.muted});
 }
 function learning(slide,d,v) {
   const rows=v.items||[];if(!rows.length)return empty(slide);

@@ -25,6 +25,9 @@ const proofOf = password => {
 export function allowed(user) {
   return !!user && user.status === 'active' && (user.uid === 'admin' || ['TL','AOP','OP','OWNER'].includes(String(user.role || '').toUpperCase()));
 }
+export function allowedReader(user) {
+  return !!user && user.status === 'active' && typeof user.uid === 'string' && !!user.uid;
+}
 let runtime;
 async function firebase() {
   if (!runtime) runtime = (async () => {
@@ -46,7 +49,9 @@ function readWithin(promise, label, ms = 18000) {
 }
 
 // Only this gateway touches Firebase. Workbook source paths are read-only here.
-export function gateway() {
+export function gateway(options = {}) {
+  const readerOnly = options.readerOnly === true;
+  const loginAllowed = readerOnly ? allowedReader : allowed;
   let current = null;
   let generation = 0;
   const rawGet = async path => {
@@ -64,13 +69,15 @@ export function gateway() {
     // The database key is the authenticated identity; never trust a mismatching profile uid.
     return profile ? {...profile,uid} : null;
   };
-  const requireAllowed = async () => {
-    if (!allowed(current)) throw error('recap/forbidden','리캡은 활성 관리자·TL·AOP·OP 계정만 사용할 수 있습니다.');
+  const requireAllowed = async (publishedRead = false) => {
+    if (readerOnly && publishedRead !== true) throw error('recap/forbidden','게시된 리캡 열람만 허용됩니다.');
+    const access = readerOnly && publishedRead === true ? allowedReader : allowed;
+    if (!access(current)) throw error('recap/forbidden','리캡은 활성 관리자·TL·AOP·OP 계정만 사용할 수 있습니다.');
     const uid = current.uid, token = generation, f = await firebase();
     const anonymous = f.session.currentUser;
     if (!anonymous) {current = null; throw error('recap/forbidden','다시 로그인해 주세요.');}
     const [session,fresh] = await Promise.all([rawGet(`authSessions/${anonymous.uid}`),readProfile(uid)]);
-    if (token !== generation || session?.userUid !== uid || !allowed(fresh)) {
+    if (token !== generation || session?.userUid !== uid || !access(fresh)) {
       current = null;
       throw error('recap/forbidden','계정의 리캡 접근 권한을 확인해 주세요.');
     }
@@ -104,7 +111,7 @@ export function gateway() {
       if (!saved?.userUid) {current = null; return null;}
       const user = await readProfile(saved.userUid);
       if (token !== generation) return null;
-      if (!allowed(user)) {current = null; return null;}
+      if (!loginAllowed(user)) {current = null; return null;}
       current = user;
       return clone(user);
     },
@@ -126,16 +133,17 @@ export function gateway() {
       }
       const user = await readProfile(uid);
       if (token !== generation) throw error('recap/superseded','새 로그인 요청으로 변경되었습니다.');
-      if (!allowed(user)) throw error('recap/forbidden','리캡은 활성 관리자·TL·AOP·OP 계정만 사용할 수 있습니다.');
+      if (!loginAllowed(user)) throw error('recap/forbidden','활성 계정의 리캡 접근 권한을 확인해 주세요.');
       current = user;
       return clone(user);
     },
     async read(month,published = false) {
       checkMonth(month);
-      await requireAllowed();
+      if (readerOnly && published !== true) throw error('recap/forbidden','게시된 리캡 열람만 허용됩니다.');
+      await requireAllowed(published === true);
       const token = generation, path = `recaps/${published ? 'published' : 'keynote'}/${month}`;
       const snapshot = await rawGet(path);
-      if (token !== generation || !allowed(current)) throw error('recap/superseded','세션이 변경되어 열람을 취소했습니다.');
+      if (token !== generation || !(readerOnly ? allowedReader(current) : allowed(current))) throw error('recap/superseded','세션이 변경되어 열람을 취소했습니다.');
       // A saved reader never fetches the workbook or reconciles live source values.
       return {state:{},saved:published ? null : snapshot,published:published ? snapshot : null,legacy:null,warnings:[]};
     },
