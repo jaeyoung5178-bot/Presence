@@ -230,6 +230,13 @@ function promotion(slide,d,v,pptx,index) {
     box(slide,(row.checks||[]).map(check=>`${check.done?'☑':'☐'} ${check.text}`).join('\n'),x+.23,4.56,w-.46,1.45,14,{valign:'top'});
     box(slide,[row.due||'기한 미정',row.status||'계획'].join(' · '),x+.23,6.26,w-.46,.23,11,{color:C.muted});});
 }
+function ownerFeedback(slide,d) {
+  const f=d.notes?.ownerFeedback;if(!f)return empty(slide,'저장된 Owner 피드백이 없습니다.');
+  const owner=f.ownerName||'Owner';
+  const blocks=[{label:owner,value:f.question,y:1.51,h:.84},{label:'임재영',value:f.answer,y:2.49,h:1.0},{label:owner,value:f.advice,y:3.63,h:1.50}];
+  blocks.forEach(({label,value,y,h})=>{rect(slide,.7,y,11.93,h,C.soft);box(slide,label,.9,y+.13,1.45,.3,12,{bold:true,color:C.blue});box(slide,String(value??''),2.49,y+.12,9.85,h-.22,17,{valign:'top'});});
+  rect(slide,.7,5.35,11.93,1.35,C.ink);box(slide,'핵심 조언',.94,5.52,1.35,.28,12,{bold:true,color:'BBCBE3'});box(slide,String(f.keyTakeaway??''),2.49,5.50,9.83,1.01,18,{bold:true,color:C.paper,valign:'top'});
+}
 function goalPage(slide,d,v){const g=d.goals||{},lines=v=>String(v||'').split(/\n+/).map(x=>x.trim()).filter(Boolean),tracks=[];for(const x of d.learning||[]){const key=x.track||'LEARNING';let t=tracks.find(t=>t.key===key);if(!t)tracks.push(t={key,items:[]});t.items.push(x);}
   [[g.sales==null?'—':fmt(g.sales)+'+','세일즈 · PCS'],[g.income==null?'—':Math.round(n(g.income)).toLocaleString('ko-KR'),d.month==='2026-10'?'목표 실인컴 · 원':'목표 인컴 · 원'],[g.headcount==null?'—':fmt(g.headcount)+'명','스코어링 HC']].forEach(([value,label],i)=>{const x=.7+i*4.03;rect(slide,x,1.5,3.85,1.3,C.ink);box(slide,value,x+.25,1.66,3.4,.6,34,{bold:true,color:C.paper});box(slide,label,x+.25,2.36,3.4,.25,11,{color:'BBCBE3'});});
   const column=(value,col)=>{const parts=lines(value),prefix=`2-0-1-${col}-`,L=d.layout?.[String(v.key).replace(/[.#$\/\[\]]/g,'_')]||{};let count=parts.length;for(const path of Object.keys(L))if(path.startsWith(prefix)&&/^\d+$/.test(path.slice(prefix.length)))count=Math.max(count,Number(path.slice(prefix.length)));return Array.from({length:count},(_,i)=>layoutText(d,v,prefix+(i+1),parts[i]||'')).join('\n\n');};const plan=tracks.map((t,i)=>{const children=[t.key,...t.items.flatMap(x=>[x.title,...(x.action?[x.action]:[])])];return children.map((value,j)=>layoutText(d,v,`2-0-1-2-${i+1}-${j}`,value)).join('\n');}).join('\n\n');const cols=[['GOAL',column(g.focus,0)],['ACTION',column(g.actions,1)],['LEARNING PLAN',plan]];
@@ -267,7 +274,7 @@ export function buildPptx({draft,views,month,logoData},PptxGenJS) {
     slide.addNotes(`Presence Team Recap · ${d.month}\n원본 페이지 ${index+1}/${pages.length}: ${v.noteTitle||v.title}\n저장 버전 ${d.revision||0}\n모든 수치는 전달된 리캡 스냅샷 기준입니다. 빈값은 미확인 상태입니다.`);
     if(v.kind==='goals'){goalPage(slide,d,v);return;}
     if(v.kind==='note'){box(slide,v.items||v.noteText||'기록된 내용이 없습니다.',.85,1.75,11.63,4.8,24,{valign:'top',breakLine:false});return;}
-    switch(v.id){case'cover':cover(slide,d);break;case'contents':contents(slide);break;case'sales':sales(slide,d,v);break;case'weekly':weekly(slide,d,v,pptx);break;case'income':income(slide,d,v);break;case'recruit':recruit(slide,d,v);break;case'rank':recruit(slide,d,v,true);break;case'qc':qc(slide,d,v);break;case'wins':case'challenges':stories(slide,d,v);break;case'callback':callback(slide,d,v);break;case'learning':learning(slide,d,v);break;case'ic':ic(slide,d,v);break;case'tree':tree(slide,d,v,pptx,index);break;case'promotion':promotion(slide,d,v,pptx,index);break;case'overview':overview(slide,d);break;default:throw new Error(`지원하지 않는 리캡 페이지: ${v.id}`);}
+    switch(v.id){case'cover':cover(slide,d);break;case'contents':contents(slide);break;case'sales':sales(slide,d,v);break;case'weekly':weekly(slide,d,v,pptx);break;case'income':income(slide,d,v);break;case'recruit':recruit(slide,d,v);break;case'rank':recruit(slide,d,v,true);break;case'qc':qc(slide,d,v);break;case'wins':case'challenges':stories(slide,d,v);break;case'callback':callback(slide,d,v);break;case'learning':learning(slide,d,v);break;case'ic':ic(slide,d,v);break;case'tree':tree(slide,d,v,pptx,index);break;case'promotion':promotion(slide,d,v,pptx,index);break;case'ownerFeedback':ownerFeedback(slide,d);break;case'overview':overview(slide,d);break;default:throw new Error(`지원하지 않는 리캡 페이지: ${v.id}`);}
   });
   if(pptx._slides.length!==pages.length)throw new Error('PPTX 페이지 수를 확인해 주세요.');
   return pptx;
