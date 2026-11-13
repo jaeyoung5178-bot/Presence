@@ -15,6 +15,8 @@ const total=values=>values.reduce((a,b)=>a+(n(b)??0),0);
 const text=v=>String(v??'');
 const monthTitle=month=>`${month.slice(0,4)}년 ${Number(month.slice(5))}월`;
 const rawText=v=>text(v).replace(/\r\n/g,'\n');
+// Layout text is authoritative, including an intentionally empty string.
+function layoutText(d,v,path,fallback){const key=String(v.key||'').replace(/[.#$\/\[\]]/g,'_'),value=d.layout?.[key]?.[path];return typeof value?.t==='string'?value.t:fallback;}
 function box(slide,value,x,y,w,h,size=16,options={}) {
   slide.addText(rawText(value),{x,y,w,h,fontFace:FONT,fontSize:size,color:C.ink,margin:0,breakLine:false,vertAnchor:'top',
     valign:'mid',fit:'shrink',paraSpaceAfterPt:0,...options});
@@ -110,9 +112,10 @@ function income(slide,d,v) {
   const shown=t.incomeComplete?t.income:d.members.some(m=>m.incomeWeeks.some(x=>n(x)!=null))?t.knownIncome:null;
   rect(slide,.7,1.5,11.93,1.0,C.ink);box(slide,t.incomeComplete?'TEAM INCOME':'확인된 인컴',.94,1.63,3,.2,11,{color:'BBCBE3'});
   box(slide,money(shown),.94,1.97,8,.33,29,{bold:true,color:C.paper});
+  const hourly=d.month==='2026-10'?all.filter(m=>m.name==='박성은').length:0;if(d.month==='2026-10')box(slide,`성과 ${all.length-hourly}명 · 시급 ${hourly}명`,9,1.85,3.35,.3,12,{color:C.paper,align:'right'});
   const max=Math.max(1,...all.map(m=>M.memberMetric(m).income||0));
-  rows.forEach((m,i)=>{const a=M.memberMetric(m),y=2.77+i*.4;box(slide,String((v.part||0)*9+i+1).padStart(2,'0'),.75,y,.48,.25,13,{color:C.blue,bold:true});
-    box(slide,m.name,1.36,y,1.25,.25,15,{bold:true,color:a.alert?C.red:C.ink});box(slide,m.role,2.63,y,.65,.25,11,{color:C.muted});
+  rows.forEach((m,i)=>{const a=M.memberMetric(m),y=2.77+i*.4;box(slide,String((v.part||0)*10+i+1).padStart(2,'0'),.75,y,.48,.25,13,{color:C.blue,bold:true});
+    box(slide,m.name+(d.month==='2026-10'&&m.name==='박성은'?' ⏰':''),1.36,y,1.25,.25,15,{bold:true,color:a.alert?C.red:C.ink});box(slide,m.role,2.63,y,.65,.25,11,{color:C.muted});
     bar(slide,a.income,max,3.42,y+.05,6.62,.14,i? '7C9CF6':C.blue);box(slide,money(a.income)+(a.incomeComplete?'':' *'),10.27,y,2.28,.27,15,{align:'right',bold:true});});
   if(!t.incomeComplete)box(slide,'미입력 급여는 0원으로 확정하지 않습니다.',.7,6.65,11.9,.23,10,{color:C.muted});
 }
@@ -131,8 +134,8 @@ function qc(slide,d,v) {
   if(d.month==='2026-10'&&d.sourceNotes?.salesSnapshot?.confirmed===true){
     const incoming=events.filter(e=>e.type==='In'),outgoing=events.filter(e=>!['In','Retain'].includes(e.type));
     for(const [i,label,count,color]of [[0,'10월 IN',ins,C.green],[1,'10월 OUT',outs,C.red]]){const x=.7+i*6.1;rect(slide,x,1.48,5.83,1.03,C.soft);box(slide,label,x+.2,1.64,3,.3,18,{color});box(slide,`${fmt(count)}명`,x+3.5,1.62,2,.55,32,{bold:true,align:'right',color});}
-    table(slide,['입사 명단','상위리더'],incoming.map(e=>[e.name,e.owner||'—']),.7,2.72,[2.1,3.73],{fontSize:14,rowH:.31});
-    table(slide,['퇴사 명단','사유'],outgoing.map(e=>[e.name,e.reason||'—']),6.8,2.72,[2.1,3.73],{fontSize:14,rowH:.31});
+    table(slide,['입사 명단','상위리더'],incoming.map((e,i)=>[e.name,layoutText(d,v,`2-0-1-0-1-${i}-1`,e.owner||'—')]),.7,2.72,[2.1,3.73],{fontSize:14,rowH:.31});
+    table(slide,['퇴사 명단','사유'],outgoing.map((e,i)=>[e.name,layoutText(d,v,`2-0-1-1-1-${i}-1`,e.reason||'—')]),6.8,2.72,[2.1,3.73],{fontSize:14,rowH:.31});
     box(slide,`월초 ${fmt(start)}명 · 월말 ${start==null?'—':fmt(start+ins-outs)}명`,.7,6.54,11.93,.28,12,{color:C.muted});return;
   }
   kpis(slide,[['월초 인원',fmt(start)],['In',fmt(ins)],['Out',fmt(outs)],['월말 인원',start==null?'—':fmt(start+ins-outs)]]);
@@ -150,14 +153,14 @@ function stories(slide,d,v) {
     widths.forEach((w,j)=>slide.addShape('roundRect',{x:xs[j],y,w,h,rectRadius:.13,fill:{color:C.paper},line:{color:C.paper,width:0}}));
     rect(slide,xs[0]+.17,y+.13,.7,.31,'1475D1');
     box(slide,String((v.part||0)*3+i+1).padStart(2,'0'),xs[0]+.17,y+.13,.7,.31,14,{bold:true,color:C.paper,align:'center'});
-    box(slide,row.title||'제목 없음',xs[0]+.24,y+(win?.58:.52),widths[0]-.48,win?.66:.38,19,{bold:true,align:'center'});
-    if(!win)box(slide,row.cause||'아직 기록하지 않았습니다.',xs[0]+.27,y+.92,widths[0]-.54,.4,12,{align:'center'});
-    if(!win)box(slide,[row.owner,row.due,row.status].filter(Boolean).join(' · '),xs[0]+.27,y+1.32,widths[0]-.54,.16,9,{align:'center',color:C.muted});
-    box(slide,win?'WIN':'Sol.',xs[1]+.19,y+.15,widths[1]-.38,.3,18,{bold:true,color:'1475D1'});
-    box(slide,(win?row.win:row.action)||'아직 기록하지 않았습니다.',xs[1]+.19,y+.61,widths[1]-.38,.8,14.5);
-    box(slide,win?'HOW':'Res. 목표',xs[2]+.19,y+.15,widths[2]-.38,.3,18,{bold:true,color:'1475D1'});
+    box(slide,layoutText(d,v,`2-0-${i}-0-1`,row.title||'제목 없음'),xs[0]+.24,y+(win?.58:.52),widths[0]-.48,win?.66:.38,19,{bold:true,align:'center'});
+    if(!win)box(slide,layoutText(d,v,`2-0-${i}-0-2`,row.cause||'아직 기록하지 않았습니다.'),xs[0]+.27,y+.92,widths[0]-.54,.4,12,{align:'center'});
+    if(!win)box(slide,layoutText(d,v,`2-0-${i}-0-3`,[row.owner,row.due,row.status].filter(Boolean).join(' · ')),xs[0]+.27,y+1.32,widths[0]-.54,.16,9,{align:'center',color:C.muted});
+    box(slide,layoutText(d,v,`2-0-${i}-1-0`,win?'WIN':'Sol.'),xs[1]+.19,y+.15,widths[1]-.38,.3,18,{bold:true,color:'1475D1'});
+    box(slide,layoutText(d,v,`2-0-${i}-1-1`,(win?row.win:row.action)||'아직 기록하지 않았습니다.'),xs[1]+.19,y+.61,widths[1]-.38,.8,14.5);
+    box(slide,layoutText(d,v,`2-0-${i}-2-0`,win?'HOW':'Res. 목표'),xs[2]+.19,y+.15,widths[2]-.38,.3,18,{bold:true,color:'1475D1'});
     const value=win?[row.how,row.next&&'NEXT\n'+row.next].filter(Boolean).join('\n\n'):row.result;
-    box(slide,value||'아직 기록하지 않았습니다.',xs[2]+.19,y+.61,widths[2]-.38,win?.8:.61,14.5);
+    box(slide,layoutText(d,v,`2-0-${i}-2-1`,value||'아직 기록하지 않았습니다.'),xs[2]+.19,y+.61,widths[2]-.38,win?.8:.61,14.5);
   });
 }
 function callback(slide,d,v) {
@@ -222,11 +225,11 @@ function promotion(slide,d,v,pptx,index) {
     box(slide,(row.checks||[]).map(check=>`${check.done?'☑':'☐'} ${check.text}`).join('\n'),x+.23,4.56,w-.46,1.45,14,{valign:'top'});
     box(slide,[row.due||'기한 미정',row.status||'계획'].join(' · '),x+.23,6.26,w-.46,.23,11,{color:C.muted});});
 }
-function goalPage(slide,d){const g=d.goals||{},lines=v=>String(v||'').split(/\n+/).map(x=>x.trim()).filter(Boolean),tracks=[];for(const x of d.learning||[]){const key=x.track||'LEARNING';let t=tracks.find(t=>t.key===key);if(!t)tracks.push(t={key,items:[]});t.items.push(x);}
+function goalPage(slide,d,v){const g=d.goals||{},lines=v=>String(v||'').split(/\n+/).map(x=>x.trim()).filter(Boolean),tracks=[];for(const x of d.learning||[]){const key=x.track||'LEARNING';let t=tracks.find(t=>t.key===key);if(!t)tracks.push(t={key,items:[]});t.items.push(x);}
   [[g.sales==null?'—':fmt(g.sales)+'+','세일즈 · PCS'],[g.income==null?'—':Math.round(n(g.income)).toLocaleString('ko-KR'),d.month==='2026-10'?'목표 실인컴 · 원':'목표 인컴 · 원'],[g.headcount==null?'—':fmt(g.headcount)+'명','스코어링 HC']].forEach(([value,label],i)=>{const x=.7+i*4.03;rect(slide,x,1.5,3.85,1.3,C.ink);box(slide,value,x+.25,1.66,3.4,.6,34,{bold:true,color:C.paper});box(slide,label,x+.25,2.36,3.4,.25,11,{color:'BBCBE3'});});
-  const cols=[['GOAL',lines(g.focus).join('\n\n')],['ACTION',lines(g.actions).join('\n\n')],['LEARNING PLAN',tracks.map(t=>[t.key,...t.items.flatMap(x=>[x.title,x.action].filter(Boolean))].join('\n')).join('\n\n')]];
-  cols.forEach(([title,body],i)=>{const x=.7+i*4.03;box(slide,title,x,3.1,3.8,.3,15,{bold:true,color:C.blue});line(slide,x,3.48,3.8,0);box(slide,body||'미입력',x,3.6,3.8,2.6,13,{valign:'top',bold:i===0});});
-  if(g.reward){rect(slide,.7,6.35,11.93,.32,C.soft);box(slide,`REWARD   ${g.reward}`,.85,6.39,11.6,.24,11,{bold:true});}}
+  const column=(value,col)=>{const parts=lines(value),prefix=`2-0-1-${col}-`,L=d.layout?.[String(v.key).replace(/[.#$\/\[\]]/g,'_')]||{};let count=parts.length;for(const path of Object.keys(L))if(path.startsWith(prefix)&&/^\d+$/.test(path.slice(prefix.length)))count=Math.max(count,Number(path.slice(prefix.length)));return Array.from({length:count},(_,i)=>layoutText(d,v,prefix+(i+1),parts[i]||'')).join('\n\n');};const plan=tracks.map((t,i)=>{const children=[t.key,...t.items.flatMap(x=>[x.title,...(x.action?[x.action]:[])])];return children.map((value,j)=>layoutText(d,v,`2-0-1-2-${i+1}-${j}`,value)).join('\n');}).join('\n\n');const cols=[['GOAL',column(g.focus,0)],['ACTION',column(g.actions,1)],['LEARNING PLAN',plan]];
+  cols.forEach(([title,body],i)=>{const x=.7+i*4.03;box(slide,title,x,3.1,3.8,.3,15,{bold:true,color:C.blue});line(slide,x,3.48,3.8,0);box(slide,body,x,3.6,3.8,2.6,13,{valign:'top',bold:i===0});});
+  if(g.reward){rect(slide,.7,6.35,11.93,.32,C.soft);box(slide,`REWARD   ${layoutText(d,v,'2-0-2-1',g.reward)}`,.85,6.39,11.6,.24,11,{bold:true});}}
 function overview(slide,d) {
   const t=M.totals(d),r=M.recruitingSummary(d.recruiting,d.month),rows=d.members.map(m=>({...m,days:M.callbackDays(d,m),submitted:n(d.callbacks?.[m.id])})),cbDays=total(rows.map(m=>m.days)),cbSub=total(rows.map(m=>m.submitted)),missing=rows.filter(m=>m.days==null||m.days>0&&m.submitted==null).length,g=d.goals||{};
   rect(slide,.7,1.52,11.93,1.3,C.blue);box(slide,`${Number(d.month.slice(5))}월 팀 성과 요약`,.97,1.85,8.6,.54,29,{bold:true,color:C.paper});box(slide,fmt(t.sales),10.3,1.81,2.0,.64,44,{bold:true,color:C.paper,align:'right'});
@@ -242,13 +245,13 @@ export function buildPptx({draft,views,month,logoData},PptxGenJS) {
   const errors=M.validate(draft);if(errors.length)throw new Error(errors.join('\n'));
   if(month&&month!==draft.month)throw new Error('선택 월과 리캡 월이 다릅니다.');
   if(!Array.isArray(views)||!views.length)throw new Error('내보낼 리캡 페이지가 없습니다.');
-  const d=M.clone(draft),pages=M.clone(views),pptx=new PptxGenJS();
+  const d=M.clone(draft),pages=M.clone(views),pptx=new PptxGenJS();if(d.month==='2026-10'&&d.members.length<=10){const first=pages.findIndex(v=>v.id==='income');if(first>=0){pages[first]={...pages[first],items:[...d.members].sort((a,b)=>(M.memberMetric(b).income??-1)-(M.memberMetric(a).income??-1)),part:0,parts:1};for(let i=pages.length-1;i>first;i--)if(pages[i].id==='income')pages.splice(i,1);}}
   pptx.layout='LAYOUT_WIDE';pptx.author=d.leader||'Presence';pptx.subject='저장된 월별 Team Recap';pptx.title=`${monthTitle(d.month)} ${d.teamName||'Presence'} Recap`;
   pptx.company=d.teamName||'Presence';pptx.lang='ko-KR';pptx.theme={headFontFace:FONT,bodyFontFace:FONT,lang:'ko-KR'};
   pptx._recapConnections=[];
   pages.forEach((v,index)=>{const slide=pptx.addSlide();header(slide,v,d,index,pages.length,logoData);
     slide.addNotes(`Presence Team Recap · ${d.month}\n원본 페이지 ${index+1}/${pages.length}: ${v.noteTitle||v.title}\n저장 버전 ${d.revision||0}\n모든 수치는 전달된 리캡 스냅샷 기준입니다. 빈값은 미확인 상태입니다.`);
-    if(v.kind==='goals'){goalPage(slide,d);return;}
+    if(v.kind==='goals'){goalPage(slide,d,v);return;}
     if(v.kind==='note'){box(slide,v.items||v.noteText||'기록된 내용이 없습니다.',.85,1.75,11.63,4.8,24,{valign:'top',breakLine:false});return;}
     switch(v.id){case'cover':cover(slide,d);break;case'contents':contents(slide);break;case'sales':sales(slide,d,v);break;case'weekly':weekly(slide,d,v,pptx);break;case'income':income(slide,d,v);break;case'recruit':recruit(slide,d,v);break;case'rank':recruit(slide,d,v,true);break;case'qc':qc(slide,d,v);break;case'wins':case'challenges':stories(slide,d,v);break;case'callback':callback(slide,d,v);break;case'learning':learning(slide,d,v);break;case'ic':ic(slide,d,v);break;case'tree':tree(slide,d,v,pptx,index);break;case'promotion':promotion(slide,d,v,pptx,index);break;case'overview':overview(slide,d);break;default:throw new Error(`지원하지 않는 리캡 페이지: ${v.id}`);}
   });
@@ -305,5 +308,5 @@ export async function exportPptx(payload) {
   const [Constructor,logoData]=await Promise.all([loadBundle(),loadBrand()]),pptx=buildPptx({...payload,logoData},Constructor),bytes=await editablePptxBytes(pptx);
   const fileName=`Presence-Team-Recap-${payload.draft.month}.pptx`,blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'}),url=URL.createObjectURL(blob);
   const anchor=document.createElement('a');anchor.href=url;anchor.download=fileName;document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
-  return {fileName,slides:payload.views.length};
+  return {fileName,slides:pptx._slides.length};
 }
