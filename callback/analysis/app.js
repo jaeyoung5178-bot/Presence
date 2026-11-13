@@ -40,7 +40,7 @@ async function load() {
   if (signature !== identity.signature) { records = []; signature = identity.signature; firstLoad = true; historical = false; authorSelection = readAuthorPreference(identity); $('#anchor-date').value = localToday(); renderAuthorOptions(); render(); }
   loadError = ''; $('#refresh').disabled = true; $('#load-status').textContent = identity.uid ? '계정의 서버 기록을 불러오는 중…' : '이 브라우저의 기록을 불러오는 중…'; $('#report').setAttribute('aria-busy', 'true'); $('#error').hidden = true;
   $('#analysis-account').textContent = identity.uid ? `${identity.name || '연결된 계정'} · 나의 콜백싯` : '계정 연결 전 · 이 브라우저의 기록';
-  $('#connection-message').textContent = identity.uid ? '다른 기기에 저장한 기록도 확인하고 있어요.' : '서버 기록을 보려면 워크북에서 Profit → 콜백싯 → 내 콜백싯 열기를 눌러 주세요.';
+  $('#connection-message').textContent = identity.uid ? '다른 기기에 저장한 기록도 확인하고 있어요.' : '서버 기록을 보려면 허브에서 내 기록 불러오기를 눌러 주세요.';
   $('#connect-workbook').hidden = !!identity.uid;
   delete $('#account-status').dataset.source;
   $('#account-status').dataset.state = 'loading';
@@ -65,7 +65,7 @@ async function load() {
     $('#account-status').dataset.state = connected ? 'connected' : identity.uid ? 'error' : 'local';
     $('#connect-workbook').hidden = connected;
     $('#load-status').textContent = connected ? `서버 기록 ${merged.remoteRecords}개 확인 · 분석 가능한 기록 ${records.length}개` : identity.uid ? '서버 확인 미완료 · 이 브라우저의 기록 기준' : '이 브라우저에 저장된 기록 기준';
-    $('#connection-message').textContent = connected ? `다른 기기의 저장 기록을 불러왔어요.${merged.pending ? ` 이 브라우저에 동기화 대기 ${merged.pending}개가 있어요. 보관함에서 동기화할 수 있어요.` : ''}` : identity.uid ? '연결을 다시 확인하려면 워크북에서 Profit → 콜백싯 → 내 콜백싯 열기를 눌러 주세요. 기존 로컬 기록은 유지돼요.' : '워크북에서 본인 전용 콜백 링크를 열면 이 기기에서도 서버 기록을 볼 수 있어요.';
+    $('#connection-message').textContent = connected ? `다른 기기의 저장 기록을 불러왔어요.${merged.pending ? ` 이 브라우저에 동기화 대기 ${merged.pending}개가 있어요. 보관함에서 동기화할 수 있어요.` : ''}` : identity.uid ? '연결을 다시 확인하려면 허브에서 내 기록 불러오기를 눌러 주세요. 기존 로컬 기록은 유지돼요.' : '허브에서 내 기록 불러오기로 연결하면 이 기기에서도 서버 기록을 볼 수 있어요.';
   } catch (error) { if (version === request) { loadError = error.message; $('#error').textContent = loadError; $('#error').hidden = false; $('#load-status').textContent = '기록 읽기 실패'; $('#account-status').dataset.state = 'error'; $('#account-status').dataset.source = 'local'; $('#connect-workbook').hidden = false; } }
   finally { if (version === request) { $('#refresh').disabled = false; $('#report').setAttribute('aria-busy', 'false'); } }
 }
