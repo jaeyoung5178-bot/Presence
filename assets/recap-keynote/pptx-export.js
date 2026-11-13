@@ -213,7 +213,12 @@ function tree(slide,d,v,pptx,index) {
     const role=node.planned?'추가 예정':v.id==='promotion'&&node.targetRole?node.targetRole+(node.targetGoal?' 목표':''):(node.role||''),depth=depths.get(node.id),tc=root?C.ink:teamColor(node);
     slide.addText([{text:node.name+(!node.planned&&depth<=1?'  '+role:''),options:{bold:true,breakLine:true,fontSize:14}},...(!node.planned&&depth<=1?[]:[{text:role,options:{fontSize:10,breakLine:depth<=1&&!!node.team}}]),...(depth<=1&&node.team?[{text:node.team,options:{fontSize:10}}]:[])],
       {...p,shape:'roundRect',fontFace:FONT,color:node.planned?tc:C.paper,align:'center',valign:'mid',margin:.055,fit:'shrink',fill:{color:node.planned?C.paper:tc},line:{color:tc,width:node.planned?2:0,dashType:node.planned?'dash':'solid'},objectName:nodeNames.get(node.id)});});
-  box(slide,`${nodes.filter(node=>!node.planned).length}명${nodes.some(node=>node.planned)?` · 추가 예정 ${nodes.filter(node=>node.planned).length}명`:''}`,.7,6.65,11.9,.23,10,{color:C.muted});
+  if(v.id==='promotion'&&d.month==='2026-10'){
+    const included=nodes.filter(node=>!node.removed&&!node.deleted&&!['deleted','removed'].includes(String(node.status||'').toLowerCase())),plans=new Map((d.promotions||[]).map(row=>[row.memberId,row.targetRole])),counts={};
+    included.forEach(node=>{const role=String(node.targetRole||plans.get(node.id)||node.role||'미지정').trim().toUpperCase();counts[role]=(counts[role]||0)+1;});
+    const roles=['OP','AOP','TL','LR','IC'],extra=Object.keys(counts).filter(role=>!roles.includes(role));
+    box(slide,[...roles,...extra].map(role=>`${role} ${counts[role]||0}명`).join(' · ')+`  |  Team H/C ${included.length}명`,.7,6.65,11.9,.23,12,{bold:true,color:C.ink});
+  }else box(slide,`${nodes.filter(node=>!node.planned).length}명${nodes.some(node=>node.planned)?` · 추가 예정 ${nodes.filter(node=>node.planned).length}명`:''}`,.7,6.65,11.9,.23,10,{color:C.muted});
   if(v.id==='promotion'&&d.promotionNote)box(slide,d.promotionNote,9.0,1.0,3.6,.95,9,{align:'right',color:C.muted,valign:'top'});
 }
 function promotion(slide,d,v,pptx,index) {
