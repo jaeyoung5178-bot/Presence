@@ -230,6 +230,14 @@ function promotion(slide,d,v,pptx,index) {
     box(slide,(row.checks||[]).map(check=>`${check.done?'☑':'☐'} ${check.text}`).join('\n'),x+.23,4.56,w-.46,1.45,14,{valign:'top'});
     box(slide,[row.due||'기한 미정',row.status||'계획'].join(' · '),x+.23,6.26,w-.46,.23,11,{color:C.muted});});
 }
+function upcomingSchedule(slide,d) {
+  const rows=[...(d.notes?.upcomingSchedule||[])].sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+  if(!rows.length)return empty(slide,'등록된 앞으로의 일정이 없습니다.');
+  rows.forEach((row,i)=>{const y=1.55+i*.96,date=String(row.date||''),year=date.slice(0,4),month=Number(date.slice(5,7)),day=Number(date.slice(8,10));
+    rect(slide,.7,y,11.93,.79,C.soft);box(slide,`${year}년 ${month}월 ${day}일`,.95,y+.15,3.15,.38,19,{bold:true,color:C.blue});
+    box(slide,String(row.title??''),4.23,y+.15,5.76,.39,22,{bold:true});box(slide,row.time||'',10.27,y+.19,2.05,.32,16,{align:'right',color:row.time?C.ink:C.muted});
+  });
+}
 function ownerFeedback(slide,d) {
   const f=d.notes?.ownerFeedback;if(!f)return empty(slide,'저장된 Owner 피드백이 없습니다.');
   const owner=f.ownerName||'Owner';
@@ -274,7 +282,7 @@ export function buildPptx({draft,views,month,logoData},PptxGenJS) {
     slide.addNotes(`Presence Team Recap · ${d.month}\n원본 페이지 ${index+1}/${pages.length}: ${v.noteTitle||v.title}\n저장 버전 ${d.revision||0}\n모든 수치는 전달된 리캡 스냅샷 기준입니다. 빈값은 미확인 상태입니다.`);
     if(v.kind==='goals'){goalPage(slide,d,v);return;}
     if(v.kind==='note'){box(slide,v.items||v.noteText||'기록된 내용이 없습니다.',.85,1.75,11.63,4.8,24,{valign:'top',breakLine:false});return;}
-    switch(v.id){case'cover':cover(slide,d);break;case'contents':contents(slide);break;case'sales':sales(slide,d,v);break;case'weekly':weekly(slide,d,v,pptx);break;case'income':income(slide,d,v);break;case'recruit':recruit(slide,d,v);break;case'rank':recruit(slide,d,v,true);break;case'qc':qc(slide,d,v);break;case'wins':case'challenges':stories(slide,d,v);break;case'callback':callback(slide,d,v);break;case'learning':learning(slide,d,v);break;case'ic':ic(slide,d,v);break;case'tree':tree(slide,d,v,pptx,index);break;case'promotion':promotion(slide,d,v,pptx,index);break;case'ownerFeedback':ownerFeedback(slide,d);break;case'overview':overview(slide,d);break;default:throw new Error(`지원하지 않는 리캡 페이지: ${v.id}`);}
+    switch(v.id){case'cover':cover(slide,d);break;case'contents':contents(slide);break;case'sales':sales(slide,d,v);break;case'weekly':weekly(slide,d,v,pptx);break;case'income':income(slide,d,v);break;case'recruit':recruit(slide,d,v);break;case'rank':recruit(slide,d,v,true);break;case'qc':qc(slide,d,v);break;case'wins':case'challenges':stories(slide,d,v);break;case'callback':callback(slide,d,v);break;case'learning':learning(slide,d,v);break;case'ic':ic(slide,d,v);break;case'tree':tree(slide,d,v,pptx,index);break;case'promotion':promotion(slide,d,v,pptx,index);break;case'upcomingSchedule':upcomingSchedule(slide,d);break;case'ownerFeedback':ownerFeedback(slide,d);break;case'overview':overview(slide,d);break;default:throw new Error(`지원하지 않는 리캡 페이지: ${v.id}`);}
   });
   if(pptx._slides.length!==pages.length)throw new Error('PPTX 페이지 수를 확인해 주세요.');
   return pptx;
