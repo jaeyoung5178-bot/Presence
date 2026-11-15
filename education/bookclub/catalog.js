@@ -23,6 +23,23 @@
         slides: 9,
         introMinutes: 3,
         href: 'education/bookclub/future-self/index.html#slide-1'
+      }),
+      Object.freeze({
+        slug: 'hey-have-you-tried',
+        status: 'ready',
+        title: '정주영 이봐, 해봤어?',
+        author: '박정웅',
+        publisher: '프리이코노미북스',
+        edition: '2015년판',
+        year: 2015,
+        isbn: '9788963740904',
+        cover: 'education/bookclub/hey-have-you-tried/assets/cover.jpg',
+        source: 'https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=50896607',
+        presentationTitle: '가능성은 행동으로 증명한다.',
+        description: '중동·조선소·포니의 세 장면에서, 리쿠르팅과 팀을 성장시키는 실행의 원리를 찾다.',
+        tags: Object.freeze(['도전', '실행', '리더십']),
+        slides: 5,
+        href: 'education/bookclub/hey-have-you-tried/index.html#slide-1'
       })
     ])
   });

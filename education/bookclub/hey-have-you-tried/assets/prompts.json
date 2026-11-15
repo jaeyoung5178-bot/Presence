@@ -1,0 +1,50 @@
+{
+  "assets": [
+    {
+      "file": "cover.jpg",
+      "method": "Original published book cover from the Aladin catalog; no generative editing",
+      "source": "https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=50896607",
+      "originalUrl": "https://image.aladin.co.kr/product/5089/66/letslook/8963740900_f.jpg",
+      "retrieved": "2026-11-15",
+      "sha256": "817a72b960a8913da0bd9f77c7b919d82188f8eeb600b9ae32e8bd02d908cb13",
+      "bytes": 165508,
+      "transformation": "Unchanged original bytes; CSS layout only"
+    },
+    {
+      "file": "jubail.png",
+      "method": "Official HD Hyundai Heavy Industries historical illustration; not a photograph; no generative editing",
+      "source": "https://hd-hhi.com/kr/company/heritage/founder-story",
+      "originalUrl": "https://hd-hhi.com/resources/front/assets/images/founder-story-75.png",
+      "retrieved": "2026-11-15",
+      "sha256": "318e5660d60d753df4b139003b0d2b969719083afbeea12389fefde5c0a48115",
+      "bytes": 452118,
+      "transformation": "Unchanged original bytes; CSS layout only"
+    },
+    {
+      "file": "shipyard.png",
+      "method": "Official HD Hyundai Heavy Industries historical illustration; not a photograph; no generative editing",
+      "source": "https://hd-hhi.com/kr/company/heritage/founder-story",
+      "originalUrl": "https://hd-hhi.com/resources/front/assets/images/founder-story-74.png",
+      "retrieved": "2026-11-15",
+      "sha256": "7fe1d78e2210706c71dc4c1dc9ccc06fe209e3ae44cf82c874dd108310492d07",
+      "bytes": 688019,
+      "transformation": "Unchanged original bytes; CSS layout only"
+    },
+    {
+      "file": "pony-production.jpg",
+      "method": "Historical production-line photograph published by Hyundai Motor Group; no generative editing",
+      "source": "https://www.hyundaimotorgroup.com/ko/story/CONT0000000000114205",
+      "originalUrl": "https://www.hyundaimotorgroup.com/image/upload/asset_library/MDA00000000000042665/1904f9ed30564ce9bdac09c0f6ec22fc.jpg",
+      "retrieved": "2026-11-15",
+      "sha256": "70ef64e982431d5e14fa000f7ca69a6788fbf6b4229cbcf541f4af00b28e0fa8",
+      "bytes": 247097,
+      "transformation": "Unchanged original bytes; CSS layout only"
+    }
+  ],
+  "visualDirection": "Actual book cover, official historical illustrations, an archival production photograph, blueprint geometry, amber light, and HTML text. No AI-generated historical imagery.",
+  "cssScenes": [
+    { "file": "../book.css", "scene": "cover", "method": "Original CSS physical-book geometry and 18-second amber grazing-light cycle; text remains HTML" },
+    { "file": "../book.css", "scene": "middle-east", "method": "Original CSS route annotation with an 18-second movement cycle over the credited official illustration" },
+    { "file": "../book.css", "scene": "closing", "method": "Original CSS drafting grid and typographic commitment cards; no reused photographic backdrop" }
+  ]
+}
