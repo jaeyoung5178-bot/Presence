@@ -36,9 +36,9 @@
         cover: 'education/bookclub/hey-have-you-tried/assets/cover.jpg',
         source: 'https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=50896607',
         presentationTitle: '가능성은 행동으로 증명한다.',
-        description: '중동·조선소·포니의 세 장면에서, 리쿠르팅과 팀을 성장시키는 실행의 원리를 찾다.',
+        description: '중동·조선소·포니·서산·올림픽의 다섯 장면에서, 리쿠르팅과 팀을 성장시키는 실행의 원리를 찾다.',
         tags: Object.freeze(['도전', '실행', '리더십']),
-        slides: 5,
+        slides: 7,
         href: 'education/bookclub/hey-have-you-tried/index.html#slide-1'
       })
     ])

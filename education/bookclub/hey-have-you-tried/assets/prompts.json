@@ -39,9 +39,32 @@
       "sha256": "70ef64e982431d5e14fa000f7ca69a6788fbf6b4229cbcf541f4af00b28e0fa8",
       "bytes": 247097,
       "transformation": "Unchanged original bytes; CSS layout only"
+    },
+    {
+      "file": "seosan-tanker.jpg",
+      "method": "Historical Seosan embankment photograph published by Hyundai Engineering & Construction; no generative editing",
+      "source": "https://www.hdec.kr/KR/newsroom/news_view.aspx?NewsListType=&NewsSeq=212&NewsType=JOURNAL",
+      "originalUrl": "https://www.hdec.kr/FileContents/EditorImg/20220303/서산간척사업(1984년 2월)] 물막이 모습.jpg",
+      "retrieved": "2026-11-16",
+      "sha256": "1ac8ce227ca0deaea336862c211959f53a07eb590f3e18c98a82bf387cde8b0a",
+      "bytes": 737852,
+      "dimensions": "770x738",
+      "transformation": "Unchanged publisher-provided bytes; CSS layout only"
+    },
+    {
+      "file": "olympic-bid.jpg",
+      "method": "Historical 1981 Baden-Baden delegation photograph, Asan Leadership Archive ALS0001241; archive-provided web derivative; no generative editing",
+      "source": "https://asanarchive.org/items/show/24904",
+      "originalUrl": "https://asanarchive.org/files/original/5fd1f039d0558e161f6d796277f2e2a2.jpg",
+      "downloadedUrl": "https://asanarchive.org/files/fullsize/5fd1f039d0558e161f6d796277f2e2a2.jpg",
+      "retrieved": "2026-11-16",
+      "sha256": "7f120061bac04cc28bf435b0d938fe55ba952eb7bc1eb2f369c43f0cfeba16db",
+      "bytes": 1229578,
+      "dimensions": "1170x766",
+      "transformation": "Unchanged archive-provided web derivative bytes; CSS layout only"
     }
   ],
-  "visualDirection": "Actual book cover, official historical illustrations, an archival production photograph, blueprint geometry, amber light, and HTML text. No AI-generated historical imagery.",
+  "visualDirection": "Actual book cover, official historical illustrations, archival production, construction and Olympic-bid photographs, blueprint geometry, amber light, and HTML text. No AI-generated historical imagery.",
   "cssScenes": [
     { "file": "../book.css", "scene": "cover", "method": "Original CSS physical-book geometry and 18-second amber grazing-light cycle; text remains HTML" },
     { "file": "../book.css", "scene": "middle-east", "method": "Original CSS route annotation with an 18-second movement cycle over the credited official illustration" },
