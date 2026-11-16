@@ -35,8 +35,8 @@
         isbn: '9788963740904',
         cover: 'education/bookclub/hey-have-you-tried/assets/cover.jpg',
         source: 'https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=50896607',
-        presentationTitle: '가능성은 행동으로 증명한다.',
-        description: '중동·조선소·포니·서산·올림픽의 다섯 장면에서, 리쿠르팅과 팀을 성장시키는 실행의 원리를 찾다.',
+        presentationTitle: '결정하기 직전의 생각을 보자.',
+        description: '성공을 장담할 수 없던 순간, 정주영은 무엇을 보았을까? 다섯 장면으로 읽는 그의 판단과 시야.',
         tags: Object.freeze(['도전', '실행', '리더십']),
         slides: 7,
         href: 'education/bookclub/hey-have-you-tried/index.html#slide-1'
