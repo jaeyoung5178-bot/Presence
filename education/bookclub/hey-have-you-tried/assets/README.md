@@ -14,3 +14,9 @@
 모든 파일은 출처에서 내려받은 바이트를 보존했습니다. 올림픽 사진은 로딩 시간을 줄이기 위해 아카이브 자체 제공 웹 표시용 파일을 사용했습니다. 합성이나 생성형 이미지 편집 없이 CSS의 배치·크롭·명도 오버레이만 적용했습니다. 표지의 책 구조와 18초 빛, 주베일의 18초 운송 표시, 마지막 장의 제도용 격자는 책별 CSS로 제작했습니다. 애니메이션은 모션 OFF와 동작 줄이기 설정을 따릅니다.
 
 이미지 출처 표기를 HTML·발표 원고·출처 창에 함께 유지합니다. 공개 웹사이트에 게재된 자료라는 사실이 별도의 자유 이용 허락을 뜻하지는 않습니다.
+
+## Closing excerpt (2026-11-17)
+
+- `closing-excerpt.png`: user-provided excerpt image, copied without alteration. Source page number unverified. Displayed intact and linked for full-size reading.
+
+- `chung-ju-yung-portrait.jpg`: HD Hyundai Heavy Industries official Founder Story portrait, https://www.hd-hhi.co.kr/en/company/heritage/founder-story ; image https://www.hd-hhi.co.kr/resources/front/assets/images/founder-story-zoom-mobile.jpg . Downloaded 2026-11-17, 720×1600.

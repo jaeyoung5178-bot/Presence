@@ -38,7 +38,7 @@
         presentationTitle: '결정하기 직전의 생각을 보자.',
         description: '성공을 장담할 수 없던 순간, 정주영은 무엇을 보았을까? 다섯 장면으로 읽는 그의 판단과 시야.',
         tags: Object.freeze(['도전', '실행', '리더십']),
-        slides: 7,
+        slides: 8,
         href: 'education/bookclub/hey-have-you-tried/index.html#slide-1'
       })
     ])

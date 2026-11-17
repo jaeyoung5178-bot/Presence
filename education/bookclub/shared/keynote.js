@@ -190,7 +190,10 @@
   });
   $('#prev').addEventListener('click', () => showSlide(current - 1));
   $('#next').addEventListener('click', () => showSlide(current + 1));
-  $('#slideSelect').addEventListener('change', (event) => showSlide(event.target.value));
+  $('#slideSelect').addEventListener('change', (event) => {
+    showSlide(event.target.value);
+    $('#slides').focus({preventScroll:true});
+  });
   document.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => showSlide(button.dataset.go)));
   $('#motion').addEventListener('click', () => {
     if (reducedMotion.matches) { status('기기의 동작 줄이기 설정을 따르고 있습니다.'); return; }
@@ -219,13 +222,25 @@
   $('#fullscreen').addEventListener('click', toggleFullscreen);
   document.addEventListener('fullscreenchange', syncFullscreen);
   document.addEventListener('keydown', (event) => {
-    if (notes.open || event.ctrlKey || event.metaKey || event.altKey || event.target.closest('input,textarea,select,[contenteditable]')) return;
+    const target = event.target instanceof Element ? event.target : document.activeElement;
+    if (event.defaultPrevented || event.isComposing || notes.open || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
+      || target?.closest('input,textarea,select,[contenteditable]')) return;
     if (event.key === 'Escape' && document.body.classList.contains('cinema')) { document.body.classList.remove('cinema'); syncFullscreen(); return; }
-    if (event.key === 'ArrowRight' || event.key === 'PageDown' || (event.key === ' ' && !event.target.closest('button,a'))) { event.preventDefault(); showSlide(current + 1); }
-    else if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); showSlide(current - 1); }
-    else if (event.key === 'Home') { event.preventDefault(); showSlide(0); }
-    else if (event.key === 'End') { event.preventDefault(); showSlide(slides.length - 1); }
-    else if (event.key.toLowerCase() === 'f') { event.preventDefault(); toggleFullscreen(); }
+    const interactive = target?.closest('button,a,summary,[role="button"],[role="link"]');
+    let destination = null;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === 'PageDown'
+      || (!interactive && (event.key === ' ' || event.key === 'Enter'))) destination = current + 1;
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp' || event.key === 'PageUp'
+      || (!interactive && event.key === 'Backspace')) destination = current - 1;
+    else if (event.key === 'Home') destination = 0;
+    else if (event.key === 'End') destination = slides.length - 1;
+    if (destination !== null) {
+      // Presenters often emit keyboard events; a held key must not skip slides.
+      event.preventDefault();
+      if (!event.repeat) showSlide(destination);
+      return;
+    }
+    if (event.key.toLowerCase() === 'f') { event.preventDefault(); toggleFullscreen(); }
     else if (event.key.toLowerCase() === 'n') { event.preventDefault(); openNotes(); }
   });
   let touch = null;
