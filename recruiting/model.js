@@ -7,11 +7,31 @@ export function range(anchor,period){const d=new Date(anchor+'T00:00:00Z');let s
 export const events=c=>Object.values(c.events||{});
 export function metrics(candidates,start,end=start){const inRange=d=>d>=start&&d<=end;const m={opens:0,formBooked:0,rejected:0,absent:0,pending:0,booked:0,showed:0,starter:0,noShow:0,cancelled:0};for(const c of candidates){const es=events(c),counted=new Set();for(const e of es){const key=e.type+'/'+e.day;if(counted.has(key))continue;counted.add(key);if(e.type==='opened'&&inRange(e.day)){m.opens++;const outcome=es.filter(a=>a.day===e.day&&['absent','rejected','booked'].includes(a.type)).sort((a,b)=>b.at-a.at||es.indexOf(b)-es.indexOf(a))[0]?.type;m[outcome==='booked'?'formBooked':outcome==='absent'?'absent':outcome==='rejected'?'rejected':'pending']++;}if(inRange(e.day)&&['booked','showed','starter','noShow','cancelled'].includes(e.type))m[e.type]++;}}return m;}
 export function dateLabel(day,short=false){if(!validDate(day))return '날짜 미정';const d=new Date(day+'T00:00:00Z');return `${short?day.slice(2).replaceAll('-','.'):Number(day.slice(5,7))+'월 '+Number(day.slice(8))+'일'} (${['일','월','화','수','목','금','토'][d.getUTCDay()]})`;}
-export function timeLabel(t){const [h,m]=String(t||'').split(':').map(Number);if(!Number.isInteger(h))return '시간 미정';return `${h<12?'오전':'오후'} ${h%12||12}시${m?' '+m+'분':''}`;}
+export function timeLabel(t){if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(t||'')))return '시간 미정';const [h,m]=String(t).split(':').map(Number);return `${h<12?'오전':'오후'} ${h%12||12}시${m?' '+m+'분':''}`;}
 export const DEFAULTS={name:'임재영',badge:'NM00178',ip:'219.241.22.182',office:'인천',type:'IC',goalOpen:20,goalBook:3,address:'인천 부평구 경인로 954-1 경인스타빌딩 3층 (부평동 645-16번지)',directions:'부평역 1번 출구(남부전용출구)로 나와 직진하신 후, 파리바게트에서 신호등을 건너시면 좌측에 경인스타빌딩 3층',sound:false};
 export const effectiveChannel=c=>String(c?.channel||'').trim()||normalizeResumeURL(c?.url)?.channel||'';
 export const smsBrand=c=>['Presence','PeaceMaker'].includes(c?.smsBrand)?c.smsBrand:effectiveChannel(c)==='알바몬'?'PeaceMaker':'Presence';
 export const hasInterviewSchedule=c=>validDate(c?.interviewDate||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(c?.interviewTime||'');
+export const TRAINING_FIELDS=['trainingDate','trainingTime','trainingPlace','trainingNote','trainingStatus','plannedWorkDate'];
+export const canPlanTraining=c=>!c?.deleted&&['showed','starter'].includes(c?.status);
+export const hasTrainingDetails=c=>['trainingDate','trainingTime','trainingPlace','trainingNote','plannedWorkDate'].some(key=>Boolean(c?.[key]))||['completed','cancelled'].includes(c?.trainingStatus);
+export function validateTraining(c,previous){
+ for(const [key,label,limit]of [['trainingPlace','교육 장소',300],['trainingNote','교육 메모',4000]]){
+  if(c[key]!=null&&typeof c[key]!=='string')return label+'를 문자로 입력해 주세요.';
+  if(String(c[key]||'').trim().length>limit)return label+'는 '+limit+'자 이하로 입력해 주세요.';
+ }
+ if(c.trainingDate&&!validDate(c.trainingDate))return '교육 날짜를 확인해 주세요.';
+ if(c.plannedWorkDate&&!validDate(c.plannedWorkDate))return '근무 예정일을 확인해 주세요.';
+ if(c.trainingTime&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(c.trainingTime))return '교육 시간을 확인해 주세요.';
+ if(c.trainingTime&&!c.trainingDate)return '교육 시간을 입력하려면 교육 날짜를 먼저 정해 주세요.';
+ if(c.trainingStatus&&!['planned','completed','cancelled'].includes(c.trainingStatus))return '교육 상태를 확인해 주세요.';
+ if(c.trainingStatus==='completed'&&!c.trainingDate)return '교육 완료를 기록하려면 교육 날짜가 필요해요.';
+ if(!canPlanTraining(c)){
+  const baseline=previous&&(c.id==null||previous.id===c.id)?previous:{};
+  if(['trainingDate','trainingTime','plannedWorkDate'].some(key=>c[key]&&c[key]!==baseline[key]))return '쇼업 또는 스타터 후보자에게 교육·근무 예정을 등록할 수 있어요.';
+ }
+ return '';
+}
 export function normalizeContactPhone(value){
  const raw=String(value||'').trim();if(!raw||!/^\+?[\d\s().-]+$/.test(raw))return '';
  let number=raw.replace(/[\s().-]/g,'');
@@ -22,13 +42,17 @@ export function normalizeContactPhone(value){
 }
 export function sms(c,s=DEFAULTS){return `${c.name}님 안녕하세요:)\n\n${smsBrand(c)} 면접일정 안내드립니다.\n\n⏰시간 : ${dateLabel(c.interviewDate)} ${timeLabel(c.interviewTime)}\n\n🏠주소 : ${s.address}\n[부평역 1번출구에서 도보 2-3분거리]\n\n🚊${s.directions}\n\n✅참고사항 : 이력서 작성을 위해 10분정도 여유있게 참석부탁드리며 문의사항 발생 시 상기 번호로 연락부탁드립니다.\n\n좋은 하루 되시고 면접에서 뵈어요~ 😊`;}
 export function kakao(candidates){const groups=new Map();for(const c of candidates.filter(c=>c.interviewDate&&['booked','showed','starter'].includes(c.status)).sort((a,b)=>(a.interviewDate+a.interviewTime).localeCompare(b.interviewDate+b.interviewTime)||(a.createdAt||a.updatedAt||0)-(b.createdAt||b.updatedAt||0))){const k=c.interviewDate+' '+c.interviewTime;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(c);}return [...groups].map(([k,list])=>`${dateLabel(k.slice(0,10),true)} ${timeLabel(k.slice(11))}\n${list.map(c=>[c.name,c.age,c.gender,c.mobile||c.phone].filter(Boolean).join(' ')).join('\n')}`).join('\n\n');}
+export function bookedOnDay(candidates,day=TODAY()){
+ if(!validDate(day))return [];
+ return candidates.filter(candidate=>!candidate.deleted&&['booked','showed','starter'].includes(candidate.status)&&validDate(candidate.interviewDate||'')&&(candidate.bookedDate===day||events(candidate).some(event=>event.type==='booked'&&event.day===day)));
+}
 export function formURL(day,m,s){const p=new URLSearchParams({usp:'pp_url','entry.580704868':s.ip,'entry.1942131361':s.type,'entry.2006978451':s.name+' / '+s.badge,'entry.118786236':s.office,'entry.1716832019':day,'entry.770580203':m.opens,'entry.775112421':m.formBooked,'entry.596735239':m.rejected,'entry.986267890':m.absent});return 'https://docs.google.com/forms/d/e/1FAIpQLScqFjHdPBCNzFJNnBD1-wsN6_C_hLA1UtDZNf-8LVfqwBDRjA/viewform?'+p;}
 export function fingerprint(m,s){return JSON.stringify([m.opens,m.formBooked,m.rejected,m.absent,s.ip,s.name,s.badge,s.office,s.type]);}
 export function parseResume(text){const phone=(text.match(/(?:010|050[0-9])[-\s]?\d{3,4}[-\s]?\d{4}/)||[])[0]||'';const age=(text.match(/\d{2}\s*세|\d{2}대/)||[])[0]||'';const gender=(text.match(/(?:^|\s)(남|여)(?:성|\s|$)/)||[])[1]||'';const named=(text.match(/(?:이름\s*[:：]?\s*)([가-힣]{2,5})/)||[])[1];const name=named||(text.match(/^\s*([가-힣]{2,5})(?=\s|$)/)||[])[1]||'';const url=(text.match(/https:\/\/[^\s<>"']+/g)||[]).map(value=>normalizeResumeURL(value.replace(/[),.;]+$/,''))?.url).find(Boolean)||'';return {name,age,gender,phone,url,note:text.slice(0,4000)};}
 export function sourceKey(c){return normalizeResumeURL(c?.url)?.key||'';}
 export function sourceKeys(c){const source=normalizeResumeURL(c?.url);if(!source)return[];const keys=source.keys||[source.key];const aliases=Array.isArray(c.sourceAliases)?c.sourceAliases.filter(key=>typeof key==='string'&&(/^\/human-resources\/detail\/\d{1,100}$/.test(key)||/^albacheonguk:[A-Za-z0-9_-]{1,100}$/.test(key)||/^albacheonguk:application:\d{1,100}:\d{1,100}$/.test(key))&&!/^albacheonguk:0+$/.test(key)).slice(0,32):[];return [...new Set([...keys,...aliases])].slice(0,32);}
 export function sameSource(a,b){const keys=sourceKeys(a),other=new Set(sourceKeys(b));return keys.some(key=>other.has(key));}
-export function validate(c){if(!c.name?.trim())return '이름을 입력해 주세요.';if(c.name.length>80)return '이름은 80자 이하로 입력해 주세요.';if(String(c.rejectionReason||'').trim().length>4000)return '거절 사유는 4000자 이하로 입력해 주세요.';if(c.status==='absent'&&!c.note?.trim())return '부재중 후보자의 학력·경력·특이사항을 한 줄로 남겨 주세요.';if(['booked','showed','starter','noShow'].includes(c.status)){if(!hasInterviewSchedule(c))return '면접 날짜와 시간을 입력해 주세요.';if(!/^01[016789]\d{7,8}$/.test((c.mobile||'').replace(/\D/g,'')))return '문자를 받을 실제 휴대폰 번호를 입력해 주세요. (안심번호와 별도)';}if(c.nextDate&&!validDate(c.nextDate))return '재연락 날짜를 확인해 주세요.';return '';}
+export function validate(c,previous){if(!c.name?.trim())return '이름을 입력해 주세요.';if(c.name.length>80)return '이름은 80자 이하로 입력해 주세요.';if(String(c.rejectionReason||'').trim().length>4000)return '거절 사유는 4000자 이하로 입력해 주세요.';const trainingError=validateTraining(c,previous);if(trainingError)return trainingError;if(c.status==='absent'&&!c.note?.trim())return '부재중 후보자의 학력·경력·특이사항을 한 줄로 남겨 주세요.';if(['booked','showed','starter','noShow'].includes(c.status)){if(!hasInterviewSchedule(c))return '면접 날짜와 시간을 입력해 주세요.';if(!/^01[016789]\d{7,8}$/.test((c.mobile||'').replace(/\D/g,'')))return '문자를 받을 실제 휴대폰 번호를 입력해 주세요. (안심번호와 별도)';}if(c.nextDate&&!validDate(c.nextDate))return '재연락 날짜를 확인해 주세요.';return '';}
 export function transition(c,type,day=TODAY()){const next=structuredClone(c),es=events(next);next.events={...next.events};if(!validDate(day))throw Error('기록 날짜를 확인해 주세요.');if(type==='opened'&&es.some(e=>e.type==='opened'&&e.day===day))return next;if(type===next.status&&type!=='opened')return next;if(type==='starter'&&!es.some(e=>e.type==='showed'))throw Error('쇼업 기록 후 스타터로 변경해 주세요.');if(['showed','noShow'].includes(type)&&!['booked','showed','noShow'].includes(next.status))throw Error('면접 부킹 후 쇼업 여부를 기록해 주세요.');if(type==='opened'){const id=uid();next.events[id]={id,type,day,at:Date.now()};return next;}const id=uid();next.events[id]={id,type,day,at:Date.now()};next.status=type;if(type==='booked')next.bookedDate=day;if(type==='showed')next.showedDate=day;if(type==='starter')next.starterDate=day;return next;}
 export function sheetRows(list,kind,includeHeader=true){const header=kind==='absent'?['열람일','이름','나이','안심번호','담당자','최근 연락일','재연락일','특이사항','이력서 URL']:['알바몬','통화 일자','면접 일자','쇼업 여부','인터뷰 시간','MO','INBOUND','면접자','나이','성별','면접자 연락처','리쿠르터','OR / PR','특이사항'];const clean=v=>{let s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+@-]/.test(s)?"'"+s:s;};const date=s=>validDate(s)?Number(s.slice(5,7))+'/'+Number(s.slice(8)):'';const rows=list.map(c=>kind==='absent'?[events(c).find(e=>e.type==='opened')?.day,c.name,c.age,c.phone,c.recruiter,events(c).filter(e=>e.type==='absent').sort((a,b)=>b.at-a.at)[0]?.day,c.nextDate,c.note,c.url]:[c.channel||normalizeResumeURL(c.url)?.channel||'',date(c.bookedDate),date(c.interviewDate),['showed','starter'].includes(c.status)?'O':'',c.interviewTime,'NM','OUT',c.name,c.age,c.gender,c.mobile,c.recruiter,'PR',c.note==='인터뷰 로그에서 등록'?'':c.note]);return [...(includeHeader?[header]:[]),...rows].map(r=>r.map(clean).join('\t')).join('\n');}
 export function albamonAbsentSheetRows(candidates,selectedDay){

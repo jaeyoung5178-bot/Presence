@@ -1,5 +1,6 @@
-// Presence Interview Log bridge. Deploy as the owner, access: Anyone.
-// Every request verifies the existing Firebase login. No public read endpoint.
+// Presence Interview Log bridge. Keep the existing deployment owner and scopes.
+// Public GET returns capability metadata only, never sheet or account contents.
+// Every data request verifies the existing Firebase login; pull never writes.
 const INTERVIEW_SHEET='1-c7Zc2fJEKcmZgu1UxRqdAehZIXrOoRN48U-XL4cozA';
 const FIREBASE_ROOT='https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app';
 const FIREBASE_KEY='AIzaSyCYKKnK8myrSM-eip9HEJxYRq_hzpfPUY0';
@@ -17,15 +18,45 @@ function identify_(token){
 }
 function date_(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return '';return Number(s.slice(5,7))+'/'+Number(s.slice(8));}
 function phone_(s){return String(s||'').replace(/\D/g,'');}
+function time_(s){const m=String(s||'').trim().match(/^(\d{1,2}):([0-5]\d)(?::00)?$/);return m&&Number(m[1])<24?('0'+Number(m[1])).slice(-2)+':'+m[2]:'';}
 function clean_(s){s=String(s||'').replace(/[\t\r\n]+/g,' ').slice(0,4000);return /^[=+@-]/.test(s)?"'"+s:s;}
 function hash_(row){return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,JSON.stringify(row))).slice(0,32);}
-function doGet(){return json_({ok:false,error:'로그인한 Crew Camp에서 연결해 주세요.'});}
+function doGet(){return json_({ok:true,service:'presence-interview-sync',protocol:2,modes:['pull','push']});}
+function validCandidate_(c){
+  if(!c||!/^[A-Za-z0-9_-]{1,100}$/.test(c.id||'')||!/^202\d-\d{2}-\d{2}$/.test(c.interviewDate||'')||!/^([01]\d|2[0-3]):[0-5]\d$/.test(c.interviewTime||'')||!/^01[016789]\d{7,8}$/.test(phone_(c.mobile))||typeof c.name!=='string'||!c.name||c.name.length>80)return false;
+  const parsed=new Date(c.interviewDate+'T00:00:00Z');return !isNaN(parsed.getTime())&&parsed.toISOString().slice(0,10)===c.interviewDate;
+}
+function pull_(candidates){
+  const book=SpreadsheetApp.openById(INTERVIEW_SHEET),months={},records=[];let unmatched=0;
+  for(const c of candidates){
+    if(!validCandidate_(c)){unmatched++;continue;}
+    const tab=c.interviewDate.slice(2,4)+'년 '+Number(c.interviewDate.slice(5,7))+'월';
+    if(!months[tab]){
+      const sheet=book.getSheetByName(tab),last=sheet?sheet.getLastRow():0;
+      const values=last>=2?sheet.getRange(2,1,last-1,14).getDisplayValues():[];
+      months[tab]={values,index:{}};
+      values.forEach((row,i)=>{const key=JSON.stringify([phone_(row[10]),row[7],row[2],time_(row[4])]);(months[tab].index[key]||(months[tab].index[key]=[])).push(i);});
+    }
+    const month=months[tab],matches=month.index[JSON.stringify([phone_(c.mobile),c.name,date_(c.interviewDate),c.interviewTime])]||[];
+    // Ambiguous duplicate rows need a person to check them; never choose one O
+    // arbitrarily, and never adopt or return unrelated remote-only people.
+    if(matches.length!==1){unmatched++;continue;}
+    const offset=matches[0],row=month.values[offset],showed=row[3]==='O',channel=String(row[0]||'');
+    records.push({id:c.id,row:offset+2,sheet:tab,showed,channel,interviewDate:c.interviewDate,hash:hash_([tab,offset+2,showed,channel,c.interviewDate])});
+  }
+  return {ok:true,mode:'pull',protocol:2,records,unmatched};
+}
 function doPost(e){
   let lock;
   try{
     if(!e||!e.postData||e.postData.contents.length>200000)throw Error('요청을 확인해 주세요.');
     const input=JSON.parse(e.postData.contents),user=identify_(input.token);
     if(!Array.isArray(input.candidates)||input.candidates.length>300)throw Error('한 번에 최대 300명까지 연결할 수 있습니다.');
+    const mode=input.mode;
+    // Old open pages posted without a mode and used to upsert automatically.
+    // Refuse them without touching the sheet until the page is refreshed.
+    if(!['pull','push'].includes(mode)||input.protocol!==2)throw Error('페이지를 새로고침해 새 연결 버전을 사용해 주세요.');
+    if(mode==='pull')return json_(pull_(input.candidates));
     lock=LockService.getScriptLock();lock.waitLock(15000);
     const book=SpreadsheetApp.openById(INTERVIEW_SHEET),props=PropertiesService.getScriptProperties(),records=[];
     for(const c of input.candidates){

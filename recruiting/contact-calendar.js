@@ -1,4 +1,4 @@
-import { validDate, range, normalizeContactPhone } from './model.js?v=20261118-sms-brand1';
+import { validDate, range, normalizeContactPhone } from './model.js?v=20261118-training1';
 
 // Only a single plain recipient is allowed: never accept URI parameters or separators.
 export const normalizePhone = normalizeContactPhone;
@@ -15,6 +15,15 @@ export function smsHref(candidate,body='',platform='') {
 export function interviewBookings(candidates) {
   return candidates.filter(c => !c.deleted && validDate(c.interviewDate) && ['booked','showed','starter','noShow'].includes(c.status))
     .sort((a,b) => `${a.interviewDate}${a.interviewTime || '99:99'}`.localeCompare(`${b.interviewDate}${b.interviewTime || '99:99'}`) || String(a.name || '').localeCompare(String(b.name || '')) || String(a.id).localeCompare(String(b.id)));
+}
+export function calendarEvents(candidates){
+ const items=interviewBookings(candidates).map(candidate=>({key:`interview:${candidate.id}:${candidate.interviewDate}`,type:'interview',candidateId:candidate.id,name:candidate.name,date:candidate.interviewDate,time:/^([01]\d|2[0-3]):[0-5]\d$/.test(candidate.interviewTime||'')?candidate.interviewTime:'',label:'면접',status:candidate.status}));
+ for(const candidate of candidates){
+  if(candidate.deleted)continue;
+  if(validDate(candidate.trainingDate||'')&&candidate.trainingStatus!=='cancelled')items.push({key:`training:${candidate.id}:${candidate.trainingDate}`,type:'training',candidateId:candidate.id,name:candidate.name,date:candidate.trainingDate,time:/^([01]\d|2[0-3]):[0-5]\d$/.test(candidate.trainingTime||'')?candidate.trainingTime:'',place:candidate.trainingPlace||'',label:candidate.trainingStatus==='completed'?'교육 완료':'교육 예정',status:candidate.trainingStatus||'planned'});
+  if(validDate(candidate.plannedWorkDate||''))items.push({key:`work:${candidate.id}:${candidate.plannedWorkDate}`,type:'work',candidateId:candidate.id,name:candidate.name,date:candidate.plannedWorkDate,time:'',label:'근무 예정',status:'planned'});
+ }
+ return items.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'99:99').localeCompare(b.time||'99:99')||a.key.localeCompare(b.key));
 }
 export function calendarDays(anchor, view = 'month') {
   const day = validDate(anchor) ? anchor : '2000-01-01';
