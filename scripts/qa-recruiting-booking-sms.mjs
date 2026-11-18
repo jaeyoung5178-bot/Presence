@@ -18,6 +18,7 @@ const fixture={candidates:Object.fromEntries([
   mk('qa-unscheduled','일정 없는 후보','','',''),
 ].map(c=>[c.id,c])),settings:{name:'QA',sound:false,sheetEndpoint:''},reports:{}};
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+const expectedSMS=(page,candidate)=>page.evaluate(async c=>{const m=await import('./model.js?v=qa-booking-sms'),p=await import('./contact-calendar.js?v=qa-booking-sms');return p.smsHref(c,m.hasInterviewSchedule(c)?m.sms(c,{...m.DEFAULTS,...window.__qaFixture.settings}):'')},candidate);
 async function geometry(page,tag){const v=await page.evaluate(()=>{const visible=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden'};const controls=[...document.querySelectorAll('button,a,input,select,textarea')].filter(visible);return{overflow:document.documentElement.scrollWidth>innerWidth+1,small:controls.filter(e=>{const r=e.getBoundingClientRect();return innerWidth<=1024&&(r.height<43.5||r.width<43.5)}).map(e=>({id:e.id,text:e.textContent.slice(0,30),w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height})),images:[...document.images].filter(visible).filter(i=>!i.complete||!i.naturalWidth).map(i=>i.src)}});check(`${tag} no overflow`,!v.overflow);check(`${tag} touch targets`,!v.small.length,JSON.stringify(v.small));check(`${tag} images`,!v.images.length,JSON.stringify(v.images));}
 try{
 for(const role of ['member','leader','admin'])for(const viewport of [{width:390,height:844},{width:1024,height:768},{width:1440,height:900}]){
@@ -43,12 +44,12 @@ check(`${tag} date only retains unknown time`,(await page.locator('.calendar-boo
 check(`${tag} date only list avoids invented time`,(await page.locator('.appointment').filter({has:page.locator('[data-edit="qa-dateonly"]')}).locator('.appointment-actions').textContent()).includes('시간 미정'));
 await page.locator('.calendar-booking[data-edit="qa-two"]').click();await page.locator('#editor[open]').waitFor();
 check(`${tag} calendar opens correct independent candidate`,await page.locator('#candidate-form [name="name"]').inputValue()===fixture.candidates['qa-two'].name&&new URL(page.url()).hash==='#candidate/qa-two');
-check(`${tag} intl SMS normalized`,await page.locator('#direct-message a').getAttribute('href')==='sms:+821023456789');
+check(`${tag} intl SMS normalized with exact composed body`,await page.locator('#direct-message a').getAttribute('href')===await expectedSMS(page,fixture.candidates['qa-two']));
 check(`${tag} SVG message icon`,await page.locator('#direct-message a svg').count()===1);
 await geometry(page,`${tag} detail`);
 await page.screenshot({path:`${out}/${tag}-detail.png`,fullPage:true});
 await page.locator('#candidate-form [name="mobile"]').fill('010 2222-3333');
-check(`${tag} edited SMS recipient updates`,await page.locator('#direct-message a').getAttribute('href')==='sms:01022223333');
+check(`${tag} edited SMS recipient updates with exact composed body`,await page.locator('#direct-message a').getAttribute('href')===await expectedSMS(page,{...fixture.candidates['qa-two'],mobile:'010 2222-3333'}));
 await page.locator('#candidate-form [name="mobile"]').fill('javascript:alert(1)');
 check(`${tag} invalid SMS disabled`,await page.locator('#direct-message button').isDisabled()&&await page.locator('#direct-message a').count()===0);
 await page.locator('#candidate-form [name="mobile"]').fill(fixture.candidates['qa-two'].mobile);
@@ -65,7 +66,7 @@ await page.locator('[data-calendar-day="2026-10-28"]').click();
 check(`${tag} empty date creates correctly dated record`,await page.locator('#candidate-form [name="interviewDate"]').inputValue()==='2026-10-28');
 await page.locator('#editor-close').click();
 await page.locator('[data-tab="camp"]').click();
-check(`${tag} upcoming SMS sibling exact recipient`,await page.locator('.next-card a[data-message="qa-one"]').getAttribute('href')==='sms:01012345678');
+check(`${tag} upcoming SMS sibling exact recipient and body`,await page.locator('.next-card a[data-message="qa-one"]').getAttribute('href')===await expectedSMS(page,fixture.candidates['qa-one']));
 check(`${tag} no nested interactive controls`,await page.locator('button button,button a[href]').count()===0);
 await page.locator('.next-card [data-edit="qa-one"]').click();await page.locator('#editor[open]').waitFor();
 check(`${tag} upcoming opens right candidate`,await page.locator('#candidate-form [name="name"]').inputValue()==='김하늘');
