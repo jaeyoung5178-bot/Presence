@@ -41,6 +41,7 @@
     '피치카드':{art:'pitch',description:'마음을 움직이는 한마디'},
     '위페어':{art:'wepair',description:'함께 만든 경험과 배움'},
     '리캡':{art:'recap',description:'우리의 배움을 돌아봐요'},
+    '26년 R&R':{art:'story',description:'푸켓에서 함께한 피스메이커들'},
     '세일즈':{art:'sales',description:'현장에서 쌓아가는 실력'},
     '멘탈리티':{art:'mindset',description:'나를 믿고 나아가는 힘'},
     '마이스토리':{art:'story',description:'나만의 이야기를 발견해요'},
@@ -120,7 +121,7 @@
   function toggleSaved(href){const remove=state.saved.has(href);remove?state.saved.delete(href):state.saved.add(href);storage.set(savedKey,[...state.saved]);hooks.toast(remove?'보관함에서 뺐어요.':'나의 보관함에 담았어요.');if(state.savedOnly)hooks.render();else savedLabels();}
   function renderFolders(){
     const data=state.data,topics=state.view==='topics';
-    const primary=['신입','트레이닝','__BOOKCLUB__','__TOPICS__','피치카드','위페어','리캡'];
+    const primary=['신입','트레이닝','__BOOKCLUB__','__TOPICS__','피치카드','위페어','리캡','26년 R&R'];
     const order=topics?topicFolders.filter(f=>data.folders.includes(f)):[...primary.filter(f=>f.startsWith('__')||data.folders.includes(f)),...data.folders.filter(f=>!primary.includes(f)&&!topicFolders.includes(f))];
     const entries=order.map(folder=>({folder,label:libraryLabel(folder),count:folder==='__BOOKCLUB__'?(window.PresenceBookGallery?.count()??1):folder==='__TOPICS__'?topicFolders.filter(f=>data.folders.includes(f)).length:data.items.filter(i=>i.folder===folder).length,editable:!folder.startsWith('__')}));
     const available=entries.filter(f=>f.count>0),upcoming=entries.filter(f=>f.count===0);
