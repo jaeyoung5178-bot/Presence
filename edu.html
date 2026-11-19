@@ -195,7 +195,7 @@
   </dialog>
 <div class="save-toast" id="toast" role="status">저장됨 ✓</div>
 
-<script src="assets/education/academy-v1.js?v=20261025-training1"></script>
+<script src="assets/education/academy-v1.js?v=20261120-rr-library1"></script>
 <script src="education/bookclub/catalog.js?v=20261117-1"></script>
 <script src="education/bookclub/gallery.js?v=20260928-2"></script>
 <script>
@@ -217,9 +217,9 @@
 
   var SEED = {
     v:1,
-    folders:["신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
+    folders:["26년 R&R","신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
     items:[
-      {id:"presence-phuket-rr-2026",tag:"R&R 2026",title:"푸켓에서 가져온 세 가지 선물",sub:"Phuket R&R 2026 · PLAY, LEARN & GROW · 임재영 AOP의 15분 키노트",href:"토픽/phuket-rr-2026/index.html",target:"_blank",folder:"마이스토리"},
+      {id:"presence-phuket-rr-2026",tag:"R&R 2026",title:"푸켓 R&R · 피스메이커들",sub:"예승 · 재영 · 윤경 · 채영 · 푸켓에서 함께한 순간과 배움",href:"토픽/phuket-rr-2026/index.html",target:"_blank",folder:"26년 R&R"},
       {id:"presence-hidden-value-zero",tag:"MENTALITY",title:"The Hidden Value of Zero",sub:"제로는 나로부터 · 390일 노제로, 실패를 배움과 실천으로 바꾸는 이야기",href:"education/mentality/hidden-value-of-zero/index.html",target:"_blank",folder:"멘탈리티"},
       {id:"presence-3step-5step",tag:"TRAINING",title:"3step, 5step 트레이닝",sub:"고객을 대하는 3가지 자세와 대화를 이어가는 5단계 · 무드와 대화의 실전 연습",href:"education/sales/3step-5step/index.html",target:"_blank",folder:"세일즈"},
       {id:"presence-great-sales",tag:"SALES",title:"3 Keys to Great Sales",sub:"멋진 세일즈를 위한 3가지 · 제품, 고객, 자신을 이해하는 25분 키노트",href:"education/sales/great-sales/index.html",target:"_blank",folder:"세일즈"},
@@ -472,9 +472,13 @@ function ensureSignatureTraining(d){
   function ensurePhuketRR(d){
     if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
     var changed=false;
-    if(d.folders.indexOf("마이스토리")<0){ d.folders.unshift("마이스토리"); changed=true; }
-    if(!d.items.some(function(it){ return it.id==="presence-phuket-rr-2026" || it.href==="토픽/phuket-rr-2026/index.html"; })){
-      d.items.unshift({id:"presence-phuket-rr-2026",tag:"R&R 2026",title:"푸켓에서 가져온 세 가지 선물",sub:"Phuket R&R 2026 · PLAY, LEARN & GROW · 임재영 AOP의 15분 키노트",href:"토픽/phuket-rr-2026/index.html",target:"_blank",folder:"마이스토리"}); changed=true;
+    if(d.folders.indexOf("26년 R&R")<0){ d.folders.push("26년 R&R"); changed=true; }
+    var item=d.items.find(function(it){ return it.id==="presence-phuket-rr-2026" || it.href==="토픽/phuket-rr-2026/index.html"; });
+    if(!item){
+      d.items.unshift({id:"presence-phuket-rr-2026",tag:"R&R 2026",title:"푸켓 R&R · 피스메이커들",sub:"예승 · 재영 · 윤경 · 채영 · 푸켓에서 함께한 순간과 배움",href:"토픽/phuket-rr-2026/index.html",target:"_blank",folder:"26년 R&R"}); changed=true;
+    }else{
+      if(item.folder!=="26년 R&R"){ item.folder="26년 R&R"; changed=true; }
+      if(item.title==="푸켓에서 가져온 세 가지 선물"){ item.title="푸켓 R&R · 피스메이커들"; item.sub="예승 · 재영 · 윤경 · 채영 · 푸켓에서 함께한 순간과 배움"; changed=true; }
     }
     return changed;
   }
@@ -577,7 +581,7 @@ function ensureSignatureTraining(d){
         remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
         remoteChanged=ensureTripOperationGuide(data)||remoteChanged;
         remoteChanged=ensureMyStoryGuide(data) || remoteChanged;
-        ensurePhuketRR(data);
+        remoteChanged=ensurePhuketRR(data) || remoteChanged;
         remoteChanged=ensureOxfamEarthquakePitch(data) || remoteChanged;
         if(remoteChanged) save(true);
         else writeLocalData();
