@@ -41,7 +41,7 @@
     turn.animations.forEach(animation => animation.cancel());
     turn.overlay.remove();
   }
-  function showSlide(index, updateHistory = true) {
+  function showSlide(index, updateHistory = true, trigger = null) {
     const next = Math.max(0, Math.min(slides.length - 1, Number(index) || 0));
     // Repeated input for the same destination must not restart the opening.
     if (pageTurn && next === current) return;
@@ -64,7 +64,9 @@
       overlay.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
       overlay.removeAttribute('id');
     }
+    if(next !== current) window.PhuketPlayback?.leave(slides[current]);
     renderSlide(next, updateHistory);
+    window.PhuketPlayback?.enter(slides[next], trigger);
     if (!overlay) return;
     $('#slides').append(overlay);
     const turn = {overlay, animations: []};
@@ -188,10 +190,10 @@
     const box = notes.getBoundingClientRect();
     if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) notes.close();
   });
-  $('#prev').addEventListener('click', () => showSlide(current - 1));
-  $('#next').addEventListener('click', () => showSlide(current + 1));
+  $('#prev').addEventListener('click', event => showSlide(current - 1, true, event));
+  $('#next').addEventListener('click', event => showSlide(current + 1, true, event));
   $('#slideSelect').addEventListener('change', (event) => {
-    showSlide(event.target.value);
+    showSlide(event.target.value, true, event);
     $('#slides').focus({preventScroll:true});
   });
   document.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => showSlide(button.dataset.go)));
@@ -225,6 +227,7 @@
     const target = event.target instanceof Element ? event.target : document.activeElement;
     if (event.defaultPrevented || event.isComposing || notes.open || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
       || target?.closest('input,textarea,select,[contenteditable]')) return;
+    if (event.key === 'Escape' && slides[current]?.dataset.kind==='movie') { event.preventDefault(); window.PhuketPlayback?.leave(slides[current]); return; }
     if (event.key === 'Escape' && document.body.classList.contains('cinema')) { document.body.classList.remove('cinema'); syncFullscreen(); return; }
     const interactive = target?.closest('button,a,summary,[role="button"],[role="link"]');
     let destination = null;
@@ -237,7 +240,7 @@
     if (destination !== null) {
       // Presenters often emit keyboard events; a held key must not skip slides.
       event.preventDefault();
-      if (!event.repeat) showSlide(destination);
+      if (!event.repeat) showSlide(destination, true, event);
       return;
     }
     if (event.key.toLowerCase() === 'f') { event.preventDefault(); toggleFullscreen(); }
@@ -252,7 +255,7 @@
     if (!touch) return;
     const dx = event.changedTouches[0].clientX - touch.x;
     const dy = event.changedTouches[0].clientY - touch.y;
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) showSlide(current + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) showSlide(current + (dx < 0 ? 1 : -1), true, event);
     touch = null;
   }, {passive:true});
   $('#slides').addEventListener('touchcancel', () => { touch = null; }, {passive:true});
@@ -261,6 +264,7 @@
     if (document.hidden) { finishPageTurn(); document.body.classList.add('paused'); }
     else syncMotion();
   });
+  window.PhuketNavigation={get current(){return current;},slides,show:(index,event)=>showSlide(index,true,event),next:event=>showSlide(current+1,true,event),prev:event=>showSlide(current-1,true,event)};
   syncMotion();
   showSlide(routeIndex(), false);
 })();
