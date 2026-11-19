@@ -1,7 +1,8 @@
 window.PhuketMedia = {
-  "opening-photo": {
-    "src": "assets/v6-061.jpg",
-    "label": "푸켓에서 함께한 피스메이커들"
+  "opening-video": {
+    "src": "assets/phuket-film-2026-final.mp4",
+    "label": "PHUKET R&R 2026 · 2분 인트로 v8",
+    "poster": "assets/phuket-film-v8-poster.jpg"
   },
   "photo-v6-074": {
     "src": "assets/v6-074.jpg",
@@ -166,5 +167,10 @@ window.PhuketMedia = {
   "photo-v6-031": {
     "src": "assets/v6-031.jpg",
     "label": "네트워킹"
+  },
+  "patong-video": {
+    "src": "assets/patong-night-street.mp4",
+    "poster": "assets/patong-night-street-poster.jpg",
+    "label": "빠통비치 밤거리"
   }
 };
