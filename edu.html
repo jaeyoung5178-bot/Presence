@@ -219,6 +219,7 @@
     v:1,
     folders:["신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
     items:[
+      {id:"presence-phuket-rr-2026",tag:"R&R 2026",title:"푸켓에서 가져온 세 가지 선물",sub:"Phuket R&R 2026 · PLAY, LEARN & GROW · 임재영 AOP의 15분 키노트",href:"토픽/phuket-rr-2026/index.html",target:"_blank",folder:"마이스토리"},
       {id:"presence-hidden-value-zero",tag:"MENTALITY",title:"The Hidden Value of Zero",sub:"제로는 나로부터 · 390일 노제로, 실패를 배움과 실천으로 바꾸는 이야기",href:"education/mentality/hidden-value-of-zero/index.html",target:"_blank",folder:"멘탈리티"},
       {id:"presence-3step-5step",tag:"TRAINING",title:"3step, 5step 트레이닝",sub:"고객을 대하는 3가지 자세와 대화를 이어가는 5단계 · 무드와 대화의 실전 연습",href:"education/sales/3step-5step/index.html",target:"_blank",folder:"세일즈"},
       {id:"presence-great-sales",tag:"SALES",title:"3 Keys to Great Sales",sub:"멋진 세일즈를 위한 3가지 · 제품, 고객, 자신을 이해하는 25분 키노트",href:"education/sales/great-sales/index.html",target:"_blank",folder:"세일즈"},
@@ -468,6 +469,16 @@ function ensureSignatureTraining(d){
     return changed;
   }
 
+  function ensurePhuketRR(d){
+    if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
+    var changed=false;
+    if(d.folders.indexOf("마이스토리")<0){ d.folders.unshift("마이스토리"); changed=true; }
+    if(!d.items.some(function(it){ return it.id==="presence-phuket-rr-2026" || it.href==="토픽/phuket-rr-2026/index.html"; })){
+      d.items.unshift({id:"presence-phuket-rr-2026",tag:"R&R 2026",title:"푸켓에서 가져온 세 가지 선물",sub:"Phuket R&R 2026 · PLAY, LEARN & GROW · 임재영 AOP의 15분 키노트",href:"토픽/phuket-rr-2026/index.html",target:"_blank",folder:"마이스토리"}); changed=true;
+    }
+    return changed;
+  }
+
   function toast(msg){ var t=$("#toast"); t.textContent=msg||"저장됨 ✓"; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on");},1400); }
   function titleStorageKey(it){
     // href는 새로고침 뒤에도 바뀌지 않으므로 랜덤 생성 id보다 우선합니다.
@@ -542,6 +553,7 @@ function ensureSignatureTraining(d){
       localChanged=ensureFieldRookieGuide(data)||localChanged;
       localChanged=ensureTripOperationGuide(data)||localChanged;
       localChanged=ensureMyStoryGuide(data) || localChanged;
+      localChanged=ensurePhuketRR(data) || localChanged;
       localChanged=ensureOxfamEarthquakePitch(data) || localChanged;
       if(localChanged) writeLocalData();
       render();
@@ -565,6 +577,7 @@ function ensureSignatureTraining(d){
         remoteChanged=ensureFieldRookieGuide(data)||remoteChanged;
         remoteChanged=ensureTripOperationGuide(data)||remoteChanged;
         remoteChanged=ensureMyStoryGuide(data) || remoteChanged;
+        ensurePhuketRR(data);
         remoteChanged=ensureOxfamEarthquakePitch(data) || remoteChanged;
         if(remoteChanged) save(true);
         else writeLocalData();
@@ -572,12 +585,12 @@ function ensureSignatureTraining(d){
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensurePhuketRR(data); ensureOxfamEarthquakePitch(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensureOxfamEarthquakePitch(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensurePhuketRR(data); ensureOxfamEarthquakePitch(data); save(true); render();
     });
   }
   function save(silent){
