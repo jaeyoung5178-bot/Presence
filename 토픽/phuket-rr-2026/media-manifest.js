@@ -148,29 +148,37 @@ window.PhuketMedia = {
     "src": "assets/v6-028.jpg",
     "label": "네트워킹"
   },
-  "photo-v6-019": {
-    "src": "assets/v6-019.jpg",
-    "label": "네트워킹"
-  },
-  "photo-v6-021": {
-    "src": "assets/v6-021.jpg",
-    "label": "네트워킹"
-  },
-  "photo-v6-023": {
-    "src": "assets/v6-023.jpg",
-    "label": "네트워킹"
-  },
-  "photo-v6-030": {
-    "src": "assets/v6-030.jpg",
-    "label": "네트워킹"
-  },
-  "photo-v6-031": {
-    "src": "assets/v6-031.jpg",
-    "label": "네트워킹"
-  },
   "patong-video": {
     "src": "assets/patong-night-street.mp4",
     "poster": "assets/patong-night-street-poster.jpg",
     "label": "빠통비치 밤거리"
+  },
+  "personal-team": {
+    "src": "assets/v6-019.jpg",
+    "label": "R&R 네트워킹 장면"
+  },
+  "presence-recap": {
+    "src": "assets/presence-recap-v10.png",
+    "label": "우리 팀 지난주 리캡"
+  },
+  "presence-sites": {
+    "src": "assets/presence-sites-v10.png",
+    "label": "사이트 찾기"
+  },
+  "presence-income": {
+    "src": "assets/presence-income-v10.png",
+    "label": "인컴·리젝 관리"
+  },
+  "presence-training": {
+    "src": "assets/presence-training-v10.png",
+    "label": "IC 스킬 기록과 트레이닝"
+  },
+  "presence-ic-notes": {
+    "src": "assets/presence-ic-notes-v10.png",
+    "label": "김철수의 코칭 기록"
+  },
+  "presence-recruiting": {
+    "src": "assets/presence-recruiting-v10.png",
+    "label": "함께하는 리쿠르팅 페이지"
   }
 };
