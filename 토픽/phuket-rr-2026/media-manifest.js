@@ -1,8 +1,8 @@
 window.PhuketMedia = {
   "opening-video": {
-    "src": "assets/phuket-film-2026-final.mp4",
-    "label": "PHUKET R&R 2026 · 2분 인트로 v8",
-    "poster": "assets/phuket-film-v8-poster.jpg"
+    "src": "assets/phuket-film-2026-v11.mp4",
+    "label": "PHUKET R&R 2026 · 2분 인트로",
+    "poster": "assets/phuket-film-2026-v11-poster.jpg"
   },
   "photo-v6-074": {
     "src": "assets/v6-074.jpg",
