@@ -1,6 +1,6 @@
 import {readExistingConnection,createAccountConnection} from '../account-connection.js?v=20261113-account1';
 import { createSheet, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, isObjectionDonor, isSharedObjectionDonor, reconcileObjectionDonors, setPaperNoteDonor, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261122-quick1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261122-quick1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261122-date-quick2';
 import { createPaperInteraction } from './paper-interaction.js?v=20261122-quick1';
 import { mountQuickControls } from './quick-controls.js?v=20261122-quick1';
 import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261122-date-move1';
@@ -439,7 +439,8 @@ $('#sheet-form').addEventListener('input', event => {
 $('#objection-donor-list').addEventListener('change', event => {
   const input = event.target.closest('[data-objection-donor]'); if (!input) return; paperEditor?.clearUndo();
   const blockIndex = Number(input.dataset.objectionDonor), block = parseObjectionBlocks(sheet.objections)[blockIndex]; if (!block) return;
-  if (setPaperNoteDonor(sheet, { kind: 'objection', blockIndex, block }, input.checked)) { renderObjectionFlags(); changed(); }
+  try { if (setPaperNoteDonor(sheet, { kind: 'objection', blockIndex, block }, input.checked)) { renderObjectionFlags(); changed(); } }
+  catch (e) { renderObjectionFlags(); error(e.message); toast(e.message); }
 });
 $('#time-rows').addEventListener('click', async event => {
   const addCase = event.target.closest('[data-add-case]'), removeCase = event.target.closest('[data-remove-case]');
