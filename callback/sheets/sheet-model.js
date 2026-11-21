@@ -207,6 +207,34 @@ export function replaceObjectionNote(sheet, block, body, donor, blockIndex) {
   if (sheet.donorObjections !== undefined || donor) sheet.donorObjections = [...flags];
   return replacement;
 }
+// One mutation path for the paper dialog and the always-available donor list.
+// Donor status belongs to the existing case or legacy note; totals stay derived.
+export function setPaperNoteDonor(sheet, target, donor) {
+  if (typeof donor !== 'boolean') throw new Error('후원자 여부를 확인해 주세요.');
+  if (target.kind === 'case') {
+    const row = sheet.rows.find(row => row.id === target.rowId), item = row?.donorCases?.find(item => item.id === target.caseId);
+    if (!item) throw new Error('이 메모가 바뀌었어요. 다시 열어 주세요.');
+    const slots = new Set(getPaperNotes(sheet).filter(note => note.kind === 'case' && note.rowId === row.id && note.caseId === item.id).map(note => note.slot).filter(Number.isInteger));
+    // A numbered common note can be shown together with a case. Clearing its
+    // checkbox clears both presentations of that same selection.
+    const flags = sheet.donorObjections?.filter(block => !slots.has(noteNumber(block)));
+    const next = { ...sheet, rows: sheet.rows.map(value => value === row ? { ...row, donorCases: row.donorCases.map(value => value === item ? { ...item, donor } : value) } : value), ...(flags === undefined ? {} : { donorObjections: flags }) };
+    const result = validateSheet(next); if (!result.valid) throw new Error(result.errors[0].message);
+    item.donor = donor; if (flags !== undefined) sheet.donorObjections = flags;
+    return { ...target, donor, caseDonor: donor };
+  }
+  const blocks = parseObjectionBlocks(sheet.objections);
+  let index = target.blockIndex, block = target.block;
+  if (target.virtual) { index = blocks.length; blocks.push(block); }
+  else if (blocks[index] !== block) throw new Error('이 메모가 바뀌었어요. 다시 열어 주세요.');
+  const flags = new Set(sheet.donorObjections || []);
+  if (donor) flags.add(block); else flags.delete(block);
+  const objections = target.virtual ? blocks.join('\n\n') : sheet.objections;
+  const result = validateSheet({ ...sheet, objections, donorObjections: [...flags] });
+  if (!result.valid) throw new Error(result.errors[0].message);
+  sheet.objections = objections; sheet.donorObjections = [...flags];
+  return { ...target, virtual: false, blockIndex: index, block, donor };
+}
 export function getDonorSummary(sheet) {
   const cases = sheet.rows.flatMap(row => row.donorCases || []);
   const donorCases = cases.filter(item => item.donor), caseNotes = new Set(donorCases.map(item => noteIdentity(item.note)).filter(Boolean));
