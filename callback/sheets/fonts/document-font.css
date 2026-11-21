@@ -1,0 +1,20 @@
+/* The same self-hosted, SIL Open Font License family is used in the editor,
+   canvas preview, exported PNG and legacy printable report. */
+@font-face {
+  font-family: "Pretendard";
+  src: url("./Pretendard-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("./Pretendard-Bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 601 900;
+  font-display: swap;
+}
+:root {
+  --callback-document-font: "Pretendard", -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+}

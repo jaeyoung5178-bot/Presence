@@ -1,3 +1,4 @@
+@import url("sheets/fonts/document-font.css?v=20261122-readable1");
 /* ============================================================
    Field Callback OS — Apple / Notion / Linear inspired
    White-first, Blue accent, card UI, mobile-first
@@ -27,7 +28,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Pretendard", "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif;
+  font-family: var(--callback-document-font);
   background: var(--bg);
   color: var(--ink);
   line-height: 1.5;

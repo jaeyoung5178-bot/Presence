@@ -1,12 +1,15 @@
 /* Field Callback OS — Service Worker
    v2: 네트워크 우선(코어 파일) — 업데이트가 즉시 반영되고, 오프라인일 때만 캐시 사용.
    (기존 캐시 우선 방식은 수정해도 아이폰 PWA에 옛 버전이 계속 뜨던 원인) */
-const CACHE = "fcos-v22"; /* v22: 종이 콜백싯 빼기와 균일한 시간 행 높이 */
+const CACHE = "fcos-v23"; /* v23: 읽기 쉬운 문서 글꼴 · 미리보기와 출력 공통 */
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./script.js",
+  "./sheets/fonts/document-font.css?v=20261122-readable1",
+  "./sheets/fonts/Pretendard-Regular.woff2",
+  "./sheets/fonts/Pretendard-Bold.woff2",
   "./personal-install.js",
   "./manifest.json",
   "./icon.svg",

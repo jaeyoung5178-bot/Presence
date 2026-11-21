@@ -1132,10 +1132,11 @@ function buildReportHTML() {
     `<td class="retro-cell">${esc(S.retro[k][sign === "+" ? "good" : "bad"]) || "<span class='none'>-</span>"}</td>`).join("");
 
   return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>Call Back Sheet — ${S.info.date}</title>
+<link rel="stylesheet" href="${esc(new URL('sheets/fonts/document-font.css?v=20261122-readable1', location.href).href)}">
 <style>
   @page { size: A4; margin: 9mm 10mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; color:#18181B; font-size:13px; line-height:1.45; padding:24px; }
+  body { font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif; color:#18181B; font-size:13px; line-height:1.45; padding:24px; }
   #sheet { width:730px; margin:0 auto; }
 
   .head { display:flex; align-items:flex-end; justify-content:space-between; padding-bottom:10px; border-bottom:3px solid #18181B; margin-bottom:12px; }

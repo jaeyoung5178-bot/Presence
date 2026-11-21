@@ -5,11 +5,12 @@ export const INK = '#292c2a', DONOR_INK = '#b13e43';
 const GRAPHITE = '#555954', PAPER = '#fffef9';
 export const PRINTED_EXAMPLES = ['Ex) 유니세프 하는 중', 'Ex) swp2400001/카드/3만/', '71년생 어머님/ 자모후'];
 let fontsReady;
+export const DOCUMENT_FONT = '"Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
 export function loadPaperFonts() {
-  return fontsReady ||= document.fonts.load('24px "Callback Hand"').catch(() => []).then(() => document.fonts.ready);
+  return fontsReady ||= Promise.all([document.fonts.load('400 18px "Pretendard"'), document.fonts.load('700 18px "Pretendard"')]).catch(() => []).then(() => document.fonts.ready);
 }
-function pen(ctx, size = 24) { ctx.font = `${size}px "Callback Hand", "Apple SD Gothic Neo", sans-serif`; ctx.fillStyle = INK; }
-function print(ctx, size = 14, weight = 500) { ctx.font = `${weight} ${size}px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Arial, sans-serif`; ctx.fillStyle = '#2e3535'; }
+function dataFont(ctx, size = 18) { ctx.font = `400 ${size}px ${DOCUMENT_FONT}`; ctx.fillStyle = INK; }
+function print(ctx, size = 14, weight = 500) { ctx.font = `${weight} ${size}px ${DOCUMENT_FONT}`; ctx.fillStyle = '#2e3535'; }
 // Character-based wrapping also handles Korean and a long URL without clipping.
 function wrap(ctx, value, width) {
   const lines = [];
@@ -22,7 +23,7 @@ function wrap(ctx, value, width) {
   }
   return lines;
 }
-function handLines(ctx, lines, x, y, lineHeight = 25, size = 24, color = INK) { pen(ctx, size); ctx.fillStyle = color; lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeight)); }
+function documentLines(ctx, lines, x, y, lineHeight = 25, size = 18, color = INK) { dataFont(ctx, size); ctx.fillStyle = color; lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeight)); }
 function line(ctx, x, y, x2, y2, color = GRAPHITE, width = 1) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke(); }
 function box(ctx, x, y, width, height, fill) { if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, width, height); } ctx.strokeStyle = GRAPHITE; ctx.lineWidth = .8; ctx.strokeRect(x, y, width, height); }
 function centered(ctx, text, x, y) { const previous = ctx.textAlign; ctx.textAlign = 'center'; ctx.fillText(text, x, y); ctx.textAlign = previous; }
@@ -63,17 +64,17 @@ function plan(ctx, sheet) {
   const metaColumns = [ [['Name:', sheet.meta.name], ['Weather:', sheet.meta.weather]], [['Team:', sheet.meta.team], ['Location:', sheet.meta.location]], [['Date:', sheet.date.replaceAll('-', '. ')], ['오늘의 테마:', sheet.meta.theme]] ];
   const metadata = metaColumns.map((col, i) => col.map(([label, value]) => {
     const offset = [40, 16, 0][i]; print(ctx, 14, 700); const labelWidth = ctx.measureText(label).width + 10;
-    pen(ctx, 23); return { label, x: MARGIN + i * INNER / 3 + offset, labelWidth, lines: wrap(ctx, value, INNER / 3 - offset - labelWidth - 10) };
+    dataFont(ctx, 18); return { label, x: MARGIN + i * INNER / 3 + offset, labelWidth, lines: wrap(ctx, value, INNER / 3 - offset - labelWidth - 10) };
   }));
   const metaFirstHeight = Math.max(...metadata.map(col => col[0].lines.length)) * 24 + 10;
   const metaSecondHeight = Math.max(...metadata.map(col => col[1].lines.length)) * 24;
   const tableY = 112 + metaFirstHeight + metaSecondHeight + 16;
   const cols = [144, 134, 112, 108, 108, 198];
-  pen(ctx, 22);
+  dataFont(ctx, 17);
   const processLines = METRICS.slice(0, 4).map((key, i) => wrap(ctx, sheet.processGoals[key], cols[i + 1] - 16));
   const goalHeight = Math.max(34, ...processLines.map(lines => lines.length * 23 + 10));
   const metricRowHeight = Math.max(43, ...sheet.rows.flatMap(row => METRICS.slice(0, 4).map((key, i) => tallyHeight(row[key], cols[i + 1]))));
-  pen(ctx, 23);
+  dataFont(ctx, 18);
   const notes = getPaperNotes(sheet).map(note => ({ ...note, lines: wrap(ctx, note.text, cols[5] - 24), color: note.donor ? DONOR_INK : INK }));
   print(ctx, 12);
   const exampleLines = PRINTED_EXAMPLES.flatMap(text => wrap(ctx, text, cols[5] - 18));
@@ -86,7 +87,7 @@ function plan(ctx, sheet) {
   const rowHeights = sheet.rows.map(() => tableBodyHeight / sheet.rows.length);
   const summaryY = tableY + 32 + goalHeight + tableBodyHeight + 23;
   const reviewY = summaryY + 102;
-  pen(ctx, 24);
+  dataFont(ctx, 18);
   const reviews = ['loa', 'pitch', 'attitude'].map(key => ({ good: wrap(ctx, sheet.review[key].good, INNER / 3 - 26), bad: wrap(ctx, sheet.review[key].bad, INNER / 3 - 26) }));
   const goodHeight = Math.max(145, ...reviews.map(r => r.good.length * 25 + 52));
   const badHeight = Math.max(145, ...reviews.map(r => r.bad.length * 25 + 46));
@@ -96,7 +97,7 @@ function plan(ctx, sheet) {
 export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
   await loadPaperFonts();
   const ctx = canvas.getContext('2d'), p = plan(ctx, sheet);
-  // Keep large handwritten records within cross-browser canvas limits without dropping content.
+  // Keep large document records within cross-browser canvas limits without dropping content.
   const actualScale = Math.min(scale, 16380 / p.height, Math.sqrt(16000000 / (WIDTH * p.height)));
   if (actualScale < .65) throw new Error('기록이 한 장의 이미지로 만들기에는 너무 길어요. 시간 기록이나 메모를 나누어 저장해 주세요. 작성 내용은 그대로 유지돼요.');
   canvas.width = Math.ceil(WIDTH * actualScale); canvas.height = Math.ceil(p.height * actualScale);
@@ -104,24 +105,24 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
   ctx.scale(actualScale, actualScale); ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = PAPER; ctx.fillRect(0, 0, WIDTH, p.height);
   print(ctx, 26, 700); centered(ctx, 'Call Back Sheet', WIDTH / 2, 64);
-  p.metadata.forEach(col => col.forEach((field, j) => { const y = 112 + (j ? p.metaFirstHeight : 0); print(ctx, 14, 700); ctx.fillText(field.label, field.x, y); handLines(ctx, field.lines, field.x + field.labelWidth, y, 24, 23); }));
+  p.metadata.forEach(col => col.forEach((field, j) => { const y = 112 + (j ? p.metaFirstHeight : 0); print(ctx, 14, 700); ctx.fillText(field.label, field.x, y); documentLines(ctx, field.lines, field.x + field.labelWidth, y, 24, 18); }));
   const headers = ['Field Time', 'Contact', 'Stop', 'Presentation', 'Close', '오브젝션 핸들링 사유'];
   let x = MARGIN;
   p.cols.forEach((w, i) => { box(ctx, x, p.tableY, w, 32, '#e9eae4'); print(ctx, i === 5 ? 14 : 15, 700); centered(ctx, headers[i], x + w / 2, p.tableY + 22); x += w; });
   x = MARGIN;
-  p.cols.forEach((w, i) => { box(ctx, x, p.tableY + 32, w, p.goalHeight, '#f0f0e9'); if (!i) { print(ctx, 14, 700); centered(ctx, '과정 목표(Goal)', x + w / 2, p.tableY + 32 + p.goalHeight / 2 + 5); } else if (i < 5) handLines(ctx, p.processLines[i - 1], x + 10, p.tableY + 56, 23, 22); else { print(ctx, 15, 700); centered(ctx, '시리얼(기본정보)', x + w / 2, p.tableY + 32 + p.goalHeight / 2 + 5); } x += w; });
+  p.cols.forEach((w, i) => { box(ctx, x, p.tableY + 32, w, p.goalHeight, '#f0f0e9'); if (!i) { print(ctx, 14, 700); centered(ctx, '과정 목표(Goal)', x + w / 2, p.tableY + 32 + p.goalHeight / 2 + 5); } else if (i < 5) documentLines(ctx, p.processLines[i - 1], x + 10, p.tableY + 56, 23, 17); else { print(ctx, 15, 700); centered(ctx, '시리얼(기본정보)', x + w / 2, p.tableY + 32 + p.goalHeight / 2 + 5); } x += w; });
   let y = p.tableY + 32 + p.goalHeight;
   const notesX = MARGIN + p.cols.slice(0, 5).reduce((a, b) => a + b, 0);
   box(ctx, notesX, y, p.cols[5], p.tableBodyHeight);
   print(ctx, 12); p.exampleLines.forEach((text, index) => ctx.fillText(text, notesX + 9, y + 25 + index * 21));
   const cells = [], notes = [];
   let noteY = y + p.exampleHeight + 19;
-  p.notes.forEach(note => { const height = Math.max(43, note.lines.length * 23 + 7); handLines(ctx, note.lines, notesX + 10, noteY, 23, 23, note.color); notes.push({ ...note, x: notesX, y: noteY - 24, width: p.cols[5], height }); noteY += height; });
+  p.notes.forEach(note => { const height = Math.max(43, note.lines.length * 23 + 7); documentLines(ctx, note.lines, notesX + 10, noteY, 23, 18, note.color); notes.push({ ...note, x: notesX, y: noteY - 24, width: p.cols[5], height }); noteY += height; });
   sheet.rows.forEach((row, index) => {
     const h = p.rowHeights[index]; x = MARGIN;
     p.cols.slice(0, 5).forEach((w, i) => { box(ctx, x, y, w, h); if (i) { cells.push({ rowId: row.id, rowIndex: index, metric: METRICS[i - 1], x, y, width: w, height: h }); drawTally(ctx, row[METRICS[i - 1]], x, y, w, h, index * 5 + i, tallyInk(row, METRICS[i - 1])); } else {
       const baseline = y + Math.min(29, h / 2 + 8);
-      pen(ctx, 22); ctx.fillText(row.time, x + 10, baseline); const minutes = fieldMinutes(row); if (index === 0 && minutes > 0 && minutes < 60) ctx.fillText(String(minutes), x + 96, baseline);
+      dataFont(ctx, 17); ctx.fillText(row.time, x + 10, baseline); const minutes = fieldMinutes(row); if (index === 0 && minutes > 0 && minutes < 60) ctx.fillText(String(minutes), x + 96, baseline);
       print(ctx, 27, 750); centered(ctx, '/', x + 81, baseline + 1);
     } x += w; }); y += h;
   });
@@ -131,8 +132,8 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
     const w = INNER / 5, x = MARGIN + i * w;
     box(ctx, x, p.summaryY + 30, w, 27, '#f0f0e9'); print(ctx, 15, 700); centered(ctx, summaryLabels[i], x + w / 2, p.summaryY + 49);
     box(ctx, x, p.summaryY + 57, w, 45);
-    // The paper prints a slash, with independently positioned handwritten goal/result values.
-    pen(ctx, 28); ctx.textAlign = 'right'; ctx.fillText(sheet.goals[key] ?? '', x + w / 2 - 16, p.summaryY + 87); ctx.textAlign = 'left'; ctx.fillText(hasValues(sheet, key) ? totals[key] : '', x + w / 2 + 15, p.summaryY + 87);
+    // The paper prints a slash, with independently positioned goal/result values.
+    dataFont(ctx, 22); ctx.textAlign = 'right'; ctx.fillText(sheet.goals[key] ?? '', x + w / 2 - 16, p.summaryY + 87); ctx.textAlign = 'left'; ctx.fillText(hasValues(sheet, key) ? totals[key] : '', x + w / 2 + 15, p.summaryY + 87);
     print(ctx, 27, 750); centered(ctx, '/', x + w / 2, p.summaryY + 89);
   });
   box(ctx, MARGIN, p.reviewY, INNER, 32, '#e9eae4'); print(ctx, 14, 700); centered(ctx, '내일을 위한 Analysis & Evaluation', WIDTH / 2, p.reviewY + 22);
@@ -142,7 +143,7 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
       box(ctx, x, top, w, height); print(ctx, 15, 700);
       if (key === 'good') { const title = ['Number', 'Pitch(Skill)', 'Attitude(Mental)'][i]; ctx.fillText(title, x + 10, top + 23); line(ctx, x + 10, top + 26, x + 10 + ctx.measureText(title).width, top + 26, '#2e3535', 1); }
       ctx.textAlign = 'right'; ctx.fillText(key === 'good' ? '(+)' : '(−)', x + w - 12, top + 23); ctx.textAlign = 'left';
-      handLines(ctx, review[key], x + 13, top + (key === 'good' ? 53 : 47), 25, 24);
+      documentLines(ctx, review[key], x + 13, top + (key === 'good' ? 53 : 47), 25, 18);
     }
   });
   return { width: canvas.width, height: canvas.height, logicalWidth: WIDTH, logicalHeight: p.height, cells, notes };
