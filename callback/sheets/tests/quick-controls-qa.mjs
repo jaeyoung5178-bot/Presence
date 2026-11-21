@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createSheet, createDonorCase, getPaperNotes, getDonorSummary, setPaperNoteDonor, normalizeSheet } from '../sheet-model.js';
+import { createSheet, createDonorCase, getPaperNotes, getDonorSummary, setPaperNoteDonor, normalizeSheet, isObjectionDonor, isSharedObjectionDonor, reconcileObjectionDonors, replaceObjectionNote, incrementPaperMetric, validateSheet } from '../sheet-model.js';
 import { planFieldTimeRange } from '../quick-controls.js';
 
 let checks = 0;
@@ -91,6 +91,69 @@ check('a distinct numbered memo with a case-matching body is still another selec
   sheet.objections = '1. 같은 가상 내용\n\n2. 같은 가상 내용';
   const target = getPaperNotes(sheet).find(note => note.kind === 'objection' && note.slot === 2);
   setPaperNoteDonor(sheet, target, true); assert.equal(getDonorSummary(sheet).count, 2);
+});
+check('identical plain paragraphs select independently, deselect and reload without changing text', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요'; const original = sheet.objections;
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[0], true);
+  assert.equal(getDonorSummary(sheet).count, 1); assert.deepEqual(getPaperNotes(sheet).map(note => note.donor), [true, false]);
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], true);
+  assert.equal(getDonorSummary(sheet).count, 2); assert.deepEqual(getPaperNotes(normalizeSheet(sheet)).map(note => note.donor), [true, true]);
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[0], false);
+  assert.equal(getDonorSummary(sheet).count, 1); assert.deepEqual(getPaperNotes(normalizeSheet(sheet)).map(note => note.donor), [false, true]);
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], false);
+  assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 0); assert.equal(sheet.objections, original);
+});
+check('unrelated paragraph insertion and reordering preserve duplicate occurrence selections', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요';
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], true);
+  let previous = sheet.objections; sheet.objections = '다른 가상 메모\n\n시간없어요\n\n시간없어요'; reconcileObjectionDonors(sheet, previous);
+  assert.equal(getDonorSummary(sheet).count, 1); assert.equal(isObjectionDonor(sheet, 2), true); assert.equal(isObjectionDonor(sheet, 1), false);
+  previous = sheet.objections; sheet.objections = '시간없어요\n\n다른 가상 메모\n\n시간없어요'; reconcileObjectionDonors(sheet, previous);
+  assert.equal(isObjectionDonor(sheet, 2), true); assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 1);
+});
+check('whole-text duplicate deletion clears only affected group keys and keeps other selections', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요\n\n별도 가상 메모';
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], true); setPaperNoteDonor(sheet, getPaperNotes(sheet)[2], true);
+  const previous = sheet.objections; sheet.objections = '시간없어요\n\n별도 가상 메모'; reconcileObjectionDonors(sheet, previous);
+  assert.deepEqual(getPaperNotes(sheet).map(note => note.donor), [false, true]); assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 1);
+});
+check('individual duplicate edit remaps retained selections to their exact remaining paragraphs', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요';
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[0], true); setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], true);
+  replaceObjectionNote(sheet, '시간없어요', '수정한 가상 내용', false, 0);
+  assert.equal(sheet.objections, '수정한 가상 내용\n\n시간없어요');
+  assert.deepEqual(getPaperNotes(sheet).map(note => note.donor), [false, true]); assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 1);
+  assert.deepEqual(sheet.donorObjections, ['시간없어요']);
+});
+check('editing a selected duplicate preserves its own selection without assigning others', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요'; setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], true);
+  replaceObjectionNote(sheet, '시간없어요', '수정한 가상 내용', true, 1);
+  assert.deepEqual(getPaperNotes(sheet).map(note => note.donor), [false, true]); assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 1);
+});
+check('legacy shared flag stays mixed until explicit occurrence selection resolves it', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요'; sheet.donorObjections = ['시간없어요'];
+  assert.equal(getDonorSummary(sheet).count, 1); assert.equal(isSharedObjectionDonor(sheet, 0), true); assert.equal(isSharedObjectionDonor(sheet, 1), true);
+  setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], true);
+  assert.deepEqual(getPaperNotes(sheet).map(note => note.donor), [false, true]); assert.equal(getDonorSummary(sheet).count, 1);
+  assert.equal(isSharedObjectionDonor(sheet, 0), false); assert.equal(isSharedObjectionDonor(sheet, 1), false);
+});
+check('invalid orphan occurrence key is rejected and no hidden key appears in note text', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요'; setPaperNoteDonor(sheet, getPaperNotes(sheet)[0], true);
+  assert.equal(validateSheet(sheet).valid, true); assert.deepEqual(getPaperNotes(sheet).map(note => note.text), ['시간없어요', '시간없어요']);
+  sheet.donorObjections = ['@callback-objection/v2:' + JSON.stringify(['시간없어요', 2])]; assert.equal(validateSheet(sheet).valid, false);
+});
+check('Close numbering preserves each explicit duplicate selection', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요'; setPaperNoteDonor(sheet, getPaperNotes(sheet)[1], true);
+  incrementPaperMetric(sheet, sheet.rows[0].id, 'close');
+  assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 1); assert.equal(isObjectionDonor(sheet, 0), false); assert.equal(isObjectionDonor(sheet, 1), true);
+});
+check('Close preserves ambiguous shared legacy text and count until explicit selection', () => {
+  const sheet = fresh(); sheet.objections = '시간없어요\n\n시간없어요'; sheet.donorObjections = ['시간없어요'];
+  const before = sheet.objections; incrementPaperMetric(sheet, sheet.rows[0].id, 'close');
+  assert.equal(sheet.rows[0].close, 1); assert.equal(sheet.objections, before); assert.deepEqual(sheet.donorObjections, ['시간없어요']);
+  assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 1); assert.equal(isSharedObjectionDonor(sheet, 0), true);
+  setPaperNoteDonor(sheet, getPaperNotes(sheet).find(note => note.blockIndex === 1), true);
+  assert.equal(isObjectionDonor(sheet, 0), false); assert.equal(isObjectionDonor(sheet, 1), true);
 });
 check('stale target fails without changing a different note', () => {
   const sheet = fresh(); sheet.objections = '1. 이전 메모'; const target = getPaperNotes(sheet)[0];

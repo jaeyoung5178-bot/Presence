@@ -108,7 +108,12 @@ export function mountQuickControls({ getSheet, isReady, onChange, onError }) {
         title.textContent = '후원자'; body.textContent = note.text; body.title = note.text; copy.append(title, body); label.append(input, copy); noteList.append(label);
       });
     }
-    noteList.querySelectorAll('[data-quick-note]').forEach((input, index) => { input.checked = !!noteTargets[index]?.donor; input.disabled = !isReady(); input.closest('label').classList.toggle('is-donor', input.checked); });
+    noteList.querySelectorAll('[data-quick-note]').forEach((input, index) => {
+      const note = noteTargets[index]; input.indeterminate = !!note?.donorShared; input.checked = !input.indeterminate && !!note?.donor; input.disabled = !isReady();
+      input.setAttribute('aria-checked', input.indeterminate ? 'mixed' : String(input.checked));
+      input.closest('label').classList.toggle('is-donor', !!note?.donor);
+      input.closest('label').querySelector('strong').textContent = input.indeterminate ? '후원자 · 기존 공유 표시' : '후원자';
+    });
     if (changedSheet) donorHost.querySelector('details').open = noteTargets.length > 0 && noteTargets.length <= 4;
   }
   function reset() { sheetId = null; sync(); }

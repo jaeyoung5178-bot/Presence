@@ -102,8 +102,42 @@ function noteNumber(block) {
   const match = block.match(/^\s*(?:(\d{1,3})[.)](?!\d)|\((\d{1,3})\)|([①-⑳]))/);
   return match ? Number(match[1] || match[2] || match[3].codePointAt(0) - 0x245f) : null;
 }
+const OBJECTION_DONOR_KEY = '@callback-objection/v2:';
+function objectionReferences(text) {
+  const blocks = parseObjectionBlocks(text), totals = new Map(), occurrences = new Map();
+  for (const block of blocks) totals.set(block, (totals.get(block) || 0) + 1);
+  return blocks.map((block, blockIndex) => {
+    const occurrence = occurrences.get(block) || 0; occurrences.set(block, occurrence + 1);
+    const occurrenceKey = OBJECTION_DONOR_KEY + JSON.stringify([block, occurrence]);
+    return { block, blockIndex, occurrence, total: totals.get(block), occurrenceKey, key: totals.get(block) > 1 ? occurrenceKey : block };
+  });
+}
+function objectionFlagBlock(key) {
+  if (!key.startsWith(OBJECTION_DONOR_KEY)) return key;
+  try { const value = JSON.parse(key.slice(OBJECTION_DONOR_KEY.length)); return Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && Number.isInteger(value[1]) && value[1] >= 0 ? value[0] : key; }
+  catch { return key; }
+}
+function objectionSelection(flags, ref) { return flags.has(ref.block) ? ref.block : flags.has(ref.occurrenceKey) ? ref.occurrenceKey : null; }
+export function isObjectionDonor(sheet, blockIndex) {
+  const ref = objectionReferences(sheet.objections)[blockIndex];
+  return !!ref && objectionSelection(new Set(sheet.donorObjections || []), ref) !== null;
+}
+export function isSharedObjectionDonor(sheet, blockIndex) {
+  const ref = objectionReferences(sheet.objections)[blockIndex];
+  return !!ref && ref.total > 1 && !!sheet.donorObjections?.includes(ref.block);
+}
+// Whole-text edits cannot identify which identical paragraph was removed. Keep
+// stable occurrence keys for unchanged groups, and clear only changed groups.
+export function reconcileObjectionDonors(sheet, previousText) {
+  if (sheet.donorObjections === undefined) return;
+  const before = objectionReferences(previousText), after = objectionReferences(sheet.objections);
+  const beforeCounts = new Map(before.map(ref => [ref.block, ref.total]));
+  const validKeys = new Set(after.filter(ref => beforeCounts.get(ref.block) === ref.total).flatMap(ref => [ref.block, ref.occurrenceKey]));
+  sheet.donorObjections = sheet.donorObjections.filter(key => validKeys.has(key));
+}
 export function getPaperNotes(sheet) {
-  const common = parseObjectionBlocks(sheet.objections).map((block, blockIndex) => ({ kind: 'objection', blockIndex, block, text: block, slot: noteNumber(block), donor: !!sheet.donorObjections?.includes(block) }));
+  const flags = new Set(sheet.donorObjections || []);
+  const common = objectionReferences(sheet.objections).map(ref => ({ kind: 'objection', blockIndex: ref.blockIndex, block: ref.block, text: ref.block, slot: noteNumber(ref.block), donor: objectionSelection(flags, ref) !== null, donorShared: ref.total > 1 && flags.has(ref.block) }));
   const linked = new Map(), extras = []; let offset = 0;
   sheet.rows.forEach(row => {
     let ordinal = 0;
@@ -136,18 +170,26 @@ export function incrementPaperMetric(sheet, rowId, metric) {
     const notes = getPaperNotes(sheet);
     if (notes.length >= 500) throw new Error('메모가 500개예요. 기존 메모를 정리한 뒤 다시 기록해 주세요.');
     const blocks = parseObjectionBlocks(beforeObjections), used = new Set(notes.filter(item => item.kind === 'case').map(item => noteNumber(item.text)));
+    const sharedPlain = objectionReferences(beforeObjections).some(ref => ref.total > 1 && noteNumber(ref.block) === null && beforeFlags?.includes(ref.block));
+    // Preserve an ambiguous legacy shared group without guessing its donor.
+    // Close still increments; getPaperNotes supplies its numbered virtual slot.
+    if (!sharedPlain) {
     // Keep the legacy parser contract: number each existing plain block only when
     // the first numbered entry is explicitly created, preserving its body and flag.
     if (blocks.length && !blocks.some(block => noteNumber(block) !== null)) {
       let nextNumber = 1;
       const promoted = blocks.map(block => { while (used.has(nextNumber)) nextNumber++; const numbered = `${nextNumber++}. ${block}`; used.add(nextNumber - 1); return { block, numbered }; });
       afterObjections = promoted.map(item => item.numbered).join('\n\n');
-      if (beforeFlags !== undefined) afterFlags = promoted.filter(item => beforeFlags.includes(item.block)).map(item => item.numbered);
+      if (beforeFlags !== undefined) {
+        const refs = objectionReferences(beforeObjections), flags = new Set(beforeFlags);
+        afterFlags = promoted.filter((item, index) => flags.has(refs[index].occurrenceKey) || (refs[index].total === 1 && flags.has(item.block))).map(item => item.numbered);
+      }
     }
     const numberedNotes = getPaperNotes({ ...sheet, objections: afterObjections });
     const number = Math.max(0, ...numberedNotes.map(item => noteNumber(item.text) || 0), numberedNotes.length) + 1;
     if (number > 999) throw new Error('메모 번호는 999번까지 기록할 수 있어요.');
     note = `${number}.`; afterObjections += `${afterObjections.trim() ? '\n\n' : ''}${note}`;
+    }
   }
   const candidate = { ...sheet, objections: afterObjections, ...(afterFlags === undefined ? {} : { donorObjections: afterFlags }), rows: sheet.rows.map(item => item === row ? { ...item, [metric]: next } : item) };
   const result = validateSheet(candidate); if (!result.valid) throw new Error(result.errors[0].message);
@@ -177,7 +219,7 @@ export function decrementPaperMetric(sheet, rowId, metric) {
     const total = getTotals(sheet).close - 1, blocks = parseObjectionBlocks(beforeObjections);
     const keep = blocks.filter(block => {
       const number = noteNumber(block);
-      return number === null || number <= total || noteIdentity(block) || beforeFlags?.includes(block);
+      return number === null || number <= total || noteIdentity(block) || beforeFlags?.some(key => objectionFlagBlock(key) === block);
     });
     // Only unused, empty placeholders disappear. Written notes keep their
     // original numbers and flags even when there are now fewer Close counts.
@@ -190,17 +232,23 @@ export function decrementPaperMetric(sheet, rowId, metric) {
   return { sheetId: sheet.id, rowId, metric, previous, next, note: null, delta: -1, beforeObjections, afterObjections, beforeFlags, beforeCases, afterCases, caseAdjusted };
 }
 export function replaceObjectionNote(sheet, block, body, donor, blockIndex) {
-  const blocks = parseObjectionBlocks(sheet.objections), index = blockIndex ?? blocks.indexOf(block);
+  const before = objectionReferences(sheet.objections), blocks = before.map(ref => ref.block), index = blockIndex ?? blocks.indexOf(block);
   if (index < 0 || blocks[index] !== block) throw new Error('이 메모가 바뀌었어요. 다시 열어 주세요.');
-  // A note editor changes one numbered block; embedded new headings must not create extra blocks.
   const prefix = block.match(/^(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))\s*/)?.[0]?.trim() || '';
   const replacement = `${prefix}${prefix && body.trim() ? ' ' : ''}${body}`.trim();
   if (!replacement) throw new Error('메모 내용을 입력해 주세요.');
   if (parseObjectionBlocks(replacement).length !== 1) throw new Error('여러 번호는 각각의 메모에서 적어 주세요.');
   blocks[index] = replacement;
-  const objections = blocks.join('\n\n'), keepOriginalFlag = blocks.some((note, i) => i !== index && note === block);
-  const flags = new Set((sheet.donorObjections || []).filter(note => note !== block || keepOriginalFlag));
-  if (donor) flags.add(replacement);
+  const objections = blocks.join('\n\n'), after = objectionReferences(objections), oldFlags = new Set(sheet.donorObjections || []), flags = new Set();
+  before.forEach(ref => {
+    if (ref.blockIndex === index) return;
+    const next = after[ref.blockIndex];
+    if (oldFlags.has(ref.occurrenceKey) || (ref.total === 1 && oldFlags.has(ref.block))) flags.add(next.key);
+    // An unrelated legacy shared flag stays ambiguous. Editing its own group
+    // resolves only the occurrence that the user explicitly selected.
+    else if (ref.total > 1 && ref.block !== block && oldFlags.has(ref.block) && next.block === ref.block && next.total === ref.total) flags.add(ref.block);
+  });
+  if (donor) flags.add(after[index].key);
   const result = validateSheet({ ...sheet, objections, donorObjections: [...flags] });
   if (!result.valid) throw new Error(result.errors[0].message);
   sheet.objections = objections;
@@ -217,30 +265,32 @@ export function setPaperNoteDonor(sheet, target, donor) {
     const slots = new Set(getPaperNotes(sheet).filter(note => note.kind === 'case' && note.rowId === row.id && note.caseId === item.id).map(note => note.slot).filter(Number.isInteger));
     // A numbered common note can be shown together with a case. Clearing its
     // checkbox clears both presentations of that same selection.
-    const flags = sheet.donorObjections?.filter(block => !slots.has(noteNumber(block)));
+    const flags = sheet.donorObjections?.filter(key => !slots.has(noteNumber(objectionFlagBlock(key))));
     const next = { ...sheet, rows: sheet.rows.map(value => value === row ? { ...row, donorCases: row.donorCases.map(value => value === item ? { ...item, donor } : value) } : value), ...(flags === undefined ? {} : { donorObjections: flags }) };
     const result = validateSheet(next); if (!result.valid) throw new Error(result.errors[0].message);
     item.donor = donor; if (flags !== undefined) sheet.donorObjections = flags;
-    return { ...target, donor, caseDonor: donor };
+    return { ...target, donor, caseDonor: donor, donorShared: false };
   }
   const blocks = parseObjectionBlocks(sheet.objections);
   let index = target.blockIndex, block = target.block;
   if (target.virtual) { index = blocks.length; blocks.push(block); }
   else if (blocks[index] !== block) throw new Error('이 메모가 바뀌었어요. 다시 열어 주세요.');
+  const objections = target.virtual ? blocks.join('\n\n') : sheet.objections, ref = objectionReferences(objections)[index];
   const flags = new Set(sheet.donorObjections || []);
-  if (donor) flags.add(block); else flags.delete(block);
-  const objections = target.virtual ? blocks.join('\n\n') : sheet.objections;
+  flags.delete(block); flags.delete(ref.occurrenceKey);
+  if (donor) flags.add(ref.key);
   const result = validateSheet({ ...sheet, objections, donorObjections: [...flags] });
   if (!result.valid) throw new Error(result.errors[0].message);
   sheet.objections = objections; sheet.donorObjections = [...flags];
-  return { ...target, virtual: false, blockIndex: index, block, donor };
+  return { ...target, virtual: false, blockIndex: index, block, donor, donorShared: false };
 }
 export function getDonorSummary(sheet) {
   const cases = sheet.rows.flatMap(row => row.donorCases || []);
   const donorCases = cases.filter(item => item.donor);
   const donorSlots = donorCases.length && sheet.donorObjections?.length ? new Set(getPaperNotes(sheet).filter(note => note.kind === 'case' && note.caseDonor).map(note => note.slot)) : new Set();
-  const flags = (sheet.donorObjections || []).filter(note => parseObjectionBlocks(sheet.objections).includes(note) && !donorSlots.has(noteNumber(note)));
-  // Distinct numbered notes are distinct selections, even with the same or empty body.
+  const storedFlags = new Set(sheet.donorObjections || []);
+  const flags = objectionReferences(sheet.objections).filter(ref => !donorSlots.has(noteNumber(ref.block))).map(ref => objectionSelection(storedFlags, ref)).filter(key => key !== null);
+  // Occurrence keys distinguish identical paragraphs without changing their text.
   if (cases.length || Array.isArray(sheet.donorObjections)) return { count: donorCases.length + new Set(flags).size, basis: 'cases' };
   if (hasValues(sheet, 'rehash')) return { count: getTotals(sheet).rehash, basis: 'rehash' };
   if (sheet.source?.type === 'photo' && sheet.source.transcription) return Number.isInteger(sheet.source.transcription.totals.rehash) ? { count: sheet.source.transcription.totals.rehash, basis: 'transcription' } : { count: null, basis: 'unknown' };
@@ -287,8 +337,8 @@ export function validateSheet(sheet) {
   }
   text(sheet.objections, 'objections');
   if (sheet.donorObjections !== undefined) {
-    const blocks = new Set(parseObjectionBlocks(sheet.objections));
-    if (!Array.isArray(sheet.donorObjections) || sheet.donorObjections.length > 500 || sheet.donorObjections.some(note => typeof note !== 'string' || !blocks.has(note)) || new Set(sheet.donorObjections).size !== sheet.donorObjections.length) error('donorObjections', '후원자 표시는 현재 특이사항의 문장과 일치해야 해요.');
+    const keys = new Set(objectionReferences(sheet.objections).flatMap(ref => [ref.block, ref.occurrenceKey]));
+    if (!Array.isArray(sheet.donorObjections) || sheet.donorObjections.length > 500 || sheet.donorObjections.some(note => typeof note !== 'string' || !keys.has(note)) || new Set(sheet.donorObjections).size !== sheet.donorObjections.length) error('donorObjections', '후원자 표시는 현재 특이사항의 문장과 일치해야 해요.');
   }
   for (const key of ['loa', 'pitch', 'attitude']) for (const polarity of ['good', 'bad']) text(sheet.review?.[key]?.[polarity], `review.${key}.${polarity}`);
   for (const key of ['createdAt', 'updatedAt']) if (typeof sheet[key] !== 'string' || !Number.isFinite(Date.parse(sheet[key]))) error(key, '기록 시간이 올바르지 않아요.');

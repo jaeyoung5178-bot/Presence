@@ -7,7 +7,7 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
   let expanded = false, subtracting = false, geometrySheetId = null, undo = null, editing = null;
   const buttons = new Map();
   function clearUndo() { undo = null; undoButton.disabled = true; }
-  function reset() { clearUndo(); subtracting = false; geometrySheetId = null; buttons.clear(); layer.replaceChildren(); editing = null; if (dialog.open) dialog.close(); $('#paper-note-body').value = ''; $('#paper-note-donor').checked = false; $('#paper-note-existing').textContent = ''; $('#paper-note-existing').hidden = true; $('#paper-note-error').textContent = ''; $('#paper-note-error').hidden = true; $('#paper-announcement').textContent = ''; donorFeedback.textContent = ''; dialog.classList.remove('is-donor'); updateMode(); }
+  function reset() { clearUndo(); subtracting = false; geometrySheetId = null; buttons.clear(); layer.replaceChildren(); editing = null; if (dialog.open) dialog.close(); $('#paper-note-body').value = ''; $('#paper-note-donor').checked = false; $('#paper-note-donor').indeterminate = false; $('#paper-note-donor').setAttribute('aria-checked', 'false'); $('#paper-note-existing').textContent = ''; $('#paper-note-existing').hidden = true; $('#paper-note-error').textContent = ''; $('#paper-note-error').hidden = true; $('#paper-announcement').textContent = ''; donorFeedback.textContent = ''; dialog.classList.remove('is-donor'); updateMode(); }
   function updateMetricButton(button, target) {
     const row = getSheet().rows.find(row => row.id === target.rowId), count = row?.[target.metric] ?? 0;
     button.setAttribute('aria-label', `${target.rowIndex + 1}행 ${row?.time || '시간 미입력'} ${LABELS[target.metric]} ${count}회 · 1회 ${subtracting ? '빼기' : '추가'}`);
@@ -76,25 +76,26 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
       if (!item) return; body = item.note; donor = !!target.donor;
     } else {
       block = target.virtual ? target.block : parseObjectionBlocks(sheet.objections)[target.blockIndex]; if (block !== target.block) return;
-      body = block.replace(/^(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))\s*/, ''); donor = !!sheet.donorObjections?.includes(block);
+      body = block.replace(/^(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))\s*/, ''); donor = !!target.donor;
     }
     $('#paper-note-existing').textContent = target.commonText ? `함께 기록된 내용 (그대로 보존돼요)\n${target.commonText}` : ''; $('#paper-note-existing').hidden = !target.commonText;
     editing = { ...target, block }; $('#paper-note-title').textContent = target.kind === 'case' ? '세일즈 케이스 메모' : `${block.match(/^(?:\d{1,3}[.)](?!\d)|[①-⑳]|\(\d{1,3}\))/)?.[0] || ''} 오브젝션 메모`.trim();
-    $('#paper-note-body').value = body; $('#paper-note-donor').checked = donor; $('#paper-note-error').hidden = true;
-    donorFeedback.textContent = '후원자 체크는 즉시 반영돼요.'; dialog.classList.toggle('is-donor', donor);
+    $('#paper-note-body').value = body; $('#paper-note-donor').indeterminate = !!target.donorShared; $('#paper-note-donor').checked = !target.donorShared && donor; $('#paper-note-donor').setAttribute('aria-checked', target.donorShared ? 'mixed' : String(donor)); $('#paper-note-error').hidden = true;
+    donorFeedback.textContent = target.donorShared ? '같은 내용의 기존 공유 표시예요. 이 메모를 체크하면 이 메모만 후원자로 선택돼요.' : '후원자 체크는 즉시 반영돼요.'; dialog.classList.toggle('is-donor', donor);
     dialog.showModal(); $('#paper-note-body').focus();
   }
   $('#paper-note-donor').addEventListener('change', () => {
     if (!editing || editing.sheetId !== getSheet().id || !isReady()) return;
     try {
       editing = setPaperNoteDonor(getSheet(), editing, $('#paper-note-donor').checked);
+      $('#paper-note-donor').indeterminate = false; $('#paper-note-donor').setAttribute('aria-checked', String(editing.donor));
       clearUndo(); onChange();
       const count = getDonorSummary(getSheet()).count;
       dialog.classList.toggle('is-donor', editing.donor);
       donorFeedback.textContent = `${editing.donor ? '후원자로 표시했어요' : '후원자 표시를 해제했어요'}${count === null ? '' : ` · 오늘 ${count}명`}. 메모 내용은 아래에서 저장해 주세요.`;
       $('#paper-note-error').hidden = true;
     } catch (error) {
-      $('#paper-note-donor').checked = !!editing.donor;
+      $('#paper-note-donor').indeterminate = !!editing.donorShared; $('#paper-note-donor').checked = !editing.donorShared && !!editing.donor; $('#paper-note-donor').setAttribute('aria-checked', editing.donorShared ? 'mixed' : String(!!editing.donor));
       $('#paper-note-error').textContent = error.message; $('#paper-note-error').hidden = false;
     }
   });
