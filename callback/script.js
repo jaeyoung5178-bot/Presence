@@ -32,7 +32,7 @@ const DIRECT_SEE = new URLSearchParams(location.search).get('view') === 'see';
 const DIRECT_SEE_CACHE = new Map();
 const DIRECT_SEE_STATE = {loaded:false,selected:false};
 function directSeeDates(){return Object.values(Store.getAll()).filter(s=>s&&!s.deleted&&s.info&&/^\d{4}-\d{2}-\d{2}$/.test(s.info.date)&&((s.logs||[]).length||(s.objections||[]).length||(s.rehashes||[]).length||s.info.site||Object.values(s.retro||{}).some(r=>r&&(r.good||r.bad)))).map(s=>s.info.date).sort().reverse();}
-function directSeeLatest(){if(DIRECT_SEE&&!DIRECT_SEE_STATE.selected){const date=directSeeDates()[0];if(date)S=Store.getSession(date)||S;}}
+function directSeeLatest(){if(DIRECT_SEE&&!DIRECT_SEE_STATE.selected){const dates=directSeeDates(),requested=new URLSearchParams(location.search).get('date'),date=dates.includes(requested)?requested:dates[0];if(date)S=Store.getSession(date)||S;}}
 
 /* ==================== Constants ==================== */
 const STAGES = ["contact", "stop", "presentation", "close", "rehash"];

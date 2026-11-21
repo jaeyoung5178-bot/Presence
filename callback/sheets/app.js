@@ -3,6 +3,8 @@ import { createSheet, fillHourlyTimes, createNextHourlyRow, fieldMinutes, create
 import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261112-close-minus1';
 import { createPaperInteraction } from './paper-interaction.js?v=20261112-close-minus1';
 import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-sync1';
+import { createCloudClient, readAccountIdentity } from './cloud.js?v=20261121-field-days1';
+import { compareFieldDays, workbookToday, validDate } from './field-days.js?v=20261121-field-days1';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -11,6 +13,8 @@ let backupURLs = [];
 let remoteOwner=owner,remoteReadConfirmed=false,remoteReadError='',accountRefresh=null;
 const accountClient=createAccountConnection();let accountTicket=0;
 let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', selectedDate = '';
+const fieldClient = createCloudClient(), fieldMonths = new Map();
+let fieldSignature = readAccountIdentity().signature, dateOnlyDraft = false;
 const invalid = new Map();
 let paperEditor;
 function error(message = '') { $('#error-banner').textContent = message; $('#error-banner').hidden = !message; }
@@ -105,7 +109,7 @@ async function editRecord(record) {
   let opened = false;
   if (sheet.id !== record.id) {
     if (!await canLeave()) return false;
-    clearTimeout(draftTimer); sheet = normalizeSheet(record); dirty = false; editVersion++; hydrate(); error();
+    clearTimeout(draftTimer); dateOnlyDraft = false; sheet = normalizeSheet(record); dirty = false; editVersion++; hydrate(); error();
     opened = true;
     status(sheet.source ? '원본을 보면서 기록을 옮겨 적어요 · 원본 사진은 그대로 보관돼요' : '저장한 기록을 열었어요 · 수정 후 다시 저장할 수 있어요');
   }
@@ -127,12 +131,12 @@ function schedulePreview() {
   }, 90);
 }
 async function persistDraft() {
-  if (!ready || invalid.size || !validateSheet(sheet).valid) return;
+  if (!ready || dateOnlyDraft || invalid.size || !validateSheet(sheet).valid) return;
   const thisOwner = owner, revision = editVersion, snapshot = structuredClone(sheet);
   try { await saveDraft(snapshot, { owner: thisOwner }); if (thisOwner === owner && revision === editVersion) { persistedDraftVersion = revision; if (dirty) status('작성 중 · 임시 저장됨'); } }
   catch (e) { if (thisOwner === owner) { error(e.message || '임시 저장하지 못했어요.'); status('임시 저장 실패 · 이 창을 유지해 주세요'); } }
 }
-function changed() { dirty = true; editVersion++; updateTotals(); updateSourceBanner(); schedulePreview(); clearTimeout(draftTimer); const validation = validateSheet(sheet); if (!invalid.size) error(validation.valid ? '' : validation.errors[0].message); status(invalid.size || !validation.valid ? '입력 확인 필요 · 임시 저장 대기' : '작성 중 · 임시 저장 중…'); if (!invalid.size && validation.valid) draftTimer = setTimeout(persistDraft, 450); }
+function changed() { dateOnlyDraft = false; dirty = true; editVersion++; updateTotals(); updateSourceBanner(); schedulePreview(); clearTimeout(draftTimer); const validation = validateSheet(sheet); if (!invalid.size) error(validation.valid ? '' : validation.errors[0].message); status(invalid.size || !validation.valid ? '입력 확인 필요 · 임시 저장 대기' : '작성 중 · 임시 저장 중…'); if (!invalid.size && validation.valid) draftTimer = setTimeout(persistDraft, 450); }
 function checkValid() {
   if (invalid.size) { const [path, message] = invalid.entries().next().value; error(message); $$('[data-field]').find(input => input.dataset.field === path)?.focus(); return false; }
   const result = validateSheet(sheet);
@@ -147,7 +151,7 @@ async function confirmAction(title, copy, accept = '계속') {
 async function canLeave() { return !dirty || await confirmAction('작성 중인 기록이 있어요', '보관함에 남기려면 먼저 콜백싯 저장을 눌러 주세요. 계속하면 현재의 미저장 변경은 지워져요.', '변경 버리고 계속'); }
 async function newSheet() {
   if (!await canLeave()) return;
-  clearTimeout(draftTimer); sheet = createSheet(); dirty = false; editVersion++; error(); hydrate(); $('#archive-dialog').close(); view('edit');
+  clearTimeout(draftTimer); dateOnlyDraft = false; sheet = createSheet(); dirty = false; editVersion++; error(); hydrate(); $('#archive-dialog').close(); view('edit');
   await persistDraft(); status('새로운 하루 · 기록을 시작해 보세요'); window.scrollTo({ top: 0, behavior: 'smooth' }); $('#sheet-name').focus({ preventScroll: true });
 }
 function dedupeRecords(loaded) {
@@ -160,6 +164,65 @@ function dedupeRecords(loaded) {
   });
 }
 async function refreshRecords() { const thisOwner = owner, loaded = await loadSheets(); if (thisOwner !== owner) return; records = dedupeRecords(loaded); $('#archive-count').textContent = records.length; renderArchive(); }
+function fieldState() {
+  const identity = readAccountIdentity();
+  return { identity, key: `${identity.signature}|${archiveMonth}`, value: fieldMonths.get(`${identity.signature}|${archiveMonth}`) };
+}
+function fieldComparisons() {
+  const { value } = fieldState(), connection = getStorageStatus();
+  if (owner !== connection.namespace) return [];
+  return value?.phase === 'ready' ? compareFieldDays(value.data.days, records, { archiveConfirmed: remoteReadConfirmed && !remoteReadError, archivePending: connection.pending > 0 }) : [];
+}
+function ensureFieldMonth() {
+  const { identity, key, value } = fieldState(), month = archiveMonth;
+  if (!identity.uid || value) return;
+  fieldMonths.set(key, { phase: 'loading' });
+  fieldClient.readFieldMonth(identity, month, workbookToday()).then(data => {
+    if (readAccountIdentity().signature !== identity.signature) return;
+    fieldMonths.set(key, { phase: 'ready', data });
+    if (archiveMonth === month) renderArchive();
+  }).catch(() => {
+    if (readAccountIdentity().signature !== identity.signature) return;
+    fieldMonths.set(key, { phase: 'error' });
+    if (archiveMonth === month) renderArchive();
+  });
+}
+function renderFieldDays() {
+  const { identity, value } = fieldState(), panel = $('#field-days-panel'), statusText = $('#field-days-status'), list = $('#field-days-list');
+  if (!dirty) $('#field-days-draft').hidden = true;
+  panel.dataset.state = !identity.uid ? 'guest' : value?.phase || 'loading';
+  $('#field-days-retry').hidden = !identity.uid || value?.phase === 'loading';
+  $('#field-days-notice').textContent = '';
+  list.innerHTML = '';
+  if (!identity.uid) { statusText.textContent = '계정을 연결하면 필드 뛴 날과 콜백싯 기록을 함께 확인할 수 있어요.'; return; }
+  if (!value || value.phase === 'loading') { statusText.textContent = '워크북의 나의 필드 달력과 저장 기록을 확인하고 있어요…'; return; }
+  if (value.phase === 'error') { statusText.textContent = '필드 달력을 불러오지 못했어요.'; $('#field-days-notice').textContent = '기록 유무를 단정하지 않았어요. 다시 확인해 주세요. 기존 콜백싯은 그대로 보관돼요.'; return; }
+  const days = fieldComparisons(), missing = days.filter(day => day.recordStatus === 'missing'), found = days.filter(day => ['paper', 'legacy'].includes(day.recordStatus)), unknown = days.filter(day => day.recordStatus === 'unknown');
+  if (days.length) statusText.innerHTML = `<span>필드 ${days.length}일</span><span>기록 있는 날 ${found.length}일</span><span class="field-needs-total">작성필요 ${missing.length}일</span>${unknown.length ? `<span>확인필요 ${unknown.length}일</span>` : ''}`;
+  else statusText.textContent = '이 달에는 확인된 필드 근무일이 없어요.';
+  $('#field-days-notice').textContent = [!value.data.firstFieldVerified ? '첫 필드 시작일은 연결 권한 안에서 확인하지 못했어요. 아래는 실제 세일즈가 저장된 근무일이에요.' : '', unknown.length ? '확인필요 날짜는 기록 조회나 사진 날짜 확인이 끝나야 작성 여부를 알 수 있어요.' : '', '휴무·랠리·미입력·미래 날짜는 제외해요. 저장한 0건은 필드 근무일에 포함해요.'].filter(Boolean).join(' ');
+  list.innerHTML = days.map(day => {
+    const label = day.recordStatus === 'missing' ? '작성필요' : day.recordStatus === 'paper' ? (day.localPending ? '이 기기 저장' : '저장기록') : day.recordStatus === 'legacy' ? '기존 기록 있음' : '확인필요';
+    const dateLabel = formatDate(day.date);
+    const action = day.recordStatus === 'missing' ? `<button type="button" class="button field-date-action" data-start-field-date="${day.date}" aria-label="${esc(dateLabel)} 콜백싯 작성">작성하기 ↗</button>`
+      : day.recordStatus === 'legacy' ? `<a class="button secondary field-date-action" href="../index.html?view=see&date=${day.date}">기존 기록 보기 ↗</a>`
+      : day.recordStatus === 'paper' ? `<button type="button" class="button secondary field-date-action" data-show-field-date="${day.date}">저장 기록 보기</button>` : '';
+    return `<li class="field-day-item" data-record-status="${day.recordStatus}"><div><strong>${esc(dateLabel)}</strong><span class="field-day-label">${label}</span></div>${action}</li>`;
+  }).join('');
+}
+async function startFieldDate(date) {
+  if (!validDate(date) || !fieldComparisons().some(day => day.date === date && day.recordStatus === 'missing')) return;
+  if (!ready) { toast('작성 중인 기록을 확인하고 있어요. 잠시 후 다시 눌러 주세요.'); return; }
+  if (dirty) {
+    if (sheet.date === date) { $('#archive-dialog').close(); view('edit'); $('#sheet-date').focus(); return; }
+    toast(`${formatDate(sheet.date)}에 작성 중인 기록이 있어요. 먼저 저장한 뒤 다른 날짜를 작성해 주세요.`);
+    $('#field-days-draft').hidden = false; $('#field-days-continue').focus(); return;
+  }
+  clearTimeout(draftTimer); paperEditor?.reset(); sheet = createSheet(); sheet.date = date;
+  sheet.meta.name = fieldState().value?.data.name || ''; dirty = false; dateOnlyDraft = true; editVersion++; error(); hydrate();
+  $('#archive-dialog').close(); view('edit'); status(`${formatDate(date)} 콜백싯 · 내용을 입력한 뒤 저장해 주세요`);
+  window.scrollTo({ top: 0 }); $('#sheet-date').focus({ preventScroll: true });
+}
 function donorGroupSummary(group) {
   return group.reduce((summary, record) => { const donor = getDonorSummary(record); if (donor.count === null) summary.unknown++; else summary.known += donor.count; return summary; }, { known: 0, unknown: 0 });
 }
@@ -173,20 +236,22 @@ function renderCalendar() {
   $('#calendar-month-label').textContent = `${year}년 ${month}월`;
   const total = donorGroupSummary(monthRecords);
   $('#calendar-summary').textContent = monthRecords.length ? (total.unknown === monthRecords.length ? `후원자 미확인 · 미확인 기록 ${total.unknown}개` : `후원자 ${total.known.toLocaleString()}명${total.unknown ? ` + 미확인 기록 ${total.unknown}개` : ''} · 콜백싯 ${monthRecords.length}개`) : (getStorageStatus().uid ? ((!remoteReadConfirmed||remoteReadError)?'개인 기록을 확인하지 못했어요. 다시 불러오기를 눌러 주세요.':'이 달에는 저장된 콜백싯이 없어요.') : '현재 기기에서 확인되는 기록이 없어요. 개인 연결과 이전 콜백싯을 확인해 주세요.');
-  const first = new Date(year, month - 1, 1).getDay(), days = new Date(year, month, 0).getDate(), today = localDate();
+  const first = new Date(year, month - 1, 1).getDay(), days = new Date(year, month, 0).getDate(), today = workbookToday(), fieldByDate = new Map(fieldComparisons().map(day => [day.date, day]));
   let markup = '<span class="calendar-pad" aria-hidden="true"></span>'.repeat(first);
   for (let day = 1; day <= days; day++) {
     const date = `${archiveMonth}-${String(day).padStart(2, '0')}`, group = byDate.get(date) || [], counts = donorGroupSummary(group), unknownOnly = counts.unknown === group.length && group.length > 0;
-    const detail = group.length ? `${unknownOnly ? '후원자 미확인' : `후원자 ${counts.known}명${counts.unknown ? ' 및 미확인 기록 있음' : ''}`}, 콜백싯 ${group.length}개` : '기록 없음';
-    markup += `<button class="calendar-day${group.length ? ' has-record' : ''}${date === today ? ' is-today' : ''}${date === selectedDate ? ' is-selected' : ''}" data-calendar-date="${date}" aria-label="${year}년 ${month}월 ${day}일, ${detail}" ${date === today ? 'aria-current="date"' : ''} ${!group.length ? 'disabled' : ''}><span class="calendar-date">${day}</span>${group.length ? `<span class="calendar-donors ${unknownOnly ? 'is-unknown' : ''}">${unknownOnly ? '미확인' : `${counts.known}명${counts.unknown ? '+?' : ''}`}</span>${group.length > 1 ? `<span class="calendar-record-count">${group.length}개</span>` : ''}` : ''}</button>`;
+    const field = fieldByDate.get(date), missing = field?.recordStatus === 'missing', legacy = field?.recordStatus === 'legacy', uncertain = field?.recordStatus === 'unknown';
+    const detail = missing ? '필드 근무일, 콜백싯 작성필요' : legacy ? '필드 근무일, 기존 콜백싯 기록 있음' : uncertain ? '필드 근무일, 기록 확인필요' : group.length ? `${unknownOnly ? '후원자 미확인' : `후원자 ${counts.known}명${counts.unknown ? ' 및 미확인 기록 있음' : ''}`}, 콜백싯 ${group.length}개` : '기록 없음';
+    markup += `<button class="calendar-day${group.length ? ' has-record' : ''}${missing ? ' needs-record' : ''}${legacy ? ' has-field-record' : ''}${uncertain ? ' field-unknown' : ''}${date === today ? ' is-today' : ''}${date === selectedDate ? ' is-selected' : ''}" data-calendar-date="${date}" aria-label="${year}년 ${month}월 ${day}일, ${detail}" ${date === today ? 'aria-current="date"' : ''} ${!group.length && !field ? 'disabled' : ''}><span class="calendar-date">${day}</span>${missing || legacy || uncertain ? `<span class="calendar-field-label">${missing ? '작성필요' : legacy ? '기존기록' : '확인필요'}</span>` : group.length ? `<span class="calendar-donors ${unknownOnly ? 'is-unknown' : ''}">${unknownOnly ? '미확인' : `${counts.known}명${counts.unknown ? '+?' : ''}`}</span>${group.length > 1 ? `<span class="calendar-record-count">${group.length}개</span>` : ''}` : ''}</button>`;
   }
   $('#calendar-grid').innerHTML = markup;
 }
 function renderArchive() {
   const connection=getStorageStatus();$('#archive-error').hidden=!remoteReadError;$('#archive-error').textContent=remoteReadError;$('#archive-retry').hidden=!connection.uid||(!remoteReadError&&remoteReadConfirmed);
 
-  const query = $('#archive-search').value.trim().toLocaleLowerCase(), currentMonth = localDate().slice(0, 7);
-  if (!archiveMonth || !archiveMonthChosen) archiveMonth = records.some(record => record.date.startsWith(currentMonth)) || !records.length ? currentMonth : records.map(record => record.date.slice(0, 7)).sort().at(-1);
+  const query = $('#archive-search').value.trim().toLocaleLowerCase(), currentMonth = workbookToday().slice(0, 7);
+  if (!archiveMonth || !archiveMonthChosen) archiveMonth = getStorageStatus().uid || records.some(record => record.date.startsWith(currentMonth)) || !records.length ? currentMonth : records.map(record => record.date.slice(0, 7)).sort().at(-1);
+  ensureFieldMonth(); renderFieldDays();
   $('#archive-month').value = archiveMonth;
   $('#archive-calendar').hidden = archiveView === 'list' || !!query;
   $('#archive-view-toggle').textContent = archiveView === 'calendar' ? '목록으로 보기' : '달력으로 보기';
@@ -219,6 +284,7 @@ async function saveCurrent() {
   try {
     const result = await saveSheet(structuredClone(sheet), { owner: thisOwner });
     if (thisOwner !== owner || currentId !== sheet.id) return;
+    dateOnlyDraft = false;
     if (revision === editVersion) { sheet = result.sheet; dirty = false; } else { sheet.id = result.sheet.id; sheet.updatedAt = result.sheet.updatedAt; }
     await saveDraft(structuredClone(sheet), { owner }); await refreshRecords();
     status(dirty ? '기록 저장됨 · 이후 변경은 임시 저장됨' : '보관함에 저장됨'); toast(result.conflict ? '다른 창의 변경을 보호하기 위해 별도 기록으로 저장했어요.' : `${formatDate(sheet.date)} 콜백싯을 저장했어요.`);
@@ -276,7 +342,7 @@ async function importBackup(file) {
   finally { $('#import-file').value = ''; }
 }
 async function loadNamespace() {
-  const epoch = ++loadEpoch; ready = false; paperEditor?.reset(); clearTimeout(draftTimer); owner = getStorageStatus().namespace; invalid.clear(); dirty = false; archiveMonth = ''; archiveMonthChosen = false; selectedDate = '';
+  const epoch = ++loadEpoch; ready = false; dateOnlyDraft = false; paperEditor?.reset(); clearTimeout(draftTimer); owner = getStorageStatus().namespace; records = []; invalid.clear(); dirty = false; archiveMonth = ''; archiveMonthChosen = false; selectedDate = '';
   try {
     const draft = await loadDraft(); if (epoch !== loadEpoch) return;
     sheet = draft ? normalizeSheet(draft) : createSheet(); editVersion++; persistedDraftVersion = editVersion; hydrate(); await refreshRecords(); if (epoch !== loadEpoch) return;
@@ -287,6 +353,8 @@ async function syncAccountRecords(){const namespace=getStorageStatus().namespace
 async function preserveGuestDraft(){if(!dirty)return;if(invalid.size||!validateSheet(sheet).valid)throw Object.assign(new Error('작성 중인 내용을 먼저 확인해 주세요. 현재 기록은 이 창에 그대로 있어요.'),{code:'callback/draft-unconfirmed'});await persistDraft();if(persistedDraftVersion!==editVersion)throw Object.assign(new Error('작성 중인 기록을 보관하지 못했어요. 이 창을 유지하고 다시 시도해 주세요.'),{code:'callback/draft-unconfirmed'});}
 function storageStatusChanged(value = getStorageStatus()) {
   const next = value?.namespace ? value : getStorageStatus();
+  const signature = readAccountIdentity().signature;
+  if (fieldSignature !== signature) { fieldSignature = signature; fieldMonths.clear(); $('#field-days-draft').hidden = true; }
   if(remoteOwner!==next.namespace){remoteOwner=next.namespace;remoteReadConfirmed=false;remoteReadError='';}
   if(next.uid&&next.phase==='error'&&next.error){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';}
   $('#open-account-connect').hidden=!!next.uid;
@@ -341,6 +409,10 @@ $('#archive-view-toggle').addEventListener('click', () => { archiveView = archiv
 $('#calendar-clear-date').addEventListener('click', () => { selectedDate = ''; renderArchive(); });
 $('#calendar-grid').addEventListener('click', async event => {
   const button = event.target.closest('[data-calendar-date]'); if (!button || button.disabled) return;
+  const field = fieldComparisons().find(day => day.date === button.dataset.calendarDate);
+  if (field?.recordStatus === 'missing') { await startFieldDate(field.date); return; }
+  if (field?.recordStatus === 'legacy' && !records.some(record => record.date === field.date)) { location.href = `../index.html?view=see&date=${field.date}`; return; }
+  if (field?.recordStatus === 'unknown' && !records.some(record => record.date === field.date)) { toast('이 날짜의 기록은 확인이 더 필요해요. 필드 달력 다시 확인을 눌러 주세요.'); return; }
   const group = records.filter(record => record.date === button.dataset.calendarDate);
   if (group.length === 1) { if (group[0].source?.type === 'photo') openSource(group[0]); else await editRecord(group[0]); }
   else { selectedDate = button.dataset.calendarDate; renderArchive(); $('#calendar-selection').scrollIntoView({ block: 'nearest' }); $('#archive-list [data-open-sheet]')?.focus({ preventScroll: true }); }
@@ -355,6 +427,13 @@ $('#archive-list').addEventListener('click', async event => {
   if (open) { const record = records.find(item => item.id === open.dataset.openSheet); if (!record) return; if (record.source?.type === 'photo') openSource(record); else await editRecord(record); }
   if (remove) { const record = records.find(item => item.id === remove.dataset.deleteSheet); if (!record || !await confirmAction('이 콜백싯을 삭제할까요?', `${formatDate(record.date)} 기록을 보관함에서 삭제해요. 삭제 전 전체 백업으로 보관할 수 있어요.`, '기록 삭제')) return; try { await deleteSheet(record.id, { owner }); if (sheet.id === record.id) { sheet = createSheet(); dirty = false; hydrate(); await clearDraft({ owner }); } await refreshRecords(); toast('콜백싯을 삭제했어요.'); } catch (e) { toast(e.message); } }
 });
+$('#field-days-list').addEventListener('click', async event => {
+  const start = event.target.closest('[data-start-field-date]'), show = event.target.closest('[data-show-field-date]');
+  if (start) await startFieldDate(start.dataset.startFieldDate);
+  if (show) { selectedDate = show.dataset.showFieldDate; $('#archive-search').value = ''; renderArchive(); $('#calendar-selection').scrollIntoView({ block: 'nearest' }); $('#archive-list [data-open-sheet]')?.focus({ preventScroll: true }); }
+});
+$('#field-days-retry').addEventListener('click', () => { fieldMonths.delete(fieldState().key); renderArchive(); });
+$('#field-days-continue').addEventListener('click', () => { $('#archive-dialog').close(); view('edit'); $('#sheet-date').focus(); });
 $('#backup-export').addEventListener('click', exportBackup); $('#backup-import').addEventListener('click', () => $('#import-file').click()); $('#import-file').addEventListener('change', event => importBackup(event.target.files[0]));
 $('#image-share').addEventListener('click', async () => { try { await navigator.share({ files: [imageFile], title: `콜백싯 ${sheet.date}` }); } catch (e) { if (e.name !== 'AbortError') toast('공유를 열지 못했어요. PNG 다운로드를 이용해 주세요.'); } });
 $('#open-source').addEventListener('click', () => openSource(sheet));
