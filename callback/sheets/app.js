@@ -12,7 +12,7 @@ let sheet = createSheet(), records = [], owner = getStorageStatus().namespace, d
 let backupURLs = [];
 let remoteOwner=owner,remoteReadConfirmed=false,remoteReadError='',accountRefresh=null;
 const accountClient=createAccountConnection();let accountTicket=0;
-let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', selectedDate = '';
+let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', selectedDate = '', archivePurpose = 'view', archiveViewBeforePicker = null;
 const fieldClient = createCloudClient(), fieldMonths = new Map();
 let fieldSignature = readAccountIdentity().signature, dateOnlyDraft = false;
 const invalid = new Map();
@@ -189,6 +189,8 @@ function ensureFieldMonth() {
 }
 function renderFieldDays() {
   const { identity, value } = fieldState(), panel = $('#field-days-panel'), statusText = $('#field-days-status'), list = $('#field-days-list');
+  const count = $('#choose-field-date-count');
+  count.textContent = !identity.uid ? '연결' : value?.phase === 'ready' ? `${fieldComparisons().filter(day => day.recordStatus === 'missing').length}일` : value?.phase === 'error' ? '재확인' : '확인 중';
   if (!dirty) $('#field-days-draft').hidden = true;
   panel.dataset.state = !identity.uid ? 'guest' : value?.phase || 'loading';
   $('#field-days-retry').hidden = !identity.uid || value?.phase === 'loading';
@@ -271,12 +273,24 @@ function renderArchive() {
   const byId = new Map(filtered.filter(record => record.source).map(record => [record.id, record]));
   $$('[data-source-thumb]').forEach(image => { image.src = byId.get(image.dataset.sourceThumb).source.imageDataUrl; });
 }
-async function openArchive() {
+async function openArchive({ purpose = 'view' } = {}) {
+  archivePurpose = purpose;
+  if (purpose === 'write') {
+    archiveViewBeforePicker = { month: archiveMonth, chosen: archiveMonthChosen, view: archiveView, date: selectedDate, query: $('#archive-search').value };
+    archiveMonth = workbookToday().slice(0, 7); archiveMonthChosen = true; archiveView = 'calendar'; selectedDate = ''; $('#archive-search').value = '';
+  }
+  $('#archive-title').textContent = purpose === 'write' ? '작성할 날짜 선택' : '내 콜백싯';
   if (!$('#archive-dialog').open) $('#archive-dialog').showModal();
   $('#archive-loading').hidden = false; $('#archive-error').hidden = true; $('#archive-dialog').setAttribute('aria-busy', 'true'); renderArchive();
   try { await refreshRecords(); }
   catch (e) { $('#archive-error').textContent = e.message || '기록을 불러오지 못했어요. 다시 열어 주세요.'; $('#archive-error').hidden = false; }
-  finally { $('#archive-loading').hidden = true; $('#archive-dialog').removeAttribute('aria-busy'); }
+  finally {
+    $('#archive-loading').hidden = true; $('#archive-dialog').removeAttribute('aria-busy');
+    if (purpose === 'write' && $('#archive-dialog').open) {
+      $('#archive-calendar').scrollIntoView({ block: 'start' });
+      ($('#calendar-grid .needs-record') || $('#calendar-prev')).focus({ preventScroll: true });
+    }
+  }
 }
 async function saveCurrent() {
   if (!checkValid()) return;
@@ -400,7 +414,14 @@ $('#time-rows').addEventListener('click', async event => {
 $('#add-row').addEventListener('click', () => { paperEditor?.clearUndo(); if (!checkValid() || sheet.rows.length >= MAX_ROWS) return; sheet.rows.push(createNextHourlyRow(sheet.rows.at(-1))); renderRows(); changed(); $(`[data-field="rows.${sheet.rows.length - 1}.time"]`).focus(); });
 $$('[data-view]').forEach(button => button.addEventListener('click', () => view(button.dataset.view)));
 $('#save-sheet').addEventListener('click', saveCurrent); $('#export-image').addEventListener('click', exportImage);
-$('#open-archive').addEventListener('click', openArchive); $('#new-sheet').addEventListener('click', newSheet); $('#archive-new').addEventListener('click', newSheet);
+$('#open-archive').addEventListener('click', () => openArchive()); $('#new-sheet').addEventListener('click', newSheet); $('#archive-new').addEventListener('click', newSheet);
+$('#choose-field-date').addEventListener('click', () => openArchive({ purpose: 'write' }));
+$('#archive-dialog').addEventListener('close', () => {
+  if (archivePurpose === 'write' && archiveViewBeforePicker) {
+    const previous = archiveViewBeforePicker; archiveMonth = previous.month; archiveMonthChosen = previous.chosen; archiveView = previous.view; selectedDate = previous.date; $('#archive-search').value = previous.query;
+  }
+  archivePurpose = 'view'; archiveViewBeforePicker = null; $('#archive-title').textContent = '내 콜백싯';
+});
 $$('[data-close-dialog]').forEach(button => button.addEventListener('click', () => $(`#${button.dataset.closeDialog}`).close()));
 $('#archive-search').addEventListener('input', renderArchive);
 $('#archive-month').addEventListener('input', event => { if (/^\d{4}-\d{2}$/.test(event.target.value)) { archiveMonth = event.target.value; archiveMonthChosen = true; selectedDate = ''; } renderArchive(); });
