@@ -301,6 +301,7 @@ function restoreArchiveView() {
   if (archivePurpose === 'write' && archiveViewBeforePicker) {
     const previous = archiveViewBeforePicker; archiveMonth = previous.month; archiveMonthChosen = previous.chosen; archiveView = previous.view; selectedDate = previous.date; $('#archive-search').value = previous.query;
   }
+  if (archivePurpose === 'write') $('.archive-mode').after($('#archive-calendar'));
   archivePurpose = 'view'; archiveViewBeforePicker = null; $('#archive-title').textContent = '내 콜백싯';
 }
 async function openArchive({ purpose = 'view' } = {}) {
@@ -309,6 +310,7 @@ async function openArchive({ purpose = 'view' } = {}) {
   if (purpose === 'write') {
     archiveViewBeforePicker = { month: archiveMonth, chosen: archiveMonthChosen, view: archiveView, date: selectedDate, query: $('#archive-search').value };
     archiveMonth = workbookToday().slice(0, 7); archiveMonthChosen = true; archiveView = 'calendar'; selectedDate = ''; $('#archive-search').value = '';
+    $('#archive-dialog .dialog-heading').after($('#archive-calendar'));
   }
   $('#archive-title').textContent = purpose === 'write' ? '작성할 날짜 선택' : '내 콜백싯';
   if (!$('#archive-dialog').open) $('#archive-dialog').showModal();
@@ -318,7 +320,7 @@ async function openArchive({ purpose = 'view' } = {}) {
   finally {
     $('#archive-loading').hidden = true; $('#archive-dialog').removeAttribute('aria-busy');
     if (purpose === 'write' && $('#archive-dialog').open) {
-      $('#archive-calendar').scrollIntoView({ block: 'start' });
+      $('#archive-dialog .dialog-shell').scrollTop = 0;
       ($('#calendar-grid .needs-record') || $('#calendar-prev')).focus({ preventScroll: true });
     }
   }
