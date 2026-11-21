@@ -1,5 +1,6 @@
-import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261009-transcription1';
+import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261122-quick1';
 import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261009-sync1';
+import { sameSheetContent, validBaseDate, DateMoveConflictError } from './sheet-content.js?v=20261122-date-move1';
 
 const DB_NAME = 'presence-paper-sheets-v1';
 const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(id);
@@ -46,7 +47,7 @@ class PhotoImportConflictError extends Error {
   constructor() { super('이미 있는 원본 사진 ID에 다른 사진 파일이 연결되어 있어 가져오지 않았어요. 기존 기록은 유지돼요.'); this.name = 'PhotoImportConflictError'; }
 }
 const localError = error => {
-  if (error instanceof IdentityChangedError || error instanceof PhotoImportConflictError) return error;
+  if (error instanceof IdentityChangedError || error instanceof PhotoImportConflictError || error instanceof DateMoveConflictError) return error;
   const wrapped = new Error(error?.name === 'QuotaExceededError'
     ? '브라우저 저장 공간이 부족해 저장하지 못했어요. 사진이나 JSON 백업을 먼저 내려받아 주세요.'
     : '이 브라우저에 저장하지 못했어요. 입력 내용을 유지한 채 다시 시도하거나 JSON으로 백업해 주세요.');
@@ -68,7 +69,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
   eventTarget = globalThis.window, broadcast = typeof BroadcastChannel === 'function' ? new BroadcastChannel(dbName) : null,
 } = {}) {
   let databasePromise, queue = Promise.resolve(), current = readIdentity();
-  let status = { namespace: current.namespace, uid: current.uid, name: current.name, mode: 'local', phase: 'idle', pending: 0, error: '', conflicts: 0,
+  let status = { namespace: current.namespace, uid: current.uid, name: current.name, mode: 'local', phase: 'idle', pending: 0, error: '', conflicts: 0, blockedDateMoves: 0,
     message: current.uid ? '계정 연결 확인 중 · 이 브라우저에 먼저 저장해요' : '이 브라우저에 저장 · 기기 간 동기화는 개인 콜백 링크 연결 후 사용할 수 있어요' };
   const listeners = new Set();
   function emit(patch = {}) {
@@ -79,7 +80,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
     const next = readIdentity();
     if (next.signature !== current.signature) {
       current = next;
-      emit({ namespace: next.namespace, uid: next.uid, name: next.name, mode: 'local', phase: 'idle', pending: 0, error: '', conflicts: 0,
+      emit({ namespace: next.namespace, uid: next.uid, name: next.name, mode: 'local', phase: 'idle', pending: 0, error: '', conflicts: 0, blockedDateMoves: 0,
         message: next.uid ? '계정이 바뀌었어요. 이 계정의 기록을 불러와 주세요.' : '이 브라우저의 개인 기록을 불러와 주세요.' });
     }
     if (owner !== undefined && owner !== next.namespace) throw new IdentityChangedError();
@@ -150,8 +151,10 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       ...(malformed ? { error: '읽을 수 없는 기록이 있어 원본을 보존했어요.', message: '일부 기록 형식을 확인할 수 없어요. 기존 데이터는 삭제하지 않았어요.' } : {}) });
     return records;
   }
-  function makeRecord(ctx, sheet, previous = null) {
+  function makeRecord(ctx, sheet, previous = null, baseDate = '') {
+    const dateMoveFrom = previous?.dateMoveFrom || (previous && !previous.document.deleted && (previous.document.sheet.date !== sheet.date || (validBaseDate(baseDate) && baseDate !== sheet.date)) ? previous.document.sheet.date : '');
     return { key: recordKey(ctx.namespace, sheet.id), namespace: ctx.namespace, id: sheet.id, pending: true,
+      ...(dateMoveFrom ? { dateMoveFrom } : {}),
       baseRevision: previous?.baseRevision || null,
       document: { version: 1, revision: makeId(), deleted: false, updatedAt: sheet.updatedAt, sheet } };
   }
@@ -164,17 +167,48 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
           latest.pending = false;
           latest.baseRevision = submitted.document.revision;
           latest.originalImport = false;
+          delete latest.dateMoveFrom;
           clearMetadataFill(latest);
           records.put(latest);
         } else if (latest.baseRevision === submitted.baseRevision) {
           // Another tab edited while this request was in flight. Its edit remains pending, based on
           // the version we just successfully wrote, rather than being erased by the acknowledgement.
           latest.baseRevision = submitted.document.revision;
+          if (latest.dateMoveFrom) {
+            if (latest.document.sheet?.date === submitted.document.sheet?.date) delete latest.dateMoveFrom;
+            else latest.dateMoveFrom = submitted.document.sheet.date;
+          }
           records.put(latest);
         }
         done(true);
       });
     });
+  }
+  async function rebaseEquivalent(ctx, submitted, initialRemote) {
+    let row = submitted, remote = initialRemote;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (!remote.data || remote.data.deleted || !sameSheetContent(row.document.sheet, remote.data.sheet)
+        || ![row.document.sheet.date, row.dateMoveFrom].filter(Boolean).includes(remote.data.sheet.date)) return { matched: false };
+      const updatedAt = nextDate(Date.parse(remote.data.updatedAt) > Date.parse(row.document.updatedAt) ? remote.data.updatedAt : row.document.updatedAt);
+      const rebased = { ...row, document: { ...row.document, revision: makeId(), updatedAt, sheet: { ...row.document.sheet, updatedAt } } };
+      const accepted = await transaction(ctx, ['records'], 'readwrite', ({ records }, done, guard) => {
+        records.get(row.key).onsuccess = guard(event => {
+          const current = event.target.result;
+          if (!current || current.document.revision !== row.document.revision) { done(false); return; }
+          records.put(rebased); done(true);
+        });
+      });
+      if (!accepted) return { matched: true, changed: true };
+      row = rebased;
+      const response = await cloud.write(row.id, row.document, remote.etag, ctx);
+      assertIdentity(ctx);
+      if (response.ok) { await acknowledge(ctx, row); return { matched: true, sheet: copy(row.document.sheet) }; }
+      if (response.status !== 412) throw new Error('날짜 변경을 서버에서 확인하지 못했어요. 입력 내용은 이 기기에 보관돼요.');
+      remote = await cloud.read(row.id, ctx);
+      assertIdentity(ctx);
+      if (remote.data && !validDocument(remote.data, row.id)) throw new Error('서버 기록 형식이 달라 날짜를 옮기지 않았어요.');
+    }
+    throw new DateMoveConflictError('다른 곳에서 저장이 계속 진행 중이에요. 새 기록으로 복사하지 않고 입력 내용을 보관했어요. 잠시 후 다시 저장해 주세요.');
   }
   async function preserveConflict(ctx, submitted, remote) {
     return transaction(ctx, ['records'], 'readwrite', ({ records }, done, guard) => {
@@ -268,17 +302,19 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
   }
   async function synchronize(ctx) {
     const forks = new Map();
+    const rebased = new Map();
+    const blockedConflicts = new Map();
     const skippedOriginals = new Map();
     assertIdentity(ctx);
     if (!ctx.uid) {
       await refreshCount(ctx, { phase: 'idle', mode: 'local', error: '', message: '이 브라우저에 저장 · 개인 콜백 링크 연결 전 기록은 자동 업로드되지 않아요' });
-      return { forks, skippedOriginals, cloudSaved: false };
+      return { forks, rebased, blockedConflicts, skippedOriginals, cloudSaved: false };
     }
     if (globalThis.navigator?.onLine === false) {
       await refreshCount(ctx, { phase: 'idle', error: '', message: '오프라인 · 이 브라우저에 저장했어요. 연결되면 동기화를 다시 시도해요.' });
-      return { forks, skippedOriginals, cloudSaved: false };
+      return { forks, rebased, blockedConflicts, skippedOriginals, cloudSaved: false };
     }
-    emit({ phase: 'syncing', error: '', message: '계정의 콜백싯을 동기화하고 있어요…' });
+    emit({ phase: 'syncing', error: '', blockedDateMoves: 0, message: '계정의 콜백싯을 동기화하고 있어요…' });
     try {
       // Read first to validate the session and ensure the whole archive is readable before any push.
       const initial = await cloud.readAll(ctx);
@@ -290,6 +326,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       // Forks created by conflicts are also uploaded in this pass. Bound work when another tab edits.
       for (let pass = 0; pass < 2 && pending.length; pass++) {
         for (const row of pending) {
+          if (blockedConflicts.has(row.id)) continue;
           assertIdentity(ctx);
           if (!validDocument(row.document, row.id)) throw new Error('일부 로컬 기록을 읽을 수 없어 원본을 보존했어요.');
           let remote = await cloud.read(row.id, ctx);
@@ -310,6 +347,15 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
             if (!row.document.deleted && (row.originalImport || hasMetadataFill(row)) && remote.data
               && await resolvePhotoOriginal(ctx, row, remote, skippedOriginals)) continue;
           }
+          if (!row.document.deleted && remote.data && !remote.data.deleted) {
+            let equivalent;
+            try { equivalent = await rebaseEquivalent(ctx, row, remote); }
+            catch (error) { if (!(error instanceof DateMoveConflictError)) throw error; blockedConflicts.set(row.id, error); continue; }
+            if (equivalent.matched) { if (equivalent.sheet) rebased.set(row.id, equivalent.sheet); continue; }
+          }
+          if (row.dateMoveFrom || (!row.document.deleted && remote.data && !remote.data.deleted && remote.data.sheet.date !== row.document.sheet.date)) {
+            blockedConflicts.set(row.id, new DateMoveConflictError()); continue;
+          }
           const fork = await preserveConflict(ctx, row, remote.data);
           conflicts++;
           if (fork) forks.set(row.id, fork.document.sheet);
@@ -323,15 +369,17 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         assertIdentity(ctx);
         await mergeRemote(ctx, remote);
       }
-      await refreshCount(ctx, { phase: 'idle', mode: 'connected', error: '', conflicts,
-        message: conflicts ? '다른 곳에서 변경된 기록이 있어요. 서버 기록을 유지하고 내 수정본은 별도 기록으로 보존했어요.' : '계정에 동기화했어요 · 다른 기기에서도 같은 개인 콜백 링크로 열 수 있어요' });
-      if (status.pending) emit({ message: '이 브라우저에 저장했어요. 아직 동기화할 기록이 남아 있어요.' });
+      const blockedMessage = blockedConflicts.size ? '날짜 변경을 확인해야 하는 기록이 있어요. 서버 원본과 이 기기의 입력은 각각 보존했어요. 다른 날짜의 저장은 계속할 수 있어요.' : '';
+      await refreshCount(ctx, { phase: blockedConflicts.size ? 'error' : 'idle', mode: 'connected', error: blockedMessage, conflicts, blockedDateMoves: blockedConflicts.size,
+        message: blockedMessage || (conflicts ? '다른 곳에서 변경된 기록이 있어요. 서버 기록을 유지하고 내 수정본은 별도 기록으로 보존했어요.' : '계정에 동기화했어요 · 다른 기기에서도 같은 개인 콜백 링크로 열 수 있어요') });
+      if (status.pending && !blockedConflicts.size) emit({ message: '이 브라우저에 저장했어요. 아직 동기화할 기록이 남아 있어요.' });
       changed(ctx);
-      return { forks, skippedOriginals, cloudSaved: status.pending === 0 };
+      return { forks, rebased, blockedConflicts, skippedOriginals, cloudSaved: status.pending === 0 };
     } catch (error) {
       if (error instanceof IdentityChangedError) { context(); throw error; }
       await refreshCount(ctx, { phase: 'error', error: error.message, message: `${error.message} 동기화 대기 기록은 이 브라우저에 보관돼요.` });
-      return { forks, skippedOriginals, cloudSaved: false };
+      if (error instanceof DateMoveConflictError) throw error;
+      return { forks, rebased, blockedConflicts, skippedOriginals, cloudSaved: false };
     }
   }
   const api = {
@@ -385,10 +433,17 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
               }
               sheet = copy(input);
               if (previous && (previous.document.deleted || previous.document.sheet.updatedAt !== input.updatedAt)) {
-                sheet.id = makeId(); previous = null; conflict = true;
+                const live = !previous.document.deleted, same = live && sameSheetContent(previous.document.sheet, input);
+                const sameDate = live && previous.document.sheet.date === input.date;
+                const safeDate = sameDate || (live && validBaseDate(options.baseDate) && [options.baseDate, input.date].includes(previous.document.sheet.date));
+                if (!same || !safeDate) {
+                  if (live && !sameDate && same && !validBaseDate(options.baseDate)) throw new DateMoveConflictError('이 임시 기록의 원래 날짜를 확인할 수 없어 날짜를 바꾸지 않았어요. 입력 내용은 보존했어요. 보관함에서 최신 기록을 다시 열어 주세요.');
+                  if ((live && !sameDate) || (validBaseDate(options.baseDate) && options.baseDate !== input.date) || previous.dateMoveFrom) throw new DateMoveConflictError();
+                  sheet.id = makeId(); previous = null; conflict = true;
+                }
               }
-              sheet.updatedAt = nextDate(previous?.document.updatedAt || input.updatedAt);
-              const record = makeRecord(ctx, sheet, previous);
+              sheet.updatedAt = nextDate(previous && Date.parse(previous.document.updatedAt) > Date.parse(input.updatedAt) ? previous.document.updatedAt : input.updatedAt);
+              const record = makeRecord(ctx, sheet, previous, options.baseDate);
               if (options.importOriginal && input.source?.type === 'photo') record.originalImport = true;
               records.put(record);
               done(sheet);
@@ -402,11 +457,14 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
           changed(ctx);
         } catch (error) { emit({ phase: 'error', error: error.message, message: error.message }); throw error; }
         const result = options.deferSync ? { forks: new Map(), cloudSaved: false } : await synchronize(ctx);
+        if (result.blockedConflicts?.has(sheet.id)) throw result.blockedConflicts.get(sheet.id);
         const existingOriginal = result.skippedOriginals?.get(sheet.id);
         if (existingOriginal) { skipped = !existingOriginal.metadataFilled; metadataFilled ||= !!existingOriginal.metadataFilled; deleted = existingOriginal.deleted; sheet = copy(existingOriginal.sheet || sheet); }
         if (result.forks.has(sheet.id)) { sheet = result.forks.get(sheet.id); conflict = true; }
+        if (result.rebased?.has(sheet.id)) sheet = result.rebased.get(sheet.id);
         if (conflict) emit({ conflicts: Math.max(status.conflicts, 1), message: '다른 곳에서 변경된 기록이 있어 수정본을 별도 기록으로 보존했어요.' });
-        return { sheet: copy(sheet), localSaved: true, cloudSaved: result.cloudSaved, conflict, skipped, deleted, metadataFilled, status: { ...status } };
+        const stored = await transaction(ctx, ['records'], 'readonly', ({ records }, done, guard) => { records.get(recordKey(ctx.namespace, sheet.id)).onsuccess = guard(event => done(event.target.result)); });
+        return { sheet: copy(sheet), baseDate: stored?.dateMoveFrom || sheet.date, localSaved: true, cloudSaved: !!ctx.uid && stored?.pending === false, conflict, skipped, deleted, metadataFilled, status: { ...status } };
       });
     },
     deleteSheet(id, options = {}) {
@@ -419,7 +477,9 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
             if (!previous) { done(false); return; }
             if (!validDocument(previous.document, id)) throw new Error('기존 기록을 읽을 수 없어 삭제하지 않았어요.');
             const updatedAt = nextDate(previous.document.updatedAt);
-            records.put({ ...previous, pending: true, document: { version: 1, revision: makeId(), deleted: true, updatedAt } });
+            const deleted = { ...previous, pending: true, document: { version: 1, revision: makeId(), deleted: true, updatedAt } };
+            delete deleted.dateMoveFrom;
+            records.put(deleted);
             done(true);
           });
         });
@@ -434,7 +494,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
         drafts.get(ctx.namespace).onsuccess = guard(event => {
           const row = event.target.result;
           if (row && !validateSheet(row.sheet).valid) throw new Error('작성 중 기록 형식을 확인할 수 없어 원본을 보존했어요.');
-          done(row ? copy(row.sheet) : null);
+          done(row ? (options.includeBase ? { sheet: copy(row.sheet), baseDate: row.baseDate || '' } : copy(row.sheet)) : null);
         });
       }));
     },
@@ -442,7 +502,7 @@ export function createSheetStorage({ dbName = DB_NAME, indexedDB: idb = globalTh
       const ctx = context(options.owner), sheet = normalizeSheet(value);
       return serialize(async () => {
         await transaction(ctx, ['drafts'], 'readwrite', ({ drafts }, done) => {
-          drafts.put({ namespace: ctx.namespace, sheet, updatedAt: new Date().toISOString() }); done(true);
+          drafts.put({ namespace: ctx.namespace, sheet, baseDate: validBaseDate(options.baseDate) ? options.baseDate : '', updatedAt: new Date().toISOString() }); done(true);
         });
         assertIdentity(ctx);
         emit({ draftSavedAt: new Date().toISOString() });

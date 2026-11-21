@@ -35,3 +35,5 @@
 .calendar-field-result{font-size:11px;line-height:1.5;color:#d9e6d4;font-weight:600;white-space:nowrap}@media(max-width:800px){.calendar-field-result{font-size:11px}.calendar-result-label{display:none}}
 
 .date-picker-field{min-width:0}.date-picker-field>.button{margin-top:8px;width:100%;min-height:44px;white-space:normal;flex-wrap:wrap;padding:10px 8px;font-size:13px;gap:8px}.date-picker-field .count{font-size:12px;white-space:nowrap}
+
+.breadcrumb button{min-height:44px;padding:0;border:0;background:transparent;color:#e7eadf;text-decoration:underline;text-decoration-color:#71846d;text-underline-offset:5px;font:inherit;white-space:nowrap}

@@ -1,4 +1,4 @@
-import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks, getPaperNotes } from './sheet-model.js?v=20261112-close-minus1';
+import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks, getPaperNotes } from './sheet-model.js?v=20261122-quick1';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';
