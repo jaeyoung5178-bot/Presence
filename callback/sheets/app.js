@@ -1,14 +1,15 @@
 import {readExistingConnection,createAccountConnection} from '../account-connection.js?v=20261113-account1';
-import { createSheet, fillHourlyTimes, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261112-close-minus1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261112-close-minus1';
-import { createPaperInteraction } from './paper-interaction.js?v=20261112-close-minus1';
-import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261009-sync1';
+import { createSheet, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, isObjectionDonor, isSharedObjectionDonor, reconcileObjectionDonors, setPaperNoteDonor, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261122-quick1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261122-date-quick2';
+import { createPaperInteraction } from './paper-interaction.js?v=20261122-quick1';
+import { mountQuickControls } from './quick-controls.js?v=20261122-quick1';
+import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261122-date-move1';
 import { createCloudClient, readAccountIdentity } from './cloud.js?v=20261121-field-days1';
 import { compareFieldDays, workbookToday, validDate } from './field-days.js?v=20261121-field-days1';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-let sheet = createSheet(), records = [], owner = getStorageStatus().namespace, dirty = false, editVersion = 0, persistedDraftVersion = 0, draftTimer, renderTimer, toastTimer, imageURL, imageFile, sourceRecord = null, loadEpoch = 0, ready = false;
+let sheet = createSheet(), sheetBaseDate = '', records = [], owner = getStorageStatus().namespace, dirty = false, editVersion = 0, persistedDraftVersion = 0, draftTimer, renderTimer, toastTimer, imageURL, imageFile, sourceRecord = null, loadEpoch = 0, ready = false;
 let backupURLs = [];
 let remoteOwner=owner,remoteReadConfirmed=false,remoteReadError='',accountRefresh=null;
 const accountClient=createAccountConnection();let accountTicket=0;
@@ -16,7 +17,7 @@ let archiveMonth = '', archiveMonthChosen = false, archiveView = 'calendar', sel
 const fieldClient = createCloudClient(), fieldMonths = new Map();
 let fieldSignature = readAccountIdentity().signature, dateOnlyDraft = false;
 const invalid = new Map();
-let paperEditor;
+let paperEditor, quickControls;
 function error(message = '') { $('#error-banner').textContent = message; $('#error-banner').hidden = !message; }
 function toast(message) { clearTimeout(toastTimer); $('#toast').textContent = message; $('#toast').hidden = false; toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 4500); }
 function status(message) { $('#save-status').textContent = message; $('#footer-status').textContent = message; }
@@ -29,7 +30,7 @@ function caseFields(row, i) {
   return `<details class="sales-cases" ${cases.length ? 'open' : ''}><summary>세일즈 케이스 <span>${cases.length ? `${cases.length}건` : '후원자 · 특이사항'}</span></summary><p class="case-guide">위 시간별 합계에 포함된 케이스예요. 케이스 숫자는 합계에 다시 더하지 않아요. 후원자를 체크하면 이 케이스의 획과 특이사항만 빨간색으로 표시돼요.</p>${cases.map((item, j) => `<div class="sales-case ${item.donor ? 'is-donor' : ''}" data-case="${i}:${j}"><div class="case-heading"><span>CASE ${j + 1}</span><label class="donor-toggle"><input type="checkbox" data-field="rows.${i}.donorCases.${j}.donor" aria-label="${i + 1}행 ${j + 1}번 케이스 후원자" ${item.donor ? 'checked' : ''}>후원자</label><button type="button" class="icon-button" data-remove-case="${i}:${j}" aria-label="${i + 1}행 ${j + 1}번 케이스 삭제">×</button></div><div class="row-numbers">${CASE_METRICS.map(key => numberField(`rows.${i}.donorCases.${j}.counts.${key}`, LABELS[key], item.counts[key], `${i + 1}행 ${j + 1}번 케이스 ${LABELS[key]}`)).join('')}</div><label class="field case-note"><span data-case-note-label>${item.donor ? '후원자 특이사항' : '특이사항'}</span><textarea data-field="rows.${i}.donorCases.${j}.note" maxlength="12000" rows="3" aria-label="${i + 1}행 ${j + 1}번 케이스 특이사항" placeholder="시리얼, 기본정보, 오브젝션 핸들링 사유">${esc(item.note)}</textarea></label></div>`).join('')}<button type="button" class="button add-button" data-add-case="${i}" ${cases.length >= 100 ? 'disabled' : ''}>＋ 케이스 추가</button></details>`;
 }
 function renderRows() {
-  $('#time-rows').innerHTML = sheet.rows.map((row, i) => `<div class="time-row" data-row-index="${i}"><div class="row-header"><span class="row-index">${String(i + 1).padStart(2, '0')}</span><div class="time-fields"><label>${i === 0 ? '첫 시작 · 아래 자동' : '시작'}<input type="time" data-field="rows.${i}.time" value="${row.time}" aria-label="${i + 1}행 시작 시간"></label><label>종료 · 선택<input type="time" data-field="rows.${i}.endTime" value="${row.endTime}" aria-label="${i + 1}행 종료 시간"></label></div><button type="button" class="icon-button remove-row" data-remove-row="${i}" aria-label="${i + 1}행 삭제" ${sheet.rows.length === 1 ? 'disabled' : ''}>−</button></div><p class="time-duration">실제 필드 <output data-field-minutes="${i}">${fieldMinutes(row) === null ? '—' : `${fieldMinutes(row)}분`}</output></p><div class="row-numbers">${METRICS.slice(0, 4).map(key => numberField(`rows.${i}.${key}`, LABELS[key], row[key], `${i + 1}행 ${LABELS[key]}`)).join('')}</div><label class="rehash-field">Rehash <span>추가 기록</span><input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-field="rows.${i}.rehash" value="${row.rehash ?? ''}" aria-label="${i + 1}행 Rehash" placeholder="—"></label></div>`).join('');
+  $('#time-rows').innerHTML = sheet.rows.map((row, i) => `<div class="time-row" data-row-index="${i}"><div class="row-header"><span class="row-index">${String(i + 1).padStart(2, '0')}</span><div class="time-fields"><label>시작<input type="time" data-field="rows.${i}.time" value="${row.time}" aria-label="${i + 1}행 시작 시간"></label><label>종료 · 선택<input type="time" data-field="rows.${i}.endTime" value="${row.endTime}" aria-label="${i + 1}행 종료 시간"></label></div><button type="button" class="icon-button remove-row" data-remove-row="${i}" aria-label="${i + 1}행 삭제" ${sheet.rows.length === 1 ? 'disabled' : ''}>−</button></div><p class="time-duration">실제 필드 <output data-field-minutes="${i}">${fieldMinutes(row) === null ? '—' : `${fieldMinutes(row)}분`}</output></p><div class="row-numbers">${METRICS.slice(0, 4).map(key => numberField(`rows.${i}.${key}`, LABELS[key], row[key], `${i + 1}행 ${LABELS[key]}`)).join('')}</div><label class="rehash-field">Rehash <span>추가 기록</span><input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-field="rows.${i}.rehash" value="${row.rehash ?? ''}" aria-label="${i + 1}행 Rehash" placeholder="—"></label></div>`).join('');
   $$('.time-row').forEach((element, i) => element.insertAdjacentHTML('beforeend', caseFields(sheet.rows[i], i)));
   $('#add-row').disabled = sheet.rows.length >= MAX_ROWS;
   $('#add-row').textContent = sheet.rows.length >= MAX_ROWS ? `시간 기록 최대 ${MAX_ROWS}개` : '＋ 시간 추가';
@@ -48,12 +49,17 @@ function setupFields() {
 function hydrate() {
   invalid.clear(); paperEditor?.reset(); renderRows();
   $$('[data-field]').forEach(input => { if (input.type === 'checkbox') input.checked = !!get(input.dataset.field); else input.value = get(input.dataset.field) ?? ''; input.removeAttribute('aria-invalid'); input.setCustomValidity(''); });
-  renderObjectionFlags(); updateTotals(); updateSourceBanner(); schedulePreview();
+  renderObjectionFlags(); updateTotals(); updateSourceBanner(); schedulePreview(); quickControls?.sync();
 }
 function renderObjectionFlags() {
   const blocks = parseObjectionBlocks(sheet.objections), host = $('#objection-donor-list');
   host.hidden = !blocks.length;
-  host.innerHTML = '<p class="case-guide">후원자에 체크하면 이미 적은 특이사항이 빨간색으로 표시돼요.</p>' + blocks.map((block, index) => `<label class="objection-donor-toggle"><input type="checkbox" data-objection-donor="${index}" aria-label="${index + 1}번째 특이사항 후원자" ${sheet.donorObjections?.includes(block) ? 'checked' : ''}><span><strong>후원자</strong><span>${esc(block)}</span></span></label>`).join('');
+  host.innerHTML = '<p class="case-guide">후원자에 체크하면 이미 적은 특이사항이 빨간색으로 표시돼요.</p>' + blocks.map((block, index) => `<label class="objection-donor-toggle"><input type="checkbox" data-objection-donor="${index}" aria-label="${index + 1}번째 특이사항 후원자" ${isObjectionDonor(sheet, index) ? 'checked' : ''}><span><strong>${isSharedObjectionDonor(sheet, index) ? '후원자 · 기존 공유 표시' : '후원자'}</strong><span>${esc(block)}</span></span></label>`).join('');
+  host.querySelectorAll('[data-objection-donor]').forEach(input => {
+    input.indeterminate = isSharedObjectionDonor(sheet, Number(input.dataset.objectionDonor));
+    if (input.indeterminate) input.checked = false;
+    input.setAttribute('aria-checked', input.indeterminate ? 'mixed' : String(input.checked));
+  });
 }
 function sourceValueCount(record) { return record.rows.reduce((total, row) => total + METRICS.filter(key => row[key] !== null).length, 0); }
 function sourceStatus(record) {
@@ -107,9 +113,9 @@ function openSource(record) {
 }
 async function editRecord(record) {
   let opened = false;
-  if (sheet.id !== record.id) {
+  if (sheet.id !== record.id || sheet.updatedAt !== record.updatedAt || sheet.date !== record.date) {
     if (!await canLeave()) return false;
-    clearTimeout(draftTimer); dateOnlyDraft = false; sheet = normalizeSheet(record); dirty = false; editVersion++; hydrate(); error();
+    clearTimeout(draftTimer); dateOnlyDraft = false; sheet = normalizeSheet(record); sheetBaseDate = record.date; dirty = false; editVersion++; hydrate(); error();
     opened = true;
     status(sheet.source ? '원본을 보면서 기록을 옮겨 적어요 · 원본 사진은 그대로 보관돼요' : '저장한 기록을 열었어요 · 수정 후 다시 저장할 수 있어요');
   }
@@ -133,10 +139,10 @@ function schedulePreview() {
 async function persistDraft() {
   if (!ready || dateOnlyDraft || invalid.size || !validateSheet(sheet).valid) return;
   const thisOwner = owner, revision = editVersion, snapshot = structuredClone(sheet);
-  try { await saveDraft(snapshot, { owner: thisOwner }); if (thisOwner === owner && revision === editVersion) { persistedDraftVersion = revision; if (dirty) status('작성 중 · 임시 저장됨'); } }
+  try { await saveDraft(snapshot, { owner: thisOwner, baseDate: sheetBaseDate }); if (thisOwner === owner && revision === editVersion) { persistedDraftVersion = revision; if (dirty) status('작성 중 · 임시 저장됨'); } }
   catch (e) { if (thisOwner === owner) { error(e.message || '임시 저장하지 못했어요.'); status('임시 저장 실패 · 이 창을 유지해 주세요'); } }
 }
-function changed() { dateOnlyDraft = false; dirty = true; editVersion++; updateTotals(); updateSourceBanner(); schedulePreview(); clearTimeout(draftTimer); const validation = validateSheet(sheet); if (!invalid.size) error(validation.valid ? '' : validation.errors[0].message); status(invalid.size || !validation.valid ? '입력 확인 필요 · 임시 저장 대기' : '작성 중 · 임시 저장 중…'); if (!invalid.size && validation.valid) draftTimer = setTimeout(persistDraft, 450); }
+function changed() { dateOnlyDraft = false; dirty = true; editVersion++; updateTotals(); updateSourceBanner(); schedulePreview(); clearTimeout(draftTimer); const validation = validateSheet(sheet); if (!invalid.size) error(validation.valid ? '' : validation.errors[0].message); status(invalid.size || !validation.valid ? '입력 확인 필요 · 임시 저장 대기' : '작성 중 · 임시 저장 중…'); if (!invalid.size && validation.valid) draftTimer = setTimeout(persistDraft, 450); quickControls?.sync(); }
 function checkValid() {
   if (invalid.size) { const [path, message] = invalid.entries().next().value; error(message); $$('[data-field]').find(input => input.dataset.field === path)?.focus(); return false; }
   const result = validateSheet(sheet);
@@ -151,7 +157,7 @@ async function confirmAction(title, copy, accept = '계속') {
 async function canLeave() { return !dirty || await confirmAction('작성 중인 기록이 있어요', '보관함에 남기려면 먼저 콜백싯 저장을 눌러 주세요. 계속하면 현재의 미저장 변경은 지워져요.', '변경 버리고 계속'); }
 async function newSheet() {
   if (!await canLeave()) return;
-  clearTimeout(draftTimer); dateOnlyDraft = false; sheet = createSheet(); dirty = false; editVersion++; error(); hydrate(); $('#archive-dialog').close(); view('edit');
+  clearTimeout(draftTimer); dateOnlyDraft = false; sheet = createSheet(); sheetBaseDate = ''; dirty = false; editVersion++; error(); hydrate(); $('#archive-dialog').close(); view('edit');
   await persistDraft(); status('새로운 하루 · 기록을 시작해 보세요'); window.scrollTo({ top: 0, behavior: 'smooth' }); $('#sheet-name').focus({ preventScroll: true });
 }
 function dedupeRecords(loaded) {
@@ -189,6 +195,7 @@ function ensureFieldMonth() {
 }
 function renderFieldDays() {
   const { identity, value } = fieldState(), panel = $('#field-days-panel'), statusText = $('#field-days-status'), list = $('#field-days-list');
+  $('.field-days-save-note').innerHTML = archivePurpose === 'write' ? '날짜를 누르면 현재 작성 중인 콜백싯의 날짜만 바뀌어요. 숫자와 메모는 그대로 유지돼요. <strong>콜백싯 저장</strong>을 눌러야 보관함에 반영돼요.' : '‘미작성’에서 작성하기를 눌러 날짜를 선택하세요. 내용을 입력하고 <strong>콜백싯 저장</strong>을 눌러야 보관함에 남아요. 기록 유무와 실제 제출 확인은 다를 수 있어요.';
   const count = $('#choose-field-date-count');
   count.textContent = !identity.uid ? '연결' : value?.phase === 'ready' ? `${fieldComparisons().filter(day => day.recordStatus === 'missing').length}일` : value?.phase === 'error' ? '재확인' : '확인 중';
   if (!dirty) $('#field-days-draft').hidden = true;
@@ -206,11 +213,21 @@ function renderFieldDays() {
   list.innerHTML = days.map(day => {
     const label = day.recordStatus === 'missing' ? '미작성' : day.recordStatus === 'paper' ? (day.localPending ? '이 기기 저장' : '저장기록') : day.recordStatus === 'legacy' ? '기존 기록 있음' : '확인필요';
     const dateLabel = formatDate(day.date);
-    const action = day.recordStatus === 'missing' ? `<button type="button" class="button field-date-action" data-start-field-date="${day.date}" aria-label="${esc(dateLabel)} 콜백싯 작성">작성하기 ↗</button>`
+    const action = archivePurpose === 'write' ? `<button type="button" class="button field-date-action" data-apply-field-date="${day.date}" aria-label="${esc(dateLabel)} 날짜 선택" ${ready ? '' : 'disabled'}>이 날짜 선택</button>` : day.recordStatus === 'missing' ? `<button type="button" class="button field-date-action" data-start-field-date="${day.date}" aria-label="${esc(dateLabel)} 콜백싯 작성">작성하기 ↗</button>`
       : day.recordStatus === 'legacy' ? `<a class="button secondary field-date-action" href="../index.html?view=see&date=${day.date}">기존 기록 보기 ↗</a>`
       : day.recordStatus === 'paper' ? `<button type="button" class="button secondary field-date-action" data-show-field-date="${day.date}">저장 기록 보기</button>` : '';
     return `<li class="field-day-item" data-record-status="${day.recordStatus}"><div><strong>${esc(dateLabel)}</strong><span class="field-day-label">${label}</span></div>${action}</li>`;
   }).join('');
+}
+function applyDateToCurrentSheet(date) {
+  if (!ready || !validDate(date)) return;
+  const input = $('#sheet-date');
+  if (sheet.date !== date) {
+    paperEditor?.clearUndo(); sheet.date = date; input.value = date;
+    invalid.delete('date'); input.setCustomValidity(''); input.removeAttribute('aria-invalid'); changed();
+  }
+  $('#archive-dialog').close(); view('edit'); input.focus({ preventScroll: true });
+  status(`${formatDate(date)} 선택됨 · 입력 내용은 그대로예요. 저장하면 이 날짜에 반영돼요.`);
 }
 async function startFieldDate(date) {
   if (!validDate(date) || !fieldComparisons().some(day => day.date === date && day.recordStatus === 'missing')) return;
@@ -220,7 +237,7 @@ async function startFieldDate(date) {
     toast(`${formatDate(sheet.date)}에 작성 중인 기록이 있어요. 먼저 저장한 뒤 다른 날짜를 작성해 주세요.`);
     $('#field-days-draft').hidden = false; $('#field-days-continue').focus(); return;
   }
-  clearTimeout(draftTimer); paperEditor?.reset(); sheet = createSheet(); sheet.date = date;
+  clearTimeout(draftTimer); paperEditor?.reset(); sheet = createSheet(); sheetBaseDate = ''; sheet.date = date;
   sheet.meta.name = fieldState().value?.data.name || ''; dirty = false; dateOnlyDraft = true; editVersion++; error(); hydrate();
   $('#archive-dialog').close(); view('edit'); status(`${formatDate(date)} 콜백싯 · 내용을 입력한 뒤 저장해 주세요`);
   window.scrollTo({ top: 0 }); $('#sheet-date').focus({ preventScroll: true });
@@ -244,12 +261,19 @@ function renderCalendar() {
     const date = `${archiveMonth}-${String(day).padStart(2, '0')}`, group = byDate.get(date) || [], counts = donorGroupSummary(group), unknownOnly = counts.unknown === group.length && group.length > 0;
     const field = fieldByDate.get(date), missing = field?.recordStatus === 'missing', legacy = field?.recordStatus === 'legacy', uncertain = field?.recordStatus === 'unknown';
     const detail = missing ? '필드 근무일, 콜백싯 미작성' : legacy ? '필드 근무일, 기존 콜백싯 기록 있음' : uncertain ? '필드 근무일, 기록 확인필요' : group.length ? `${unknownOnly ? '후원자 미확인' : `후원자 ${counts.known}명${counts.unknown ? ' 및 미확인 기록 있음' : ''}`}, 콜백싯 ${group.length}개` : '기록 없음';
-    markup += `<button class="calendar-day${group.length ? ' has-record' : ''}${missing ? ' needs-record' : ''}${legacy ? ' has-field-record' : ''}${uncertain ? ' field-unknown' : ''}${date === today ? ' is-today' : ''}${date === selectedDate ? ' is-selected' : ''}" data-calendar-date="${date}" aria-label="${year}년 ${month}월 ${day}일, ${field ? `결과 ${field.count}건, ` : ''}${detail}" ${date === today ? 'aria-current="date"' : ''} ${!group.length && !field ? 'disabled' : ''}><span class="calendar-date">${day}</span>${field ? `<span class="calendar-field-result"><span class="calendar-result-label">결과 </span>${field.count.toLocaleString()}건</span>` : ''}${missing || legacy || uncertain ? `<span class="calendar-field-label">${missing ? '미작성' : legacy ? '기존기록' : '확인필요'}</span>` : group.length ? `<span class="calendar-donors ${unknownOnly ? 'is-unknown' : ''}">${unknownOnly ? '미확인' : `${counts.known}명${counts.unknown ? '+?' : ''}`}</span>${group.length > 1 ? `<span class="calendar-record-count">${group.length}개</span>` : ''}` : ''}</button>`;
+    markup += `<button class="calendar-day${group.length ? ' has-record' : ''}${missing ? ' needs-record' : ''}${legacy ? ' has-field-record' : ''}${uncertain ? ' field-unknown' : ''}${date === today ? ' is-today' : ''}${date === selectedDate ? ' is-selected' : ''}" data-calendar-date="${date}" aria-label="${year}년 ${month}월 ${day}일, ${field ? `결과 ${field.count}건, ` : ''}${detail}${archivePurpose === 'write' ? ', 작성 날짜로 선택' : ''}" ${date === today ? 'aria-current="date"' : ''} ${archivePurpose !== 'write' && !group.length && !field ? 'disabled' : ''}><span class="calendar-date">${day}</span>${field ? `<span class="calendar-field-result"><span class="calendar-result-label">결과 </span>${field.count.toLocaleString()}건</span>` : ''}${missing || legacy || uncertain ? `<span class="calendar-field-label">${missing ? '미작성' : legacy ? '기존기록' : '확인필요'}</span>` : group.length ? `<span class="calendar-donors ${unknownOnly ? 'is-unknown' : ''}">${unknownOnly ? '미확인' : `${counts.known}명${counts.unknown ? '+?' : ''}`}</span>${group.length > 1 ? `<span class="calendar-record-count">${group.length}개</span>` : ''}` : ''}</button>`;
   }
   $('#calendar-grid').innerHTML = markup;
+  if (archivePurpose === 'write' && !ready) {
+    $('#calendar-summary').textContent = '작성 중인 내용을 안전하게 불러오는 중이에요. 잠시 후 날짜를 선택할 수 있어요.';
+    $$('#calendar-grid [data-calendar-date]').forEach(button => { button.disabled = true; });
+  }
 }
 function renderArchive() {
   const connection=getStorageStatus();$('#archive-error').hidden=!remoteReadError;$('#archive-error').textContent=remoteReadError;$('#archive-retry').hidden=!connection.uid||(!remoteReadError&&remoteReadConfirmed);
+  const choosingDate = archivePurpose === 'write';
+  $('#archive-search').closest('label').hidden = choosingDate; $('#archive-view-toggle').hidden = choosingDate;
+  $('.archive-footer').hidden = choosingDate;
 
   const query = $('#archive-search').value.trim().toLocaleLowerCase(), currentMonth = workbookToday().slice(0, 7);
   if (!archiveMonth || !archiveMonthChosen) archiveMonth = getStorageStatus().uid || records.some(record => record.date.startsWith(currentMonth)) || !records.length ? currentMonth : records.map(record => record.date.slice(0, 7)).sort().at(-1);
@@ -262,7 +286,7 @@ function renderArchive() {
   $('#calendar-selection-title').textContent = selectedDate ? `${formatDate(selectedDate)} 콜백싯` : '';
   renderCalendar();
   const filtered = records.filter(record => (query ? [record.date, ...Object.values(record.meta)].join(' ').toLocaleLowerCase().includes(query) : selectedDate ? record.date === selectedDate : record.date.startsWith(archiveMonth))).sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt));
-  $('#archive-list').hidden = !query && !selectedDate && archiveView === 'calendar' && records.length > 0;
+  $('#archive-list').hidden = choosingDate || (!query && !selectedDate && archiveView === 'calendar' && records.length > 0);
   if(!filtered.length&&!records.length&&getStorageStatus().uid&&(!remoteReadConfirmed||remoteReadError)){$('#archive-list').innerHTML='<div class="archive-empty"><strong>'+ (remoteReadError?'개인 기록을 불러오지 못했어요':'연결된 기록을 확인하고 있어요')+'</strong><p>이 기기의 기록은 그대로 보관돼요. 다시 불러오기를 눌러 확인해 주세요.</p></div>';return;}
   if (!filtered.length && !records.length && !getStorageStatus().uid) { $('#archive-list').innerHTML = '<div class="archive-empty"><strong>현재 기기의 보관함이에요</strong><p>개인 콜백 연결이 없으면 다른 기기의 기록은 보이지 않아요. 위의 이전 콜백싯 기록 보기에서 기존 연결을 확인해 주세요.</p></div>'; return; }
   if (!filtered.length) { $('#archive-list').innerHTML = `<div class="archive-empty"><strong>${records.length ? '찾는 기록이 없어요' : '첫 번째 필드를 기다리고 있어요'}</strong><p>${records.length ? '검색어나 월을 바꾸어 다시 찾아보세요.' : '새 기록을 작성하고 저장하면 날짜순으로 모여요.'}</p></div>`; return; }
@@ -277,6 +301,7 @@ function restoreArchiveView() {
   if (archivePurpose === 'write' && archiveViewBeforePicker) {
     const previous = archiveViewBeforePicker; archiveMonth = previous.month; archiveMonthChosen = previous.chosen; archiveView = previous.view; selectedDate = previous.date; $('#archive-search').value = previous.query;
   }
+  if (archivePurpose === 'write') $('.archive-mode').after($('#archive-calendar'));
   archivePurpose = 'view'; archiveViewBeforePicker = null; $('#archive-title').textContent = '내 콜백싯';
 }
 async function openArchive({ purpose = 'view' } = {}) {
@@ -285,6 +310,7 @@ async function openArchive({ purpose = 'view' } = {}) {
   if (purpose === 'write') {
     archiveViewBeforePicker = { month: archiveMonth, chosen: archiveMonthChosen, view: archiveView, date: selectedDate, query: $('#archive-search').value };
     archiveMonth = workbookToday().slice(0, 7); archiveMonthChosen = true; archiveView = 'calendar'; selectedDate = ''; $('#archive-search').value = '';
+    $('#archive-dialog .dialog-heading').after($('#archive-calendar'));
   }
   $('#archive-title').textContent = purpose === 'write' ? '작성할 날짜 선택' : '내 콜백싯';
   if (!$('#archive-dialog').open) $('#archive-dialog').showModal();
@@ -294,7 +320,7 @@ async function openArchive({ purpose = 'view' } = {}) {
   finally {
     $('#archive-loading').hidden = true; $('#archive-dialog').removeAttribute('aria-busy');
     if (purpose === 'write' && $('#archive-dialog').open) {
-      $('#archive-calendar').scrollIntoView({ block: 'start' });
+      $('#archive-dialog .dialog-shell').scrollTop = 0;
       ($('#calendar-grid .needs-record') || $('#calendar-prev')).focus({ preventScroll: true });
     }
   }
@@ -303,13 +329,19 @@ async function saveCurrent() {
   if (!checkValid()) return;
   clearTimeout(draftTimer); const button = $('#save-sheet'), revision = editVersion, thisOwner = owner, currentId = sheet.id; button.disabled = true; status('콜백싯 저장 중…');
   try {
-    const result = await saveSheet(structuredClone(sheet), { owner: thisOwner });
+    const result = await saveSheet(structuredClone(sheet), { owner: thisOwner, baseDate: sheetBaseDate });
     if (thisOwner !== owner || currentId !== sheet.id) return;
     dateOnlyDraft = false;
+    sheetBaseDate = result.baseDate || result.sheet.date;
     if (revision === editVersion) { sheet = result.sheet; dirty = false; } else { sheet.id = result.sheet.id; sheet.updatedAt = result.sheet.updatedAt; }
-    await saveDraft(structuredClone(sheet), { owner }); await refreshRecords();
+    await saveDraft(structuredClone(sheet), { owner, baseDate: sheetBaseDate }); await refreshRecords();
     status(dirty ? '기록 저장됨 · 이후 변경은 임시 저장됨' : '보관함에 저장됨'); toast(result.conflict ? '다른 창의 변경을 보호하기 위해 별도 기록으로 저장했어요.' : `${formatDate(sheet.date)} 콜백싯을 저장했어요.`);
-  } catch (e) { error(e.message || '기록을 저장하지 못했어요.'); status('저장 실패 · 작성 내용은 이 창에 남아 있어요'); }
+  } catch (e) {
+    if (e.code === 'callback/date-move-conflict' && thisOwner === owner && currentId === sheet.id) {
+      await persistDraft();
+      error(e.message); status(persistedDraftVersion === editVersion ? '날짜 변경 보류 · 입력 내용은 임시 저장됨' : '날짜 변경 보류 · 입력을 보존하려면 이 창을 유지해 주세요');
+    } else { error(e.message || '기록을 저장하지 못했어요.'); status('저장 실패 · 작성 내용은 이 창에 남아 있어요'); }
+  }
   finally { button.disabled = false; }
 }
 async function exportImage() {
@@ -365,19 +397,22 @@ async function importBackup(file) {
 async function loadNamespace() {
   const epoch = ++loadEpoch; ready = false; dateOnlyDraft = false; paperEditor?.reset(); clearTimeout(draftTimer); owner = getStorageStatus().namespace; records = []; invalid.clear(); dirty = false; archiveMonth = ''; archiveMonthChosen = false; selectedDate = '';
   try {
-    const draft = await loadDraft(); if (epoch !== loadEpoch) return;
-    sheet = draft ? normalizeSheet(draft) : createSheet(); editVersion++; persistedDraftVersion = editVersion; hydrate(); await refreshRecords(); if (epoch !== loadEpoch) return;
-    dirty = !!draft && !records.some(record => record.id === draft.id && JSON.stringify(record) === JSON.stringify(draft)); ready = true; status(draft ? (dirty ? '임시 저장한 기록을 이어서 작성해요' : '저장한 기록을 불러왔어요') : '새로운 하루 · 기록을 시작해 보세요');
-  } catch (e) { ready = true; error(e.message || '저장된 기록을 읽지 못했어요.'); status('기록 불러오기 오류'); }
+    const draftContext = await loadDraft({ includeBase: true }); if (epoch !== loadEpoch) return;
+    const draft = draftContext?.sheet;
+    sheet = draft ? normalizeSheet(draft) : createSheet(); sheetBaseDate = draftContext?.baseDate || ''; editVersion++; persistedDraftVersion = editVersion; hydrate(); await refreshRecords(); if (epoch !== loadEpoch) return;
+    const saved = records.find(record => record.id === sheet.id);
+    if (!sheetBaseDate && saved?.updatedAt === sheet.updatedAt) sheetBaseDate = saved.date;
+    dirty = !!draft && !records.some(record => record.id === draft.id && JSON.stringify(record) === JSON.stringify(draft)); ready = true; quickControls?.sync(); if ($('#archive-dialog').open) renderArchive(); status(draft ? (dirty ? '임시 저장한 기록을 이어서 작성해요' : '저장한 기록을 불러왔어요') : '새로운 하루 · 기록을 시작해 보세요');
+  } catch (e) { ready = true; quickControls?.sync(); if ($('#archive-dialog').open) renderArchive(); error(e.message || '저장된 기록을 읽지 못했어요.'); status('기록 불러오기 오류'); }
 }
-async function syncAccountRecords(){const namespace=getStorageStatus().namespace;try{const result=await syncSheets();const next=getStorageStatus();if(next.namespace!==namespace)return result;if(next.error||next.phase==='error'){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';}else if(next.uid&&next.mode==='connected'){remoteReadConfirmed=true;remoteReadError='';}renderArchive();return result;}catch(error){if(getStorageStatus().namespace===namespace){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';renderArchive();}throw error;}}
+async function syncAccountRecords(){const namespace=getStorageStatus().namespace;try{const result=await syncSheets();const next=getStorageStatus();if(next.namespace!==namespace)return result;if((next.error||next.phase==='error')&&!next.blockedDateMoves){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';}else if(next.uid&&next.mode==='connected'){remoteReadConfirmed=true;remoteReadError='';}renderArchive();return result;}catch(error){if(getStorageStatus().namespace===namespace){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';renderArchive();}throw error;}}
 async function preserveGuestDraft(){if(!dirty)return;if(invalid.size||!validateSheet(sheet).valid)throw Object.assign(new Error('작성 중인 내용을 먼저 확인해 주세요. 현재 기록은 이 창에 그대로 있어요.'),{code:'callback/draft-unconfirmed'});await persistDraft();if(persistedDraftVersion!==editVersion)throw Object.assign(new Error('작성 중인 기록을 보관하지 못했어요. 이 창을 유지하고 다시 시도해 주세요.'),{code:'callback/draft-unconfirmed'});}
 function storageStatusChanged(value = getStorageStatus()) {
   const next = value?.namespace ? value : getStorageStatus();
   const signature = readAccountIdentity().signature;
   if (fieldSignature !== signature) { fieldSignature = signature; fieldMonths.clear(); $('#field-days-draft').hidden = true; }
   if(remoteOwner!==next.namespace){remoteOwner=next.namespace;remoteReadConfirmed=false;remoteReadError='';}
-  if(next.uid&&next.phase==='error'&&next.error){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';}
+  if(next.uid&&next.phase==='error'&&next.error&&!next.blockedDateMoves){remoteReadConfirmed=false;remoteReadError='기록을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.';}
   $('#open-account-connect').hidden=!!next.uid;
   $('#storage-status').textContent = `${next.name ? `${next.name} · ` : ''}${next.message || (next.mode === 'connected' ? '계정에 연결됨' : '이 기기에 저장')}`;
   $('#archive-connection-status').textContent = $('#storage-status').textContent;
@@ -387,6 +422,7 @@ function storageStatusChanged(value = getStorageStatus()) {
 
 setupFields();
 paperEditor = createPaperInteraction({ getSheet: () => sheet, isReady: () => ready, checkValid: () => { if (invalid.size || !validateSheet(sheet).valid) view('edit'); return checkValid(); }, onChange: () => { renderRows(); $('#objections').value = sheet.objections; renderObjectionFlags(); changed(); }, onError: message => { error(message); toast(message); } });
+quickControls = mountQuickControls({ getSheet: () => sheet, isReady: () => ready && !invalid.size, onChange: () => { paperEditor?.clearUndo(); renderRows(); updateTimeFields(); $('#objections').value = sheet.objections; renderObjectionFlags(); changed(); }, onError: message => { error(message); toast(message); } });
 $('#sheet-form').addEventListener('submit', event => event.preventDefault());
 $('#sheet-form').addEventListener('input', event => {
   const input = event.target, path = input.dataset.field; if (!path) return; paperEditor?.clearUndo();
@@ -396,17 +432,17 @@ $('#sheet-form').addEventListener('input', event => {
     const message = `${input.getAttribute('aria-label') || LABELS[path.split('.').at(-1)]}: 0~999 사이의 정수를 입력해 주세요.`;
     invalid.set(path, message); input.setCustomValidity(message); input.setAttribute('aria-invalid', 'true'); error(message); changed(); return;
   }
+  const previousObjections = sheet.objections;
   invalid.delete(path); input.setCustomValidity(''); input.removeAttribute('aria-invalid'); set(path, isNumeric(path) ? value === '' ? (path.includes('.counts.') ? 0 : null) : Number(value) : value);
-  if (path === 'rows.0.time' && value) fillHourlyTimes(sheet.rows, value);
   if (/^rows\.\d+\.(time|endTime)$/.test(path)) updateTimeFields();
-  if (path === 'objections') { if (sheet.donorObjections) sheet.donorObjections = sheet.donorObjections.filter(note => parseObjectionBlocks(sheet.objections).includes(note)); renderObjectionFlags(); }
+  if (path === 'objections') { reconcileObjectionDonors(sheet, previousObjections); renderObjectionFlags(); }
   if (!invalid.size) error(); changed();
 });
 $('#objection-donor-list').addEventListener('change', event => {
   const input = event.target.closest('[data-objection-donor]'); if (!input) return; paperEditor?.clearUndo();
-  const block = parseObjectionBlocks(sheet.objections)[Number(input.dataset.objectionDonor)]; if (!block) return;
-  const flags = new Set(sheet.donorObjections || []); if (input.checked) flags.add(block); else flags.delete(block);
-  sheet.donorObjections = [...flags]; changed();
+  const blockIndex = Number(input.dataset.objectionDonor), block = parseObjectionBlocks(sheet.objections)[blockIndex]; if (!block) return;
+  try { if (setPaperNoteDonor(sheet, { kind: 'objection', blockIndex, block }, input.checked)) { renderObjectionFlags(); changed(); } }
+  catch (e) { renderObjectionFlags(); error(e.message); toast(e.message); }
 });
 $('#time-rows').addEventListener('click', async event => {
   const addCase = event.target.closest('[data-add-case]'), removeCase = event.target.closest('[data-remove-case]');
@@ -423,6 +459,7 @@ $$('[data-view]').forEach(button => button.addEventListener('click', () => view(
 $('#save-sheet').addEventListener('click', saveCurrent); $('#export-image').addEventListener('click', exportImage);
 $('#open-archive').addEventListener('click', () => openArchive()); $('#new-sheet').addEventListener('click', newSheet); $('#archive-new').addEventListener('click', newSheet);
 $('#choose-field-date').addEventListener('click', () => openArchive({ purpose: 'write' }));
+$('#breadcrumb-choose-date').addEventListener('click', () => openArchive({ purpose: 'write' }));
 $('#archive-dialog').addEventListener('close', () => {
   if (!$('#archive-dialog').open) restoreArchiveView();
 });
@@ -434,6 +471,7 @@ $('#archive-view-toggle').addEventListener('click', () => { archiveView = archiv
 $('#calendar-clear-date').addEventListener('click', () => { selectedDate = ''; renderArchive(); });
 $('#calendar-grid').addEventListener('click', async event => {
   const button = event.target.closest('[data-calendar-date]'); if (!button || button.disabled) return;
+  if (archivePurpose === 'write') { applyDateToCurrentSheet(button.dataset.calendarDate); return; }
   const field = fieldComparisons().find(day => day.date === button.dataset.calendarDate);
   if (field?.recordStatus === 'missing') { await startFieldDate(field.date); return; }
   if (field?.recordStatus === 'legacy' && !records.some(record => record.date === field.date)) { location.href = `../index.html?view=see&date=${field.date}`; return; }
@@ -450,10 +488,16 @@ $('#calendar-grid').addEventListener('keydown', event => {
 $('#archive-list').addEventListener('click', async event => {
   const open = event.target.closest('[data-open-sheet]'), remove = event.target.closest('[data-delete-sheet]');
   if (open) { const record = records.find(item => item.id === open.dataset.openSheet); if (!record) return; if (record.source?.type === 'photo') openSource(record); else await editRecord(record); }
-  if (remove) { const record = records.find(item => item.id === remove.dataset.deleteSheet); if (!record || !await confirmAction('이 콜백싯을 삭제할까요?', `${formatDate(record.date)} 기록을 보관함에서 삭제해요. 삭제 전 전체 백업으로 보관할 수 있어요.`, '기록 삭제')) return; try { await deleteSheet(record.id, { owner }); if (sheet.id === record.id) { sheet = createSheet(); dirty = false; hydrate(); await clearDraft({ owner }); } await refreshRecords(); toast('콜백싯을 삭제했어요.'); } catch (e) { toast(e.message); } }
+  if (remove) {
+    const record = records.find(item => item.id === remove.dataset.deleteSheet);
+    if (record?.id === sheet.id && dirty) { toast('지금 작성 중인 기록이에요. 입력 내용을 보호하기 위해 삭제하지 않았어요. 먼저 저장하거나 다른 기록을 열어 주세요.'); return; }
+    if (!record || !await confirmAction('이 콜백싯을 삭제할까요?', `${formatDate(record.date)} 기록을 보관함에서 삭제해요. 삭제 전 전체 백업으로 보관할 수 있어요.`, '기록 삭제')) return;
+    try { await deleteSheet(record.id, { owner }); if (sheet.id === record.id) { sheet = createSheet(); sheetBaseDate = ''; dirty = false; hydrate(); await clearDraft({ owner }); } await refreshRecords(); toast('콜백싯을 삭제했어요.'); } catch (e) { toast(e.message); }
+  }
 });
 $('#field-days-list').addEventListener('click', async event => {
-  const start = event.target.closest('[data-start-field-date]'), show = event.target.closest('[data-show-field-date]');
+  const apply = event.target.closest('[data-apply-field-date]'), start = event.target.closest('[data-start-field-date]'), show = event.target.closest('[data-show-field-date]');
+  if (apply && archivePurpose === 'write') applyDateToCurrentSheet(apply.dataset.applyFieldDate);
   if (start) await startFieldDate(start.dataset.startFieldDate);
   if (show) { selectedDate = show.dataset.showFieldDate; $('#archive-search').value = ''; renderArchive(); $('#calendar-selection').scrollIntoView({ block: 'nearest' }); $('#archive-list [data-open-sheet]')?.focus({ preventScroll: true }); }
 });
@@ -470,8 +514,10 @@ $('#source-zoom').addEventListener('click', () => { const zoomed = $('#source-zo
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { clearTimeout(draftTimer); persistDraft(); } });
 window.addEventListener('beforeunload', event => { if ((dirty && persistedDraftVersion !== editVersion) || invalid.size || !validateSheet(sheet).valid) { event.preventDefault(); event.returnValue = ''; } });
 subscribe(storageStatusChanged); storageStatusChanged();
+const entryParams = new URLSearchParams(location.search), chooseOnEntry = entryParams.get('view') !== 'archive' || entryParams.get('chooseDate') === '1';
+if (chooseOnEntry) void openArchive({ purpose: 'write' });
 await loadNamespace();
-if (new URLSearchParams(location.search).get('view') === 'archive') await openArchive();
+if (!chooseOnEntry) await openArchive();
 syncAccountRecords().then(refreshRecords).catch(e => error(e.message));
 
 $('#open-account-connect').addEventListener('click',()=>{$('#account-connect-status').textContent='';$('#account-connect-dialog').showModal();$('#account-connect-id').focus();});
