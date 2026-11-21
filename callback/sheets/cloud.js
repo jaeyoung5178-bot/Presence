@@ -1,3 +1,5 @@
+import { validDate, monthDates, normalizedName, salesNameKey, isWorkedDay, firstFieldFromSurveys, legacyRecordStatus } from './field-days.js?v=20261121-field-days1';
+
 // A separate Firebase app keeps paper-sheet authentication independent from Field Callback OS.
 const DATABASE = 'https://presence-team-default-rtdb.asia-southeast1.firebasedatabase.app';
 const CONFIG = {
@@ -181,6 +183,43 @@ export function createCloudClient({ readIdentity = readAccountIdentity, fetchImp
     return `callbacksheets/${context.uid}/_paperSheets${id ? `/${id}` : ''}`;
   }
   return {
+    // Calendar evidence is read-only and scoped to the authenticated owner's exact name key.
+    // Never fetch /sales or /callbacksheets/{uid}: the latter includes full-size paper photos.
+    async readFieldMonth(context, month, today) {
+      const dates = monthDates(month, today);
+      if (!validUid(context.uid)) throw new Error('워크북의 개인 콜백 링크로 계정을 연결해 주세요.');
+      const response = await authenticated(context, `callbackProfiles/${context.uid}`, undefined, '내 필드 계정 확인');
+      const profile = response.data;
+      if (!profile || profile.status !== 'active' || !profile.name || (profile.uid && profile.uid !== context.uid)
+        || (context.name && normalizedName(context.name) !== normalizedName(profile.name))) {
+        throw new Error('내 필드 계정을 확인하지 못했어요. 워크북의 개인 콜백 링크를 다시 열어 주세요.');
+      }
+      const name = profile.name, namePath = encodeURIComponent(salesNameKey(name));
+      let firstField = '', firstFieldVerified = false;
+      // These optional own-profile reads respect existing rules; no access is broadened.
+      const surveys = await authenticated(context, `users/${context.uid}/surveys`, undefined, '첫 필드 확인', [401, 403]);
+      if (surveys.ok) firstField = firstFieldFromSurveys(surveys.data);
+      if (!firstField) {
+        const join = await authenticated(context, `memberInfo/${namePath}/join`, undefined, '첫 필드 확인', [401, 403]);
+        if (join.ok && validDate(join.data)) firstField = join.data;
+      }
+      firstFieldVerified = !!firstField;
+      const eligible = dates.filter(date => !firstField || date >= firstField);
+      const days = [];
+      // Bound concurrency and keep only the owner's minimal projection in memory.
+      let index = 0;
+      await Promise.all(Array.from({ length: Math.min(4, eligible.length) }, async () => {
+        while (index < eligible.length) {
+          const date = eligible[index++];
+          const sale = await authenticated(context, `sales/${date}/${namePath}`, undefined, '내 필드 달력 조회');
+          if (!isWorkedDay(sale.data, { date, name, firstField, today })) continue;
+          const legacy = await authenticated(context, `callbacksheets/${context.uid}/${date}`, undefined, '이전 콜백싯 날짜 확인');
+          days.push({ date, count: Math.max(0, Number(sale.data.count) || 0), legacyStatus: legacyRecordStatus(legacy.data, date, name) });
+        }
+      }));
+      assertIdentity(context);
+      return { month, name, firstField, firstFieldVerified, days: days.sort((a, b) => a.date.localeCompare(b.date)) };
+    },
     // Only this analysis path accepts 304. The writer's readAll/read/write contracts stay unchanged.
     async readAnalysisSnapshot(context) {
       const { ANALYSIS_INDEX_KEY, decodeAnalysisIndex, projectCanonicalDocuments, createAnalysisIndex, validSourceEtag } = await import('../analysis/analysis-projection.js?v=20261009-analysisindex1');
