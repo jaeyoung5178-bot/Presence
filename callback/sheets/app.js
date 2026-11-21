@@ -273,7 +273,14 @@ function renderArchive() {
   const byId = new Map(filtered.filter(record => record.source).map(record => [record.id, record]));
   $$('[data-source-thumb]').forEach(image => { image.src = byId.get(image.dataset.sourceThumb).source.imageDataUrl; });
 }
+function restoreArchiveView() {
+  if (archivePurpose === 'write' && archiveViewBeforePicker) {
+    const previous = archiveViewBeforePicker; archiveMonth = previous.month; archiveMonthChosen = previous.chosen; archiveView = previous.view; selectedDate = previous.date; $('#archive-search').value = previous.query;
+  }
+  archivePurpose = 'view'; archiveViewBeforePicker = null; $('#archive-title').textContent = '내 콜백싯';
+}
 async function openArchive({ purpose = 'view' } = {}) {
+  if (!$('#archive-dialog').open) restoreArchiveView();
   archivePurpose = purpose;
   if (purpose === 'write') {
     archiveViewBeforePicker = { month: archiveMonth, chosen: archiveMonthChosen, view: archiveView, date: selectedDate, query: $('#archive-search').value };
@@ -417,10 +424,7 @@ $('#save-sheet').addEventListener('click', saveCurrent); $('#export-image').addE
 $('#open-archive').addEventListener('click', () => openArchive()); $('#new-sheet').addEventListener('click', newSheet); $('#archive-new').addEventListener('click', newSheet);
 $('#choose-field-date').addEventListener('click', () => openArchive({ purpose: 'write' }));
 $('#archive-dialog').addEventListener('close', () => {
-  if (archivePurpose === 'write' && archiveViewBeforePicker) {
-    const previous = archiveViewBeforePicker; archiveMonth = previous.month; archiveMonthChosen = previous.chosen; archiveView = previous.view; selectedDate = previous.date; $('#archive-search').value = previous.query;
-  }
-  archivePurpose = 'view'; archiveViewBeforePicker = null; $('#archive-title').textContent = '내 콜백싯';
+  if (!$('#archive-dialog').open) restoreArchiveView();
 });
 $$('[data-close-dialog]').forEach(button => button.addEventListener('click', () => $(`#${button.dataset.closeDialog}`).close()));
 $('#archive-search').addEventListener('input', renderArchive);
