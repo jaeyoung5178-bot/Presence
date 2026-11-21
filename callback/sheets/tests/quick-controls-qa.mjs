@@ -64,6 +64,17 @@ check('virtual numbered memo becomes one stable legacy note on first selection',
   setPaperNoteDonor(sheet, target, true); assert.equal(getDonorSummary(sheet).count, 1);
   setPaperNoteDonor(sheet, target, false); assert.equal(getDonorSummary(sheet).count, 0);
 });
+check('each numbered selection counts once even with identical or empty bodies', () => {
+  const sheet = fresh(); sheet.rows[0].close = 2;
+  for (const slot of [1, 2]) setPaperNoteDonor(sheet, getPaperNotes(sheet).find(note => note.slot === slot), true);
+  assert.equal(getDonorSummary(sheet).count, 2);
+  setPaperNoteDonor(sheet, getPaperNotes(sheet).find(note => note.slot === 1), false);
+  assert.equal(getDonorSummary(sheet).count, 1);
+  sheet.objections = '1. 같은 가상 내용\n\n2. 같은 가상 내용'; sheet.donorObjections = [];
+  for (const target of getPaperNotes(sheet)) setPaperNoteDonor(sheet, target, true);
+  assert.equal(getDonorSummary(sheet).count, 2);
+  assert.equal(getDonorSummary(normalizeSheet(sheet)).count, 2);
+});
 check('case and common memo selection represent one donor and uncheck clears both', () => {
   const sheet = fresh(); const row = sheet.rows[0]; row.contact = row.stop = row.presentation = row.close = 1;
   const item = createDonorCase(row); item.note = '가상 케이스 원문'; row.donorCases = [item];
@@ -73,6 +84,13 @@ check('case and common memo selection represent one donor and uncheck clears bot
   assert.equal(item.donor, true); assert.equal(getDonorSummary(sheet).count, 1);
   setPaperNoteDonor(sheet, target, false); assert.equal(getDonorSummary(sheet).count, 0);
   assert.equal(sheet.objections, before); assert.equal(item.note, '가상 케이스 원문');
+});
+check('a distinct numbered memo with a case-matching body is still another selection', () => {
+  const sheet = fresh(), row = sheet.rows[0]; row.close = 1;
+  const item = createDonorCase(row); item.note = '같은 가상 내용'; item.donor = true; row.donorCases = [item];
+  sheet.objections = '1. 같은 가상 내용\n\n2. 같은 가상 내용';
+  const target = getPaperNotes(sheet).find(note => note.kind === 'objection' && note.slot === 2);
+  setPaperNoteDonor(sheet, target, true); assert.equal(getDonorSummary(sheet).count, 2);
 });
 check('stale target fails without changing a different note', () => {
   const sheet = fresh(); sheet.objections = '1. 이전 메모'; const target = getPaperNotes(sheet)[0];

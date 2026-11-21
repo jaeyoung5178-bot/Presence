@@ -237,10 +237,11 @@ export function setPaperNoteDonor(sheet, target, donor) {
 }
 export function getDonorSummary(sheet) {
   const cases = sheet.rows.flatMap(row => row.donorCases || []);
-  const donorCases = cases.filter(item => item.donor), caseNotes = new Set(donorCases.map(item => noteIdentity(item.note)).filter(Boolean));
+  const donorCases = cases.filter(item => item.donor);
   const donorSlots = donorCases.length && sheet.donorObjections?.length ? new Set(getPaperNotes(sheet).filter(note => note.kind === 'case' && note.caseDonor).map(note => note.slot)) : new Set();
   const flags = (sheet.donorObjections || []).filter(note => parseObjectionBlocks(sheet.objections).includes(note) && !donorSlots.has(noteNumber(note)));
-  if (cases.length || Array.isArray(sheet.donorObjections)) return { count: donorCases.length + new Set(flags.map(noteIdentity).filter(note => !caseNotes.has(note))).size, basis: 'cases' };
+  // Distinct numbered notes are distinct selections, even with the same or empty body.
+  if (cases.length || Array.isArray(sheet.donorObjections)) return { count: donorCases.length + new Set(flags).size, basis: 'cases' };
   if (hasValues(sheet, 'rehash')) return { count: getTotals(sheet).rehash, basis: 'rehash' };
   if (sheet.source?.type === 'photo' && sheet.source.transcription) return Number.isInteger(sheet.source.transcription.totals.rehash) ? { count: sheet.source.transcription.totals.rehash, basis: 'transcription' } : { count: null, basis: 'unknown' };
   if (sheet.source?.type === 'photo' && Number.isInteger(sheet.source.donorCount)) return { count: sheet.source.donorCount, basis: 'photo' };
