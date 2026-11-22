@@ -220,6 +220,7 @@
     folders:["26년 R&R","신입","피치카드","섹터리더","리캡","클라이언트 미팅","멘탈리티","세일즈","BOM","FOM"],
     items:[
       {id:"presence-phuket-rr-2026",tag:"R&R 2026",title:"푸켓 R&R · 피스메이커들",sub:"예승 · 재영 · 윤경 · 채영 · 푸켓에서 함께한 순간과 배움",href:"토픽/phuket-rr-2026/index.html",target:"_blank",folder:"26년 R&R"},
+      {id:"presence-nozero400",tag:"MENTALITY",title:"NoZero 400 Days",sub:"결과에 대한 집착, 결과를 위한 과정 · 임재영",href:"education/mentality/nozero400/index.html",target:"_blank",folder:"멘탈리티"},
       {id:"presence-hidden-value-zero",tag:"MENTALITY",title:"The Hidden Value of Zero",sub:"제로는 나로부터 · 390일 노제로, 실패를 배움과 실천으로 바꾸는 이야기",href:"education/mentality/hidden-value-of-zero/index.html",target:"_blank",folder:"멘탈리티"},
       {id:"presence-3step-5step",tag:"TRAINING",title:"3step, 5step 트레이닝",sub:"고객을 대하는 3가지 자세와 대화를 이어가는 5단계 · 무드와 대화의 실전 연습",href:"education/sales/3step-5step/index.html",target:"_blank",folder:"세일즈"},
       {id:"presence-great-sales",tag:"SALES",title:"3 Keys to Great Sales",sub:"멋진 세일즈를 위한 3가지 · 제품, 고객, 자신을 이해하는 25분 키노트",href:"education/sales/great-sales/index.html",target:"_blank",folder:"세일즈"},
@@ -368,6 +369,23 @@
     var item=d.items.find(function(it){return it.id==="presence-hidden-value-zero" || it.href==="education/mentality/hidden-value-of-zero/index.html";});
     if(!item){d.items.unshift({id:"presence-hidden-value-zero",tag:"MENTALITY",title:"The Hidden Value of Zero",sub:"제로는 나로부터 · 390일 노제로, 실패를 배움과 실천으로 바꾸는 이야기",href:"education/mentality/hidden-value-of-zero/index.html",target:"_blank",folder:"멘탈리티"});return true;}
     if(item.folder!=="멘탈리티"){item.folder="멘탈리티";changed=true;}
+    return changed;
+  }
+  function ensureNoZero400(d){
+    if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
+    var changed=false;
+    if(d.folders.indexOf("멘탈리티")<0){d.folders.push("멘탈리티");changed=true;}
+    var id="presence-nozero400", href="education/mentality/nozero400/index.html";
+    var item=d.items.find(function(it){return it.id===id;}) || d.items.find(function(it){return it.href===href;});
+    if(!item){
+      d.items.unshift({id:id,tag:"MENTALITY",title:"NoZero 400 Days",sub:"결과에 대한 집착, 결과를 위한 과정 · 임재영",href:href,target:"_blank",folder:"멘탈리티"});
+      return true;
+    }
+    var required={id:id,href:href,target:"_blank",folder:"멘탈리티"};
+    Object.keys(required).forEach(function(key){if(item[key]!==required[key]){item[key]=required[key];changed=true;}});
+    if(!item.title){item.title="NoZero 400 Days";changed=true;}
+    if(!item.sub){item.sub="결과에 대한 집착, 결과를 위한 과정 · 임재영";changed=true;}
+    if(!item.tag){item.tag="MENTALITY";changed=true;}
     return changed;
   }
   function ensureNeedsObjectionGuide(d){
@@ -546,6 +564,7 @@ function ensureSignatureTraining(d){
       data=local;
       var localChanged=ensureNeedsObjectionGuide(data);
       localChanged=ensureHiddenValueZero(data)||localChanged;
+      localChanged=ensureNoZero400(data)||localChanged;
       localChanged=ensureGreatSalesGuide(data)||localChanged;
       localChanged=ensureStepsTraining(data)||localChanged;
       localChanged=ensureOxfamTestLink(data)||localChanged;
@@ -571,6 +590,7 @@ function ensureSignatureTraining(d){
         ensureOxfamTestLink(data);
         var remoteChanged=ensureNeedsObjectionGuide(data);
         remoteChanged=ensureHiddenValueZero(data)||remoteChanged;
+        remoteChanged=ensureNoZero400(data)||remoteChanged;
         remoteChanged=ensureGreatSalesGuide(data)||remoteChanged;
         remoteChanged=ensureStepsTraining(data)||remoteChanged;
         remoteChanged=ensureCharityTraining(data)||remoteChanged;
@@ -589,12 +609,12 @@ function ensureSignatureTraining(d){
       }
       else if(!data){
         data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensurePhuketRR(data); ensureOxfamEarthquakePitch(data); save(true); render();
+        ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureNoZero400(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensurePhuketRR(data); ensureOxfamEarthquakePitch(data); save(true); render();
       }
     }).catch(function(){
       if(data) return;
       data=restoreLocalTitles(ensureCallbackGuide(JSON.parse(JSON.stringify(SEED))));
-      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensurePhuketRR(data); ensureOxfamEarthquakePitch(data); save(true); render();
+      ensureNeedsObjectionGuide(data); ensureHiddenValueZero(data); ensureNoZero400(data); ensureGreatSalesGuide(data); ensureStepsTraining(data); ensureCharityTraining(data); ensureOxfamNewHireGuide(data); ensureWarHistoryTodayGuide(data); ensureCompactTraining(data); ensureSignatureTraining(data); ensureFieldRookieGuide(data); ensureTripOperationGuide(data); ensureMyStoryGuide(data); ensurePhuketRR(data); ensureOxfamEarthquakePitch(data); save(true); render();
     });
   }
   function save(silent){
