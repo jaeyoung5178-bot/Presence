@@ -46,8 +46,7 @@ export function tallyInk(row, metric) {
   return colors;
 }
 function drawTally(ctx, value, x, y, width, height, seed, colors = []) {
-  if (value === null || value === undefined) return;
-  if (value === 0) { ctx.save(); print(ctx, 18, 600); centered(ctx, '0', x + width / 2, y + height / 2 + 6); ctx.restore(); return; }
+  if (value === null || value === undefined || value === 0) return;
   const groups = tallyGroups(value), cols = Math.max(1, Math.floor((width - 18) / 25)), visibleCols = Math.min(cols, groups.length);
   const startX = x + (width - visibleCols * 25) / 2, startY = y + Math.max(8, (height - Math.ceil(groups.length / cols) * 29) / 2);
   ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';

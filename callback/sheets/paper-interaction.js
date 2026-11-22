@@ -20,7 +20,7 @@ export function createPaperInteraction({ getSheet, isReady, checkValid, onChange
     $('#paper-subtract-mode').setAttribute('aria-pressed', String(subtracting));
     for (const button of buttons.values()) if (button.paperTarget?.kind === 'metric') updateMetricButton(button, button.paperTarget);
     toggle.setAttribute('aria-pressed', String(expanded)); toggle.textContent = expanded ? '전체 종이 보기' : '확대해서 기록';
-    const guide = subtracting ? '빼기 모드 · 숫자 칸을 누르면 −1, 0회 아래로 내려가지 않아요. 작성한 메모와 후원자 표시는 보존돼요.' : '더하기 모드 · 숫자 칸을 누르면 +1, Close를 더하면 오른쪽에 메모 번호가 생겨요.';
+    const guide = subtracting ? '빼기 모드 · 숫자 칸을 누르면 −1, 마지막 획을 빼면 완전히 빈칸이 돼요. 0회 아래로 내려가지 않고 메모와 후원자 표시는 보존돼요.' : '더하기 모드 · 숫자 칸을 누르면 +1, Close를 더하면 오른쪽에 메모 번호가 생겨요.';
     $('#paper-edit-guide').textContent = !expanded && !desktop.matches ? `확대해서 기록을 누른 뒤 종이의 숫자 칸과 메모를 직접 눌러 주세요. ${guide}` : `${guide} 오른쪽 메모를 누르면 내용과 후원자를 바로 기록해요.`;
   }
   toggle.addEventListener('click', () => { expanded = !expanded; updateMode(); }); desktop.addEventListener('change', updateMode); updateMode();
