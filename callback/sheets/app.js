@@ -1,6 +1,6 @@
 import {readExistingConnection,createAccountConnection} from '../account-connection.js?v=20261113-account1';
 import { createSheet, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getMetricReading, getDonorSummary, parseObjectionBlocks, isObjectionDonor, isSharedObjectionDonor, reconcileObjectionDonors, setPaperNoteDonor, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261122-font-rehash1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261122-font-rehash1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261122-font-size1';
 import { createPaperInteraction } from './paper-interaction.js?v=20261122-font-rehash1';
 import { mountQuickControls } from './quick-controls.js?v=20261122-font-rehash1';
 import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261122-font-rehash1';
