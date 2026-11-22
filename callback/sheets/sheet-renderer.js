@@ -8,7 +8,7 @@ let fontsReady;
 export function loadPaperFonts() {
   return fontsReady ||= document.fonts.load('24px "Callback Hand"').catch(() => []).then(() => document.fonts.ready);
 }
-function pen(ctx, size = 24) { ctx.font = `${size}px "Callback Hand", "Apple SD Gothic Neo", sans-serif`; ctx.fillStyle = INK; }
+function pen(ctx, size = 24) { ctx.font = `${size * .85}px "Callback Hand", "Apple SD Gothic Neo", sans-serif`; ctx.fillStyle = INK; }
 function print(ctx, size = 14, weight = 500) { ctx.font = `${weight} ${size}px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Arial, sans-serif`; ctx.fillStyle = '#2e3535'; }
 // Character-based wrapping also handles Korean and a long URL without clipping.
 function wrap(ctx, value, width) {
