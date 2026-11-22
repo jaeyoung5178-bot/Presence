@@ -7,9 +7,9 @@
   <meta name="description" content="오늘의 필드를 손글씨 콜백싯으로 기록하고, 날짜별로 모아 보세요.">
   <title>콜백싯 · Presence Hub</title>
   <link rel="icon" href="../../icon-32.png">
-  <link rel="preload" href="fonts/NanumPenScript-Regular.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261122-date-quick3">
-  <link rel="stylesheet" href="quick-controls.css?v=20261122-quick1">
+  <link rel="preload" href="fonts/GamjaFlower-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20261122-font-rehash1">
+  <link rel="stylesheet" href="quick-controls.css?v=20261122-font-rehash1">
 </head>
 <body>
   <header class="topbar">
@@ -42,12 +42,12 @@
           <section class="editor-section"><div class="section-heading"><span class="step">02</span><div><h2>시간별 기록</h2><p>숫자를 넣으면 종이에 正가 한 획씩 채워져요.</p></div></div>
             <details class="process-details"><summary>과정 목표(Goal) <span>원본 표의 목표 한 줄</span></summary><div id="process-goals" class="field-grid"></div></details>
             <p class="input-guide"><span class="ink-sample" aria-hidden="true">正</span> 5회 = 正 &nbsp;·&nbsp; 0회 = 0 &nbsp;·&nbsp; 빈칸 = 미기록</p>
-            <p class="time-guide">위에서 시작·종료 시간을 고르고 시간표 만들기를 누르면 시간별 행이 채워져요. 숫자나 메모가 있는 행은 그대로 보존해요. 각 행의 시간도 직접 조정할 수 있어요.</p>
+            <p class="time-guide">시작·종료 시간을 고르면 시간별 행이 바로 만들어져요. 숫자나 메모가 있는 행은 그대로 보존해요. 각 행의 시간도 직접 조정할 수 있어요.</p>
             <div id="time-rows"></div>
             <button type="button" id="add-row" class="button add-button">＋ 시간 추가</button>
             <label class="field notes-field" for="objections">오브젝션 핸들링 사유 <span>시리얼(기본정보)</span><textarea id="objections" data-field="objections" maxlength="12000" rows="6" placeholder="공통 메모나 기존 기록을 적어 주세요.&#10;후원자 특이사항은 해당 시간의 세일즈 케이스에 적으면 빨간색으로 표시돼요."></textarea></label><div id="objection-donor-list" class="objection-donor-list" hidden></div>
           </section>
-          <section class="editor-section"><div class="section-heading"><span class="step">03</span><div><h2>오늘의 목표 & 결과</h2><p>목표를 적으면 시간별 기록의 합계와 나란히 보여요.</p></div></div><div id="daily-goals" class="daily-goals"></div><p class="subtle">결과는 위의 시간별 숫자만 자동 합산해요. Rehash는 시간별 추가 기록에 입력하세요.</p></section>
+          <section class="editor-section"><div class="section-heading"><span class="step">03</span><div><h2>오늘의 목표 & 결과</h2><p>목표를 적으면 시간별 기록의 합계와 나란히 보여요.</p></div></div><div id="daily-goals" class="daily-goals"></div><p id="rehash-result-note" class="subtle" role="status">오른쪽 메모에 후원자를 체크하면 Rehash 실제 후원자 수가 자동으로 반영돼요.</p></section>
           <section class="editor-section"><div class="section-heading"><span class="step">04</span><div><h2>내일을 위한 회고</h2><p>잘한 점은 이어 가고, 아쉬운 점은 다음 시도로.</p></div></div><div id="review-fields"></div></section>
         </form>
       </section>
@@ -67,7 +67,7 @@
   <dialog id="source-dialog" class="source-dialog" aria-labelledby="source-title"><div class="dialog-shell"><header class="dialog-heading"><div><p class="eyebrow">ORIGINAL FIELD NOTE</p><h2 id="source-title">콜백싯 원본 사진</h2><p id="source-status"></p></div><button class="icon-button" data-close-dialog="source-dialog" aria-label="원본 사진 닫기">×</button></header><div class="source-info"><p id="source-date-basis"></p><p id="source-duplicates" hidden></p></div><div class="source-toolbar"><span id="source-filename"></span><button id="source-zoom" class="button secondary" aria-pressed="false">원본 크기로 보기</button></div><div class="source-photo-frame" id="source-photo-frame" role="region" aria-label="콜백싯 원본 사진 · 확대 시 가로로 스크롤 가능" tabindex="0"><img id="source-image" alt="종이에 작성된 콜백싯 원본 사진"></div><p id="source-image-error" class="source-image-error" role="alert" hidden>사진을 표시하지 못했어요. 원본 파일을 확인해 주세요.</p><p id="source-notes" class="source-notes" hidden></p><footer class="image-actions"><a id="source-download" class="button secondary" download>원본 사진 저장</a><button id="source-transcribe" class="button primary">기록 옮겨 적기</button></footer><p class="subtle">원본은 그대로 보관돼요. 숫자를 옮겨 적으면 합계와 디지털 콜백싯이 만들어져요.</p></div></dialog>
   <dialog id="paper-note-dialog" class="paper-note-dialog" aria-labelledby="paper-note-title"><form id="paper-note-form"><header class="dialog-heading"><div><h2 id="paper-note-title">오브젝션 메모</h2><p>종이 오른쪽의 메모를 수정해요.</p></div><button type="button" class="icon-button" data-close-dialog="paper-note-dialog" aria-label="메모 닫기">×</button></header><p id="paper-note-existing" class="subtle" style="white-space:pre-wrap" hidden></p><label class="field">메모 내용<textarea id="paper-note-body" rows="6" maxlength="12000" aria-label="오브젝션 메모 내용" placeholder="시리얼, 기본정보, 오브젝션 핸들링 사유"></textarea></label><label class="donor-toggle"><input id="paper-note-donor" type="checkbox">후원자 · 빨간색으로 표시</label><p id="paper-note-error" class="source-image-error" role="alert" hidden></p><footer class="confirm-actions"><button type="button" class="button secondary" data-close-dialog="paper-note-dialog">닫기</button><button type="submit" class="button primary">메모 저장</button></footer></form></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20261122-date-quick3"></script>
+  <script type="module" src="app.js?v=20261122-font-rehash1"></script>
 <dialog id="account-connect-dialog" class="account-connect-dialog" aria-labelledby="account-connect-title"><form id="account-connect-form"><header><h2 id="account-connect-title">내 콜백싯 불러오기</h2><button id="cancel-account-connect" type="button" aria-label="로그인 닫기">×</button></header><p>프레젠스 계정으로 본인 기록을 연결해요.</p><label>아이디<input id="account-connect-id" autocomplete="username" required></label><label>비밀번호<input id="account-connect-password" type="password" autocomplete="current-password" required></label><p id="account-connect-status" role="status"></p><button class="button primary account-connect-submit" type="submit">내 기록 불러오기</button></form></dialog>
 </body>
 </html>

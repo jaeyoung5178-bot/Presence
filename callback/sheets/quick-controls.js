@@ -1,4 +1,4 @@
-import { METRICS, MAX_ROWS, createRow, getPaperNotes, getDonorSummary, setPaperNoteDonor, validateSheet } from './sheet-model.js?v=20261122-quick1';
+import { METRICS, MAX_ROWS, createRow, getPaperNotes, getDonorSummary, setPaperNoteDonor, validateSheet } from './sheet-model.js?v=20261122-font-rehash1';
 
 const minutes = value => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value || '') ? Number(value.slice(0, 2)) * 60 + Number(value.slice(3)) : null;
 const clock = value => `${String(Math.floor((value % 1440) / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
@@ -51,11 +51,11 @@ function donorTargets(sheet) {
 export function mountQuickControls({ getSheet, isReady, onChange, onError }) {
   const timeHost = document.createElement('section');
   timeHost.className = 'quick-field-time'; timeHost.setAttribute('aria-labelledby', 'quick-field-time-title');
-  timeHost.innerHTML = '<div class="quick-control-heading"><div><h3 id="quick-field-time-title">Field Time</h3><p>몇 시부터 몇 시까지 필드했나요?</p></div><span class="quick-time-badge" hidden>다음 날 종료</span></div><div class="quick-time-fields"><label class="field">몇 시부터<input id="field-time-start" type="time" step="60" aria-label="필드 시작 시간"></label><label class="field">몇 시까지<input id="field-time-end" type="time" step="60" aria-label="필드 종료 시간"></label></div><p class="quick-time-guide">두 시간을 고르면 시간별 행이 자동으로 만들어져요. 숫자·메모가 있는 행은 그대로 보존돼요.</p><button id="apply-field-time" type="button" class="button secondary">시간표 만들기</button><p id="field-time-status" class="quick-control-status" role="status" aria-live="polite"></p>';
+  timeHost.innerHTML = '<div class="quick-control-heading"><div><h3 id="quick-field-time-title">필드 시작 ~ 종료</h3><p>두 시간을 선택하면 시간표가 바로 만들어져요.</p></div><span class="quick-time-badge" hidden>다음 날 종료</span></div><div class="quick-time-fields"><label class="field">시작<input id="field-time-start" type="time" step="60" aria-label="필드 시작 시간"></label><label class="field">종료<input id="field-time-end" type="time" step="60" aria-label="필드 종료 시간"></label></div><p class="quick-time-guide">두 시간을 고르면 시간별 행이 자동으로 만들어져요. 숫자·메모가 있는 행은 그대로 보존돼요.</p><button id="apply-field-time" type="button" class="button secondary">시간표 만들기</button><p id="field-time-status" class="quick-control-status" role="status" aria-live="polite"></p>';
   document.querySelector('#time-rows').before(timeHost);
   const donorHost = document.createElement('section');
   donorHost.className = 'quick-donors'; donorHost.setAttribute('aria-labelledby', 'quick-donors-title');
-  donorHost.innerHTML = '<div class="quick-control-heading"><div><h3 id="quick-donors-title">오늘의 후원자</h3><p>메모에 체크하면 빨간색으로 표시돼요.</p></div><output id="quick-donor-count" aria-label="오늘의 후원자 수" aria-live="polite">미확인</output></div><details class="quick-donor-details"><summary>메모별 후원자 선택 <span id="quick-note-count"></span></summary><div id="quick-donor-notes" class="quick-donor-notes"></div></details>';
+  donorHost.innerHTML = '<div class="quick-control-heading"><div><h3 id="quick-donors-title">Rehash · 실제 후원자</h3><p>메모에 체크하면 빨간색 표시와 Rehash 결과에 함께 반영돼요.</p></div><output id="quick-donor-count" aria-label="오늘의 후원자 수" aria-live="polite">미확인</output></div><details class="quick-donor-details"><summary>메모별 후원자 선택 <span id="quick-note-count"></span></summary><div id="quick-donor-notes" class="quick-donor-notes"></div></details>';
   document.querySelector('#preview-panel .paper-tools').before(donorHost);
   const startInput = timeHost.querySelector('#field-time-start'), endInput = timeHost.querySelector('#field-time-end'), applyButton = timeHost.querySelector('#apply-field-time'), timeStatus = timeHost.querySelector('#field-time-status'), noteList = donorHost.querySelector('#quick-donor-notes');
   let sheetId = null, timesSignature = '', notesSignature = '', noteTargets = [];

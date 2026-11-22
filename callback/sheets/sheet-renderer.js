@@ -1,4 +1,4 @@
-import { METRICS, fieldMinutes, getTotals, hasValues, parseObjectionBlocks, getPaperNotes } from './sheet-model.js?v=20261122-quick1';
+import { METRICS, fieldMinutes, getMetricReading, parseObjectionBlocks, getPaperNotes } from './sheet-model.js?v=20261122-font-rehash1';
 
 const WIDTH = 900, MARGIN = 48, INNER = WIDTH - MARGIN * 2;
 export const INK = '#292c2a', DONOR_INK = '#b13e43';
@@ -126,13 +126,13 @@ export async function renderSheet(canvas, sheet, { scale = 1.7 } = {}) {
     } x += w; }); y += h;
   });
   box(ctx, MARGIN, p.summaryY, INNER, 30, '#e9eae4'); print(ctx, 15, 700); centered(ctx, '오늘의 목표 & 결과 (환경을 탓하지 말고 나의 노력을 탓하라)', WIDTH / 2, p.summaryY + 21);
-  const summaryLabels = ['Contact', 'Stop', 'Presentation', 'Close', 'Rehash'], totals = getTotals(sheet);
+  const summaryLabels = ['Contact', 'Stop', 'Presentation', 'Close', 'Rehash'];
   METRICS.forEach((key, i) => {
     const w = INNER / 5, x = MARGIN + i * w;
     box(ctx, x, p.summaryY + 30, w, 27, '#f0f0e9'); print(ctx, 15, 700); centered(ctx, summaryLabels[i], x + w / 2, p.summaryY + 49);
     box(ctx, x, p.summaryY + 57, w, 45);
     // The paper prints a slash, with independently positioned handwritten goal/result values.
-    pen(ctx, 28); ctx.textAlign = 'right'; ctx.fillText(sheet.goals[key] ?? '', x + w / 2 - 16, p.summaryY + 87); ctx.textAlign = 'left'; ctx.fillText(hasValues(sheet, key) ? totals[key] : '', x + w / 2 + 15, p.summaryY + 87);
+    pen(ctx, 28); ctx.textAlign = 'right'; ctx.fillText(sheet.goals[key] ?? '', x + w / 2 - 16, p.summaryY + 87); ctx.textAlign = 'left'; ctx.fillText(getMetricReading(sheet, key).value ?? '', x + w / 2 + 15, p.summaryY + 87);
     print(ctx, 27, 750); centered(ctx, '/', x + w / 2, p.summaryY + 89);
   });
   box(ctx, MARGIN, p.reviewY, INNER, 32, '#e9eae4'); print(ctx, 14, 700); centered(ctx, '내일을 위한 Analysis & Evaluation', WIDTH / 2, p.reviewY + 22);

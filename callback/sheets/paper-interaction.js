@@ -1,4 +1,4 @@
-import { LABELS, incrementPaperMetric, decrementPaperMetric, parseObjectionBlocks, replaceObjectionNote, setPaperNoteDonor, getDonorSummary, validateSheet } from './sheet-model.js?v=20261122-quick1';
+import { LABELS, incrementPaperMetric, decrementPaperMetric, parseObjectionBlocks, replaceObjectionNote, setPaperNoteDonor, getDonorSummary, validateSheet } from './sheet-model.js?v=20261122-font-rehash1';
 
 export function createPaperInteraction({ getSheet, isReady, checkValid, onChange, onError }) {
   const $ = selector => document.querySelector(selector), layer = $('#paper-hit-layer'), scroll = $('#paper-scroll'), toggle = $('#paper-edit-toggle'), undoButton = $('#paper-undo'), dialog = $('#paper-note-dialog');

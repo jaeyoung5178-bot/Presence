@@ -1,9 +1,9 @@
 import {readExistingConnection,createAccountConnection} from '../account-connection.js?v=20261113-account1';
-import { createSheet, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getTotals, getDonorSummary, parseObjectionBlocks, isObjectionDonor, isSharedObjectionDonor, reconcileObjectionDonors, setPaperNoteDonor, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261122-quick1';
-import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261122-date-quick2';
-import { createPaperInteraction } from './paper-interaction.js?v=20261122-quick1';
-import { mountQuickControls } from './quick-controls.js?v=20261122-quick1';
-import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261122-date-move1';
+import { createSheet, createNextHourlyRow, fieldMinutes, createDonorCase, CASE_METRICS, getMetricReading, getDonorSummary, parseObjectionBlocks, isObjectionDonor, isSharedObjectionDonor, reconcileObjectionDonors, setPaperNoteDonor, hasValues, localDate, METRICS, LABELS, MAX_ROWS, normalizeSheet, validateSheet, formatDate } from './sheet-model.js?v=20261122-font-rehash1';
+import { renderSheet, exportSheetPNG } from './sheet-renderer.js?v=20261122-font-rehash1';
+import { createPaperInteraction } from './paper-interaction.js?v=20261122-font-rehash1';
+import { mountQuickControls } from './quick-controls.js?v=20261122-font-rehash1';
+import { loadSheets, saveSheet, deleteSheet, loadDraft, saveDraft, clearDraft, getStorageStatus, subscribe, syncSheets } from './storage.js?v=20261122-font-rehash1';
 import { createCloudClient, readAccountIdentity } from './cloud.js?v=20261121-field-days1';
 import { compareFieldDays, workbookToday, validDate } from './field-days.js?v=20261121-field-days1';
 
@@ -124,7 +124,18 @@ async function editRecord(record) {
   if (opened) void persistDraft();
   return true;
 }
-function updateTotals() { const totals = getTotals(sheet); METRICS.forEach(key => { $(`#total-${key}`).textContent = hasValues(sheet, key) ? totals[key].toLocaleString() : '—'; }); }
+function updateTotals() {
+  METRICS.forEach(key => { const reading = getMetricReading(sheet, key); $(`#total-${key}`).textContent = reading.value === null ? '—' : reading.value.toLocaleString(); });
+  const reading = getMetricReading(sheet, 'rehash');
+  $$('[data-field^="rows."][data-field$=".rehash"]').forEach(input => {
+    input.readOnly = reading.basis === 'donors';
+    input.title = input.readOnly ? '실제 Rehash 결과는 오른쪽 메모의 후원자 체크로 바꿔요. 기존 수기 값은 보관돼요.' : '';
+    input.closest('.rehash-field').querySelector('span').textContent = input.readOnly ? '수기 값 보관' : '추가 기록';
+  });
+  $('#rehash-result-note').textContent = reading.basis === 'donors'
+    ? `Rehash 실제 후원자 ${reading.value}명 · 메모의 후원자 체크와 함께 자동 반영돼요. 시간별 수기 입력값은 그대로 보관돼요.`
+    : '오른쪽 메모에서 후원자를 체크하면 Rehash 결과가 실제 후원자 수로 자동 반영돼요. 아직 체크하지 않은 기존 기록은 수기 Rehash를 사용해요.';
+}
 function schedulePreview() {
   clearTimeout(renderTimer); const revision = editVersion;
   renderTimer = setTimeout(async () => {
@@ -291,8 +302,8 @@ function renderArchive() {
   if (!filtered.length && !records.length && !getStorageStatus().uid) { $('#archive-list').innerHTML = '<div class="archive-empty"><strong>현재 기기의 보관함이에요</strong><p>개인 콜백 연결이 없으면 다른 기기의 기록은 보이지 않아요. 위의 이전 콜백싯 기록 보기에서 기존 연결을 확인해 주세요.</p></div>'; return; }
   if (!filtered.length) { $('#archive-list').innerHTML = `<div class="archive-empty"><strong>${records.length ? '찾는 기록이 없어요' : '첫 번째 필드를 기다리고 있어요'}</strong><p>${records.length ? '검색어나 월을 바꾸어 다시 찾아보세요.' : '새 기록을 작성하고 저장하면 날짜순으로 모여요.'}</p></div>`; return; }
   $('#archive-list').innerHTML = filtered.map(record => {
-    const totals = getTotals(record), donor = getDonorSummary(record), photo = record.source?.type === 'photo', title = [record.meta.name, record.meta.location, record.meta.theme].filter(Boolean).join(' · ') || '이름 없는 필드 기록';
-    return `<article class="archive-record${photo ? ' record-photo' : ''}"><button class="record-open" data-open-sheet="${esc(record.id)}" aria-label="${esc(record.date + ' ' + title)} ${photo ? '원본 사진' : '기록'} 열기">${photo ? `<img class="record-thumbnail" data-source-thumb="${esc(record.id)}" loading="lazy" alt="">` : ''}<span class="record-date">${formatDate(record.date)}</span><span class="record-title">${esc(title)}</span><span class="record-donor-count">${donor.count === null ? '후원자 미확인' : `후원자 ${donor.count.toLocaleString()}명`}${donor.basis === 'rehash' ? ' · Rehash 기준' : ''}</span>${photo ? `<span class="source-badge">${sourceStatus(record)}</span>${record.source.dateBasis !== 'written' ? `<span class="record-date-basis">${record.source.dateBasis === 'capture' ? '촬영일 기준' : '날짜 미확인 · 임시 정렬'}</span>` : ''}` : ''}${!photo || sourceValueCount(record) ? `<span class="record-stats">${METRICS.map(key => `<span>${LABELS[key]} <b>${hasValues(record, key) ? totals[key] : '—'}</b></span>`).join('')}</span>` : ''}</button><button class="icon-button record-delete" data-delete-sheet="${esc(record.id)}" aria-label="${record.date} 기록 삭제">×</button></article>`;
+    const donor = getDonorSummary(record), photo = record.source?.type === 'photo', title = [record.meta.name, record.meta.location, record.meta.theme].filter(Boolean).join(' · ') || '이름 없는 필드 기록';
+    return `<article class="archive-record${photo ? ' record-photo' : ''}"><button class="record-open" data-open-sheet="${esc(record.id)}" aria-label="${esc(record.date + ' ' + title)} ${photo ? '원본 사진' : '기록'} 열기">${photo ? `<img class="record-thumbnail" data-source-thumb="${esc(record.id)}" loading="lazy" alt="">` : ''}<span class="record-date">${formatDate(record.date)}</span><span class="record-title">${esc(title)}</span><span class="record-donor-count">${donor.count === null ? '후원자 미확인' : `후원자 ${donor.count.toLocaleString()}명`}${donor.basis === 'rehash' ? ' · Rehash 기준' : ''}</span>${photo ? `<span class="source-badge">${sourceStatus(record)}</span>${record.source.dateBasis !== 'written' ? `<span class="record-date-basis">${record.source.dateBasis === 'capture' ? '촬영일 기준' : '날짜 미확인 · 임시 정렬'}</span>` : ''}` : ''}${!photo || sourceValueCount(record) || getMetricReading(record, 'rehash').basis === 'donors' ? `<span class="record-stats">${METRICS.map(key => `<span>${LABELS[key]} <b>${getMetricReading(record, key).value ?? '—'}</b></span>`).join('')}</span>` : ''}</button><button class="icon-button record-delete" data-delete-sheet="${esc(record.id)}" aria-label="${record.date} 기록 삭제">×</button></article>`;
   }).join('');
   const byId = new Map(filtered.filter(record => record.source).map(record => [record.id, record]));
   $$('[data-source-thumb]').forEach(image => { image.src = byId.get(image.dataset.sourceThumb).source.imageDataUrl; });
