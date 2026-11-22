@@ -1,4 +1,4 @@
-import { normalizeSheet } from './sheet-model.js?v=20261122-quick1';
+import { normalizeSheet } from './sheet-model.js?v=20261122-font-rehash1';
 
 // Date correction can reuse a record only when every other documented value,
 // including creation/row/case IDs, explicit zeroes and the original photo, agrees.

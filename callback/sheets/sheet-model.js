@@ -80,6 +80,12 @@ export function createSheet(now = new Date()) {
 export function getTotals(sheet) { return Object.fromEntries(METRICS.map(key => [key, sheet.rows.reduce((sum, row) => sum + (Number.isInteger(row[key]) ? row[key] : 0), 0)])); }
 export function hasValues(sheet, key) { return sheet.rows.some(row => row[key] !== null && row[key] !== undefined); }
 export function getMetricReading(sheet, key) {
+  if (key === 'rehash') {
+    const donors = getDonorSummary(sheet);
+    // An explicit empty selection is zero, including after reload. Raw hourly
+    // values remain intact as the fallback for records without donor selections.
+    return { value: donors.count, basis: donors.basis === 'cases' ? 'donors' : donors.basis === 'rehash' ? 'manual' : donors.basis };
+  }
   if (hasValues(sheet, key)) return { value: getTotals(sheet)[key], basis: 'manual' };
   const value = sheet.source?.type === 'photo' ? sheet.source.transcription?.totals?.[key] : null;
   return Number.isInteger(value) && value >= 0 ? { value, basis: 'transcription' } : { value: null, basis: 'unknown' };

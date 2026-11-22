@@ -1,6 +1,6 @@
-import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261122-quick1';
+import { makeId, normalizeSheet, validateSheet } from './sheet-model.js?v=20261122-font-rehash1';
 import { createCloudClient, IdentityChangedError, readAccountIdentity } from './cloud.js?v=20261009-sync1';
-import { sameSheetContent, validBaseDate, DateMoveConflictError } from './sheet-content.js?v=20261122-date-move1';
+import { sameSheetContent, validBaseDate, DateMoveConflictError } from './sheet-content.js?v=20261122-font-rehash1';
 
 const DB_NAME = 'presence-paper-sheets-v1';
 const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,180}$/.test(id);
