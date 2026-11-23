@@ -219,17 +219,14 @@ window.NOZERO400 = {
       "n": 2,
       "title": "배운 적 없던 스키",
       "kicker": "시작은 숙소 앞 언덕",
-      "layout": "ski-photo",
+      "layout": "ski-story",
       "screen": "배운 적 없던 스키\n\n숙소 앞 언덕에서\n어쩌다 슬로프로",
       "emphasis": [
         "배운 적 없던 스키"
       ],
       "time": "55초",
       "seconds": 55,
-      "notes": "저는 스키를 정식으로 배운 적이 없습니다. 숙소 앞 언덕에서 타다가 어쩌다 슬로프까지 가게 됐습니다.\n\n그렇게 타고 있는데 뜻밖에 칭찬과 격려를 받았습니다. 그 말에 재미가 붙었고, 계속 타보고 싶어졌습니다. 제게는 그게 리테인이 된 거예요.\n\n재미가 있으니까 다른 스키어들을 관찰하고 따라 했습니다. 보고, 따라 하고, 다시 타면서 숙달됐습니다. 재미가 반복을 만든 겁니다.\n\n스키에서 그랬듯이, 노제로도 제가 한번 해낸 경험이 다음 시도를 하게 만들었습니다. 첫 시상 이후에는 매일 노제로를 해낼 수 있겠다는 확신으로 이어졌습니다.",
-      "image": "assets/ski-childhood-restored.png",
-      "imageAlt": "어린 시절 스키장에서 스키와 폴을 들고 서 있는 임재영의 사진 보정본",
-      "caption": "어린 시절 스키장 · 사진 보정본"
+      "notes": "저는 스키를 정식으로 배운 적이 없습니다. 숙소 앞 언덕에서 타다가 어쩌다 슬로프까지 가게 됐습니다.\n\n그렇게 타고 있는데 뜻밖에 칭찬과 격려를 받았습니다. 그 말에 재미가 붙었고, 계속 타보고 싶어졌습니다. 제게는 그게 리테인이 된 거예요.\n\n재미가 있으니까 다른 스키어들을 관찰하고 따라 했습니다. 보고, 따라 하고, 다시 타면서 숙달됐습니다. 재미가 반복을 만든 겁니다.\n\n스키에서 그랬듯이, 노제로도 제가 한번 해낸 경험이 다음 시도를 하게 만들었습니다. 첫 시상 이후에는 매일 노제로를 해낼 수 있겠다는 확신으로 이어졌습니다."
     },
     {
       "scene": "talk",
@@ -254,7 +251,7 @@ window.NOZERO400 = {
       "time": "10초"
     },
     {
-      "scene": "talk",
+      "scene": "first-score-proof",
       "title": "1. 빠른 셋업, 퍼스트 스코어 집중",
       "kicker": "",
       "layout": "tip-first",
@@ -263,7 +260,201 @@ window.NOZERO400 = {
       "notes": "첫 번째는 빠른 셋업과 퍼스트 스코어에 집중하는 겁니다.\n\n제 경험으로는 셋업 직후에는 사람들 눈에 잘 띄고, 유동이 활발한 때가 많았습니다. 저도 필드 초반에는 체력과 컨디션이 좋은 편이고요.\n\n그래서 셋업을 빠르게 마치고, 첫 STP를 노리는 데 집중합니다. 조금 있다가 시작해야겠다고 미루기보다 준비가 끝나면 바로 움직이는 겁니다.\n\n그래서 저는 첫 기회를 잡는 데 힘을 씁니다. 시작부터 하나 만들어놓으면 그 뒤 필드가 훨씬 편해졌습니다.",
       "tipNumber": "01",
       "seconds": 70,
-      "time": "1분 10초"
+      "time": "1분 10초",
+      "proofClips": [
+        {
+          "image": "assets/first-score-v9/first-score-01.png",
+          "imageWidth": 220,
+          "imageHeight": 58,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-02.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-03.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-04.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-05.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-06.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-07.png",
+          "imageWidth": 220,
+          "imageHeight": 58,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-08.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-09.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-10.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-11.png",
+          "imageWidth": 220,
+          "imageHeight": 50,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-12.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 4만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-13.png",
+          "imageWidth": 220,
+          "imageHeight": 47,
+          "alt": "실제 첫 후원 기록 · 1. 재영 4만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-14.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 2만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-15.png",
+          "imageWidth": 220,
+          "imageHeight": 49,
+          "alt": "실제 첫 후원 기록 · 1. 재영 4만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-16.png",
+          "imageWidth": 220,
+          "imageHeight": 49,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-17.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 4만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-18.png",
+          "imageWidth": 220,
+          "imageHeight": 57,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-19.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-20.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 2만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-22.png",
+          "imageWidth": 220,
+          "imageHeight": 58,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-23.png",
+          "imageWidth": 220,
+          "imageHeight": 50,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-24.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-26.png",
+          "imageWidth": 220,
+          "imageHeight": 58,
+          "alt": "실제 첫 후원 기록 · 1. 재영 5만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-27.png",
+          "imageWidth": 220,
+          "imageHeight": 58,
+          "alt": "실제 첫 후원 기록 · 1. 재영 5만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-28.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-29.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-30.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-31.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-32.png",
+          "imageWidth": 220,
+          "imageHeight": 54,
+          "alt": "실제 첫 후원 기록 · 1. 재영 5만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-33.png",
+          "imageWidth": 220,
+          "imageHeight": 56,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        },
+        {
+          "image": "assets/first-score-v9/first-score-34.png",
+          "imageWidth": 220,
+          "imageHeight": 53,
+          "alt": "실제 첫 후원 기록 · 1. 재영 3만"
+        }
+      ]
     },
     {
       "scene": "skill-step",
