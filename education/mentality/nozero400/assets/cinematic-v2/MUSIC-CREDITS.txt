@@ -1,0 +1,7 @@
+Music: Inspired
+Artist: Kevin MacLeod
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600022
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Modifications: 44-second excerpt, loudness normalization, 0.6-second fade in and 2.5-second fade out.
