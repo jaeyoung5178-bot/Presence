@@ -1,0 +1,4 @@
+Pretendard v1.3.9
+https://github.com/orioncactus/pretendard
+https://github.com/orioncactus/pretendard/releases/download/v1.3.9/Pretendard-1.3.9.zip
+License: SIL Open Font License 1.1 (LICENSE.txt)
