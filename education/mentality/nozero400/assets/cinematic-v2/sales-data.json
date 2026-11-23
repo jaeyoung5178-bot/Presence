@@ -1,0 +1,4550 @@
+{
+  "scope": {
+    "startDate": "2024-11-02",
+    "endDate": "2026-11-23",
+    "asOfDate": "2026-11-23",
+    "sourceName": "Presence 개인 세일즈 기록 · 게시 시트",
+    "sourceUrl": "https://hub.presence.co.kr/presence-record.html",
+    "fieldDaysComplete": true,
+    "donorCountsComplete": true,
+    "naDaysComplete": false,
+    "missingIsNa": false,
+    "coverageLabel": "2024.11.02–2026.11.23 · 개인 기록 403일 · 최종 필드 기록 11.20",
+    "sourceRecordCutoff": "2026-11-20"
+  },
+  "summary": {
+    "elapsedDays": 751,
+    "calendarDaysInclusive": 752,
+    "fieldDays": 403,
+    "totalDonors": 883,
+    "averageDonors": 2.1910669975186106,
+    "averageDonorsDisplay": "2.19",
+    "naDays": 79,
+    "missingDays": 270,
+    "zeroDays": 0,
+    "latestRecordedFieldDate": "2026-11-20",
+    "milestone400": {
+      "date": "2026-11-16",
+      "elapsedDays": 744,
+      "calendarDaysInclusive": 745,
+      "fieldDays": 400,
+      "totalDonors": 878,
+      "averageDonors": 2.195,
+      "averageDonorsDisplay": "2.20"
+    }
+  },
+  "daily": [
+    {
+      "date": "2024-11-02",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 1
+    },
+    {
+      "date": "2024-11-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 2
+    },
+    {
+      "date": "2024-11-04",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 3
+    },
+    {
+      "date": "2024-11-05",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 4
+    },
+    {
+      "date": "2024-11-06",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 5
+    },
+    {
+      "date": "2024-11-07",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 6
+    },
+    {
+      "date": "2024-11-08",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 7
+    },
+    {
+      "date": "2024-11-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-11-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-11-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-11-12",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-11-13",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 8
+    },
+    {
+      "date": "2024-11-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 9
+    },
+    {
+      "date": "2024-11-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-11-16",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 10
+    },
+    {
+      "date": "2024-11-17",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 11
+    },
+    {
+      "date": "2024-11-18",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 12
+    },
+    {
+      "date": "2024-11-19",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 13
+    },
+    {
+      "date": "2024-11-20",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 14
+    },
+    {
+      "date": "2024-11-21",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 15
+    },
+    {
+      "date": "2024-11-22",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 16
+    },
+    {
+      "date": "2024-11-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-11-24",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-11-25",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 17
+    },
+    {
+      "date": "2024-11-26",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 18
+    },
+    {
+      "date": "2024-11-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 19
+    },
+    {
+      "date": "2024-11-28",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 20
+    },
+    {
+      "date": "2024-11-29",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 21
+    },
+    {
+      "date": "2024-11-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-02",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 22
+    },
+    {
+      "date": "2024-12-03",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-04",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 23
+    },
+    {
+      "date": "2024-12-05",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 24
+    },
+    {
+      "date": "2024-12-06",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 25
+    },
+    {
+      "date": "2024-12-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-09",
+      "status": "field",
+      "donors": 6,
+      "fieldOrdinal": 26
+    },
+    {
+      "date": "2024-12-10",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 27
+    },
+    {
+      "date": "2024-12-11",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 28
+    },
+    {
+      "date": "2024-12-12",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 29
+    },
+    {
+      "date": "2024-12-13",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 30
+    },
+    {
+      "date": "2024-12-14",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-16",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 31
+    },
+    {
+      "date": "2024-12-17",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 32
+    },
+    {
+      "date": "2024-12-18",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 33
+    },
+    {
+      "date": "2024-12-19",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 34
+    },
+    {
+      "date": "2024-12-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 35
+    },
+    {
+      "date": "2024-12-24",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 36
+    },
+    {
+      "date": "2024-12-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-26",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 37
+    },
+    {
+      "date": "2024-12-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 38
+    },
+    {
+      "date": "2024-12-28",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-29",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2024-12-31",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 39
+    },
+    {
+      "date": "2025-01-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-02",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 40
+    },
+    {
+      "date": "2025-01-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 41
+    },
+    {
+      "date": "2025-01-04",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 42
+    },
+    {
+      "date": "2025-01-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-06",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 43
+    },
+    {
+      "date": "2025-01-07",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 44
+    },
+    {
+      "date": "2025-01-08",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 45
+    },
+    {
+      "date": "2025-01-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-10",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 46
+    },
+    {
+      "date": "2025-01-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-12",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-13",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 47
+    },
+    {
+      "date": "2025-01-14",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 48
+    },
+    {
+      "date": "2025-01-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-21",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 49
+    },
+    {
+      "date": "2025-01-22",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 50
+    },
+    {
+      "date": "2025-01-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 51
+    },
+    {
+      "date": "2025-01-24",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 52
+    },
+    {
+      "date": "2025-01-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-28",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-29",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-01-31",
+      "status": "field",
+      "donors": 6,
+      "fieldOrdinal": 53
+    },
+    {
+      "date": "2025-02-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-03",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-06",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 54
+    },
+    {
+      "date": "2025-02-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-10",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 55
+    },
+    {
+      "date": "2025-02-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-12",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 56
+    },
+    {
+      "date": "2025-02-13",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 57
+    },
+    {
+      "date": "2025-02-14",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 58
+    },
+    {
+      "date": "2025-02-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-17",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 59
+    },
+    {
+      "date": "2025-02-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-19",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 60
+    },
+    {
+      "date": "2025-02-20",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 61
+    },
+    {
+      "date": "2025-02-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-24",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-02-28",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-03",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 62
+    },
+    {
+      "date": "2025-03-04",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 63
+    },
+    {
+      "date": "2025-03-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-06",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 64
+    },
+    {
+      "date": "2025-03-07",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 65
+    },
+    {
+      "date": "2025-03-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-10",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 66
+    },
+    {
+      "date": "2025-03-11",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 67
+    },
+    {
+      "date": "2025-03-12",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 68
+    },
+    {
+      "date": "2025-03-13",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 69
+    },
+    {
+      "date": "2025-03-14",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 70
+    },
+    {
+      "date": "2025-03-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-17",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 71
+    },
+    {
+      "date": "2025-03-18",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 72
+    },
+    {
+      "date": "2025-03-19",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 73
+    },
+    {
+      "date": "2025-03-20",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 74
+    },
+    {
+      "date": "2025-03-21",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 75
+    },
+    {
+      "date": "2025-03-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-24",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 76
+    },
+    {
+      "date": "2025-03-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-28",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 77
+    },
+    {
+      "date": "2025-03-29",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-03-31",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-01",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 78
+    },
+    {
+      "date": "2025-04-02",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 79
+    },
+    {
+      "date": "2025-04-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 80
+    },
+    {
+      "date": "2025-04-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-06",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-09",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 81
+    },
+    {
+      "date": "2025-04-10",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 82
+    },
+    {
+      "date": "2025-04-11",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 83
+    },
+    {
+      "date": "2025-04-12",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-13",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 84
+    },
+    {
+      "date": "2025-04-15",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 85
+    },
+    {
+      "date": "2025-04-16",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 86
+    },
+    {
+      "date": "2025-04-17",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 87
+    },
+    {
+      "date": "2025-04-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-21",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 88
+    },
+    {
+      "date": "2025-04-22",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 89
+    },
+    {
+      "date": "2025-04-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-24",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 90
+    },
+    {
+      "date": "2025-04-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-28",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 91
+    },
+    {
+      "date": "2025-04-29",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-04-30",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 92
+    },
+    {
+      "date": "2025-05-01",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 93
+    },
+    {
+      "date": "2025-05-02",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 94
+    },
+    {
+      "date": "2025-05-03",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-05",
+      "status": "field",
+      "donors": 6,
+      "fieldOrdinal": 95
+    },
+    {
+      "date": "2025-05-06",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 96
+    },
+    {
+      "date": "2025-05-07",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 97
+    },
+    {
+      "date": "2025-05-08",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 98
+    },
+    {
+      "date": "2025-05-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-12",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 99
+    },
+    {
+      "date": "2025-05-13",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-14",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 100
+    },
+    {
+      "date": "2025-05-15",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 101
+    },
+    {
+      "date": "2025-05-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-19",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 102
+    },
+    {
+      "date": "2025-05-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-21",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 103
+    },
+    {
+      "date": "2025-05-22",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 104
+    },
+    {
+      "date": "2025-05-23",
+      "status": "field",
+      "donors": 12,
+      "fieldOrdinal": 105
+    },
+    {
+      "date": "2025-05-24",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-26",
+      "status": "field",
+      "donors": 7,
+      "fieldOrdinal": 106
+    },
+    {
+      "date": "2025-05-27",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 107
+    },
+    {
+      "date": "2025-05-28",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 108
+    },
+    {
+      "date": "2025-05-29",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 109
+    },
+    {
+      "date": "2025-05-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-05-31",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-02",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 110
+    },
+    {
+      "date": "2025-06-03",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 111
+    },
+    {
+      "date": "2025-06-04",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 112
+    },
+    {
+      "date": "2025-06-05",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 113
+    },
+    {
+      "date": "2025-06-06",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 114
+    },
+    {
+      "date": "2025-06-07",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 115
+    },
+    {
+      "date": "2025-06-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-09",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 116
+    },
+    {
+      "date": "2025-06-10",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 117
+    },
+    {
+      "date": "2025-06-11",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 118
+    },
+    {
+      "date": "2025-06-12",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 119
+    },
+    {
+      "date": "2025-06-13",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 120
+    },
+    {
+      "date": "2025-06-14",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-17",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 121
+    },
+    {
+      "date": "2025-06-18",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 122
+    },
+    {
+      "date": "2025-06-19",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 123
+    },
+    {
+      "date": "2025-06-20",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 124
+    },
+    {
+      "date": "2025-06-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-23",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 125
+    },
+    {
+      "date": "2025-06-24",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-25",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 126
+    },
+    {
+      "date": "2025-06-26",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 127
+    },
+    {
+      "date": "2025-06-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-28",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-29",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-06-30",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 128
+    },
+    {
+      "date": "2025-07-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-02",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 129
+    },
+    {
+      "date": "2025-07-03",
+      "status": "field",
+      "donors": 10,
+      "fieldOrdinal": 130
+    },
+    {
+      "date": "2025-07-04",
+      "status": "field",
+      "donors": 6,
+      "fieldOrdinal": 131
+    },
+    {
+      "date": "2025-07-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-06",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-08",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 132
+    },
+    {
+      "date": "2025-07-09",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 133
+    },
+    {
+      "date": "2025-07-10",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 134
+    },
+    {
+      "date": "2025-07-11",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 135
+    },
+    {
+      "date": "2025-07-12",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-13",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-14",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-15",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 136
+    },
+    {
+      "date": "2025-07-16",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 137
+    },
+    {
+      "date": "2025-07-17",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 138
+    },
+    {
+      "date": "2025-07-18",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 139
+    },
+    {
+      "date": "2025-07-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 140
+    },
+    {
+      "date": "2025-07-24",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 141
+    },
+    {
+      "date": "2025-07-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-26",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 142
+    },
+    {
+      "date": "2025-07-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-28",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 143
+    },
+    {
+      "date": "2025-07-29",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 144
+    },
+    {
+      "date": "2025-07-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-07-31",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 145
+    },
+    {
+      "date": "2025-08-01",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 146
+    },
+    {
+      "date": "2025-08-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-03",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 147
+    },
+    {
+      "date": "2025-08-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-05",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 148
+    },
+    {
+      "date": "2025-08-06",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 149
+    },
+    {
+      "date": "2025-08-07",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 150
+    },
+    {
+      "date": "2025-08-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-12",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-13",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 151
+    },
+    {
+      "date": "2025-08-15",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 152
+    },
+    {
+      "date": "2025-08-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-18",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 153
+    },
+    {
+      "date": "2025-08-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-20",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 154
+    },
+    {
+      "date": "2025-08-21",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 155
+    },
+    {
+      "date": "2025-08-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-24",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-25",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 156
+    },
+    {
+      "date": "2025-08-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 157
+    },
+    {
+      "date": "2025-08-28",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 158
+    },
+    {
+      "date": "2025-08-29",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 159
+    },
+    {
+      "date": "2025-08-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-08-31",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-01",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 160
+    },
+    {
+      "date": "2025-09-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-03",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 161
+    },
+    {
+      "date": "2025-09-04",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 162
+    },
+    {
+      "date": "2025-09-05",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 163
+    },
+    {
+      "date": "2025-09-06",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 164
+    },
+    {
+      "date": "2025-09-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-08",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 165
+    },
+    {
+      "date": "2025-09-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-10",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 166
+    },
+    {
+      "date": "2025-09-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-12",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 167
+    },
+    {
+      "date": "2025-09-13",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 168
+    },
+    {
+      "date": "2025-09-14",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-15",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 169
+    },
+    {
+      "date": "2025-09-16",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 170
+    },
+    {
+      "date": "2025-09-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-18",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 171
+    },
+    {
+      "date": "2025-09-19",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 172
+    },
+    {
+      "date": "2025-09-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-22",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 173
+    },
+    {
+      "date": "2025-09-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-09-24",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 174
+    },
+    {
+      "date": "2025-09-25",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 175
+    },
+    {
+      "date": "2025-09-26",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 176
+    },
+    {
+      "date": "2025-09-27",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 177
+    },
+    {
+      "date": "2025-09-28",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 178
+    },
+    {
+      "date": "2025-09-29",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 179
+    },
+    {
+      "date": "2025-09-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-01",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 180
+    },
+    {
+      "date": "2025-10-02",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 181
+    },
+    {
+      "date": "2025-10-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 182
+    },
+    {
+      "date": "2025-10-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-06",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-12",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-13",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 183
+    },
+    {
+      "date": "2025-10-14",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 184
+    },
+    {
+      "date": "2025-10-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-16",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 185
+    },
+    {
+      "date": "2025-10-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-22",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 186
+    },
+    {
+      "date": "2025-10-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 187
+    },
+    {
+      "date": "2025-10-24",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 188
+    },
+    {
+      "date": "2025-10-25",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 189
+    },
+    {
+      "date": "2025-10-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-28",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-10-29",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 190
+    },
+    {
+      "date": "2025-10-30",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 191
+    },
+    {
+      "date": "2025-10-31",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 192
+    },
+    {
+      "date": "2025-11-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 193
+    },
+    {
+      "date": "2025-11-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-05",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 194
+    },
+    {
+      "date": "2025-11-06",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 195
+    },
+    {
+      "date": "2025-11-07",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 196
+    },
+    {
+      "date": "2025-11-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-11",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 197
+    },
+    {
+      "date": "2025-11-12",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 198
+    },
+    {
+      "date": "2025-11-13",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 199
+    },
+    {
+      "date": "2025-11-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 200
+    },
+    {
+      "date": "2025-11-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-17",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 201
+    },
+    {
+      "date": "2025-11-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-20",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 202
+    },
+    {
+      "date": "2025-11-21",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 203
+    },
+    {
+      "date": "2025-11-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-24",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 204
+    },
+    {
+      "date": "2025-11-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-26",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 205
+    },
+    {
+      "date": "2025-11-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 206
+    },
+    {
+      "date": "2025-11-28",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 207
+    },
+    {
+      "date": "2025-11-29",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-11-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-01",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 208
+    },
+    {
+      "date": "2025-12-02",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 209
+    },
+    {
+      "date": "2025-12-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 210
+    },
+    {
+      "date": "2025-12-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-06",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-08",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 211
+    },
+    {
+      "date": "2025-12-09",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 212
+    },
+    {
+      "date": "2025-12-10",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 213
+    },
+    {
+      "date": "2025-12-11",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 214
+    },
+    {
+      "date": "2025-12-12",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 215
+    },
+    {
+      "date": "2025-12-13",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-14",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 216
+    },
+    {
+      "date": "2025-12-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-16",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 217
+    },
+    {
+      "date": "2025-12-17",
+      "status": "field",
+      "donors": 7,
+      "fieldOrdinal": 218
+    },
+    {
+      "date": "2025-12-18",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 219
+    },
+    {
+      "date": "2025-12-19",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 220
+    },
+    {
+      "date": "2025-12-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-22",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 221
+    },
+    {
+      "date": "2025-12-23",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 222
+    },
+    {
+      "date": "2025-12-24",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 223
+    },
+    {
+      "date": "2025-12-25",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 224
+    },
+    {
+      "date": "2025-12-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2025-12-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 225
+    },
+    {
+      "date": "2025-12-28",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 226
+    },
+    {
+      "date": "2025-12-29",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 227
+    },
+    {
+      "date": "2025-12-30",
+      "status": "field",
+      "donors": 6,
+      "fieldOrdinal": 228
+    },
+    {
+      "date": "2025-12-31",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 229
+    },
+    {
+      "date": "2026-01-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 230
+    },
+    {
+      "date": "2026-01-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-05",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 231
+    },
+    {
+      "date": "2026-01-06",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-07",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 232
+    },
+    {
+      "date": "2026-01-08",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 233
+    },
+    {
+      "date": "2026-01-09",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 234
+    },
+    {
+      "date": "2026-01-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-12",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 235
+    },
+    {
+      "date": "2026-01-13",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-14",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 236
+    },
+    {
+      "date": "2026-01-15",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 237
+    },
+    {
+      "date": "2026-01-16",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 238
+    },
+    {
+      "date": "2026-01-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 239
+    },
+    {
+      "date": "2026-01-24",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 240
+    },
+    {
+      "date": "2026-01-25",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 241
+    },
+    {
+      "date": "2026-01-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-01-28",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 242
+    },
+    {
+      "date": "2026-01-29",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 243
+    },
+    {
+      "date": "2026-01-30",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 244
+    },
+    {
+      "date": "2026-01-31",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-02",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 245
+    },
+    {
+      "date": "2026-02-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 246
+    },
+    {
+      "date": "2026-02-04",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 247
+    },
+    {
+      "date": "2026-02-05",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 248
+    },
+    {
+      "date": "2026-02-06",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 249
+    },
+    {
+      "date": "2026-02-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-09",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 250
+    },
+    {
+      "date": "2026-02-10",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 251
+    },
+    {
+      "date": "2026-02-11",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 252
+    },
+    {
+      "date": "2026-02-12",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 253
+    },
+    {
+      "date": "2026-02-13",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-14",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-19",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 254
+    },
+    {
+      "date": "2026-02-20",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 255
+    },
+    {
+      "date": "2026-02-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-22",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 256
+    },
+    {
+      "date": "2026-02-24",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 257
+    },
+    {
+      "date": "2026-02-25",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 258
+    },
+    {
+      "date": "2026-02-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-02-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 259
+    },
+    {
+      "date": "2026-02-28",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-01",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 260
+    },
+    {
+      "date": "2026-03-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-05",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 261
+    },
+    {
+      "date": "2026-03-06",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 262
+    },
+    {
+      "date": "2026-03-07",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-09",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 263
+    },
+    {
+      "date": "2026-03-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-11",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 264
+    },
+    {
+      "date": "2026-03-12",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 265
+    },
+    {
+      "date": "2026-03-13",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 266
+    },
+    {
+      "date": "2026-03-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 267
+    },
+    {
+      "date": "2026-03-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-17",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 268
+    },
+    {
+      "date": "2026-03-18",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 269
+    },
+    {
+      "date": "2026-03-19",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 270
+    },
+    {
+      "date": "2026-03-20",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 271
+    },
+    {
+      "date": "2026-03-21",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-22",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 272
+    },
+    {
+      "date": "2026-03-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-24",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 273
+    },
+    {
+      "date": "2026-03-25",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 274
+    },
+    {
+      "date": "2026-03-26",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 275
+    },
+    {
+      "date": "2026-03-27",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 276
+    },
+    {
+      "date": "2026-03-28",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-29",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 277
+    },
+    {
+      "date": "2026-03-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-03-31",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 278
+    },
+    {
+      "date": "2026-04-01",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 279
+    },
+    {
+      "date": "2026-04-02",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 280
+    },
+    {
+      "date": "2026-04-03",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-04",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-06",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-07",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 281
+    },
+    {
+      "date": "2026-04-08",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 282
+    },
+    {
+      "date": "2026-04-09",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 283
+    },
+    {
+      "date": "2026-04-10",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 284
+    },
+    {
+      "date": "2026-04-11",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 285
+    },
+    {
+      "date": "2026-04-12",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-13",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 286
+    },
+    {
+      "date": "2026-04-14",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-15",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-18",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-19",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-20",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 287
+    },
+    {
+      "date": "2026-04-21",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 288
+    },
+    {
+      "date": "2026-04-22",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 289
+    },
+    {
+      "date": "2026-04-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 290
+    },
+    {
+      "date": "2026-04-24",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-26",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-27",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-04-28",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 291
+    },
+    {
+      "date": "2026-04-29",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 292
+    },
+    {
+      "date": "2026-04-30",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 293
+    },
+    {
+      "date": "2026-05-01",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 294
+    },
+    {
+      "date": "2026-05-02",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-03",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-04",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 295
+    },
+    {
+      "date": "2026-05-05",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 296
+    },
+    {
+      "date": "2026-05-06",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 297
+    },
+    {
+      "date": "2026-05-07",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 298
+    },
+    {
+      "date": "2026-05-08",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-09",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-10",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-11",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-12",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 299
+    },
+    {
+      "date": "2026-05-13",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 300
+    },
+    {
+      "date": "2026-05-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 301
+    },
+    {
+      "date": "2026-05-15",
+      "status": "field",
+      "donors": 11,
+      "fieldOrdinal": 302
+    },
+    {
+      "date": "2026-05-16",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-17",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-18",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 303
+    },
+    {
+      "date": "2026-05-19",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 304
+    },
+    {
+      "date": "2026-05-20",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-21",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 305
+    },
+    {
+      "date": "2026-05-22",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 306
+    },
+    {
+      "date": "2026-05-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-24",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 307
+    },
+    {
+      "date": "2026-05-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-26",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 308
+    },
+    {
+      "date": "2026-05-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 309
+    },
+    {
+      "date": "2026-05-28",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 310
+    },
+    {
+      "date": "2026-05-29",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 311
+    },
+    {
+      "date": "2026-05-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-05-31",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-01",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 312
+    },
+    {
+      "date": "2026-06-02",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-03",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 313
+    },
+    {
+      "date": "2026-06-04",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 314
+    },
+    {
+      "date": "2026-06-05",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 315
+    },
+    {
+      "date": "2026-06-06",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-07",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-08",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 316
+    },
+    {
+      "date": "2026-06-09",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-10",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 317
+    },
+    {
+      "date": "2026-06-11",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 318
+    },
+    {
+      "date": "2026-06-12",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-13",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-14",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-15",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-16",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 319
+    },
+    {
+      "date": "2026-06-17",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 320
+    },
+    {
+      "date": "2026-06-18",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 321
+    },
+    {
+      "date": "2026-06-19",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 322
+    },
+    {
+      "date": "2026-06-20",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-21",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-22",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 323
+    },
+    {
+      "date": "2026-06-24",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 324
+    },
+    {
+      "date": "2026-06-25",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 325
+    },
+    {
+      "date": "2026-06-26",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 326
+    },
+    {
+      "date": "2026-06-27",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-28",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-06-29",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 327
+    },
+    {
+      "date": "2026-06-30",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 328
+    },
+    {
+      "date": "2026-07-01",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 329
+    },
+    {
+      "date": "2026-07-02",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-03",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 330
+    },
+    {
+      "date": "2026-07-04",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 331
+    },
+    {
+      "date": "2026-07-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-06",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 332
+    },
+    {
+      "date": "2026-07-07",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-08",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-09",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 333
+    },
+    {
+      "date": "2026-07-10",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 334
+    },
+    {
+      "date": "2026-07-11",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-12",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-13",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-14",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-15",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-16",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 335
+    },
+    {
+      "date": "2026-07-17",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 336
+    },
+    {
+      "date": "2026-07-18",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-19",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 337
+    },
+    {
+      "date": "2026-07-20",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 338
+    },
+    {
+      "date": "2026-07-21",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 339
+    },
+    {
+      "date": "2026-07-22",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 340
+    },
+    {
+      "date": "2026-07-23",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 341
+    },
+    {
+      "date": "2026-07-24",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 342
+    },
+    {
+      "date": "2026-07-25",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-26",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 343
+    },
+    {
+      "date": "2026-07-28",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 344
+    },
+    {
+      "date": "2026-07-29",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 345
+    },
+    {
+      "date": "2026-07-30",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-07-31",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 346
+    },
+    {
+      "date": "2026-08-01",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-02",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-03",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-04",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 347
+    },
+    {
+      "date": "2026-08-05",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 348
+    },
+    {
+      "date": "2026-08-06",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 349
+    },
+    {
+      "date": "2026-08-07",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 350
+    },
+    {
+      "date": "2026-08-08",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-09",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-10",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 351
+    },
+    {
+      "date": "2026-08-11",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 352
+    },
+    {
+      "date": "2026-08-12",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 353
+    },
+    {
+      "date": "2026-08-13",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 354
+    },
+    {
+      "date": "2026-08-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 355
+    },
+    {
+      "date": "2026-08-15",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-16",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-17",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-18",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 356
+    },
+    {
+      "date": "2026-08-19",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 357
+    },
+    {
+      "date": "2026-08-20",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 358
+    },
+    {
+      "date": "2026-08-21",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 359
+    },
+    {
+      "date": "2026-08-22",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-23",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-24",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 360
+    },
+    {
+      "date": "2026-08-25",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-26",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 361
+    },
+    {
+      "date": "2026-08-27",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 362
+    },
+    {
+      "date": "2026-08-28",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 363
+    },
+    {
+      "date": "2026-08-29",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-30",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-08-31",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-01",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-02",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-03",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-04",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 364
+    },
+    {
+      "date": "2026-09-05",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-06",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 365
+    },
+    {
+      "date": "2026-09-07",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 366
+    },
+    {
+      "date": "2026-09-08",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-09",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 367
+    },
+    {
+      "date": "2026-09-10",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 368
+    },
+    {
+      "date": "2026-09-11",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 369
+    },
+    {
+      "date": "2026-09-12",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 370
+    },
+    {
+      "date": "2026-09-13",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 371
+    },
+    {
+      "date": "2026-09-14",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-15",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 372
+    },
+    {
+      "date": "2026-09-16",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 373
+    },
+    {
+      "date": "2026-09-17",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-18",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 374
+    },
+    {
+      "date": "2026-09-19",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-20",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 375
+    },
+    {
+      "date": "2026-09-21",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-22",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 376
+    },
+    {
+      "date": "2026-09-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 377
+    },
+    {
+      "date": "2026-09-24",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-25",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-26",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-27",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-28",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 378
+    },
+    {
+      "date": "2026-09-29",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-09-30",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 379
+    },
+    {
+      "date": "2026-10-01",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 380
+    },
+    {
+      "date": "2026-10-02",
+      "status": "field",
+      "donors": 5,
+      "fieldOrdinal": 381
+    },
+    {
+      "date": "2026-10-03",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-04",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-05",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 382
+    },
+    {
+      "date": "2026-10-06",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 383
+    },
+    {
+      "date": "2026-10-07",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 384
+    },
+    {
+      "date": "2026-10-08",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 385
+    },
+    {
+      "date": "2026-10-09",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-10",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-11",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-12",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 386
+    },
+    {
+      "date": "2026-10-13",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 387
+    },
+    {
+      "date": "2026-10-15",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 388
+    },
+    {
+      "date": "2026-10-16",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 389
+    },
+    {
+      "date": "2026-10-17",
+      "status": "field",
+      "donors": 4,
+      "fieldOrdinal": 390
+    },
+    {
+      "date": "2026-10-18",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-19",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-20",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 391
+    },
+    {
+      "date": "2026-10-21",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-22",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 392
+    },
+    {
+      "date": "2026-10-23",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 393
+    },
+    {
+      "date": "2026-10-24",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-25",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-26",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 394
+    },
+    {
+      "date": "2026-10-27",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 395
+    },
+    {
+      "date": "2026-10-28",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 396
+    },
+    {
+      "date": "2026-10-29",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-10-30",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 397
+    },
+    {
+      "date": "2026-10-31",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-01",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-02",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-03",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-04",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-05",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-06",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-07",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-08",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-09",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-10",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-11",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-12",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-13",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 398
+    },
+    {
+      "date": "2026-11-14",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 399
+    },
+    {
+      "date": "2026-11-15",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-16",
+      "status": "field",
+      "donors": 2,
+      "fieldOrdinal": 400
+    },
+    {
+      "date": "2026-11-17",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 401
+    },
+    {
+      "date": "2026-11-18",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-19",
+      "status": "field",
+      "donors": 1,
+      "fieldOrdinal": 402
+    },
+    {
+      "date": "2026-11-20",
+      "status": "field",
+      "donors": 3,
+      "fieldOrdinal": 403
+    },
+    {
+      "date": "2026-11-21",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-22",
+      "status": "na",
+      "donors": null,
+      "fieldOrdinal": null
+    },
+    {
+      "date": "2026-11-23",
+      "status": "missing",
+      "donors": null,
+      "fieldOrdinal": null
+    }
+  ]
+}
