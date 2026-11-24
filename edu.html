@@ -225,7 +225,7 @@
       {id:"presence-3step-5step",tag:"TRAINING",title:"3step, 5step 트레이닝",sub:"고객을 대하는 3가지 자세와 대화를 이어가는 5단계 · 무드와 대화의 실전 연습",href:"education/sales/3step-5step/index.html",target:"_blank",folder:"세일즈"},
       {id:"presence-great-sales",tag:"SALES",title:"3 Keys to Great Sales",sub:"멋진 세일즈를 위한 3가지 · 제품, 고객, 자신을 이해하는 25분 키노트",href:"education/sales/great-sales/index.html",target:"_blank",folder:"세일즈"},
       {id:"presence-oxfam-test",tag:"OXFAM",title:"OXFAM 테스트링크",sub:"신입을 위한 옥스팜 후원 연습판과 테스트 참여 기록",href:"oxfam-test.html",target:"",folder:"신입"},
-      {id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"신입 체리티교육 · 89장 프레젠테이션과 현장 영상",href:"education/charity-training/index.html",target:"_blank",folder:"신입"},
+      {id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"Good & New 푸켓 영상으로 시작하는 신입 체리티교육",href:"education/charity-training/index.html?v=20261124-charity-good-new-phuket",target:"_blank",folder:"신입"},
       {id:uid(),tag:"CLASS",title:"Onboarding I·II",sub:"인천 신입교육 — 피스메이커 루키 클래스",href:"토픽/topic-onboarding.html",target:"",folder:"신입"},
       {id:"presence-oxfam-new-hire",tag:"NEW",title:"신입교육",sub:"OXFAM 신입교육 · 교육자용 전체화면 프레젠테이션",href:"education/oxfam-new-hire/index.html",target:"_blank",folder:"신입"},
       {id:"presence-war-history-today",tag:"PHOTO",title:"전쟁의 과거와 오늘",sub:"한국전쟁과 가자지구를 실제 기록 사진으로 보는 교육 아카이브",href:"education/war-history-today/index.html",target:"_blank",folder:"신입"},
@@ -297,11 +297,12 @@
     if(!d || !Array.isArray(d.folders) || !Array.isArray(d.items)) return false;
     var changed=false;
     if(d.folders.indexOf("신입")<0){d.folders.unshift("신입");changed=true;}
-    var item=d.items.find(function(it){return it.id==="presence-charity-training" || it.href==="education/charity-training/index.html";});
-    if(!item){d.items.unshift({id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"신입 체리티교육 · 89장 프레젠테이션과 현장 영상",href:"education/charity-training/index.html",target:"_blank",folder:"신입"});return true;}
+    var item=d.items.find(function(it){return it.id==="presence-charity-training" || String(it.href||"").split("?")[0]==="education/charity-training/index.html";});
+    if(!item){d.items.unshift({id:"presence-charity-training",tag:"CHARITY",title:"체리티교육",sub:"Good & New 푸켓 영상으로 시작하는 신입 체리티교육",href:"education/charity-training/index.html?v=20261124-charity-good-new-phuket",target:"_blank",folder:"신입"});return true;}
     if(item.title!=="체리티교육"){item.title="체리티교육";changed=true;}
     if(item.folder!=="신입"){item.folder="신입";changed=true;}
-    if(item.href!=="education/charity-training/index.html"){item.href="education/charity-training/index.html";changed=true;}
+    if(item.href!=="education/charity-training/index.html?v=20261124-charity-good-new-phuket"){item.href="education/charity-training/index.html?v=20261124-charity-good-new-phuket";changed=true;}
+    if(item.sub!=="Good & New 푸켓 영상으로 시작하는 신입 체리티교육"){item.sub="Good & New 푸켓 영상으로 시작하는 신입 체리티교육";changed=true;}
     return changed;
   }
 

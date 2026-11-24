@@ -1,6 +1,18 @@
 const $=id=>document.getElementById(id), total=slides.length;
 let cur=Math.min(total-1,Math.max(0,(parseInt(location.hash.slice(1))||1)-1)),active=null,audio=null;
 const done=new Set(),players=new Map(),pending=new Map();
+const isOpener=(i=cur)=>slides[i]?.id==='good-and-new-phuket-2026';
+let openerAttempt=0;
+function stopOpener(){openerAttempt++;$('openerVideo').pause()}
+async function playOpener(){
+ if(!isOpener()||!settingsReady||document.querySelector('dialog[open]'))return;
+ const v=$('openerVideo'),attempt=++openerAttempt,s=slides[cur];
+ if(!v.getAttribute('src')){v.src=s.video.src;v.poster=s.video.poster}
+ $('openerFallback').hidden=true;v.muted=false;v.volume=1;v.currentTime=0;
+ try{await v.play();if(attempt!==openerAttempt||!isOpener())return;$('openerFallback').hidden=true}
+ catch{if(attempt!==openerAttempt||!isOpener())return;$('openerMessage').textContent='소리와 함께 영상을 시작하려면 재생 버튼을 눌러주세요.';$('openerFallback').hidden=false}
+}
+function previous(){const i=targetPage(-1);show(i,isOpener(i))}
 for (const s of slides){const o=document.createElement('option');o.value=s.n-1;o.textContent=`${String(s.n).padStart(2,'0')} · ${s.title}`;$('select').append(o)}
 function stopAudio(){if(audio){audio.pause();audio=null}}
 function closeVideo(focus=true){
@@ -10,25 +22,28 @@ function closeVideo(focus=true){
  if(focus&&!$('play').hidden)$('play').focus();
 }
 function show(i,autoplay=false){
- if(!Number.isInteger(i)||i<0||i>=total)return;closeVideo(false);stopAudio();cur=i;const s=slides[i];
+ if(!Number.isInteger(i)||i<0||i>=total)return;closeVideo(false);stopAudio();stopOpener();cur=i;const s=slides[i],opening=isOpener(i);
+ document.body.classList.toggle('is-opener',opening);document.body.classList.toggle('is-agenda',s.id==='training-agenda'||s.image==='assets/agenda.svg');$('openerView').hidden=!opening;$('slideImage').hidden=opening;
+ if(opening){$('openerVideo').poster=s.video.poster;if(!$('openerVideo').getAttribute('src'))$('openerVideo').src=s.video.src;$('openerFallback').hidden=false;$('openerMessage').textContent='소리와 함께 영상을 시작합니다.'}
  $('slideImage').src=s.image||`slides/slide-${String(s.n).padStart(2,'0')}.png`;$('slideImage').alt=s.title;
  $('select').value=i;$('counter').textContent=`${String(i+1).padStart(2,'0')} / ${total}`;
  $('prev').disabled=i===0;$('next').disabled=i===total-1&&!s.video;
- $('section').textContent=s.section;$('source').hidden=!s.source;$('play').hidden=!s.video;$('status').textContent='';
- if(s.video){const v=s.video;Object.assign($('play').style,{left:v.x/12.8+'%',top:v.y/7.2+'%',width:v.w/12.8+'%',height:v.h/7.2+'%'});$('play').setAttribute('aria-label',s.title+' 재생');prepare(i)}
+ $('section').textContent=s.section;$('source').hidden=!s.source;$('play').hidden=opening||!s.video;$('status').textContent='';
+ if(s.video&&!opening){const v=s.video;Object.assign($('play').style,{left:v.x/12.8+'%',top:v.y/7.2+'%',width:v.w/12.8+'%',height:v.h/7.2+'%'});$('play').setAttribute('aria-label',s.title+' 재생');prepare(i)}
  $('readBody').replaceChildren();for(const it of s.items){if(it.kind==='text'&&it.y<670){const p=document.createElement('p');p.textContent=it.text;$('readBody').append(p)}}
  $('music').hidden=!s.audio;$('music').textContent='배경음악';
  $('links').replaceChildren();for(const l of s.links||[]){const a=document.createElement('a');a.href=l.url;a.target='_blank';a.rel='noopener';a.textContent=l.label;$('links').append(a)}
- history.replaceState(null,'','#'+s.n);if(typeof drawAgenda==='function'){drawAgenda();updateNavigation();}if(autoplay&&s.video)playVideo();
+ history.replaceState(null,'','#'+s.n);if(typeof drawAgenda==='function'){drawAgenda();updateNavigation();}if(autoplay&&s.video){if(opening)playOpener();else playVideo()}
  // Prepare the upcoming film before the next user gesture.
  for(let j=i+1;j<Math.min(i+4,total);j++)if(slides[j].video){prepare(j);break}
 }
-function next(){if(!settingsReady){$('status').textContent='교육 설정을 불러오는 중입니다. 잠시 후 다시 눌러주세요.';return}if(active!==null){closeVideo();return}if(slides[cur].video&&!done.has(cur)){playVideo();return}show(targetPage(1),true)}
+function next(){if(!settingsReady){$('status').textContent='교육 설정을 불러오는 중입니다. 잠시 후 다시 눌러주세요.';return}if(isOpener()){show(targetPage(1),true);return}if(active!==null){closeVideo();return}if(slides[cur].video&&!done.has(cur)){playVideo();return}show(targetPage(1),true)}
 let ytApi;
 function getYT(){if(window.YT?.Player)return Promise.resolve(window.YT);if(ytApi)return ytApi;
  ytApi=new Promise((res,rej)=>{window.onYouTubeIframeAPIReady=()=>res(window.YT);const tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';tag.onerror=()=>rej(Error('YouTube 연결 실패'));document.head.append(tag);setTimeout(()=>{if(!window.YT?.Player)rej(Error('YouTube 연결 시간 초과'))},20000)});return ytApi}
 function setError(i,msg){if(active!==i)return;$('loading').hidden=true;$('problem').hidden=false;$('errorText').textContent=msg;$('openOriginal').href=slides[i].video.type==='file'?slides[i].video.src:'https://www.youtube.com/watch?v='+slides[i].video.src}
 function prepare(i){
+ if(isOpener(i))return Promise.resolve(null);
  if(players.has(i))return Promise.resolve(players.get(i));if(pending.has(i))return pending.get(i);
  const v=slides[i].video;if(!v)return Promise.resolve(null);
  const slot=document.createElement('div');slot.className='media-slot';slot.id='slot-'+i;$('mediaHost').append(slot);
@@ -53,16 +68,21 @@ function start(p,i){
  else if(p.ready){p.el.seekTo(0,true);p.el.playVideo();$('loading').hidden=true}
 }
 function playVideo(){
+ if(isOpener()){playOpener();return}
  const i=cur;if(!slides[i].video)return;stopAudio();active=i;$('overlay').hidden=false;$('loading').hidden=false;$('problem').hidden=true;
  document.querySelectorAll('.media-slot').forEach(el=>el.classList.remove('active'));
  const p=players.get(i);if(p){p.slot.classList.add('active');start(p,i)}else prepare(i).then(p=>start(p,i));
  $('closeVideo').focus();
 }
-$('next').onclick=next;$('prev').onclick=()=>show(targetPage(-1));$('select').onchange=()=>show(+$('select').value,true);$('play').onclick=playVideo;$('closeVideo').onclick=()=>closeVideo();$('retry').onclick=playVideo;
+$('next').onclick=next;$('prev').onclick=previous;$('select').onchange=()=>show(+$('select').value,true);$('play').onclick=playVideo;$('closeVideo').onclick=()=>closeVideo();$('retry').onclick=playVideo;$('openerStart').onclick=()=>{$('openerVideo').focus();playOpener()};
+$('openerVideo').addEventListener('ended',()=>{$('openerStart').textContent='↻ 다시 재생';$('openerMessage').textContent='다음으로 오늘의 교육 순서를 확인하세요.';$('openerFallback').hidden=false});
+$('openerVideo').addEventListener('playing',()=>{$('openerStart').textContent='▶ 영상 재생';$('openerFallback').hidden=true});
+$('openerVideo').addEventListener('error',()=>{if(isOpener()){$('openerMessage').textContent='영상을 불러오지 못했습니다. 재생 버튼으로 다시 시도해 주세요.';$('openerFallback').hidden=false}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopOpener()});
 $('full').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen?.().catch(()=>{$('status').textContent='창 크기에 맞춰 표시합니다.'})};
 $('source').onclick=()=>{$('originalImage').src=`originals/slide-${String(slides[cur].source).padStart(2,'0')}.jpg`;$('sourceDialog').showModal()};$('closeSource').onclick=()=>$('sourceDialog').close();
 $('read').onclick=()=>$('readDialog').showModal();$('closeRead').onclick=()=>$('readDialog').close();
 $('music').onclick=()=>{if(audio){stopAudio();$('music').textContent='배경음악'}else{audio=new Audio(slides[cur].audio);audio.onended=()=>{audio=null;$('music').textContent='배경음악'};audio.play().then(()=>$('music').textContent='음악 정지').catch(()=>$('status').textContent='음악을 재생하지 못했습니다.')}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(active!==null){e.preventDefault();closeVideo()}return}if(e.target.matches('select,input,textarea')||document.querySelector('dialog[open]'))return;
- if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();next()}else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();if(active!==null)closeVideo();else show(targetPage(-1))}else if(e.key==='Home')show(visibleIndices()[0]);else if(e.key==='End')show(visibleIndices().at(-1))});
+document.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||e.target.closest('select,input,textarea,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.key==='Escape'){if(active!==null){e.preventDefault();closeVideo()}else if(isOpener()){e.preventDefault();stopOpener();$('openerFallback').hidden=false}return}if(e.target.closest('button,a')&&[' ','Enter'].includes(e.key))return;
+ if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();next()}else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();if(active!==null)closeVideo();else previous()}else if(e.key==='Home'){e.preventDefault();show(visibleIndices()[0],isOpener(visibleIndices()[0]))}else if(e.key==='End'){e.preventDefault();show(visibleIndices().at(-1))}},true);
 getYT().then(()=>{for(let i=0;i<total;i++)if(slides[i].video?.type==='youtube')prepare(i)}).catch(()=>{});

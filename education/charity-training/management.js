@@ -1,15 +1,18 @@
-const agendaDefaults=[['자기소개','Introduce'],['옥스팜 소개','About OXFAM · Oxfam Today'],['피드백 및 Q&A','Feedback · Questions']].map(([title,sub])=>({title,sub}));
-// Preserve the confirmed presentation exclusions even when settings are temporarily unavailable.
-const baselineHidden=[3,4,5,6];
+const goodNewAgenda={id:'good-and-new-phuket-2026',title:'Good & New',sub:'26년 R&R · 푸켓'};
+const agendaDefaults=[goodNewAgenda,...[['자기소개','Introduce'],['옥스팜 소개','About OXFAM · Oxfam Today'],['피드백 및 Q&A','Feedback · Questions']].map(([title,sub])=>({title,sub}))];
+const baselineHidden=[4,5,6,7],maxAgenda=13;
 function migrateLegacyHidden(hidden){
- const originalPages=new Map([[1,1]]);
+ const originalPages=new Map([[1,slides.find(s=>s.id==='training-agenda')?.n||2]]);
  for(const slide of slides){const match=/^slides\/slide-(\d+)\.png$/.exec(slide.image||'');if(match)originalPages.set(Number(match[1]),slide.n)}
  return [...new Set(hidden.filter(Number.isInteger).map(n=>originalPages.get(n)).filter(Number.isInteger))];
 }
 function normalizeSettings(data){
- const current=data?.schemaVersion===2;
- const hidden=Array.isArray(data?.hidden)?data.hidden:baselineHidden;
- return {schemaVersion:2,agenda:current&&Array.isArray(data.agenda)&&data.agenda.length?data.agenda.slice(0,12):structuredClone(agendaDefaults),hidden:current?[...new Set(hidden.filter(n=>Number.isInteger(n)&&n>=1&&n<=slides.length))]:migrateLegacyHidden(hidden),updatedAt:data?.updatedAt||0};
+ const schema=data?.schemaVersion;
+ const agenda=Array.isArray(data?.agenda)&&data.agenda.length?structuredClone(data.agenda):structuredClone(agendaDefaults);
+ if(!agenda.some(a=>a.id===goodNewAgenda.id))agenda.unshift(structuredClone(goodNewAgenda));
+ const hidden=Array.isArray(data?.hidden)?data.hidden:null;
+ const mapped=!hidden?baselineHidden:schema===3?hidden:schema===2?hidden.filter(Number.isInteger).map(n=>n+1):migrateLegacyHidden(hidden);
+ return {...(data||{}),schemaVersion:3,agenda,hidden:[...new Set(mapped.filter(n=>Number.isInteger(n)&&n>=1&&n<=slides.length))],updatedAt:data?.updatedAt||0};
 }
 let lessonSettings=normalizeSettings(null),draft=null,admin=false,settingsReady=false;
 const settingsUrl=HUB_CONFIG.databaseURL+'/edu_lib/lessonSettings/charityTraining.json';
@@ -21,7 +24,7 @@ function applySettings(){
 }
 function drawAgenda(){
  const frame=document.querySelector('.frame');let view=$('agendaView');if(!view){view=document.createElement('section');view.id='agendaView';view.className='agendaView';view.setAttribute('aria-label','오늘의 교육 순서');frame.append(view)}
- view.hidden=cur!==0;if(cur!==0)return;view.replaceChildren();
+ const agendaSlide=slides[cur].id==='training-agenda'||slides[cur].image==='assets/agenda.svg';view.hidden=!agendaSlide;if(!agendaSlide)return;view.replaceChildren();
  const kicker=document.createElement('p');kicker.className='agendaKicker';kicker.textContent='PEACEMAKER / NEW CHARITY TRAINING';
  const heading=document.createElement('h1');heading.textContent='오늘의 교육 순서';
  const grid=document.createElement('div');grid.className='agendaGrid';grid.style.setProperty('--rows',Math.ceil(lessonSettings.agenda.length/4));grid.classList.toggle('dense',lessonSettings.agenda.length>8);
@@ -30,7 +33,7 @@ function drawAgenda(){
 }
 function updateNavigation(){const v=visibleIndices(),pos=v.indexOf(cur);$('prev').disabled=pos<=0;$('next').disabled=pos===v.length-1&&!slides[cur].video;$('counter').textContent=`${String(pos+1).padStart(2,'0')} / ${v.length}`}
 function targetPage(step){const v=visibleIndices(),p=v.indexOf(cur);return v[p+step]}
-async function loadSettings(){
+async function loadSettings({startup=false}={}){
  if(!settingsReady)$('status').textContent='저장된 교육 구성을 불러오는 중…';
  try{
   const r=await fetch(settingsUrl,{cache:'no-store'});if(!r.ok)throw Error('설정 연결 실패');
@@ -38,6 +41,7 @@ async function loadSettings(){
  }catch(e){
   settingsReady=true;applySettings();document.body.classList.remove('settings-loading');$('status').textContent='마지막으로 확인된 페이지 구성으로 진행합니다.';
  }
+ if(startup&&isOpener())playOpener();
 }
 let firebasePromise;
 function firebaseRuntime(){if(firebasePromise)return firebasePromise;firebasePromise=Promise.all([import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')]).then(([appApi,authApi,dbApi])=>{const app=appApi.getApps().length?appApi.getApp():appApi.initializeApp(HUB_CONFIG);return{authApi,dbApi,auth:authApi.getAuth(app),db:dbApi.getDatabase(app)}});return firebasePromise}
@@ -46,7 +50,7 @@ async function saveSettings(){
  if(draft.hidden.length>=slides.length){$('manageStatus').textContent='교육 페이지는 최소 1장을 표시해야 합니다.';return}
  const savingDraft=structuredClone(draft);$('manageEditor').inert=true;$('saveManage').disabled=true;$('manageStatus').textContent='전체 기기에 저장 중…';
  try{const fb=await firebaseRuntime();await fb.auth.authStateReady();const user=fb.auth.currentUser||(await fb.authApi.signInAnonymously(fb.auth)).user;await fb.dbApi.set(fb.dbApi.ref(fb.db,'eduAdminProofs/'+user.uid),HUB_ADMIN_PROOF);
-  const value={schemaVersion:2,agenda:savingDraft.agenda.map(a=>({title:a.title.trim(),sub:a.sub.trim()})),hidden:savingDraft.hidden,updatedAt:Date.now()};
+  const value={...savingDraft,schemaVersion:3,agenda:savingDraft.agenda.map(a=>({...a,title:a.title.trim(),sub:String(a.sub||'').trim()})),hidden:savingDraft.hidden,updatedAt:Date.now()};
   const result=await fb.dbApi.runTransaction(fb.dbApi.ref(fb.db,'edu_lib/lessonSettings/charityTraining'),current=>{if(current&&(current.updatedAt||0)!==savingDraft.updatedAt)return;return value;},{applyLocally:false});
   if(!result.committed)throw Error('다른 기기에서 먼저 변경했습니다. 관리를 닫고 다시 열어 최신 내용을 불러와 주세요.');
   lessonSettings=value;draft=structuredClone(value);applySettings();$('manageStatus').textContent='전체 기기에 저장되었습니다.';
@@ -57,17 +61,17 @@ function managementForm(){
 }
 function renderAgendaEditor(){
  const list=$('agendaEditor');list.replaceChildren();draft.agenda.forEach((a,i)=>{const row=document.createElement('div');row.className='agendaEditRow';const fields=document.createElement('div');fields.className='agendaEditFields';
-  for(const key of ['title','sub']){const input=document.createElement('input');input.value=a[key];input.maxLength=key==='title'?30:72;input.setAttribute('aria-label',`${i+1}번 ${key==='title'?'주제':'보조 설명'}`);input.placeholder=key==='title'?'주제':'보조 설명';input.oninput=()=>a[key]=input.value;fields.append(input)}
-  const actions=document.createElement('div');actions.className='rowActions';for(const [label,fn,disabled] of [['위로',()=>moveAgenda(i,-1),i===0],['아래로',()=>moveAgenda(i,1),i===draft.agenda.length-1],['삭제',()=>{draft.agenda.splice(i,1);renderAgendaEditor()},draft.agenda.length===1]]){const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-label',`${i+1}번 ${label}`);b.disabled=disabled;b.onclick=fn;actions.append(b)}row.append(fields,actions);list.append(row)});$('addAgenda').disabled=draft.agenda.length>=12;
+  for(const key of ['title','sub']){const input=document.createElement('input');input.value=a[key]||'';input.maxLength=key==='title'?30:72;input.setAttribute('aria-label',`${i+1}번 ${key==='title'?'주제':'보조 설명'}`);input.placeholder=key==='title'?'주제':'보조 설명';input.oninput=()=>a[key]=input.value;fields.append(input)}
+  const actions=document.createElement('div');actions.className='rowActions';for(const [label,fn,disabled] of [['위로',()=>moveAgenda(i,-1),i===0],['아래로',()=>moveAgenda(i,1),i===draft.agenda.length-1],['삭제',()=>{draft.agenda.splice(i,1);renderAgendaEditor()},draft.agenda.length===1]]){const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-label',`${i+1}번 ${label}`);b.disabled=disabled;b.onclick=fn;actions.append(b)}row.append(fields,actions);list.append(row)});$('addAgenda').disabled=draft.agenda.length>=maxAgenda;
 }
 function moveAgenda(i,delta){const [a]=draft.agenda.splice(i,1);draft.agenda.splice(i+delta,0,a);renderAgendaEditor()}
 function renderPageEditor(){
  const list=$('pageEditor');list.replaceChildren();for(const s of slides){const row=document.createElement('label');row.className='pageEditRow';const check=document.createElement('input');check.type='checkbox';check.checked=!draft.hidden.includes(s.n);check.setAttribute('aria-label',`${s.n}페이지 표시`);check.onchange=()=>{draft.hidden=draft.hidden.filter(n=>n!==s.n);if(!check.checked)draft.hidden.push(s.n)};const im=document.createElement('img');im.src=s.image||`slides/slide-${String(s.n).padStart(2,'0')}.png`;im.alt='';im.loading='lazy';const title=document.createElement('span');title.textContent=`${String(s.n).padStart(2,'0')} · ${s.title}`;row.append(check,im,title);list.append(row)}
 }
-$('manage').onclick=async()=>{closeVideo(false);$('manageDialog').showModal();$('manageStatus').textContent='설정을 불러오는 중…';await loadSettings();managementForm()};
+$('manage').onclick=async()=>{closeVideo(false);stopOpener();$('manageDialog').showModal();$('manageStatus').textContent='설정을 불러오는 중…';await loadSettings();managementForm()};
 $('closeManage').onclick=()=>{$('manageDialog').close();draft=null};$('saveManage').onclick=saveSettings;
 $('loginManage').onsubmit=async e=>{e.preventDefault();const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode($('managePassword').value));const hash=[...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('');if(hash!==HUB_PASSWORD_HASH){$('loginError').textContent='비밀번호를 확인해 주세요.';return}admin=true;$('managePassword').value='';$('loginError').textContent='';managementForm()};
-$('addAgenda').onclick=()=>{if(draft.agenda.length<12){draft.agenda.push({title:'새 주제',sub:''});renderAgendaEditor()}};
+$('addAgenda').onclick=()=>{if(draft.agenda.length<maxAgenda){draft.agenda.push({title:'새 주제',sub:''});renderAgendaEditor()}};
 $('showAllPages').onclick=()=>{draft.hidden=[];renderPageEditor()};
 $('resetAgenda').onclick=()=>{draft.agenda=structuredClone(agendaDefaults);renderAgendaEditor()};
-show(cur);loadSettings();
+show(cur);loadSettings({startup:true});
