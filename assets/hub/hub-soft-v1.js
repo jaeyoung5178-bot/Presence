@@ -31,6 +31,7 @@
   const networking=document.createElement('a');networking.href='networking/index.html';networking.innerHTML='<span class="m-tag">NETWORK</span>네트워킹';menu.append(networking);
   const blueprint=document.createElement('a');blueprint.href='blueprint/index.html';blueprint.innerHTML='<span class="m-tag">BLUEPRINT</span>팀의 비전과 목표';menu.append(blueprint);
   const teamBuilding=document.createElement('a');teamBuilding.href='team-building/index.html';teamBuilding.innerHTML='<span class="m-tag">TEAMBUILD</span>팀빌딩 지원';menu.append(teamBuilding);
+  const managerMeetings=document.createElement('a');managerMeetings.href='manager-meetings/index.html';managerMeetings.style.scrollMarginBlock='16px';managerMeetings.innerHTML='<span class="m-tag">MANAGER</span>Presence Manager 회의';menu.append(managerMeetings);
   const items=Array.from(menu.children),sections=[['daily','기록과 실행'],['learn','배움과 아카이브'],['connect','우리의 연결'],['manage','공간 관리']];
   const specs={RECORD:['daily',0,'개인 세일즈 기록','나의 필드와 성장'],FIELD:['daily',1,'콜백싯','오늘의 실행을 기록해요'],SITES:['daily',4,'사이트 운영','필드와 활동 장소'],SCORE:['daily',5,'스코어방 결과','함께 만든 성과'],MEMO:['daily',9,'메모와 액션플랜','생각을 다음 행동으로'],EDU:['learn',2,'에듀케이션','우리의 배움 라이브러리'],RECAP:['learn',3,'팀 리캡','지나온 배움 돌아보기'],LIBRARY:['learn',10,'재영의 서재','읽고 나누는 생각'],WORK:['connect',6,'프레젠스 워크북','함께 자라는 공간'],BRAND:['connect',7,'맛도사','일상 속 맛있는 발견'],NOTION:['connect',8,'인천 HC50','팀 노션 바로가기'],PHOTO:['manage',11,'사진 올리기','새로운 순간을 필름에'],TEAM:['manage',12,'팀원 사진 공간','함께 나누는 순간'],LOCK:['manage',13,'관리자 잠금','공간을 안전하게']};
   specs.RECRUIT=['daily',12,'리쿠르팅 · Crew Camp','새로운 동료를 만나는 즐거운 모험'];
@@ -38,11 +39,12 @@
   specs.SETUP=['daily',1,'셋업 매니저','요일별 필드 인원과 공지'];
   specs.NETWORK=['learn',6,'네트워킹','만남과 대화, 다음으로 이어지는 연결'];
   specs.TEAMBUILD=['learn',6,'팀빌딩 지원','박인선 LR · 하루의 계획과 신입 케어'];
+  specs.MANAGER=['learn',6,'Presence Manager 회의','회의와 액션플랜을 모으는 저장소'];
   specs.BLUEPRINT=['connect',6,'팀의 비전과 목표 · Blueprint','코어밸류, 프로모션, 팀에서 기업으로'];
   const menuContent=document.createDocumentFragment();
   const menuHead=document.createElement('div');menuHead.className='hub-menu-head';menuHead.innerHTML='<div><p>YOUR NEXT CHAPTER</p><h2>어디로 가볼까요?</h2></div><button class="hub-menu-close" type="button" aria-label="둘러보기 메뉴 닫기">'+icon('close')+'</button>';menuContent.append(menuHead);
   const grids={};sections.forEach(([key,title])=>{const section=document.createElement('section');section.className='hub-menu-section';section.dataset.group=key;section.innerHTML='<h3>'+title+'</h3><div class="hub-menu-grid"></div>';grids[key]=section.lastElementChild;menuContent.append(section);});
-  items.forEach(item=>{const tag=item.querySelector('.m-tag')?.textContent.trim(),s=specs[tag];if(!s)return;item.classList.add('hub-menu-item');item.dataset.hubCategory=tag;item.innerHTML=(tag==='BLUEPRINT'?'<img src="blueprint/assets/presence-mutual.png" width="48" height="44" style="object-fit:contain;flex:none" alt="">':tag==='NETWORK'?'<img src="networking/assets/networking-icon.webp" width="48" height="44" style="object-fit:contain;flex:none" alt="">':tag==='TEAMBUILD'?'<img src="team-building/assets/team-building-journal.png" width="48" height="44" style="object-fit:contain;flex:none" alt="">':charm(s[1]))+'<span class="hub-menu-copy"><strong>'+s[2]+'</strong><small>'+s[3]+'</small></span>'+icon(item.target==='_blank'?'external':'arrow','hub-menu-arrow');grids[s[0]].append(item);});
+  items.forEach(item=>{const tag=item.querySelector('.m-tag')?.textContent.trim(),s=specs[tag];if(!s)return;item.classList.add('hub-menu-item');item.dataset.hubCategory=tag;item.innerHTML=(tag==='MANAGER'?'<img src="manager-meetings/assets/manager-meeting-archive.svg" width="48" height="44" style="object-fit:contain;flex:none" alt="">':tag==='BLUEPRINT'?'<img src="blueprint/assets/presence-mutual.png" width="48" height="44" style="object-fit:contain;flex:none" alt="">':tag==='NETWORK'?'<img src="networking/assets/networking-icon.webp" width="48" height="44" style="object-fit:contain;flex:none" alt="">':tag==='TEAMBUILD'?'<img src="team-building/assets/team-building-journal.png" width="48" height="44" style="object-fit:contain;flex:none" alt="">':charm(s[1]))+'<span class="hub-menu-copy"><strong>'+s[2]+'</strong><small>'+s[3]+'</small></span>'+icon(item.target==='_blank'?'external':'arrow','hub-menu-arrow');grids[s[0]].append(item);});
   const bottom=document.createElement('div');bottom.className='hub-menu-bottom';bottom.innerHTML='<span>각자의 가능성, 함께하는 Presence.</span><button class="hub-menu-settings" type="button">설정</button>';menuContent.append(bottom);
   const contentNodes=Array.from(menuContent.childNodes);menu.replaceChildren();
   function syncAccess(){
@@ -89,4 +91,8 @@
   }
   const dialogObserver=new MutationObserver(dialogSync);dialogObserver.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
   document.addEventListener('keydown',e=>{if(!activeDialog)return;if(e.key==='Escape'){if(activeDialog.id==='reel-gal')activeDialog.remove();else activeDialog.classList.remove('open','on');e.preventDefault();}if(e.key==='Tab'){const list=Array.from(activeDialog.querySelectorAll('button:not([disabled]),a[href],input:not([type=file]),[tabindex="0"]')).filter(n=>n.getClientRects().length);if(!list.length)return;const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}},true);
+  if(new URLSearchParams(location.search).get('open')==='learn'&&admin())requestAnimationFrame(()=>{
+    syncAccess();positionMenu();menu.classList.add('open');menu.inert=false;
+    requestAnimationFrame(()=>{const section=menu.querySelector('[data-group="learn"]');section?.scrollIntoView({block:'nearest'});managerMeetings.scrollIntoView({block:'nearest'});managerMeetings.focus({preventScroll:true});});
+  });
 })();
