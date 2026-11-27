@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "archive": {
+    "id": "presence-manager-meetings",
+    "title": "Presence Manager 회의",
+    "subtitle": "팀의 생각을 모으고, 다음 행동을 함께 정하는 회의 저장소",
+    "section": "배움과 아카이브"
+  },
+  "meeting": {
+    "id": "first-team-swot",
+    "title": "첫 모임 · 팀 SWOT 분석",
+    "meetingNumber": 1,
+    "meetingDate": null,
+    "intro": "각 팀의 강점·약점·기회·위협을 함께 살펴보고, 다음 성장을 위한 액션플랜을 정리했습니다.",
+    "teams": [
+      {
+        "id": "fuse",
+        "name": "퓨즈팀",
+        "nameStatus": "confirmed-by-user",
+        "original": "assets/originals/fuse-swot.png",
+        "image": "assets/web/fuse-swot.webp",
+        "alt": "퓨즈팀 SWOT 분석 자료",
+        "sourceAttachment": "codex-clipboard-876e14e3-058b-4509-a6c7-4dbcc3dd39de.png"
+      },
+      {
+        "id": "youngwave",
+        "name": "YoungWave",
+        "nameStatus": "confirmed-from-image",
+        "original": "assets/originals/youngwave-swot.png",
+        "image": "assets/web/youngwave-swot.webp",
+        "alt": "YoungWave 팀 SWOT 분석 자료",
+        "sourceAttachment": "codex-clipboard-8a8a277e-f190-4ac5-a83b-4b325f3f838c.png"
+      },
+      {
+        "id": "presence",
+        "name": "Presence",
+        "nameStatus": "confirmed-from-image",
+        "original": "assets/originals/presence-swot.png",
+        "image": "assets/web/presence-swot.webp",
+        "alt": "Presence 팀 SWOT 분석 자료",
+        "sourceAttachment": "codex-clipboard-a5c20988-1dad-48fc-b068-00bc7df21b66.png"
+      }
+    ],
+    "actionPlan": {
+      "title": "액션플랜",
+      "managerDevelopment": {
+        "title": "매니저 2명 만들기",
+        "targetCount": 2,
+        "members": [
+          {
+            "name": "손예진",
+            "focus": "지각하지 않기",
+            "detail": "월 3회 이상 지각 NO!"
+          },
+          {
+            "name": "권영웅",
+            "focus": "COD 강연",
+            "detail": ""
+          }
+        ]
+      },
+      "sectorLeaderChat": {
+        "title": "팀 내 섹터리더 카톡방 만들기",
+        "purpose": "섹터 운영, 신입 케어, 사이트 및 인원 매니징에 관한 모든 이야기를 팀 안에서 나누고, 모든 팀장이 함께 지원하고 도우며 소통·트레이닝하기 위한 공간입니다.",
+        "invitees": ["손예진", "권영웅"],
+        "maintenanceCriteria": [
+          { "label": "매달 15부킹 이상", "status": "as-provided" },
+          { "label": "세일즈 AVG 1.2 이상", "status": "as-provided" },
+          { "label": "한 주에 6명", "status": "as-provided" }
+        ],
+        "siteDevelopment": {
+          "title": "주말 스케줄과 함께 사이트 개발 계획 공유하기",
+          "timing": "주말 저녁, 스케줄표를 입력할 때",
+          "channel": "프레젠스 섹터리더방",
+          "description": "사이트 개발을 위해 아래 계획을 함께 적어 올립니다.",
+          "siteTypes": [
+            { "label": "나에게 처음이거나 1달 이상 안 쓴 사이트", "count": 1 },
+            { "label": "신규 개발 사이트", "count": 1 },
+            { "label": "잘할 수 있는 믿음의 사이트", "count": 1 }
+          ],
+          "perPersonTotal": 3,
+          "countStatus": "confirmed-by-user"
+        },
+        "topicTraining": {
+          "title": "팀 내 토픽자 양성과 트레이닝 기회 만들기",
+          "frequency": "월 1회",
+          "firstSpeakers": "처음에는 TL급 인원들이 팀에 가장 필요한 내용으로 토픽을 준비합니다.",
+          "nextSpeakers": "이후 섹터리더 그룹에도 토픽을 진행할 기회를 줍니다.",
+          "participation": "참여는 자유롭게 하되, 팀빌더 그룹은 의무 참석하는 방향으로 운영합니다."
+        }
+      }
+    }
+  }
+}

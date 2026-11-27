@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 88" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Presence Manager 회의 저장소</title>
+  <desc id="desc">초록 의자와 우드 회의 테이블 위에 놓인 회의 기록 폴더</desc>
+  <defs>
+    <linearGradient id="wood" x1="16" y1="34" x2="80" y2="66" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D3B58A"/>
+      <stop offset="1" stop-color="#B78C5D"/>
+    </linearGradient>
+    <linearGradient id="green" x1="48" y1="13" x2="48" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#376B57"/>
+      <stop offset="1" stop-color="#204D3D"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="48" cy="76" rx="35" ry="5" fill="#244A39" opacity=".09"/>
+  <g stroke="#204B3A" stroke-width="2.5" stroke-linejoin="round">
+    <rect x="17" y="19" width="16" height="22" rx="6" fill="url(#green)"/>
+    <rect x="40" y="12" width="16" height="25" rx="6" fill="url(#green)"/>
+    <rect x="63" y="19" width="16" height="22" rx="6" fill="url(#green)"/>
+  </g>
+  <path d="M21 57V73M75 57V73" stroke="#805D3B" stroke-width="7" stroke-linecap="round"/>
+  <rect x="10" y="35" width="76" height="31" rx="12" fill="#997146" stroke="#805D3B" stroke-width="2.5"/>
+  <rect x="10" y="31" width="76" height="30" rx="12" fill="url(#wood)" stroke="#805D3B" stroke-width="2.5"/>
+  <path d="M18 51H28M68 40H77" stroke="#E3CBA7" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+  <path d="M33 36H44L48 40H65V58H33V36Z" fill="#753B43" stroke="#65343B" stroke-width="2.5" stroke-linejoin="round"/>
+  <rect x="37" y="33" width="23" height="21" rx="3" fill="#FFFCF2" stroke="#BBA57D" stroke-width="2.5"/>
+  <path d="M43 40H54M43 46H51" stroke="#567563" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M32 47H45L48 44H66L62 59H35L32 47Z" fill="#2D604A" stroke="#204B3A" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M42 52H55" stroke="#D7BE89" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
