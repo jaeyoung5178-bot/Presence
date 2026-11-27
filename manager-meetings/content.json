@@ -11,6 +11,13 @@
     "title": "첫 모임 · 팀 SWOT 분석",
     "meetingNumber": 1,
     "meetingDate": null,
+    "nextMeeting": {
+      "date": "2026-12-17",
+      "time": "19:00",
+      "timeZone": "Asia/Seoul",
+      "displayDate": "2026.12.17(목)",
+      "displayTime": "저녁 7시"
+    },
     "intro": "각 팀의 강점·약점·기회·위협을 함께 살펴보고, 다음 성장을 위한 액션플랜을 정리했습니다.",
     "teams": [
       {
